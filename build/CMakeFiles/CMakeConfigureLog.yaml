@@ -1,0 +1,679 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineSystem.cmake:200 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The target system is: Generic -  - powerpc64
+      The host system is: Windows - 10.0.22631 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-g++.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        D:/projects/alear/build/CMakeFiles/3.29.0-rc3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-9p67km"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-9p67km"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_SYSROOT: "C:/usr/local/cell"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-9p67km'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_b0bcb
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe --sysroot=C:/usr/local/cell   -v -o CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCXXCompilerABI.cpp"
+        Using built-in specs.
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1plus.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot C:/usr/local/cell -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCXXCompilerABI.cpp -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCXXCompilerABI.cpp -auxbase-strip CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -version -fno-threadsafe-statics -o C:/Users/Aidan/AppData/Local/Temp/cc0Ygaaa.s
+        ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+        ignoring nonexistent directory "C:/usr/local/cell/include"
+        ignoring nonexistent directory "C:/usr/local/cell/../common/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include
+        End of search list.
+        GNU C++ version 4.1.1 (SDK420, $Rev: 3547 $) (ppu-lv2)
+        	compiled by GNU C version 4.1.1 (SDK420, $Rev: 3547 $).
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: baeffbaeae215bc6163f201dfc341db1
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj C:/Users/Aidan/AppData/Local/Temp/cc0Ygaaa.s
+        GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420, $Rev: 3547 $)
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-g++.exe  -v CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -ocmTC_b0bcb.elf -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a C:/usr/local/cell/target/ppu/lib/libstdc++.a && cd ."
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup -ocmTC_b0bcb.elf c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrti.o c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt0.o c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt1.o c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtbegin.o -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj C:/usr/local/cell/target/ppu/lib/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a C:/usr/local/cell/target/ppu/lib/libstdc++.a -lstdc++ -lm -Lc:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib --start-group -lc -lgcc -lstdc++ -lsupc++ -lsnc -llv2_stub -lsyscall --end-group -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/elf64_lv2_prx.x c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtend.o c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrtn.o\x0d
+        ps3ppuld 430.1.5139.0 (rel,ps3,430.1,common,src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe\x0d
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:134 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include]
+        end of search list found
+        collapse include dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include]
+        implicit include dirs: [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:170 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-9p67km']
+        ignore line: []
+        ignore line: [Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_b0bcb]
+        ignore line: [[1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe --sysroot=C:/usr/local/cell   -v -o CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCXXCompilerABI.cpp"]
+        ignore line: [Using built-in specs.]
+        ignore line: [Target: ppu-lv2]
+        ignore line: [Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx]
+        ignore line: [Thread model: lv2]
+        ignore line: [gcc version 4.1.1 (SDK420  $Rev: 3547 $)]
+        ignore line: [ c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1plus.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot C:/usr/local/cell -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCXXCompilerABI.cpp -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCXXCompilerABI.cpp -auxbase-strip CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -version -fno-threadsafe-statics -o C:/Users/Aidan/AppData/Local/Temp/cc0Ygaaa.s]
+        ignore line: [ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"]
+        ignore line: [ignoring nonexistent directory "C:/usr/local/cell/include"]
+        ignore line: [ignoring nonexistent directory "C:/usr/local/cell/../common/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C++ version 4.1.1 (SDK420  $Rev: 3547 $) (ppu-lv2)]
+        ignore line: [	compiled by GNU C version 4.1.1 (SDK420  $Rev: 3547 $).]
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: baeffbaeae215bc6163f201dfc341db1]
+        ignore line: [ c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj C:/Users/Aidan/AppData/Local/Temp/cc0Ygaaa.s]
+        ignore line: [GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420  $Rev: 3547 $)]
+        ignore line: [[2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-g++.exe  -v CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj -ocmTC_b0bcb.elf -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a C:/usr/local/cell/target/ppu/lib/libstdc++.a && cd ."]
+        ignore line: [Using built-in specs.]
+        ignore line: [Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1]
+        ignore line: [Target: ppu-lv2]
+        ignore line: [Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx]
+        ignore line: [Thread model: lv2]
+        ignore line: [gcc version 4.1.1 (SDK420  $Rev: 3547 $)]
+        link line: [ c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup -ocmTC_b0bcb.elf c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrti.o c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt0.o c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt1.o c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtbegin.o -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj C:/usr/local/cell/target/ppu/lib/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a C:/usr/local/cell/target/ppu/lib/libstdc++.a -lstdc++ -lm -Lc:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib --start-group -lc -lgcc -lstdc++ -lsupc++ -lsnc -llv2_stub -lsyscall --end-group -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/elf64_lv2_prx.x c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtend.o c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrtn.o\x0d]
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-V] ==> ignore
+          arg [-Qy] ==> ignore
+          arg [--alternative-ld=ps3ppuld] ==> ignore
+          arg [--gnu-mode] ==> ignore
+          arg [--prx-fixup] ==> ignore
+          arg [-ocmTC_b0bcb.elf] ==> ignore
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrti.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrti.o]
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt0.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt0.o]
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt1.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt1.o]
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtbegin.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtbegin.o]
+          arg [-LC:/usr/local/cell/target/ppu/lib] ==> dir [C:/usr/local/cell/target/ppu/lib]
+          arg [-Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1] ==> dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1]
+          arg [-Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc] ==> dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc]
+          arg [-Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib] ==> dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib]
+          arg [-Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib] ==> dir [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib]
+          arg [CMakeFiles/cmTC_b0bcb.dir/CMakeCXXCompilerABI.cpp.obj] ==> ignore
+          arg [C:/usr/local/cell/target/ppu/lib/libc.a] ==> lib [C:/usr/local/cell/target/ppu/lib/libc.a]
+          arg [C:/usr/local/cell/target/ppu/lib/libm.a] ==> lib [C:/usr/local/cell/target/ppu/lib/libm.a]
+          arg [C:/usr/local/cell/target/ppu/lib/liblv2_stub.a] ==> lib [C:/usr/local/cell/target/ppu/lib/liblv2_stub.a]
+          arg [C:/usr/local/cell/target/ppu/lib/libstdc++.a] ==> lib [C:/usr/local/cell/target/ppu/lib/libstdc++.a]
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-Lc:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib] ==> dir [c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib]
+          arg [--start-group] ==> ignore
+          arg [-lc] ==> lib [c]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lsupc++] ==> lib [supc++]
+          arg [-lsnc] ==> lib [snc]
+          arg [-llv2_stub] ==> lib [lv2_stub]
+          arg [-lsyscall] ==> lib [syscall]
+          arg [--end-group] ==> ignore
+          arg [-T] ==> ignore
+          arg [c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/elf64_lv2_prx.x] ==> ignore
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtend.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtend.o]
+          arg [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrtn.o] ==> obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrtn.o]
+        ignore line: [ps3ppuld 430.1.5139.0 (rel ps3 430.1 common src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe\x0d]
+        ignore line: []
+        ignore line: []
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrti.o] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/ecrti.o]
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt0.o] ==> [C:/usr/local/cell/target/ppu/lib/crt0.o]
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/crt1.o] ==> [C:/usr/local/cell/target/ppu/lib/crt1.o]
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtbegin.o] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/crtbegin.o]
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/crtend.o] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/crtend.o]
+        collapse obj [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/ecrtn.o] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/ecrtn.o]
+        collapse library dir [C:/usr/local/cell/target/ppu/lib] ==> [C:/usr/local/cell/target/ppu/lib]
+        collapse library dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1]
+        collapse library dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc] ==> [C:/usr/local/cell/host-win32/ppu/lib/gcc]
+        collapse library dir [c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib] ==> [C:/usr/local/cell/host-win32/ppu/ppu-lv2/lib]
+        collapse library dir [c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib] ==> [C:/usr/local/cell/target/ppu/lib]
+        collapse library dir [c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib] ==> [C:/usr/local/cell/target/ppu/lib]
+        implicit libs: [C:/usr/local/cell/target/ppu/lib/libc.a;C:/usr/local/cell/target/ppu/lib/libm.a;C:/usr/local/cell/target/ppu/lib/liblv2_stub.a;C:/usr/local/cell/target/ppu/lib/libstdc++.a;stdc++;m;c;gcc;stdc++;supc++;snc;lv2_stub;syscall]
+        implicit objs: [C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/ecrti.o;C:/usr/local/cell/target/ppu/lib/crt0.o;C:/usr/local/cell/target/ppu/lib/crt1.o;C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/crtbegin.o;C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/crtend.o;C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/ecrtn.o]
+        implicit dirs: [C:/usr/local/cell/target/ppu/lib;C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1;C:/usr/local/cell/host-win32/ppu/lib/gcc;C:/usr/local/cell/host-win32/ppu/ppu-lv2/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/Internal/FeatureTesting.cmake:34 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/Internal/FeatureTesting.cmake:84 (_record_compiler_features)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/Compiler/CMakeCommonCompilerMacros.cmake:137 (_record_compiler_features_cxx)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompileFeatures.cmake:70 (cmake_record_cxx_compile_features)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:70 (CMAKE_DETERMINE_COMPILE_FEATURES)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compile features"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-416iul"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-416iul"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_SYSROOT: "C:/usr/local/cell"
+    buildResult:
+      variable: "CMAKE_CXX_FEATURE_TEST"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-416iul'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_b9fa3
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe --sysroot=C:/usr/local/cell   -std=c++98 -o CMakeFiles/cmTC_b9fa3.dir/feature_tests.cxx.obj -c D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-416iul/feature_tests.cxx
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-g++.exe   CMakeFiles/cmTC_b9fa3.dir/feature_tests.cxx.obj -ocmTC_b9fa3.elf -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a C:/usr/local/cell/target/ppu/lib/libstdc++.a && cd ."
+        
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        D:/projects/alear/build/CMakeFiles/3.29.0-rc3/CompilerIdC/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-2xaluc"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-2xaluc"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_SYSROOT: "C:/usr/local/cell"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-2xaluc'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_888c9
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe --sysroot=C:/usr/local/cell   -v -o CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c"
+        Using built-in specs.
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot C:/usr/local/cell -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c -std=gnu99 -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCCompilerABI.c -auxbase-strip CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj -version -o C:/Users/Aidan/AppData/Local/Temp/ccmElaaa.s
+        ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+        ignoring nonexistent directory "C:/usr/local/cell/include"
+        ignoring nonexistent directory "C:/usr/local/cell/../common/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include
+        End of search list.
+        GNU C version 4.1.1 (SDK420, $Rev: 3547 $) (ppu-lv2)
+        	compiled by GNU C version 4.1.1 (SDK420, $Rev: 3547 $).
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: cc234cc980cf065a531cd47e196c7f42
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj C:/Users/Aidan/AppData/Local/Temp/ccmElaaa.s
+        GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420, $Rev: 3547 $)\x0d
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj -o cmTC_888c9.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_888c9.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj -o cmTC_888c9.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --sysroot=c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup --prx-child-link -dc -r -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti -LC:/usr/local/cell/target/ppu/lib/fno-exceptions -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/prx32.xr CMakeFiles/cmTC_888c9.dir/CMakeCCompilerABI.c.obj C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a --start-group -lgcc -lsyscall -llv2_stub --end-group -o C:/Users/Aidan/AppData/Local/Temp/ccoPeaaa.psp.rela.o
+        ps3ppuld 430.1.5139.0 (rel,ps3,430.1,common,src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe\x0d
+         c:/usr/local/cell/host-win32/ppu/bin/../../bin/ppu-lv2-prx-libgen.exe -e C:/Users/Aidan/AppData/Local/Temp/ccCujaaa.lib.ent.s C:/Users/Aidan/AppData/Local/Temp/ccoPeaaa.psp.rela.o\x0d
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/ccoPeaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:56 (try_compile)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Check for working C compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-bbib53"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-bbib53"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_SYSROOT: "C:/usr/local/cell"
+    buildResult:
+      variable: "CMAKE_C_COMPILER_WORKS"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-bbib53'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_e4243
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe --sysroot=C:/usr/local/cell    -o CMakeFiles/cmTC_e4243.dir/testCCompiler.c.obj -c D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-bbib53/testCCompiler.c
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_e4243.dir/testCCompiler.c.obj -o cmTC_e4243.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_e4243.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_e4243.dir/testCCompiler.c.obj -o cmTC_e4243.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/ccuClaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1165 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Checking whether the ASM compiler is GNU using "--version" matched "(GNU assembler)|(GCC)|(Free Software Foundation)":
+      GNU assembler 2.17 (SDK420, $Rev: 3547 $)
+      Copyright 2005 Free Software Foundation, Inc.
+      This program is free software; you may redistribute it under the terms of
+      the GNU General Public License.  This program has absolutely no warranty.
+      This assembler was configured for a target of `ppu-lv2'.
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        D:/projects/alear/build/CMakeFiles/3.29.0-rc3/CompilerIdC/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-zatkjf"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-zatkjf"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-zatkjf'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_a464a
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe   -v -o CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c"
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c -std=gnu99 -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCCompilerABI.c -auxbase-strip CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj -version -o C:/Users/Aidan/AppData/Local/Temp/ccWekaaa.s
+        ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/../common/include
+        End of search list.
+        GNU C version 4.1.1 (SDK420, $Rev: 3547 $) (ppu-lv2)
+        	compiled by GNU C version 4.1.1 (SDK420, $Rev: 3547 $).
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: cc234cc980cf065a531cd47e196c7f42
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj C:/Users/Aidan/AppData/Local/Temp/ccWekaaa.s\x0d
+        GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420, $Rev: 3547 $)\x0d
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj -o cmTC_a464a.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_a464a.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj -o cmTC_a464a.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --sysroot=c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup --prx-child-link -dc -r -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti -LC:/usr/local/cell/target/ppu/lib/fno-exceptions -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/prx32.xr CMakeFiles/cmTC_a464a.dir/CMakeCCompilerABI.c.obj C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a --start-group -lgcc -lsyscall -llv2_stub --end-group -o C:/Users/Aidan/AppData/Local/Temp/ccSIbaaa.psp.rela.o
+        ps3ppuld 430.1.5139.0 (rel,ps3,430.1,common,src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe
+         c:/usr/local/cell/host-win32/ppu/bin/../../bin/ppu-lv2-prx-libgen.exe -e C:/Users/Aidan/AppData/Local/Temp/ccAhdaaa.lib.ent.s C:/Users/Aidan/AppData/Local/Temp/ccSIbaaa.psp.rela.o
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/ccSIbaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:56 (try_compile)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Check for working C compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8te9aq"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8te9aq"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_COMPILER_WORKS"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8te9aq'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_db69f
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe    -o CMakeFiles/cmTC_db69f.dir/testCCompiler.c.obj -c D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8te9aq/testCCompiler.c
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_db69f.dir/testCCompiler.c.obj -o cmTC_db69f.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_db69f.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_db69f.dir/testCCompiler.c.obj -o cmTC_db69f.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/cc29daaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        D:/projects/alear/build/CMakeFiles/3.29.0-rc3/CompilerIdC/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8syh8v"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8syh8v"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-8syh8v'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_74a36
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe   -v -o CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c"
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c -std=gnu99 -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCCompilerABI.c -auxbase-strip CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj -version -o C:/Users/Aidan/AppData/Local/Temp/ccElfaaa.s
+        ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/../common/include
+        End of search list.
+        GNU C version 4.1.1 (SDK420, $Rev: 3547 $) (ppu-lv2)
+        	compiled by GNU C version 4.1.1 (SDK420, $Rev: 3547 $).
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: cc234cc980cf065a531cd47e196c7f42
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj C:/Users/Aidan/AppData/Local/Temp/ccElfaaa.s\x0d
+        GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420, $Rev: 3547 $)\x0d
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj -o cmTC_74a36.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_74a36.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj -o cmTC_74a36.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --sysroot=c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup --prx-child-link -dc -r -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti -LC:/usr/local/cell/target/ppu/lib/fno-exceptions -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/prx32.xr CMakeFiles/cmTC_74a36.dir/CMakeCCompilerABI.c.obj C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a --start-group -lgcc -lsyscall -llv2_stub --end-group -o C:/Users/Aidan/AppData/Local/Temp/ccKUeaaa.psp.rela.o
+        ps3ppuld 430.1.5139.0 (rel,ps3,430.1,common,src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe
+         c:/usr/local/cell/host-win32/ppu/bin/../../bin/ppu-lv2-prx-libgen.exe -e C:/Users/Aidan/AppData/Local/Temp/cckFjaaa.lib.ent.s C:/Users/Aidan/AppData/Local/Temp/ccKUeaaa.psp.rela.o
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/ccKUeaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:56 (try_compile)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Check for working C compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-6l701i"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-6l701i"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_COMPILER_WORKS"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-6l701i'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_cb61d
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe    -o CMakeFiles/cmTC_cb61d.dir/testCCompiler.c.obj -c D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-6l701i/testCCompiler.c
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_cb61d.dir/testCCompiler.c.obj -o cmTC_cb61d.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_cb61d.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx   CMakeFiles/cmTC_cb61d.dir/testCCompiler.c.obj -o cmTC_cb61d.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/cc4odaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        D:/projects/alear/build/CMakeFiles/3.29.0-rc3/CompilerIdC/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-wiihn0"
+      binary: "D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-wiihn0"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/projects/alear/build/CMakeFiles/CMakeScratch/TryCompile-wiihn0'
+        
+        Run Build Command(s): E:/usr/local/ninja.exe -v cmTC_1d210
+        [1/2] C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-gcc.exe   -v -o CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj -c "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c"
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/cc1.exe -quiet -v -iprefix c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../lib/gcc/ppu-lv2/4.1.1/ -isysroot c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu -D__PPU__ -D__CELLOS_LV2__ C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeCCompilerABI.c -std=gnu99 -mabi=altivec -maltivec -mstrict-align -fstrict-aligned -mno-vrsave -mtraceback=none -quiet -dumpbase CMakeCCompilerABI.c -auxbase-strip CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj -version -o C:/Users/Aidan/AppData/Local/Temp/ccsncaaa.s
+        ignoring nonexistent directory "/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/include
+         c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/../common/include
+        End of search list.
+        GNU C version 4.1.1 (SDK420, $Rev: 3547 $) (ppu-lv2)
+        	compiled by GNU C version 4.1.1 (SDK420, $Rev: 3547 $).
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: cc234cc980cf065a531cd47e196c7f42
+         c:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/bin/as.exe -mcelloslv2 -a64 -mbig -mcellppu -V -Qy -o CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj C:/Users/Aidan/AppData/Local/Temp/ccsncaaa.s\x0d
+        GNU assembler version 2.17 (ppu-lv2) using BFD version 2.17 (SDK420, $Rev: 3547 $)\x0d
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj -o cmTC_1d210.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        FAILED: cmTC_1d210.prx 
+        C:\\WINDOWS\\system32\\cmd.exe /C "cd . && C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe -mprx  -v CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj -o cmTC_1d210.prx -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti   -LC:/usr/local/cell/target/ppu/lib/fno-exceptions   -LC:/usr/local/cell/target/ppu/lib C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a && cd ."
+        Using built-in specs.
+        Reading specs from c:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib/prxspec.4.1.1
+        Target: ppu-lv2
+        Configured with: /ps3/svn/current/toolchain/trunk/gcc/configure --target=ppu-lv2 --host=i386-pc-mingw32msvc --build=i686-pc-linux-gnu --prefix=/usr/local/cell/host-win32/ppu --with-sysroot=/usr/local/cell/target/ppu --with-headers=yes --disable-shared --disable-hosted-libstdcxx
+        Thread model: lv2
+        gcc version 4.1.1 (SDK420, $Rev: 3547 $)
+         c:/usr/local/cell/host-win32/ppu/bin/../libexec/gcc/ppu-lv2/4.1.1/collect2.exe --sysroot=c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu --eh-frame-hdr -V -Qy --alternative-ld=ps3ppuld --gnu-mode --prx-fixup --prx-child-link -dc -r -LC:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti -LC:/usr/local/cell/target/ppu/lib/fno-exceptions -LC:/usr/local/cell/target/ppu/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1 -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc -Lc:/usr/local/cell/host-win32/ppu/bin/../lib/gcc/ppu-lv2/4.1.1/../../../../ppu-lv2/lib -Lc:/usr/local/cell/host-win32/ppu/bin/../../../target/ppu/lib -T c:\\usr\\local\\cell\\host-win32\\ppu\\bin\\../../../target/ppu/lib/prx32.xr CMakeFiles/cmTC_1d210.dir/CMakeCCompilerABI.c.obj C:/usr/local/cell/target/ppu/lib/fno-exceptions/fno-rtti/libc.a C:/usr/local/cell/target/ppu/lib/libm.a C:/usr/local/cell/target/ppu/lib/liblv2_stub.a --start-group -lgcc -lsyscall -llv2_stub --end-group -o C:/Users/Aidan/AppData/Local/Temp/cc2biaaa.psp.rela.o
+        ps3ppuld 430.1.5139.0 (rel,ps3,430.1,common,src @160906 x64) c:\\usr\\local\\cell\\host-win32\\sn\\bin\\ps3ppuld64.exe
+         c:/usr/local/cell/host-win32/ppu/bin/../../bin/ppu-lv2-prx-libgen.exe -e C:/Users/Aidan/AppData/Local/Temp/ccUdqaaa.lib.ent.s C:/Users/Aidan/AppData/Local/Temp/cc2biaaa.psp.rela.o
+        ppu-lv2-prx-libgen.exe: Not found PSP/PS3 PRX link data(module info & export info) in "C:/Users/Aidan/AppData/Local/Temp/cc2biaaa.psp.rela.o"\x0d
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...

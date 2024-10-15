@@ -1,0 +1,105 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : {},
+				"path" : "C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-as.exe",
+				"version" : ""
+			},
+			"language" : "ASM",
+			"sourceFileExtensions" : 
+			[
+				"s",
+				"S",
+				"asm"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : [],
+					"linkDirectories" : [],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : []
+				},
+				"path" : "C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-gcc.exe",
+				"version" : "4.1.1"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1/include"
+					],
+					"linkDirectories" : 
+					[
+						"C:/usr/local/cell/target/ppu/lib",
+						"C:/usr/local/cell/host-win32/ppu/lib/gcc/ppu-lv2/4.1.1",
+						"C:/usr/local/cell/host-win32/ppu/lib/gcc",
+						"C:/usr/local/cell/host-win32/ppu/ppu-lv2/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"C:/usr/local/cell/target/ppu/lib/libc.a",
+						"C:/usr/local/cell/target/ppu/lib/libm.a",
+						"C:/usr/local/cell/target/ppu/lib/liblv2_stub.a",
+						"C:/usr/local/cell/target/ppu/lib/libstdc++.a",
+						"stdc++",
+						"m",
+						"c",
+						"gcc",
+						"stdc++",
+						"supc++",
+						"snc",
+						"lv2_stub",
+						"syscall"
+					]
+				},
+				"path" : "C:/usr/local/cell/host-win32/ppu/bin/ppu-lv2-g++.exe",
+				"version" : "4.1.1"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm",
+				"ccm",
+				"cxxm",
+				"c++m"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

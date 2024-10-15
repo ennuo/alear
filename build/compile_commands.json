@@ -1,0 +1,296 @@
+[
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\alear.cpp.obj -c D:\\projects\\alear\\code\\Alear\\alear.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\alear.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\alear.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\alearconf.cpp.obj -c D:\\projects\\alear\\code\\Alear\\alearconf.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\alearconf.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\alearconf.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\alearvm.cpp.obj -c D:\\projects\\alear\\code\\Alear\\alearvm.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\alearvm.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\alearvm.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\gfxparams.cpp.obj -c D:\\projects\\alear\\code\\Alear\\gfxparams.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\gfxparams.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\gfxparams.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\podstyles.cpp.obj -c D:\\projects\\alear\\code\\Alear\\podstyles.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\podstyles.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\podstyles.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\portal.cpp.obj -c D:\\projects\\alear\\code\\Alear\\portal.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\portal.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\portal.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\powerup.cpp.obj -c D:\\projects\\alear\\code\\Alear\\powerup.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\powerup.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\powerup.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\rpcs3.cpp.obj -c D:\\projects\\alear\\code\\Alear\\rpcs3.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\rpcs3.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\rpcs3.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\serverswitcher.cpp.obj -c D:\\projects\\alear\\code\\Alear\\serverswitcher.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\serverswitcher.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\serverswitcher.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Alear\\styles.cpp.obj -c D:\\projects\\alear\\code\\Alear\\styles.cpp",
+  "file": "D:\\projects\\alear\\code\\Alear\\styles.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\styles.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\InventoryItem.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\InventoryItem.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\InventoryItem.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\InventoryItem.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\InventoryView.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\InventoryView.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\InventoryView.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\InventoryView.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\LoadingScreen.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\LoadingScreen.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\LoadingScreen.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\LoadingScreen.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\MMAudio.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\MMAudio.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\MMAudio.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\MMAudio.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\MemoryTexture.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\MemoryTexture.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\MemoryTexture.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\MemoryTexture.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\PartCostume.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\PartCostume.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\PartCostume.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\PartCostume.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\PartCreature.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\PartCreature.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\PartCreature.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\PartCreature.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\PartPhysicsWorld.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\PartPhysicsWorld.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\PartPhysicsWorld.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\PartPhysicsWorld.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\PartYellowHead.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\PartYellowHead.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\PartYellowHead.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\PartYellowHead.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\Poppet.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\Poppet.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\Poppet.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\Poppet.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\ResourceSystem.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\ResourceSystem.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\ResourceSystem.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\ResourceSystem.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\ResourceTranslationTable.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\ResourceTranslationTable.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\ResourceTranslationTable.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\ResourceTranslationTable.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\SackBoyAnim.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\SackBoyAnim.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\SackBoyAnim.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\SackBoyAnim.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\SystemCommon.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\SystemCommon.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\SystemCommon.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\SystemCommon.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\gfxAPI.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\gfxAPI.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\gfxAPI.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\gfxAPI.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\vm\\NativeRegistry.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\vm\\NativeRegistry.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\vm\\NativeRegistry.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\vm\\NativeRegistry.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\vm\\ScriptContext.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\vm\\ScriptContext.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\vm\\ScriptContext.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\vm\\ScriptContext.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\vm\\ScriptObject.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\vm\\ScriptObject.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\vm\\ScriptObject.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\vm\\ScriptObject.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CWLib\\vm\\VMTypes.cpp.obj -c D:\\projects\\alear\\code\\CWLib\\vm\\VMTypes.cpp",
+  "file": "D:\\projects\\alear\\code\\CWLib\\vm\\VMTypes.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CWLib\\vm\\VMTypes.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\GUIDHashMap.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\GUIDHashMap.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\GUIDHashMap.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\GUIDHashMap.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\Hash.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\Hash.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\Hash.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\Hash.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\MMString.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\MMString.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\MMString.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\MMString.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\StringUtil.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\StringUtil.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\StringUtil.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\StringUtil.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\cell\\DebugLog.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\cell\\DebugLog.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\cell\\DebugLog.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\cell\\DebugLog.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\cell\\thread.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\cell\\thread.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\cell\\thread.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\cell\\thread.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\clock.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\clock.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\clock.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\clock.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\filepath.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\filepath.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\filepath.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\filepath.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\mem.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\mem.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\mem.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\mem.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\CoreLib\\mem_allocator.cpp.obj -c D:\\projects\\alear\\code\\CoreLib\\mem_allocator.cpp",
+  "file": "D:\\projects\\alear\\code\\CoreLib\\mem_allocator.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\CoreLib\\mem_allocator.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Std\\hook.cpp.obj -c D:\\projects\\alear\\code\\Std\\hook.cpp",
+  "file": "D:\\projects\\alear\\code\\Std\\hook.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Std\\hook.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Std\\json.cpp.obj -c D:\\projects\\alear\\code\\Std\\json.cpp",
+  "file": "D:\\projects\\alear\\code\\Std\\json.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Std\\json.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\Std\\printf.cpp.obj -c D:\\projects\\alear\\code\\Std\\printf.cpp",
+  "file": "D:\\projects\\alear\\code\\Std\\printf.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\Std\\printf.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-g++.exe -DALEAR_MAJOR_VERSION=1 -DALEAR_MINOR_VERSION=0 -DSCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -std=c++98 -Os -fno-exceptions -fno-strict-aliasing -fmodulo-sched -fno-rtti -o CMakeFiles\\alear.dir\\code\\main.cpp.obj -c D:\\projects\\alear\\code\\main.cpp",
+  "file": "D:\\projects\\alear\\code\\main.cpp",
+  "output": "CMakeFiles\\alear.dir\\code\\main.cpp.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\alearvm_hook.s.obj D:\\projects\\alear\\code\\Alear\\asm\\alearvm_hook.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\alearvm_hook.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\alearvm_hook.s.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\creatureupdate_hook.s.obj D:\\projects\\alear\\code\\Alear\\asm\\creatureupdate_hook.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\creatureupdate_hook.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\creatureupdate_hook.s.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\divergence_hook.s.obj D:\\projects\\alear\\code\\Alear\\asm\\divergence_hook.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\divergence_hook.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\divergence_hook.s.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\gfxbind_hook.s.obj D:\\projects\\alear\\code\\Alear\\asm\\gfxbind_hook.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\gfxbind_hook.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\gfxbind_hook.s.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\podstyles_hooks.s.obj D:\\projects\\alear\\code\\Alear\\asm\\podstyles_hooks.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\podstyles_hooks.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\podstyles_hooks.s.obj"
+},
+{
+  "directory": "D:/projects/alear/build",
+  "command": "C:\\usr\\local\\cell\\host-win32\\ppu\\bin\\ppu-lv2-as.exe --defsym ALEAR_MAJOR_VERSION=1 --defsym ALEAR_MINOR_VERSION=0 --defsym SCRIPT_DEBUG=1 -ID:/projects/alear/code/Alear -ID:/projects/alear/code/CWLib -ID:/projects/alear/code/Spuge -ID:/projects/alear/code/CoreLib -ID:/projects/alear/code/Std -ID:/projects/alear/code -IC:/usr/local/cell/target/common/include -IC:/usr/local/cell/target/ppu/include -g -o CMakeFiles\\alear.dir\\code\\Alear\\asm\\portal_hook.s.obj D:\\projects\\alear\\code\\Alear\\asm\\portal_hook.s",
+  "file": "D:\\projects\\alear\\code\\Alear\\asm\\portal_hook.s",
+  "output": "CMakeFiles\\alear.dir\\code\\Alear\\asm\\portal_hook.s.obj"
+}
+]

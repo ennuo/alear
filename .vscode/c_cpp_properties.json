@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "PS3 Debug",
+            "includePath": [
+                "${workspaceFolder}/code/Alear",
+                "${workspaceFolder}/code/CWLib",
+                "${workspaceFolder}/code/Spuge",
+                "${workspaceFolder}/code/CoreLib",
+                "${workspaceFolder}/code/Std",
+                "${workspaceFolder}/code/",
+                "${SCE_PS3_ROOT}/target/common/include",
+                "${SCE_PS3_ROOT}/target/ppu/include"
+            ],
+            "defines": [
+                "SN_TARGET_PS3",
+                "_DEBUG",
+                "__GCC__"
+            ],
+            "compilerPath": "${SCE_PS3_ROOT}/host-win32/ppu/bin/ppu-lv2-gcc.exe",
+            "cStandard": "c99",
+            "cppStandard": "c++98",
+            "intelliSenseMode": "gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        }
+    ],
+    "version": 4
+}

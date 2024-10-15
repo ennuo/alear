@@ -1,0 +1,16 @@
+{
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/cmake/ppu.cmake"
+    ],
+    "files.associations": {
+        "*.cgf": "cg",
+        "*.cgv": "cg",
+        "map": "cpp",
+        "xstring": "cpp",
+        "xmemory": "cpp",
+        "iosfwd": "cpp",
+        "types.h": "c",
+        "functional": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
