@@ -2,14 +2,14 @@
 #define RESOURCE_SYSTEM_H
 
 #include "Resource.h"
-extern bool g_TestSuiteResourcesDisabled;
+extern bool gTestSuiteResourcesDisabled;
 
 extern CP<CResource> (*LoadResource)(CResourceDescriptorBase const&, CStreamPriority, u32, bool);
 
 template<typename T>
 CP<T> LoadResourceByKey(int key, u32 flags, CStreamPriority stream_priority_override)
 {
-    if (g_TestSuiteResourcesDisabled) return NULL;
+    if (gTestSuiteResourcesDisabled) return NULL;
     CResourceDescriptorBase desc(GetResourceType<T>(), key);
     CP<CResource> resource = LoadResource(desc, stream_priority_override, flags, false);
     return CP<T>((T*)resource.GetRef());

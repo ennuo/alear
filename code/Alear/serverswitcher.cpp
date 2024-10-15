@@ -6,7 +6,7 @@
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
 
-CServerSwitcher* g_ServerSwitcher;
+CServerSwitcher* gServerSwitcher;
 
 CServerSwitcher::CServerSwitcher()
 {
@@ -98,7 +98,7 @@ bool CServerSwitcher::LoadFromJSON(char* json)
         if (digest == NULL || strlen(digest) > MAX_DIGEST_CHARS) 
         {
             DebugLog("Digest was either not provided or invalid, defaulting to ELF digest key.\n");
-            digest = g_ServerDigest;
+            digest = gServerDigest;
         }
         
         SServerConfiguration& configuration = Servers[Size++];
@@ -128,9 +128,9 @@ bool CServerSwitcher::Switch(int index)
     // Copy the server configuration data to the references,
     // might be better logically to override the GetURL functions?
     // But this definitely works
-    g_ServerURL = config.HttpUrl;
-    g_ServerSecureURL = config.SecureUrl;
-    g_ServerDigest = config.Digest;
+    gServerURL = config.HttpUrl;
+    gServerSecureURL = config.SecureUrl;
+    gServerDigest = config.Digest;
 
     return true;
 }
@@ -138,9 +138,9 @@ bool CServerSwitcher::Switch(int index)
 void CServerSwitcher::GetDefaultServerConfiguration(SServerConfiguration& configuration)
 {
     strcpy(configuration.Name, "Default");
-    strcpy(configuration.HttpUrl, g_ServerURL);
-    strcpy(configuration.SecureUrl, g_ServerSecureURL);
-    strcpy(configuration.Digest, g_ServerDigest);
+    strcpy(configuration.HttpUrl, gServerURL);
+    strcpy(configuration.SecureUrl, gServerSecureURL);
+    strcpy(configuration.Digest, gServerDigest);
 }
 
 const char* CServerSwitcher::GetServerName(int index)
@@ -159,28 +159,28 @@ namespace ServerSwitcherNativeFunctions
 {
     int GetNumServers()
     {
-        return g_ServerSwitcher->GetNumServers();
+        return gServerSwitcher->GetNumServers();
     }
 
     int GetServerIndex()
     {
-        return g_ServerSwitcher->GetServerIndex();
+        return gServerSwitcher->GetServerIndex();
     }
 
     const char* GetServerName(int index)
     {
-        return g_ServerSwitcher->GetServerName(index);
+        return gServerSwitcher->GetServerName(index);
     }
 
     const char* GetServerURL(int index)
     {
-        return g_ServerSwitcher->GetServerURL(index);
+        return gServerSwitcher->GetServerURL(index);
     }
 
     void Switch(int index)
     {
         DebugLog("Beginning server switch...\n");
-        if (g_ServerSwitcher->Switch(index)) DebugLog("Successfully switched servers!\n");
+        if (gServerSwitcher->Switch(index)) DebugLog("Successfully switched servers!\n");
         else DebugLog("Failed to switch servers!\n");
     }
 
@@ -197,16 +197,16 @@ namespace ServerSwitcherNativeFunctions
 bool AlearInitServerSwitcher()
 {
     DebugLog("Initializing Server Switcher\n");
-    g_ServerSwitcher = new CServerSwitcher();
+    gServerSwitcher = new CServerSwitcher();
     CFilePath fp(FPR_GAMEDATA, "gamedata/alear/servers.json");
     if (FileExists(fp))
     {
         DebugLog("Loading server configuration file at %s\n", fp.c_str());
-        g_ServerSwitcher->LoadFromFile(fp);
+        gServerSwitcher->LoadFromFile(fp);
 
         // Switch to the first server providied in the configuration
-        if (g_ServerSwitcher->GetNumServers() >= 2)
-            g_ServerSwitcher->Switch(1);
+        if (gServerSwitcher->GetNumServers() >= 2)
+            gServerSwitcher->Switch(1);
 
     }
     else

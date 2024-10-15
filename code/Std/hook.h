@@ -9,7 +9,7 @@
 #define PORT_BIND_TEXTURE (0x001cadc8)
 
 
-extern void* g_TocBase;
+extern void* gTocBase;
 
 struct shkOpd
 {

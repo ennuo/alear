@@ -26,8 +26,8 @@ public:
     u8 Type;
 };
 
-extern CAllocatorBucket g_OtherBucket;
-extern CAllocatorBucket g_VectorBucket;
+extern CAllocatorBucket gOtherBucket;
+extern CAllocatorBucket gVectorBucket;
 
 /* mem_allocator.h: 85 */
 class CAllocatorMM {

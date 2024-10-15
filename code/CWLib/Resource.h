@@ -12,7 +12,7 @@
 #include "GuidHash.h"
 #include "Serialise.h"
 
-extern u32 g_LazyGCTime;
+extern u32 gLazyGCTime;
 
 enum EResourceFlag {
 	FLAG_REF_COUNT_DIRTY = 2,
@@ -47,14 +47,14 @@ public:
     inline u32 AddRef() 
     {
         Flags |= FLAG_REF_COUNT_DIRTY;
-        LazyGCTime = g_LazyGCTime;
+        LazyGCTime = gLazyGCTime;
 		return cellAtomicIncr32((uint32_t*) &this->RefCount);
 	}
 
 	inline u32 Release() 
     {
         Flags |= FLAG_REF_COUNT_DIRTY;
-        LazyGCTime = g_LazyGCTime;
+        LazyGCTime = gLazyGCTime;
 		return cellAtomicDecr32((uint32_t*) &this->RefCount);
 	}
 

@@ -4,7 +4,7 @@
 
 CFileDB* CFileDB::Construct(CFilePath& path)
 {
-    CFileDB* database = (CFileDB*)CAllocatorMM::Malloc(g_OtherBucket, sizeof(CFileDB));
+    CFileDB* database = (CFileDB*)CAllocatorMM::Malloc(gOtherBucket, sizeof(CFileDB));
     memset(database, 0, sizeof(CFileDB));
     *(u32*)database = 0x0090c530;
     database->Path.Assign(path.c_str());

@@ -62,6 +62,6 @@ enum EMemPool
     MEM_POOL_LAST
 };
 
-extern CGfxMemoryPool g_MemPools[];
+extern CGfxMemoryPool gMemPools[];
 
 #endif // GFX_POOL_H

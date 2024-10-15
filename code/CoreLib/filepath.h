@@ -23,7 +23,7 @@ enum EOpenMode
 typedef int FileHandle;
 typedef int DirHandle;
 
-extern bool g_GameDataReady;
+extern bool gGameDataReady;
 
 class CFilePath {
 public:

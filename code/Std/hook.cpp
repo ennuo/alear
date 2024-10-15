@@ -8,7 +8,7 @@
 
 #include "ppcasm.h"
 
-void* g_TocBase;
+void* gTocBase;
 
 void* GetTOCBase()
 {
@@ -49,7 +49,7 @@ void MH_InitHook(void* address, void* hook)
 {
     if (!g_HookInit)
     {
-        g_TocBase = GetTOCBase();
+        gTocBase = GetTOCBase();
         g_HookInit = true;
     }
 

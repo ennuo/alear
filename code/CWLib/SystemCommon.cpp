@@ -2,7 +2,7 @@
 
 void AddInitSteps(CInitStep* newsteps)
 {
-	CInitStep* step = g_InitSteps;
+	CInitStep* step = gInitSteps;
 	CInitStep* last = NULL;
 	while (step->InitFunc != NULL || step->CloseFunc != NULL || step->PostResourceInitFunc != NULL)
 	{

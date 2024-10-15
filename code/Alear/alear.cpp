@@ -36,7 +36,7 @@ bool AlearEpilogue()
     return true;
 }
 
-CInitStep g_AlearInitSteps[] =
+CInitStep gAlearInitSteps[] =
 {
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
@@ -124,7 +124,7 @@ void AlearSetupDatabase()
 
     AlearLoadDatabaseConfiguration();
 
-    if (g_GameDataReady)
+    if (gGameDataReady)
     {
         CFilePath patch_fp(FPR_GAMEDATA, "/output/brg_patch.map");
         if (FileExists(patch_fp))
@@ -143,10 +143,10 @@ void AlearStartup()
     DebugLog("Alear version %d.%d build date: " __DATE__ " time: " __TIME__ "\n", ALEAR_MAJOR_VERSION, ALEAR_MINOR_VERSION);
 
     DebugLog("Injecting init steps into startup...\n");
-    DebugLog("First CInitStep: %s\n", g_InitSteps[0].DebugText);
-    DebugLog("First ps3test1 CInitStep: %s\n", g_Ps3Test1InitSteps[0].DebugText);
-    DebugLog("First Alear CInitStep: %s\n", g_AlearInitSteps[0].DebugText);
-    DebugLog("SPRX TOC Base: %x\n", g_TocBase);
+    DebugLog("First CInitStep: %s\n", gInitSteps[0].DebugText);
+    DebugLog("First ps3test1 CInitStep: %s\n", gPs3Test1InitSteps[0].DebugText);
+    DebugLog("First Alear CInitStep: %s\n", gAlearInitSteps[0].DebugText);
+    DebugLog("SPRX TOC Base: %x\n", gTocBase);
 
     // Setup all our hooks
     MH_InitHook((void*)0x0057d548, (void*)&AlearSetupDatabase);
@@ -162,11 +162,11 @@ void AlearStartup()
 
     // This module gets initialized by replacing the function that normally
     // adds the init steps for ps3test1, so make sure we're adding them after our own.
-    AddInitSteps(g_Ps3Test1InitSteps);
-    AddInitSteps(g_AlearInitSteps);
+    AddInitSteps(gPs3Test1InitSteps);
+    AddInitSteps(gAlearInitSteps);
 
-    DebugLog("g_InitSteps:\n");
-    CInitStep* step = g_InitSteps, *last = NULL;
+    DebugLog("gInitSteps:\n");
+    CInitStep* step = gInitSteps, *last = NULL;
     while (step->InitFunc != NULL || step->CloseFunc != NULL || step->PostResourceInitFunc != NULL)
     {
         DebugLog("\t%s\n", step->DebugText);

@@ -22,7 +22,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
     {
         case STATE_GAS_MASK:
         {
-            CAudio::PlaySample(CAudio::g_SFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
                 CResourceDescriptor<RPlan> desc(71445);
@@ -38,7 +38,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         case STATE_GAS_MASK:
         {
             creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::g_SFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
             CResourceDescriptor<RPlan> desc(71445);
             if (BlockUntilResourceLoaded(mesh))

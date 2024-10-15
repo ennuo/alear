@@ -6,9 +6,9 @@
 
 const int MAX_DIGEST_CHARS = 18;
 
-extern const char* g_ServerURL;
-extern const char* g_ServerSecureURL;
-extern const char* g_ServerDigest;
+extern const char* gServerURL;
+extern const char* gServerSecureURL;
+extern const char* gServerDigest;
 
 struct __attribute__((packed, aligned(16))) SServerConfiguration
 {
@@ -69,7 +69,7 @@ private:
     int Size;
 };
 
-extern CServerSwitcher* g_ServerSwitcher;
+extern CServerSwitcher* gServerSwitcher;
 bool AlearInitServerSwitcher();
 namespace ServerSwitcherNativeFunctions
 {

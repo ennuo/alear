@@ -43,7 +43,7 @@ public:
 	static bool Reserve(void** data, u32* max_size, u32 new_max_size, u32 sizeof_t) {
 		if (*max_size < new_max_size) {
 			u32 count = Allocator::ResizePolicy(*max_size, new_max_size, sizeof_t);
-			void* mem = Allocator::Realloc(g_VectorBucket, *data, sizeof_t * count);
+			void* mem = Allocator::Realloc(gVectorBucket, *data, sizeof_t * count);
 			if (mem != NULL) {
 				*data = mem;
 				*max_size = count;
@@ -72,7 +72,7 @@ public:
 	}
 	inline ~CRawVector() {
 		if (this->Data != NULL) {
-			Allocator::Free(g_VectorBucket, this->Data);
+			Allocator::Free(gVectorBucket, this->Data);
 			this->Data = NULL;
 		}
 		this->Size = 0;
@@ -106,7 +106,7 @@ public:
 
 	inline ~CVector() {
 		if (this->Data != NULL) {
-			Allocator::Free(g_VectorBucket, this->Data);
+			Allocator::Free(gVectorBucket, this->Data);
 			this->Data = NULL;
 		}
 		this->Size = 0;
@@ -132,12 +132,12 @@ public:
 	bool try_reserve(u32 new_max_size) {
 		if (this->MaxSize < new_max_size) {
 			u32 count = Allocator::ResizePolicy(this->MaxSize, new_max_size, sizeof(T));
-			T* data = (T*) Allocator::Malloc(g_VectorBucket, count * sizeof(T));
+			T* data = (T*) Allocator::Malloc(gVectorBucket, count * sizeof(T));
 			if (data != NULL) {
 				if (this->Size != 0) {
 					for (u32 i = 0; i < this->Size; ++i)
 						memcpy(&data[i], &this->Data[i], sizeof(T));
-					Allocator::Free(g_VectorBucket, this->Data);
+					Allocator::Free(gVectorBucket, this->Data);
 				}
 				this->MaxSize = new_max_size;
 				this->Data = data;

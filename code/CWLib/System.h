@@ -18,7 +18,7 @@ public:
 };
 
 void AddInitSteps(CInitStep* newsteps);
-extern CInitStep g_InitSteps[];
-extern CInitStep g_Ps3Test1InitSteps[];
+extern CInitStep gInitSteps[];
+extern CInitStep gPs3Test1InitSteps[];
 
 #endif // SYSTEM_H

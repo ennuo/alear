@@ -144,7 +144,7 @@ void AlearHandleVM(ExecutionState* state)
     }
 }
 
-static s32 g_SwitchTable[NUM_INSTRUCTION_TYPES];
+static s32 gSwitchTable[NUM_INSTRUCTION_TYPES];
 const int g_RetailInstructionCount = IT_ASSERT + 1;
 
 extern "C" void _alearvm_hook_naked();
@@ -155,18 +155,18 @@ void AlearInitVMHook()
     // Going to just switch out the switch case table with our own,
     // first have to read the original one and account for the new offsets.
     const int SWITCH_LABEL = 0x001898a4;
-    MH_Read(SWITCH_LABEL, g_SwitchTable, g_RetailInstructionCount * sizeof(s32));
+    MH_Read(SWITCH_LABEL, gSwitchTable, g_RetailInstructionCount * sizeof(s32));
     for (int i = 0; i < g_RetailInstructionCount; ++i)
     {
-        s32 target = SWITCH_LABEL + g_SwitchTable[i] - (u32)g_SwitchTable;
-        g_SwitchTable[i] = target;
+        s32 target = SWITCH_LABEL + gSwitchTable[i] - (u32)gSwitchTable;
+        gSwitchTable[i] = target;
     }
 
     // Now fill in the branches to our own custom handling for the rest of the instruction types...
     u32 addr = (u32)(&_alearvm_hook_naked);
     for (int i = g_RetailInstructionCount; i < NUM_INSTRUCTION_TYPES; ++i)
-        g_SwitchTable[i] = addr - (u32)g_SwitchTable;
+        gSwitchTable[i] = addr - (u32)gSwitchTable;
 
     // Now switch out the pointer in the TOC
-    MH_Poke32(0x00921b20, (u32)g_SwitchTable);
+    MH_Poke32(0x00921b20, (u32)gSwitchTable);
 }

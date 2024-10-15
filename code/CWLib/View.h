@@ -8,6 +8,6 @@ public:
     CCamera* Camera;
 };
 
-extern CView g_View;
+extern CView gView;
 
 #endif // VIEW_H
