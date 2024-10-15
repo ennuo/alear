@@ -7,11 +7,7 @@
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
 #include "ResourceGFXMesh.h"
-
-class RPlan : public CResource {
-public:
-
-};
+#include "ResourcePlan.h"
 
 void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 {
