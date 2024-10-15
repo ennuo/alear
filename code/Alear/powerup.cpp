@@ -53,9 +53,9 @@ bool CanSwim(PCreature& creature)
         state == STATE_GAS_MASK;
 }
 
-bool IsPowerupState(PCreature& creature)
+bool IsPowerupState(PCreature* creature)
 {
-    EState state = creature.State;
+    EState state = creature->State;
     return 
         state == STATE_JETPACK ||
         state == STATE_GUN ||
@@ -112,6 +112,22 @@ void CollectGasMask(CThing* thing)
     creature->SetState(STATE_GAS_MASK);
 }
 
+void RemoveAbility(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+
+    if (IsPowerupState(creature))
+        creature->SetState(STATE_NORMAL);
+    
+    if (creature->HasScubaGear)
+    {
+        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
+        creature->SetScubaGear(false);
+    }
+}
+
 void OnCreatureStateUpdate(PCreature& creature)
 {
     CInput* input = creature.GetInput();
@@ -160,6 +176,8 @@ void AlearInitCreatureHook()
     MH_Poke32(0x000719a8, B(&_creature_statechange_hook, 0x000719a8));
     MH_Poke32(0x00073b1c, B(&_creature_scubagear_equip_hook, 0x00073b1c));
 
+    MH_InitHook((void*)0x0040a828, (void*)&RemoveAbility);
+    
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
 }

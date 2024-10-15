@@ -172,10 +172,10 @@ _creature_scubagear_equip_hook:
     mr %r3, %r31
 
     std %r2, 0x28(%r1)
-    lis %r5, _Z14IsPowerupStateR9PCreature@h      
-    ori %r5, %r5, _Z14IsPowerupStateR9PCreature@l
+    lis %r5, _Z14IsPowerupStateP9PCreature@h      
+    ori %r5, %r5, _Z14IsPowerupStateP9PCreature@l
     lwz %r2, 0x4(%r5)
-    bl ._Z14IsPowerupStateR9PCreature
+    bl ._Z14IsPowerupStateP9PCreature
     ld %r2, 0x28(%r1)
 
     cmpwi %cr7, %r3, 0x0

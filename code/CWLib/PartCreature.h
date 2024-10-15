@@ -31,6 +31,10 @@ public:
     CInput* GetInput();
 public:
     EState State;
+private:
+    char Pad1[0x111];
+public:
+    bool HasScubaGear;
 };
 
 #endif // PART_CREATURE_H
