@@ -1,7 +1,7 @@
 #ifndef HOOK_H
 #define HOOK_H
 
-#include "mmtypes.h"
+
 
 #define TOC0 (0x009230b8)
 #define TOC1 (0x00932B50)

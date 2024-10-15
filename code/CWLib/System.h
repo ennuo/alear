@@ -1,7 +1,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "mmtypes.h"
+
 
 typedef void (InitStepCallback_Close)(void);
 typedef bool (InitStepCallback_Init)(void);

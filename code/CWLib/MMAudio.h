@@ -1,7 +1,7 @@
 #ifndef MM_AUDIO_H
 #define MM_AUDIO_H
 
-#include "mmtypes.h"
+
 #include "thing.h"
 #include "Audio/FModAudioHandle.h"
 

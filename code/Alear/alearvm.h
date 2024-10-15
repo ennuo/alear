@@ -1,7 +1,7 @@
 #ifndef ALEAR_VM_H
 #define ALEAR_VM_H
 
-#include "mmtypes.h"
+
 #include "cwlib.h"
 
 void AlearHandleVM(ExecutionState* state);

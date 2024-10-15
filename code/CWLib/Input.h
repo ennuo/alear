@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "mmtypes.h"
+
 #include "PadEnums.h"
 
 class CInput {

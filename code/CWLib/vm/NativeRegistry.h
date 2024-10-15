@@ -1,7 +1,7 @@
 #ifndef VM_NATIVE_REGISTRY_H
 #define VM_NATIVE_REGISTRY_H
 
-#include "mmtypes.h"
+
 
 #include "VMTypes.h"
 #include "ScriptContext.h"

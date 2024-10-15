@@ -1,6 +1,6 @@
 #include <cell/gcm.h>
 
-#include "mmtypes.h"
+
 #include "thing.h"
 
 #include "ResourceGfxMaterial.h"

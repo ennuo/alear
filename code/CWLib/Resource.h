@@ -1,7 +1,7 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
-#include "mmtypes.h"
+
 #include "refcount.h"
 
 #include "ReflectionVisitable.h"

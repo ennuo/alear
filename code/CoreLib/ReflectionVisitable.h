@@ -1,7 +1,7 @@
 #ifndef REFLECTION_VISITABLE_H
 #define REFLECTION_VISITABLE_H
 
-#include "mmtypes.h"
+
 
 class CReflectionVisitable {
 public:

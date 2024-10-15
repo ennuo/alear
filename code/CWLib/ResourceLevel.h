@@ -1,7 +1,7 @@
 #ifndef RESOURCE_LEVEL_H
 #define RESOURCE_LEVEL_H
 
-#include "mmtypes.h"
+
 #include "thing.h"
 #include "Resource.h"
 #include "PlayerNumber.inl"

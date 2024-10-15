@@ -3,7 +3,7 @@
 
 #include <Cg/NV/cg_types.h>
 
-#include "mmtypes.h"
+
 #include "Resource.h"
 
 class RGfxMaterial : public CResource {

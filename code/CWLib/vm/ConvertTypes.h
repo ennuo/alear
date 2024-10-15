@@ -1,7 +1,7 @@
 #ifndef VM_CONVERT_TYPES_H
 #define VM_CONVERT_TYPES_H
 
-#include "mmtypes.h"
+
 #include "vm/ScriptContext.h"
 #include "vm/ScriptObject.h"
 

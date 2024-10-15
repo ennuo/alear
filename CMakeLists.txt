@@ -68,5 +68,9 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
     SCRIPT_DEBUG=1
 )
 
+target_precompile_headers(${CMAKE_PROJECT_NAME} PUBLIC 
+    code/CoreLib/mmtypes.h
+)   
+
 # Create the sprx
 include(sprx)

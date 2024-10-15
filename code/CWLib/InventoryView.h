@@ -1,7 +1,7 @@
 #ifndef INVENTORY_VIEW_H
 #define INVENTORY_VIEW_H
 
-#include "mmtypes.h"
+
 #include "refcount.h"
 #include "vector.h"
 

@@ -1,7 +1,7 @@
 #ifndef GFX_CORE_H
 #define GFX_CORE_H
 
-#include "mmtypes.h"
+
 
 class CGCMTextureState {
 public:

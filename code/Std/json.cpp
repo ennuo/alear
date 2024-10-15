@@ -27,7 +27,7 @@
 
 */
 
-#include "mmtypes.h"
+
 #include "json.h"
 
 /** Structure to handle a heap of JSON properties. */

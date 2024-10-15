@@ -1,7 +1,7 @@
 #ifndef AUDIO_FMOD_AUDIO_HANDLE_H
 #define AUDIO_FMOD_AUDIO_HANDLE_H
 
-#include "mmtypes.h"
+
 
 namespace CAudio 
 {

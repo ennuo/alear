@@ -1,7 +1,7 @@
 #ifndef RESOURCE_DESCRIPTOR_H
 #define RESOURCE_DESCRIPTOR_H
 
-#include "mmtypes.h"
+
 #include "GuidHash.h"
 #include "ReflectionVisitable.h"
 

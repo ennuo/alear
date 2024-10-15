@@ -3,7 +3,7 @@
 
 #include <cell/gcm.h>
 
-#include "mmtypes.h"
+
 
 #include "vector.h"
 

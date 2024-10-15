@@ -1,7 +1,7 @@
 #ifndef SCRIPT_VARIANT_H
 #define SCRIPT_VARIANT_H
 
-#include "mmtypes.h"
+
 #include "vm/VMTypes.h"
 
 class CScriptVariant {

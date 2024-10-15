@@ -1,7 +1,7 @@
 #ifndef FRUST_CULL_H
 #define FRUST_CULL_H
 
-#include "mmtypes.h"
+
 
 class CCullBone {
 public:

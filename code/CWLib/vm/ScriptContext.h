@@ -1,7 +1,7 @@
 #ifndef SCRIPT_CONTEXT_H
 #define SCRIPT_CONTEXT_H
 
-#include "mmtypes.h"
+
 
 #include "vector.h"
 #include "thing.h"

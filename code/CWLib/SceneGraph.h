@@ -1,7 +1,7 @@
 #ifndef SCENE_GRAPH_H
 #define SCENE_GRAPH_H
 
-#include "mmtypes.h"
+
 #include "frustcull.h"
 #include "thing.h"
 

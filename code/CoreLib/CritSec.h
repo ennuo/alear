@@ -1,7 +1,7 @@
 #ifndef CRITSEC_H
 #define CRITSEC_H
 
-#include "mmtypes.h"
+
 #include "printf.h"
 
 #include <sys/synchronization.h>

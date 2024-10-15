@@ -1,7 +1,7 @@
 #ifndef MEM_ALLOCATOR_H
 #define MEM_ALLOCATOR_H
 
-#include "mmtypes.h"
+
 #include "mem.h"
 
 namespace MM {

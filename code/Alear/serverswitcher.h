@@ -1,7 +1,7 @@
 #ifndef SERVER_SWITCHER_H
 #define SERVER_SWITCHER_H
 
-#include "mmtypes.h"
+
 #include "filepath.h"
 
 const int MAX_DIGEST_CHARS = 18;

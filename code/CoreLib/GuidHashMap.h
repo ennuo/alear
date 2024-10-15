@@ -4,7 +4,7 @@
 #include "CritSec.h"
 #include "vector.h"
 #include "filepath.h"
-#include "mmtypes.h"
+
 #include "GuidHash.h"
 #include "SerialiseEnums.h"
 

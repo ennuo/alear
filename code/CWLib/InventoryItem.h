@@ -1,7 +1,7 @@
 #ifndef INVENTORY_ITEM_H
 #define INVENTORY_ITEM_H
 
-#include "mmtypes.h"
+
 #include "vector.h"
 
 #include "ResourceDescriptor.h"

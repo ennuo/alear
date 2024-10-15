@@ -924,7 +924,7 @@ int fctprintf(void (*out)(char character, void* arg), void* arg, const char* for
 }
 
 #include <sys/tty.h>
-#include "mmtypes.h"
+
 
 // for printf implementation
 void _putchar( char c )

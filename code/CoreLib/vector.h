@@ -1,7 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "mmtypes.h"
+
 #include "mem_allocator.h"
 
 template <typename T>

@@ -1,7 +1,7 @@
 #ifndef GFX_POOL_H
 #define GFX_POOL_H
 
-#include "mmtypes.h"
+
 
 class CGfxMemoryPool {
     class CAllactionInfo {

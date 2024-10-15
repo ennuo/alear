@@ -1,7 +1,7 @@
 #ifndef VM_INSTRUCTION_H
 #define VM_INSTRUCTION_H
 
-#include "mmtypes.h"
+
 
 enum EInstructionType
 {

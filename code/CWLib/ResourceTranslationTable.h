@@ -1,7 +1,7 @@
 #ifndef RESOURCE_TRANSLATION_TABLE_H
 #define RESOURCE_TRANSLATION_TABLE_H
 
-#include "mmtypes.h"
+
 #include "Resource.h"
 
 class RTranslationTable : public CResource {

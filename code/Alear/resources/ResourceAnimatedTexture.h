@@ -1,7 +1,7 @@
 #ifndef RESOURCE_ANIMATED_TEXTURE_H
 #define RESOURCE_ANIMATED_TEXTURE_H
 
-#include "mmtypes.h"
+
 #include "refcount.h"
 #include "ResourceGFXTexture.h"
 #include "Resource.h"

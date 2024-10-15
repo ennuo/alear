@@ -1,7 +1,7 @@
 #ifndef VM_TYPES_H
 #define VM_TYPES_H
 
-#include "mmtypes.h"
+
 #include "StringUtil.h"
 #include "MMString.h"
 #include "Hash.h"

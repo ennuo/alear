@@ -1,7 +1,7 @@
 #ifndef MMSTRING_H
 #define MMSTRING_H
 
-#include "mmtypes.h"
+
 #include "StringUtil.h"
 
 template <typename T>

@@ -1,7 +1,7 @@
 #ifndef COLOUR_H
 #define COLOUR_H
 
-#include "mmtypes.h"
+
 
 class c32 {
 public:

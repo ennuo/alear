@@ -1,7 +1,7 @@
 #ifndef SLOTID_H
 #define SLOTID_H
 
-#include "mmtypes.h"
+
 
 class CSlotID {
 public:

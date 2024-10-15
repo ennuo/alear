@@ -1,7 +1,7 @@
 #ifndef STRING_UTIL_H
 #define STRING_UTIL_H
 
-#include "mmtypes.h"
+
 
 size_t StringLength(const char* str);
 size_t StringLength(const wchar_t* s);

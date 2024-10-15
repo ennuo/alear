@@ -1,7 +1,7 @@
 #ifndef LOADING_SCREEN_H
 #define LOADING_SCREEN_H
 
-#include "mmtypes.h"
+
 #include "MMString.h"
 
 class CTextState;

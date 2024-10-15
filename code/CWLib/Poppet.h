@@ -1,7 +1,7 @@
 #ifndef POPPET_H
 #define POPPET_H
 
-#include "mmtypes.h"
+
 #include "thing.h"
 
 #include "ReflectionVisitable.h"
