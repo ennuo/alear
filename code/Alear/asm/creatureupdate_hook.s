@@ -184,4 +184,21 @@ _creature_scubagear_equip_hook:
 _ScubaGear_NotUsingPowerup:
     ba 0x00073b30
 
+.global _creature_popit_hook
+_creature_popit_hook:
+    rldicl %r3, %r29, 0x0, 0x20
 
+    std %r2, 0x28(%r1)
+    lis %r5, _Z15IsPlayableStateR9PCreature@h      
+    ori %r5, %r5, _Z15IsPlayableStateR9PCreature@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z15IsPlayableStateR9PCreature
+    ld %r2, 0x28(%r1)
+
+    cmpwi %cr7, %r3, 0x0
+    beq %cr7, _CreaturePopitHook_CannotUsePopit
+
+_CreaturePopitHook_CanUsePopit:
+    ba 0x0035521c
+_CreaturePopitHook_CannotUsePopit:
+    ba 0x00355198

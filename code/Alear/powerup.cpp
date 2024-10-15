@@ -157,7 +157,7 @@ extern "C" void _creatureupdate_hook();
 extern "C" void _creatureupdate_handlecollisions_hook();
 extern "C" void _animupdate_walkable_hook();
 extern "C" void _updatebodyangle_walkable_hook();
-// extern "C" void _gasmask_gas_hook();
+extern "C" void _creature_popit_hook();
 
 extern "C" void _lethaltouch_hook();
 extern "C" void _canswim_hook();
@@ -175,9 +175,10 @@ void AlearInitCreatureHook()
     MH_Poke32(0x00064be8, B(&_canswim_hook, 0x00064be8));
     MH_Poke32(0x000719a8, B(&_creature_statechange_hook, 0x000719a8));
     MH_Poke32(0x00073b1c, B(&_creature_scubagear_equip_hook, 0x00073b1c));
+    MH_Poke32(0x003551fc, B(&_creature_popit_hook, 0x003551fc));
 
     MH_InitHook((void*)0x0040a828, (void*)&RemoveAbility);
-    
+
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
 }
