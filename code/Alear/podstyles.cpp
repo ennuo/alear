@@ -20,6 +20,8 @@ const u32 gUserObjectMask = 0x40100480;
 
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner)
 {
+    CGUID item_guid = item->Plan.GetGUID();
+
     u32 item_type = item->Details.Type;
     u32 view_type = view->Descriptor.Type;
 
@@ -27,6 +29,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     u32 view_subtype = view->Descriptor.SubType;
 
     if (view->HeartedOnly && (item->Flags & E_IIF_HEARTED) == 0) return false;
+    if (item_guid == 0x12981 || item_guid == 0x15351) return false;
     if ((item_type & view_type) == 0) return false;
 
     if ((view_type & E_TYPE_USER_POD) != 0)
@@ -46,21 +49,18 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
 
         return true;
     }
-    else
-    {
-        bool owns = item->Details.IsCreatedBy(owner);
+    
+    bool owns = item->Details.ToolType == TOOL_NOT_A_TOOL 
+                ? item->Details.IsCreatedBy(owner)
+                : (item_subtype & E_SUBTYPE_MADE_BY_OTHERS) == 0;
+    
+    if ((view_subtype & E_SUBTYPE_MADE_BY_ME) != 0 && owns)
+        return true;
+    
+    if ((view_subtype & E_SUBTYPE_MADE_BY_OTHERS) != 0)
+        return !owns;
 
-        if ((view_subtype & E_SUBTYPE_MADE_BY_ME) != 0 && owns)
-            return true;
-        if ((view_subtype & E_SUBTYPE_MADE_BY_OTHERS) != 0)
-        {
-            if (item->Details.ToolType == 0)
-                return (item_subtype & E_SUBTYPE_MADE_BY_OTHERS) != 0;
-            return !owns;
-        }
-
-        return false;
-    }
+    return false;
 }
 
 CThing* GetPodThing(PWorld* world)
@@ -74,7 +74,7 @@ CThing* GetPodThing(PWorld* world)
         if (pos == NULL) continue;
 
         // unreliable in 2 onward!
-        if (pos->AnimHash == 3730280596)
+        if (pos->AnimHash == 3730280596u)
             return thing;
     }
 

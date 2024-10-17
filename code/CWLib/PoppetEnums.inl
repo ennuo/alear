@@ -16,9 +16,9 @@ typedef enum EGlobalSettingsType {
 } EGlobalSettingsType;
 
 typedef enum EInventoryObjectSubType {
-    E_SUBTYPE_MADE_BY_ME=536870912,
-    E_SUBTYPE_MADE_BY_OTHERS=1073741824,
-    E_SUBTYPE_FULL_COSTUME=2147483648,
+    E_SUBTYPE_MADE_BY_ME=536870912u,
+    E_SUBTYPE_MADE_BY_OTHERS=1073741824u,
+    E_SUBTYPE_FULL_COSTUME=2147483648u,
 
     // these are custom subtypes
     E_SUBTYPE_POD_CONTROLLER=1,
@@ -57,8 +57,8 @@ typedef enum EInventoryObjectType {
     E_TYPE_COM_PHOTO_TOOLS=268435456,
     E_TYPE_COM_OBJECT_TOOLS=536870912,
     E_TYPE_USER_POD=1073741824,
-    E_TYPE_POD_TOOL=2147483648,
-    E_TYPE_ALL=4294967295
+    E_TYPE_POD_TOOL=2147483648u,
+    E_TYPE_ALL=4294967295u
 } EInventoryObjectType;
 
 typedef enum EInventorySortMode {

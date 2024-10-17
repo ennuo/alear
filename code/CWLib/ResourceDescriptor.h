@@ -76,7 +76,8 @@ public:
         GUID = guid;
         Valid = true;
     }
-
+public:
+    inline CGUID& GetGUID() { return GUID; }
 protected:
     CGUID GUID;
     CHash Hash;

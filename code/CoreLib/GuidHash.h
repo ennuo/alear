@@ -29,6 +29,8 @@ public:
 	inline bool operator<=(const CGUID* rhs) const { return guid <= rhs->guid; }
 	inline bool operator>(const CGUID* rhs) const { return guid > rhs->guid; }
 	inline bool operator>=(const CGUID* rhs) const { return guid >= rhs->guid; }
+
+	inline bool operator==(int rhs) const { return guid == rhs; }
 };
 
 /* GuidHash.h: 72 */
