@@ -21,6 +21,8 @@
 // 9 = TRY BACKUP (X) RETRY (O)
 // 10 = (X) (O) (probably invalid state)
 
+MH_DefineFunc(UpdateButtonPrompts, 0x00265b3c, TOC0, void);
+
 MH_DefineFunc(SetActiveLoadingScreen, 0x00265624, TOC0, void*, CTextState const* text, TextStateCallback* callback, bool allow_if_other_active_screens);
 MH_DefineFunc(CancelActiveLoadingScreen, 0x00267dc8, TOC0, void, void* handle, bool call_callback, u32 result);
 

@@ -58,7 +58,6 @@ bool CustomTryTranslate(u32 key, tchar_t const*& out)
     return false;
 }
 
-
 extern "C" void _divergence_hook();
 void AlearInitConf()
 {

@@ -1,8 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-
-
 class CCamera {
 public:
     float OrthoLength;

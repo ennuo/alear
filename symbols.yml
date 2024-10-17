@@ -16,8 +16,12 @@ gFarDist: 0x00924b38
 gScriptObjectManager: 0x009caa54
 gStaticCPHead: 0x00945818
 gPatchTrans: 0x00945824
-_ZN6CAudio4gSFXE: 0x009cc848
+gPadData: 0x009dbd90
 gTranslationTable: 0x00945818
+gFont: 0x00946ccc
+gResX: 0x007db4e0
+gResY: 0x007db4e4
+_ZN6CAudio4gSFXE: 0x009cc848
 _ZN6FileDB5MutexE: 0x00a1e938
 _ZN6FileDB3DBsE: 0x00a1e960
 _ZN6CAudio22gFModEventInstanceListE: 0x009caa70

@@ -23,7 +23,7 @@ public:
     float progress;
 };
 
-
+extern void (*UpdateButtonPrompts)();
 extern void* (*SetActiveLoadingScreen)(CTextState const* text, TextStateCallback* callback, bool allow_if_other_active_screens);
 extern void (*CancelActiveLoadingScreen)(void* handle, bool call_callback, u32 result);
 

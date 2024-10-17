@@ -7,6 +7,7 @@
 #include "powerup.h"
 #include "alearconf.h"
 #include "podstyles.h"
+#include "alearcam.h"
 
 #include "MMString.h"
 #include "cell/thread.h"
@@ -24,6 +25,7 @@ bool AlearEpilogue()
 {
     DebugLog("Performing init steps...\n");
 
+    // fix this later
     *((CP<RTranslationTable>*)&gAlearTrans) = LoadResourceByKey<RTranslationTable>(3709465117, 0, STREAM_PRIORITY_DEFAULT);
 
     DebugLog("FileDB::DBs:\n");
@@ -111,10 +113,59 @@ bool AlearLoadDatabaseConfiguration()
     return true;
 }
 
+bool gEnableFHD = false;
+
+void AlearHookHD()
+{
+    const int width = 1920;
+    const int height = 1080;
+
+    MH_Poke32(0x001df23c + 0x00, LI(4, width));
+    MH_Poke32(0x001df23c + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df124 + 0x00, LI(4, width));
+    MH_Poke32(0x001df124 + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df140 + 0x00, LI(4, width));
+    MH_Poke32(0x001df140 + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df15c + 0x00, LI(4, width));
+    MH_Poke32(0x001df15c + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df178 + 0x00, LI(4, width));
+    MH_Poke32(0x001df178 + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df05c + 0x00, LI(4, width));
+    MH_Poke32(0x001df05c + 0x04, LI(5, height));
+
+    MH_Poke32(0x001df03c + 0x00, LI(4, width));
+    MH_Poke32(0x001df03c + 0x04, LI(5, height));
+
+    // PRT_L_BUFFER_720P2X
+    MH_Poke32(0x001df07c + 0x00, LI(4, (width * 2)));
+    MH_Poke32(0x001df07c + 0x04, LI(5, height));
+
+    // Fix the scissor dimensions in the SetNiceState function
+    MH_Poke32(0x003e28d8 + 0x00, LI(6, width));
+    MH_Poke32(0x003e28d8 + 0x04, LI(7, height));
+    // Change dimension when transferring image in Swap
+    MH_Poke32(0x003e3f0c + 0x00, LI(3, width));
+    MH_Poke32(0x003e3f0c + 0x04, LI(4, height));
+}
+
 void AlearSetupDatabase()
 {
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
 
+    if (gEnableFHD)
+    {
+        CFilePath fp(FPR_GAMEDATA, "/gamedata/alear/hd/patch.map");
+        if (FileExists(fp))
+        {
+            FileDB::DBs.push_back(CFileDB::Construct(fp));
+        }
+    }
+    
     CFilePath alear_fp(FPR_GAMEDATA, "/gamedata/alear/boot.map");
     if (FileExists(alear_fp))
     {
@@ -157,7 +208,9 @@ void AlearStartup()
     AlearInitCreatureHook();
     AlearInitConf();
     InitPodStyles();
+    InitCameraHooks();
     ServerSwitcherNativeFunctions::Register();
+    if (gEnableFHD) AlearHookHD();
     
 
     // This module gets initialized by replacing the function that normally

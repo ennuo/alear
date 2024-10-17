@@ -9,6 +9,7 @@ class RMesh;
 class RPlan;
 class RScript;
 class RTranslationTable;
+class RFontFace;
 
 enum EResourceType
 {
@@ -88,6 +89,7 @@ template <> inline EResourceType GetResourceType<RMesh>() { return RTYPE_MESH; }
 template <> inline EResourceType GetResourceType<RPlan>() { return RTYPE_PLAN; }
 template <> inline EResourceType GetResourceType<RScript>() { return RTYPE_SCRIPT; }
 template <> inline EResourceType GetResourceType<RTranslationTable>() { return RTYPE_TRANSLATION; }
+template <> inline EResourceType GetResourceType<RFontFace>() { return RTYPE_FONTFACE; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

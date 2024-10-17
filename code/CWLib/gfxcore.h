@@ -1,7 +1,10 @@
 #ifndef GFX_CORE_H
 #define GFX_CORE_H
 
+#include <cell/gcm/gcm_enum.h>
 
+extern u32 gResX;
+extern u32 gResY;
 
 class CGCMTextureState {
 public:
