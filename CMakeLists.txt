@@ -21,7 +21,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/code/CWLib
     ${PROJECT_SOURCE_DIR}/code/Spuge
     ${PROJECT_SOURCE_DIR}/code/CoreLib
-    ${PROJECT_SOURCE_DIR}/code/Std
+    ${PROJECT_SOURCE_DIR}/code/PrxLib
     ${PROJECT_SOURCE_DIR}/code
 
     ${PS3_SDK}/target/common/include

@@ -7,7 +7,7 @@
                 "${workspaceFolder}/code/CWLib",
                 "${workspaceFolder}/code/Spuge",
                 "${workspaceFolder}/code/CoreLib",
-                "${workspaceFolder}/code/Std",
+                "${workspaceFolder}/code/PrxLib",
                 "${workspaceFolder}/code/",
                 "${SCE_PS3_ROOT}/target/common/include",
                 "${SCE_PS3_ROOT}/target/ppu/include"
