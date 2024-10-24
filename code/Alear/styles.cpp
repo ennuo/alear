@@ -8,6 +8,40 @@
 
 #include "alearconf.h"
 
+#include <gooey/GooeyNodeManager.h>
+
+class CInfoBubble {
+private:
+    char Pad[0x280];
+public:
+    v2 BubbleMax;
+    v2 BubbleMin;
+};
+
+void OnFillInfoBubbleBackground(CInfoBubble* bubble, CGooeyNodeManager* manager)
+{
+    u32 col0 = ReplaceA(manager->PrimaryColour, 0xcc).AsGPUCol();
+    u32 col1 = ReplaceA(manager->HighlightColour, 0xcc).AsGPUCol();
+
+    v2 max = bubble->BubbleMax;
+    v2 min = bubble->BubbleMin; 
+    v2 size = (max - min) * 0.25f;
+
+    v4 tl = v4(min.getX() - size.getX(), min.getY() - size.getY(), 0.0f, 1.0f);
+    v4 tr = v4(max.getX() + size.getX(), min.getY() - size.getY(), 0.0f, 1.0f);
+    v4 br = v4(max.getX() + size.getX(), max.getY() + size.getY(), 0.0f, 1.0f);
+    v4 bl = v4(min.getX() - size.getX(), max.getY() + size.getY(), 0.0f, 1.0f);
+
+    NGfx::tgStart(4, 0x30);
+
+    NGfx::tgAddVertex(tl, col0, 0.0f, 0.0f, 0.0f, 0.0f);
+    NGfx::tgAddVertex(tr, col0, 0.0f, 0.0f, 0.0f, 0.0f);
+    NGfx::tgAddVertex(br, col1, 0.0f, 0.0f, 0.0f, 0.0f);
+    NGfx::tgAddVertex(bl, col1, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    NGfx::tgDraw(CELL_GCM_PRIMITIVE_QUADS, NULL, true, 1, 0, true, v4(0.0f, 0.0f, 0.0f, 1.0f));
+}
+
 void OnFillPoppetBackground(CPoppet* poppet, float alpha)
 {
     CThing* player = poppet->PlayerThing;
@@ -61,5 +95,8 @@ void OnFillPoppetBackground(CPoppet* poppet, float alpha)
 
 void AlearInitStyles()
 {
+    MH_InitHook((void*)0x0029a768, (void*)&OnFillInfoBubbleBackground);
     MH_InitHook((void*)0x00344084, (void*)&OnFillPoppetBackground);
+
+    //MH_Poke32(0x002f5bc0, 0x4e800020);
 }

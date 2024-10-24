@@ -1,3 +1,6 @@
+#ifndef PLAYER_NUMBER_INL
+#define PLAYER_NUMBER_INL
+
 enum EPlayerNumber
 {
     E_PLAYER_NUMBER_NONE = -1,
@@ -13,3 +16,5 @@ enum EPlayerNumber
     E_PLAYER_NUMBER_9,
     E_PLAYER_NUMBER_10,
 };
+
+#endif // PLAYER_NUMBER_INL

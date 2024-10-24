@@ -19,6 +19,7 @@ public:
     CRawVector<PRenderMesh*> ListPRenderMesh;
     CRawVector<PPos*> ListPPos;
 public:
+    CThing* GetThingByUID(u32 uid);
     CThing* FindThingByScriptName(char const* name);
 };
 

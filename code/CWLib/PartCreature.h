@@ -7,7 +7,7 @@
 
 enum EState 
 {
-    STATE_NORMAL            = 0,
+    STATE_NORMAL_            = 0,
     STATE_JETPACK           = 1,
     STATE_GUN               = 2,
     STATE_STUNNED           = 3,

@@ -10,15 +10,11 @@
 #include "PartCostume.h"
 #include "PartRenderMesh.h"
 #include "PartPhysicsWorld.h"
+#include "PartRenderPosition.h"
 
 class CThingPtr;
 class PJoint;
 class PBody;
-
-class PPos : public CPart {
-public:
-    u32 AnimHash;
-};
 
 class CThing : public CReflectionVisitable {
 public:

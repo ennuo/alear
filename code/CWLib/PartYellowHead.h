@@ -7,6 +7,7 @@
 
 class PYellowHead : public CPart {
 public:
+    v4 GetActivePosition() const;
     c32 GetColour(EPlayerColour colour);
 private:
     char Pad[0x30];

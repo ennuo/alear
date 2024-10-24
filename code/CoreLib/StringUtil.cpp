@@ -10,6 +10,11 @@ size_t StringLength(const wchar_t* s)
 	return wcslen(s);
 }
 
+size_t StringLength(const tchar_t* s)
+{
+	return wcslen((const wchar_t*)s);
+}
+
 int StringCompare(const char* a, const char* b)
 {
 	return strcmp(a, b);

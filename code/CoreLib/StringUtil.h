@@ -5,6 +5,7 @@
 
 size_t StringLength(const char* str);
 size_t StringLength(const wchar_t* s);
+size_t StringLength(const tchar_t* s);
 int StringCompare(const char* a, const char* b);
 size_t StringCompareN(const char* a, const char* b, size_t len);
 int StringICompare(const char* a, const char* b);

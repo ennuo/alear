@@ -8,7 +8,7 @@
 
 #define PORT_BIND_TEXTURE (0x001cadc8)
 
-
+struct v4hack { v4 V; };
 extern void* gTocBase;
 
 struct shkOpd

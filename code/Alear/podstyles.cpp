@@ -29,6 +29,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     u32 view_subtype = view->Descriptor.SubType;
 
     if (view->HeartedOnly && (item->Flags & E_IIF_HEARTED) == 0) return false;
+    
     if (item_guid == 0x12981 || item_guid == 0x15351) return false;
     if ((item_type & view_type) == 0) return false;
 

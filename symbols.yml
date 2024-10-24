@@ -21,6 +21,7 @@ gTranslationTable: 0x00945818
 gFont: 0x00946ccc
 gResX: 0x007db4e0
 gResY: 0x007db4e4
+gNetworkManager: 0x00974af8
 _ZN6CAudio4gSFXE: 0x009cc848
 _ZN6FileDB5MutexE: 0x00a1e938
 _ZN6FileDB3DBsE: 0x00a1e960

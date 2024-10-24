@@ -1,8 +1,6 @@
 #ifndef REFLECTION_VISITABLE_H
 #define REFLECTION_VISITABLE_H
 
-
-
 class CReflectionVisitable {
 public:
     u32 VisitationStamp;

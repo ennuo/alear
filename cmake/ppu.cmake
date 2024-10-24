@@ -8,7 +8,7 @@ link_directories("${PS3_SDK}/target/ppu/lib/fno-exceptions/fno-rtti" "${PS3_SDK}
 
 set(CMAKE_C_COMPILER  "${PS3_SDK}/host-win32/ppu/bin/ppu-lv2-gcc.exe")
 # set(CMAKE_C_STANDARD_LIBRARIES "")
-set(CMAKE_C_STANDARD_LIBRARIES "${PS3_SDK}/target/ppu/lib/fno-exceptions/fno-rtti/libc.a ${PS3_SDK}/target/ppu/lib/libm.a ${PS3_SDK}/target/ppu/lib/liblv2_stub.a")
+set(CMAKE_C_STANDARD_LIBRARIES "${PS3_SDK}/target/ppu/lib/fno-exceptions/fno-rtti/libc.a ${PS3_SDK}/target/ppu/lib/fno-exceptions/fno-rtti/libm.a ${PS3_SDK}/target/ppu/lib/liblv2_stub.a")
 set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_COMPILER} -mprx <FLAGS> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 set(CMAKE_CXX_COMPILER "${PS3_SDK}/host-win32/ppu/bin/ppu-lv2-g++.exe")

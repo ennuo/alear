@@ -8,6 +8,7 @@
 #include "vm/NativeFunctionCracker.h"
 #include "ResourceGFXMesh.h"
 #include "ResourcePlan.h"
+#include <PartCreature.h>
 
 void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 {
@@ -48,7 +49,7 @@ bool CanSwim(PCreature& creature)
 {
     EState state = creature.State;
     return
-        state == STATE_NORMAL ||
+        state == STATE_NORMAL_ ||
         state == STATE_GUN ||
         state == STATE_GAS_MASK;
 }
@@ -119,7 +120,7 @@ void RemoveAbility(CThing* thing)
     if (creature == NULL) return;
 
     if (IsPowerupState(creature))
-        creature->SetState(STATE_NORMAL);
+        creature->SetState(STATE_NORMAL_);
     
     if (creature->HasScubaGear)
     {
@@ -136,7 +137,7 @@ void OnCreatureStateUpdate(PCreature& creature)
     // Handle all custom powerup/sackboy states here
     switch (creature.State)
     {
-        case STATE_NORMAL:
+        case STATE_NORMAL_:
         {
             // if ((input->ButtonsOld & PAD_BUTTON_TRIANGLE) == 0 && (input->Buttons & PAD_BUTTON_TRIANGLE) != 0)
             //     creature.SetState(STATE_GAS_MASK);
@@ -146,7 +147,7 @@ void OnCreatureStateUpdate(PCreature& creature)
         case STATE_GAS_MASK:
         {
             // if ((input->ButtonsOld & PAD_BUTTON_TRIANGLE) == 0 && (input->Buttons & PAD_BUTTON_TRIANGLE) != 0)
-            //     creature.SetState(STATE_NORMAL);
+            //     creature.SetState(STATE_NORMAL_);
             
             break;
         }

@@ -4,5 +4,6 @@
 #include <np/common.h>
 
 typedef SceNpId NetworkPlayerID;
+typedef SceNpOnlineId NetworkOnlineID;
 
 #endif // NETWORK_NETWORKUTILS_NP_H

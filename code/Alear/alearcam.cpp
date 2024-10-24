@@ -1,25 +1,51 @@
 #include "alearcam.h"
-#include "hook.h"
-#include "ppcasm.h"
+#include "alearlauncher.h"
 
-#include "gfxcore.h"
-#include "padinput.h"
+#include <cell/fs/cell_fs_file_api.h>
 
-#include "cell/DebugLog.h"
+#include <hook.h>
+#include <mmalex.h>
+#include <ppcasm.h>
+#include <json_ext.h>
+#include <printf.h>
+#include <filepath.h>
 
-#include "ResourceGFXFont.h"
-#include "View.h"
-#include "OverlayUI.h"
-#include "LoadingScreen.h"
+#include <gfxcore.h>
+#include <padinput.h>
+#include <cell/DebugLog.h>
 
-bool gShowCameraHelper = true;
+#include <ResourceGame.h>
+#include <ResourceLevel.h>
+#include <thing.h>
+#include <PartYellowHead.h>
+#include <PartPhysicsWorld.h>
+#include <ResourceGFXFont.h>
+#include <View.h>
+#include <OverlayUI.h>
+#include <LoadingScreen.h>
+#include <gooey/GooeyNodeManager.h>
+#include <network/NetworkManager.h>
+
+enum ECameraMenu {
+    MENU_MAIN,
+    MENU_SETTINGS,
+    MENU_TIMELINE,
+    MENU_PLAYBACK
+};
+
+ECameraMenu gCameraMenu = MENU_MAIN;
+bool gShowCameraMenu = false;
+bool gShowCameraInfo = true;
 bool gUseLegacyDebugCamera = false;
 bool gDisableDOF = true;
 bool gDisableFog = true;
 
+CGooeyNodeManager* gCameraGooey;
+
 void OnPredictionOrRenderUpdate()
 {
-
+    if (!gView.DebugCameraActive)
+        gShowCameraMenu = false;
 }
 
 float UnpackAnalogue(u16 raw)
@@ -51,6 +77,109 @@ void HandleCameraMovementInput(CView* view)
     camera.Foc = camera.Pos - (inv_camrot * v4(0.0f, 0.0f, 3000.0f, 1.0f));
 }
 
+void UpdateCameraUI(CGooeyNodeManager* manager)
+{
+    manager->SetStylesheetScalingFactor(0.5f);
+    if (!manager->StartFrameNamed(1000)) return;
+
+    manager->SetFrameSizing(gResX, gResY);
+    manager->SetFrameLayoutMode(LM_CENTERED, LM_CENTERED);
+    if (manager->StartFrame())
+    {
+        manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_START);
+        manager->SetFrameSizing(SizingBehaviour::Contents(), SizingBehaviour::Contents());
+        manager->SetFrameBorders(32.0f, 32.0f);
+        manager->SetFrameDefaultChildSpacing(0.0f, 0.0f);
+
+        // manager->DoText(L"Debug Camera", GTS_T2);
+        // manager->DoHorizontalBreak(GBS_SOLID, v2(0.5f, 0.5f));
+
+        if (manager->StartFrame())
+        {
+            manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_END);
+            manager->SetFrameSizing(SizingBehaviour::Contents(), SizingBehaviour::Contents());
+            manager->SetFrameBorders(0.0f, 0.0f);
+            manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
+
+
+            switch (gCameraMenu)
+            {
+                case MENU_MAIN:
+                {
+                    if (manager->DoInline(L"Cinemachine", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
+                        gCameraMenu = MENU_TIMELINE;
+                    
+                    manager->DoBreak();
+                    
+                    if (manager->DoInline(L"Settings", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
+                        gCameraMenu = MENU_SETTINGS;
+                    
+                    break;
+                }
+                case MENU_SETTINGS:
+                {
+                    if (manager->DoInline(L"DOF", GTS_SMALL_PRINT, gDisableDOF ? STATE_NORMAL : STATE_TOGGLE, NULL, 256) & 256)
+                        gDisableDOF = !gDisableDOF;
+                    
+                    manager->DoBreak();
+                    manager->DoInline(L"Fog", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256);
+
+                    break;
+                }
+
+                case MENU_TIMELINE:
+                {
+                    for (int i = 0; i < gClips.size(); ++i)
+                    {
+                        CCameraClip* clip = gClips[i];
+                        bool active = gCinemachine.IsPlaying() && gCinemachine.GetActiveClip() == clip;
+                        if (manager->DoInline(clip->Name.c_str(), GTS_SMALL_PRINT, active ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+                            gCinemachine.Play(clip);
+
+                        manager->DoBreak();
+                    }
+
+                    if (manager->DoButton(L"Reload From Disk", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
+                        LoadCameraClips();
+
+                    break;
+                }
+
+                case MENU_PLAYBACK:
+                {
+                    // Position
+                    // Transition Type
+                    // Timing
+                        // Transition Time
+                        // Hold Time
+                    // Focus
+                        // Field of View
+                        // Depth of Field
+                }
+            }
+
+
+            manager->EndFrame();
+        }
+
+
+        manager->EndFrame();
+    }
+
+    if ((manager->EndFrame(512) & 512) != 0)
+    {
+        if (gCameraMenu == MENU_MAIN) gShowCameraMenu = false;
+        else if (gCameraMenu == MENU_TIMELINE)
+        {
+            if (gCinemachine.IsPlaying())
+                gCinemachine.Stop();
+            else
+                gCameraMenu = MENU_MAIN;
+        }
+        else gCameraMenu = MENU_MAIN;
+    }
+}
+
 void OnUpdateDebugCamera(CView* view)
 {
     if (gUseLegacyDebugCamera || view->MaverickCam)
@@ -59,18 +188,28 @@ void OnUpdateDebugCamera(CView* view)
         view->DebugCamera.Apply(view->Camera);
         return;
     }
-
-    HandleCameraMovementInput(view);
-    view->DebugCamera.Apply(view->Camera);
-
-    if ((gPadData->ButtonsDown & PAD_BUTTON_SQUARE) != 0)
+    
+    
+    if (gShowCameraMenu)
     {
-        gDisableDOF = !gDisableDOF;
+        if (gCameraGooey == NULL)
+            gCameraGooey = new CGooeyNodeManager(INPUT_ALL, E_GOOEY_MANAGER_NETWORK_NONE);
+
+        UpdateCameraUI(gCameraGooey);
+        gCameraGooey->PerFrameUpdate(E_PLAYER_NUMBER_NONE, MODE_NORMAL, 0);
     }
+    else HandleCameraMovementInput(view);
 
-    if ((gPadData->ButtonsDown & PAD_BUTTON_CIRCLE) != 0)
+    gCinemachine.Update();
+    if (gCinemachine.IsPlaying())
+        gCinemachine.Apply(view->Camera);
+    else 
+        view->DebugCamera.Apply(view->Camera);
+    
+    if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
     {
-        gDisableFog = !gDisableFog;
+        gShowCameraMenu = !gShowCameraMenu;
+        gCameraMenu = MENU_MAIN;
     }
 
     if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
@@ -79,8 +218,6 @@ void OnUpdateDebugCamera(CView* view)
         view->DebugCamera.Yaw = 0.0f;
         view->DebugCamera.Pitch = 0.0f;
     }
-
-
 
     if (gDisableDOF)
     {
@@ -95,30 +232,40 @@ void OnUpdateDebugCamera(CView* view)
     }
 }
 
-const tchar_t* gTestString = (const tchar_t*)L"\uE001  Save Camera Shot";
+MMString<wchar_t> gCameraFocString;
+MMString<wchar_t> gCameraPosString;
+
 void OnDrawPostComp(COverlayUI* interface)
 {
+    UpdateAlearLauncher();
+    
     if (!gView.DebugCameraActive)
     {
         UpdateButtonPrompts();
         return;
     }
 
-    if (!gShowCameraHelper) return;
+    if (gShowCameraInfo)
+    {
+        v4 camera_pos = gCinemachine.IsPlaying() ? gCinemachine.Camera.Pos : gView.DebugCamera.Pos;
+        v4 camera_foc = gCinemachine.IsPlaying() ? gCinemachine.Camera.Foc : gView.DebugCamera.Foc;
 
-    const u32 text_color = 0xFFFFFFFF;
+        char fmt[1024];
+        sprintf(fmt, "Position: <%f, %f, %f>", (float)camera_pos.getX(), (float)camera_pos.getY(), (float)camera_pos.getZ());
+        const tchar_t* pos_str = (const tchar_t*)MultiByteToWChar(gCameraPosString, fmt, NULL);
+        sprintf(fmt, "Focus:    <%f, %f, %f>", (float)camera_foc.getX(), (float)camera_foc.getY(), (float)camera_foc.getZ());
+        const tchar_t* foc_str = (const tchar_t*)MultiByteToWChar(gCameraFocString, fmt, NULL);
 
-    StartDrawText(true, NULL, NULL, false, true, gResX, gResY);
+        const u32 text_color = 0xFFFFFFFF;
+        StartDrawText(true, NULL, NULL, false, true, gResX, gResY);
+        DrawText(gFont[FONT_DEFAULT], pos_str, 16.0f, 21.0f, 0.0f, 7.0f, text_color, -1.0f);
+        DrawText(gFont[FONT_DEFAULT], foc_str, 16.0f, 35.0f, 0.0f, 7.0f, text_color, -1.0f);
+        EndDrawText();
+    }
 
+    if (!gShowCameraMenu || gCameraGooey == NULL) return;
 
-    // DrawText(gFont[FONT_DEFAULT], (const tchar_t*)L"\uE003  Hide UI", 16.0f, gResY - 21.0f, 0.0f, 15.0f, text_color, -1.0f);
-    // DrawText(gFont[FONT_DEFAULT], gTestString, 16.0f, gResY - 21.0f, 0.0f, 15.0f, text_color, -1.0f);
-    // DrawText(gFont[FONT_DEFAULT], (const tchar_t*)L"\uE003  Hide UI", 16.0f, gResY - 42.0f, 0.0f, 15.0f, text_color, -1.0f);
-
-
-    //DrawText(gFont[FONT_DEFAULT], (const tchar_t*)L"DOF: Disabled", 16.0f, 21.0f, 0.0f, 7.0f, text_color, -1.0f);
-
-    EndDrawText();
+    gCameraGooey->RenderToTexture(gResX, gResY, gResX, gResY, false, false);
 }
 
 extern "C" void _alearcam_update_hook();
@@ -127,4 +274,326 @@ void InitCameraHooks()
     MH_Poke32(0x00014acc, B(&_alearcam_update_hook, 0x00014acc));
     MH_InitHook((void*)0x002716fc, (void*)&OnDrawPostComp);
     MH_InitHook((void*)0x001fc920, (void*)&OnUpdateDebugCamera);
+
+    MH_Poke32(0x00014b2c, 0x540003de); // change teleport to select
+}
+
+CVector<CCameraClip*> gClips(16);
+CCinemachine gCinemachine;
+
+bool LoadCameraClip(char* json)
+{
+    const int MAX_FIELDS = 4096;
+    json_t pool[MAX_FIELDS];
+    json_t const* root = json_create(json, pool, MAX_FIELDS);
+    if (root == NULL)
+    {
+        DebugLog("Failed to load camera clip, JSON was invalid!\n");
+        return false;
+    }
+
+    if (json_getType(root) != JSON_OBJ)
+    {
+        DebugLog("Root of camera clip definition must be a JSON object!\n");
+        return false;
+    }
+
+    CCameraClip* clip = new CCameraClip();
+    const json_t* prop = NULL;
+
+
+    const char* name = json_getPropertyValue(root, "name");
+    if (name == NULL) name = "Unnamed Clip";
+    MultiByteToWChar(clip->Name, name, NULL);
+
+    prop = json_getProperty(root, "looped");
+    if (prop != NULL && json_getType(prop) == JSON_BOOLEAN)
+        clip->IsLooping = json_getBoolean(prop);
+
+    const json_t* json_shots = json_getProperty(root, "shots");
+    if (json_shots != NULL)
+    {
+        if (json_getType(json_shots) != JSON_ARRAY)
+        {
+            DebugLog("Camera shot list must be a JSON array!\n");
+            delete clip;
+            return false;
+        }
+
+        for (json_t const* element = json_getChild(json_shots); element != NULL; element = json_getSibling(element))
+        {
+            if (json_getType(element) != JSON_OBJ)
+            {
+                DebugLog("Element in shot array is invalid! (Not a JSON object), failing load!\n");
+                delete clip;
+                return false;
+            }
+
+            CCameraKeyframe frame;
+
+            const char* shot_type = json_getStringProperty(element, "shot_type", "CUT");
+            const char* target_type = json_getStringProperty(element, "target_type", "POSITION");
+
+            if (StringCompare(shot_type, "ORBIT_3D") == 0)
+                frame.ShotType = SHOT_ORBIT_3D;
+            else if (StringCompare(shot_type, "ORBIT_2D") == 0)
+                frame.ShotType = SHOT_ORBIT_2D;
+            else if (StringCompare(shot_type, "CUT") == 0)
+                frame.ShotType = SHOT_CUT;
+            else if (StringCompare(shot_type, "OFFSET") == 0)
+                frame.ShotType = SHOT_OFFSET;
+            else
+            {
+                DebugLog("Unknown camera shot type (%s), failing load!\n", shot_type);
+                delete clip;
+                return false;
+            }
+
+            if (StringCompare(target_type, "POSITION") == 0)
+                frame.TargetType = TARGET_POSITION;
+            else if (StringCompare(target_type, "PLAYER") == 0)
+                frame.TargetType = TARGET_PLAYER;
+            else if (StringCompare(target_type, "OBJECT") == 0)
+                frame.TargetType = TARGET_OBJECT;
+            else
+            {
+                DebugLog("Unknown camera target type (%s), failing load!\n", target_type);
+            }
+
+            frame.TransitionTime = json_getFloatProperty(element, "transition_time", 0.0f);
+            frame.HoldTime = json_getFloatProperty(element, "hold_time", 0.0f);
+            frame.Focus = json_getVectorProperty(element, "focus", v4(0.0f));
+            frame.Position = json_getVectorProperty(element, "position", v4(0.0f));
+            frame.Target = json_getIntProperty(element, "target", 0);
+
+            json_t const* orbit = json_getProperty(element, "orbit");
+            if (orbit != NULL)
+            {
+                if (json_getType(orbit) != JSON_OBJ)
+                {
+                    DebugLog("Orbit config has invalid object type! Expected JSON_OBJ, cancelling load!\n");
+                    delete clip;
+                    return false;
+                }
+
+                frame.Orbit.Distance = json_getFloatProperty(orbit, "distance", 400.0f);
+                frame.Orbit.Radius = json_getFloatProperty(orbit, "radius", 200.0f);
+                frame.Orbit.Period = json_getFloatProperty(orbit, "period", 1.0f);
+                frame.Orbit.AngleOffset = json_getFloatProperty(orbit, "angle_offset", 0.0f);
+                frame.Orbit.Flipped = json_getBoolProperty(orbit, "flipped", false);
+            }
+
+            clip->Keyframes.push_back(frame);
+        }
+    }
+
+    gClips.push_back(clip);
+    DebugLog("Successfully added %s to clip store!\n", name);
+    return true;
+}
+
+bool LoadCameraClip(CFilePath& fp)
+{
+    char* json = FileLoadText(fp);
+    if (json == NULL)
+    {
+        DebugLog("Failed to read file data for camera clip!\n");
+        return false;
+    }
+
+    bool ret = LoadCameraClip(json);
+    delete json;
+    return ret;
+}
+
+bool LoadCameraClips()
+{
+    gCinemachine.Stop();
+    for (int i = 0; i < gClips.size(); ++i)
+    {
+        CCameraClip* clip = gClips[i];
+        delete clip;
+    }
+    gClips.clear();
+    DebugLog("Starting load of camera config clips...\n");
+
+    CFilePath clipdir(FPR_GAMEDATA, "gamedata/alear/clips");
+
+    int fd;
+
+    // Not going to treat it as an error if the directory fails to open,
+    // since the clips are technically optional.
+    if (cellFsOpendir(clipdir.c_str(), &fd) != CELL_FS_OK)
+    {
+        DebugLog("Not loading any clips because directory doesn't exist!\n");
+        return true;
+    }
+
+    CellFsDirectoryEntry entry;
+    memset(&entry, 0, sizeof(CellFsDirectoryEntry));
+    u32 data_count = 0;
+    char buf[CELL_FS_MAX_FS_PATH_LENGTH];
+    CFilePath fp;
+    do
+    {
+        if (cellFsGetDirectoryEntries(fd, &entry, sizeof(CellFsDirectoryEntry), &data_count) != CELL_FS_OK)
+            break;
+        
+        if (entry.entry_name.d_type != CELL_FS_TYPE_REGULAR) continue;
+        sprintf(buf, "%s/%s", clipdir.c_str(), entry.entry_name.d_name);
+        fp.Assign(buf);
+        if (!LoadCameraClip(fp))
+            DebugLog("Failed to load camera clip from %s, an error occurred!\n", buf);
+    } while (data_count);
+
+    cellFsClosedir(fd);
+    return true;
+}
+
+float CCameraKeyframe::GetOrbitAngle(float time)
+{
+    const float deg2rad = 0.01745329251f;
+    float pct = mmalex::fmod(time / Orbit.Period, 1.0f);
+    float deg = (Orbit.Flipped ? -1.0f : 1.0f) * (pct * 360.0f) + Orbit.AngleOffset;
+    return deg * deg2rad;
+}
+
+SCameraData CCameraKeyframe::GetCameraData(float time)
+{
+    v4 pos, foc;
+
+    switch (TargetType)
+    {
+        case TARGET_PLAYER:
+        {
+            EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+            CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
+            if (player != NULL && player->GetPYellowHead() != NULL)
+                foc = player->GetPYellowHead()->GetActivePosition();
+            
+            break;
+        }
+        case TARGET_OBJECT:
+        {
+            RLevel* level = gGame->Level;
+            if (level == NULL) break;
+            CThing* thing = level->WorldThing;
+            if (thing == NULL) break;
+            PWorld* world = thing->GetPWorld();
+            if (world == NULL) break;
+
+            CThing* target_thing = world->GetThingByUID(Target);
+            if (target_thing != NULL && target_thing->GetPPos() != NULL)
+                foc = target_thing->GetPPos()->GetBestGameplayPosv4();
+
+            break;
+        }
+        case TARGET_POSITION:
+        default:
+        {
+            foc = Focus;
+            break;
+        }
+    }
+
+    switch (ShotType)
+    {
+        case SHOT_CUT:
+        default:
+        {
+            pos = Position;
+            break;
+        }
+
+        case SHOT_OFFSET:
+        {
+            pos = Position + foc;
+            break;
+        }
+
+        case SHOT_ORBIT_2D:
+        {
+            float angle = GetOrbitAngle(time);
+            pos = foc + v4(Orbit.Radius * mmalex::cos(angle), Orbit.Radius * mmalex::sin(angle), Orbit.Distance, 0.0f);
+            break;
+        }
+
+        case SHOT_ORBIT_3D:
+        {
+            float angle = GetOrbitAngle(time);
+            pos = foc + v4(Orbit.Radius * mmalex::cos(angle), 0.0f, Orbit.Radius * mmalex::sin(angle), 0.0f);
+            break;
+        }
+    }
+
+    // Fix up the W component just in case
+    // for matrix math, oops
+    pos.setW(1.0f);
+    foc.setW(1.0f);
+
+    return SCameraData(pos, foc);
+}
+
+void CCinemachine::Play(CCameraClip* clip)
+{
+    Stop();
+
+    if (clip == NULL || clip->Keyframes.size() == 0) return;
+
+    ActiveClip = clip;
+    State = STATE_PLAYING;
+}
+
+void CCinemachine::Stop()
+{
+    Frame = 0;
+    StateTimer = 0.0f;
+    ActiveClip = NULL;
+    State = STATE_IDLE;
+}
+
+const char* gStateNames[] = { "STATE_IDLE", "STATE_PLAYING", "STATE_TRANSITION" };
+
+void CCinemachine::Update()
+{
+    if (State == STATE_IDLE) return;
+
+    // DebugLog("[CCinemachine] [STATE]=%s, [TIMER]=%f, [FRAME]=%d\n", gStateNames[State], StateTimer, Frame);
+
+    const float delta = 1.0f / 30.0f; // hehehehehehe
+    float time = StateTimer;
+    StateTimer += delta;
+
+    CCameraKeyframe& frame = ActiveClip->Keyframes[Frame];
+    switch (State)
+    {
+        case STATE_PLAYING:
+        {
+            if (time >= frame.HoldTime)
+                time = frame.HoldTime;
+
+            SCameraData cam = frame.GetCameraData(time);
+            gCinemachine.Apply(cam);
+
+            if (time >= frame.HoldTime)
+            {
+                if (frame.HasTransition() && HasFramesRemaining())
+                {
+                    SetState(STATE_TRANSITION);
+                    LerpStart = cam;
+                    LerpTarget = GetNextFrame()->GetCameraData(0.0f);
+                }
+                else NextFrame();
+            }
+
+            break;
+        }
+        case STATE_TRANSITION:
+        {
+            float factor = time / frame.TransitionTime;
+            gCinemachine.Apply(LerpStart, LerpTarget, factor);
+            if (time >= frame.TransitionTime) NextFrame();
+            break;
+        }
+    }
 }

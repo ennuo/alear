@@ -43,6 +43,7 @@ CInitStep gAlearInitSteps[] =
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     { "Alear Server Switcher", NULL, AlearInitServerSwitcher, NULL, NULL, false, NULL },
+    { "Alear Cinemachine", NULL, LoadCameraClips, NULL, NULL, false, NULL },
     // Need a NULL entry to indicate the end of the initialization steps
     { NULL, NULL, NULL, NULL, NULL, false, NULL }
 };

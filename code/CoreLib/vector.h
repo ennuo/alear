@@ -129,6 +129,13 @@ public:
 		return this->Data + index;
 	}
 
+	inline void clear()
+	{
+		Allocator::Free(gVectorBucket, this->Data);
+		this->Size = 0;
+		this->MaxSize = 0;
+	}
+
 	bool try_reserve(u32 new_max_size) {
 		if (this->MaxSize < new_max_size) {
 			u32 count = Allocator::ResizePolicy(this->MaxSize, new_max_size, sizeof(T));
