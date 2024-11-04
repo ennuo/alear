@@ -10,9 +10,10 @@ class CPoppet : public CReflectionVisitable {
 private:
     char Pad[0x18f8];
 public:
-    CThingPtr PlayerThing;
-
+    void RenderHoverObject(CThing* thing, float outline);
     v2 GetBubbleSize();
+public:
+    CThingPtr PlayerThing;
 };
 
 

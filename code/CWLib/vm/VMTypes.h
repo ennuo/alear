@@ -104,9 +104,28 @@ struct Arg
     const char* GetName() { return Name; }
 };
 
-struct ScriptObjectUID
-{
+struct ScriptObjectUID {
     u32 UID;
+
+    inline ScriptObjectUID() { UID = 0; }
+    inline ScriptObjectUID(u32 uid) { UID = uid; }
+    inline ScriptObjectUID(const ScriptObjectUID& uid) { UID = uid.UID; }
+
+	inline ScriptObjectUID& operator=(const ScriptObjectUID& rhs) 
+	{
+        UID = rhs.UID;
+        return *this;
+	}
+
+    inline bool operator==(const ScriptObjectUID& rhs)
+    {
+        return UID == rhs.UID;
+    }
+
+    inline bool operator!=(const ScriptObjectUID& rhs)
+    {
+        return UID != rhs.UID;
+    }
 };
 
 
@@ -122,8 +141,13 @@ public:
         int len = StringLength(name);
         MangledName.assign(name, len);
         MangledNameHash = JenkinsHash((u8*)name, len, 0);
-
     }
+
+    inline bool IsEmpty()
+    {
+        return MangledName.empty();
+    }
+    
 private:
     MMString<char> MangledName;
     u32 MangledNameHash;

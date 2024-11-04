@@ -11,14 +11,14 @@ struct SConvertScriptTypes
     typedef Type NativeType;
     typedef Type VMType;
 
-    static void VMToNative(NativeType* out, CScriptContext* context, VMType* in)
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
     {
-        *out = *in;
+        out = in;
     }
 
-    static void NativeToVM(VMType* out, CScriptContext* context, NativeType* in)
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
     {
-        *out = *in;
+        out = in;
     }
 };
 
@@ -30,14 +30,14 @@ struct SConvertScriptTypes<int>
     typedef int NativeType;
     typedef int VMType;
 
-    static void VMToNative(NativeType* out, CScriptContext* context, VMType* in)
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
     {
-        *out = *in;
+        out = in;
     }
 
-    static void NativeToVM(VMType* out, CScriptContext* context, NativeType* in)
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
     {
-        *out = *in;
+        out = in;
     }
 };
 
@@ -47,15 +47,15 @@ struct SConvertScriptTypes<const char*>
     typedef const char* NativeType;
     typedef ScriptObjectUID VMType;
 
-    static void VMToNative(NativeType* out, CScriptContext* context, VMType* in)
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
     {
         // todo: add this later when needed
-        *out = NULL;
+        out = NULL;
     }
 
-    static void NativeToVM(VMType* out, CScriptContext* context, NativeType* in)
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
     {
-        out->UID = gScriptObjectManager->RegisterStringA(*in).UID;
+        out.UID = gScriptObjectManager->RegisterStringA(in).UID;
     }
 };
 
@@ -65,14 +65,14 @@ struct SConvertScriptTypes<CThing*>
     typedef CThing* NativeType;
     typedef ScriptThingUID VMType;
 
-    static void VMToNative(NativeType* out, CScriptContext* context, VMType* in)
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
     {
-        *out = context->LookupThing(*in);
+        out = context->LookupThing(in);
     }
 
-    static void NativeToVM(VMType* out, CScriptContext* context, NativeType* in)
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
     {
-        out->UID = (*in)->UID;
+        out.UID = in->UID;
     }
 };
 

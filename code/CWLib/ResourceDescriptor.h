@@ -86,6 +86,7 @@ protected:
 };
 
 template<class T> inline EResourceType GetResourceType();
+
 template <> inline EResourceType GetResourceType<RMesh>() { return RTYPE_MESH; }
 template <> inline EResourceType GetResourceType<RPlan>() { return RTYPE_PLAN; }
 template <> inline EResourceType GetResourceType<RScript>() { return RTYPE_SCRIPT; }

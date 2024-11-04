@@ -26,3 +26,4 @@ set(SN_TARGET_PS3 1)
 
 # Some common tools that might be used
 set(MAKE_FSELF "${PS3_SDK}/host-win32/bin/make_fself.exe")
+set(PRX_STRIP "${PS3_SDK}/host-win32/bin/ppu-lv2-prx-strip.exe")

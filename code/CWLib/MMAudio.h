@@ -20,7 +20,8 @@ typedef FModWrapper<FMOD::EventGroup> AUDIO_GROUP;
 
 namespace CAudio 
 {
-    extern AUDIO_HANDLE (*PlaySample)(AUDIO_GROUP& group, char const* name, CThing* thing, float param1, float param2);
+    AUDIO_HANDLE PlaySample(AUDIO_GROUP& group, char const* name, float param1, v2 const* pos3d, float param2);
+    AUDIO_HANDLE PlaySample(AUDIO_GROUP& group, char const* name, CThing* thing, float param1, float param2);
     extern AUDIO_GROUP gSFX;
 };
 

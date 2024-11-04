@@ -4,7 +4,7 @@
 
 MH_DefineFunc(CAllocatorMM_Malloc, 0x0058922c, TOC1, void*, CAllocatorBucket& bucket, u32 size);
 MH_DefineFunc(CAllocatorMM_Free, 0x00588714, TOC1, void, CAllocatorBucket& bucket, void* data);
-MH_DefineFunc(CAllocatorMM_Realloc, 0x00588714, TOC1, void*, CAllocatorBucket& bucket, void* data, u32 size);
+MH_DefineFunc(CAllocatorMM_Realloc, 0x0058a448, TOC1, void*, CAllocatorBucket& bucket, void* data, u32 size);
 
 void* CAllocatorMM::Malloc(CAllocatorBucket& bucket, u32 size)
 {

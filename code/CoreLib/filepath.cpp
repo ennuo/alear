@@ -66,6 +66,13 @@ u64 FileRead(FileHandle h, void* out, u64 count) {
 	return n;
 }
 
+u64 FileWrite(FileHandle h, void* bin, u64 count)
+{
+	u64 n;
+	cellFsWrite(h, bin, count, &n);
+	return n;
+}
+
 bool FileStat(FileHandle h, u64* modtime, u64* size) 
 {
 	*modtime = 0;
@@ -119,4 +126,10 @@ char* FileLoadText(CFilePath& fp)
 	}
 
 	return NULL;
+}
+
+MH_DefineFunc(_FileLoad, 0x0057b6ec, TOC1, bool, CFilePath const&, ByteArray&, CHash&)
+bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out)
+{
+	return _FileLoad(fp, bufout, hash_out);
 }

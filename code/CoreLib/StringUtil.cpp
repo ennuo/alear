@@ -36,14 +36,14 @@ int StringICompareN(const char* a, const char* b, size_t len)
 }
 
 template<typename T>
-size_t StringCopy(T* dst, const T* src, unsigned int size)
+size_t StringCopy(T* dst, T const* src, unsigned int size)
 {
     unsigned int num = size;
 	T* ptr = (T*) src;
 	while (*src && num--)
 		*dst++ = *src++;
 	*dst = '\0';
-	return (ptr - src) - 1;
+	return src - ptr;
 }
 
 unsigned int StringCopy(char* dst, const char* src, unsigned int size)
@@ -58,9 +58,3 @@ unsigned int StringCopy(wchar_t* dst, const wchar_t* src, unsigned int size)
 
 unsigned int StringCopy(char* dst, char const* src, unsigned int size);
 unsigned int StringCopy(wchar_t* dst, wchar_t const* src, unsigned int size);
-
-template <typename T, unsigned int size>
-inline size_t StringCopy(T dst[size], T const* src) 
-{
-	return StringCopy(dst, src, size);
-}

@@ -4,6 +4,7 @@ gGameDataReady: 0x00a1e530
 gServerURL: 0x00920f50
 gServerSecureURL: 0x00920ec8
 gServerDigest: 0x00936db0
+gStlBucket: 0x00a200a0
 gOtherBucket: 0x00a200a0
 gVectorBucket: 0x00a200a0
 gView: 0x009d2c90
@@ -22,6 +23,13 @@ gFont: 0x00946ccc
 gResX: 0x007db4e0
 gResY: 0x007db4e4
 gNetworkManager: 0x00974af8
+gWorlds: 0x009caa48
+gResourceArray: 0x00946a5c
+gResourceCS: 0x00946a58
+gCaches: 0x009469b0
+gAnimBank: 0x009749d8
+_ZN15NVirtualMachine26gRegisteredScriptFunctionsE: 0x0
+_ZN19CScriptObjectCustomI21CScriptedGooeyWrapperE15NativeObjectMapE: 0x00a25df8
 _ZN6CAudio4gSFXE: 0x009cc848
 _ZN6FileDB5MutexE: 0x00a1e938
 _ZN6FileDB3DBsE: 0x00a1e960

@@ -26,6 +26,7 @@ class PCreature : public CPart {
 private:
     char Pad[0x928];
 public:
+    void BeSlapped(CThing const* thing, v2 force);
     void SetScubaGear(bool active);
     void SetState(EState state);
     CInput* GetInput();

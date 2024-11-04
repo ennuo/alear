@@ -5,11 +5,16 @@
 #include "MMString.h"
 
 #include "vm/VMTypes.h"
+#include "vm/InstanceLayout.h"
 
 #include "refcount.h"
 #include "vector.h"
 
 class RScript;
+class CSignature;
+namespace NVirtualMachine {
+    class CScriptFunctionBinding;
+}
 
 class CTypeReferenceRow {
 private:
@@ -27,7 +32,21 @@ public:
     CP<RScript> SuperClassScript;
     ModifierBits Modifiers;
     CVector<CTypeReferenceRow> TypeReferences;
-    // ...
+private:
+    char Pad[180];
+public:
+    CP<RScript> UpToDateScript;
+    bool ExportsFixedUp;
+    bool FixedUp;
+    bool Finishing;
+    u32 TotalInstanceSize;
+    CP<CInstanceLayout> InstanceLayout;
+    CP<CInstanceLayout> SuperInstanceLayout;
+public:
+    bool LookupFunction(CSignature const& signature, NVirtualMachine::CScriptFunctionBinding* binding) const;
+    bool IsInstanceLayoutValid();
+    void ForceFixup();
+    void Fixup();
 };
 
 #endif // RESOURCE_SCRIPT_H

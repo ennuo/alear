@@ -10,6 +10,10 @@ class PRenderMesh;
 class RLevel;
 class PWorld : public CPart {
 public:
+    CThing* GetThingByUID(u32 uid);
+    CThing* FindThingByScriptName(char const* name);
+    void UpgradeAllScripts();
+public:
     u32 ThingUIDCounter;
     CRawVector<CThing*> Things;
     RLevel* Level;
@@ -18,9 +22,6 @@ private:
 public:
     CRawVector<PRenderMesh*> ListPRenderMesh;
     CRawVector<PPos*> ListPPos;
-public:
-    CThing* GetThingByUID(u32 uid);
-    CThing* FindThingByScriptName(char const* name);
 };
 
 #endif // PART_PHYSICS_WORLD_H

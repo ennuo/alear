@@ -27,10 +27,11 @@ DebugChannelOptions g_DebugChannelMapping[] = {
     { 12, true, "DC_REPLAY", "Replay" },
     { 4, true, "DC_ALEAR", "Alear" },
     #ifdef SCRIPT_DEBUG
-    { 4, true, "DC_SCRIPT_DEBUG", "ScriptDebug" }
+    { 4, true, "DC_SCRIPT_DEBUG", "ScriptDebug" },
     #else
-    { 4, false, "DC_SCRIPT_DEBUG", "ScriptDebug" }
+    { 4, false, "DC_SCRIPT_DEBUG", "ScriptDebug" },
     #endif 
+    { 4, true, "DC_SM64", "SM64" }
 };
 
 void DebugLog(const char* format, ...) {
@@ -76,4 +77,17 @@ void DebugLogChV(EDebugChannel channel, const char* format, va_list args)
 void DebugLogEnable(EDebugChannel channel, bool enable)
 {
     g_DebugChannelMapping[channel].Enabled = enable;
+}
+
+const char* gNewLine = "\n";
+
+extern "C" void DEBUG_PRINT(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    DebugLogChV(DC_SM64, format, args);
+    va_end(args);
+    
+    unsigned int len;
+    sys_tty_write(0, gNewLine, 1, &len);
 }

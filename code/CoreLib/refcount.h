@@ -75,7 +75,8 @@ public:
 public:
 	void CopyFrom(T* ptr)
 	{
-		if (ptr) {
+		if (ptr) 
+		{
 			ptr->AddRef();
 			Ref = ptr;
 		}

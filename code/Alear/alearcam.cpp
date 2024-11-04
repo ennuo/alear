@@ -2,6 +2,7 @@
 #include "alearlauncher.h"
 
 #include <cell/fs/cell_fs_file_api.h>
+#include <cell/gcm.h>
 
 #include <hook.h>
 #include <mmalex.h>
@@ -14,17 +15,28 @@
 #include <padinput.h>
 #include <cell/DebugLog.h>
 
+#include <GFXApi.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <GuidHashMap.h>
 #include <thing.h>
 #include <PartYellowHead.h>
 #include <PartPhysicsWorld.h>
+#include <Poppet.h>
 #include <ResourceGFXFont.h>
 #include <View.h>
 #include <OverlayUI.h>
 #include <LoadingScreen.h>
 #include <gooey/GooeyNodeManager.h>
 #include <network/NetworkManager.h>
+#include <gooey/GooeyScriptInterface.h>
+
+
+#ifdef __SM64__
+extern void SpawnMarioAvatar(EPadIndex pad, float x, float y, float z);
+extern void ClearMarioAvatars();
+extern bool ApplyMainAvatarCamera(CCamera* camera);
+#endif 
 
 enum ECameraMenu {
     MENU_MAIN,
@@ -37,15 +49,52 @@ ECameraMenu gCameraMenu = MENU_MAIN;
 bool gShowCameraMenu = false;
 bool gShowCameraInfo = true;
 bool gUseLegacyDebugCamera = false;
+bool gDisableCameraInput = false;
 bool gDisableDOF = true;
 bool gDisableFog = true;
+bool gShowOutlines = false;
 
 CGooeyNodeManager* gCameraGooey;
+
+void OnRunPipelinePostProcessing()
+{
+    if (!gShowOutlines) return;
+
+    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+    CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
+    if (player == NULL) return;
+    PYellowHead* yellowhead = player->GetPYellowHead();
+    if (yellowhead == NULL) return;
+    CPoppet* poppet = yellowhead->Poppet;
+    if (poppet == NULL) return;
+
+    cellGcmSetDepthTestEnable(gCellGcmCurrentContext, CELL_GCM_TRUE);
+    cellGcmSetDepthFunc(gCellGcmCurrentContext, CELL_GCM_LEQUAL);
+    for (int i = 0; i < gView.WorldList.size(); ++i)
+    {
+        PWorld* world = gView.WorldList[i];
+        for (int j = 0; j < world->Things.size(); ++j)
+        {
+            CThing* thing = world->Things[j];
+            poppet->RenderHoverObject(thing, 5.0f);
+        }
+    }
+}
 
 void OnPredictionOrRenderUpdate()
 {
     if (!gView.DebugCameraActive)
+    {
+        if (gCinemachine.IsPlaying())
+            gCinemachine.Stop();
+        
+        #ifdef __SM64__
+        ClearMarioAvatars();
+        #endif
+
+        gDisableCameraInput = false;
         gShowCameraMenu = false;
+    }
 }
 
 float UnpackAnalogue(u16 raw)
@@ -57,6 +106,8 @@ float UnpackAnalogue(u16 raw)
 
 void HandleCameraMovementInput(CView* view)
 {
+    if (gDisableCameraInput) return;
+
     float lx = UnpackAnalogue(gPadData->LeftStickX);
     float ly = UnpackAnalogue(gPadData->LeftStickY);
     float rx = UnpackAnalogue(gPadData->RightStickX);
@@ -113,17 +164,42 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                     
                     if (manager->DoInline(L"Settings", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
                         gCameraMenu = MENU_SETTINGS;
-                    
+
+
+                    #ifdef __SM64__
+                    manager->DoBreak();
+
+                    if (manager->DoInline(L"Mario", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
+                    {
+                        gShowCameraMenu = false;
+                        gDisableCameraInput = true;
+                        EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+                        CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
+                        if (player != NULL && player->GetPYellowHead() != NULL)
+                        {
+                            v4 pos = player->GetPYellowHead()->GetActivePosition();
+                            SpawnMarioAvatar(E_PAD_INDEX_0, (float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
+                        }
+                    }
+                    #endif
+
                     break;
                 }
                 case MENU_SETTINGS:
                 {
-                    if (manager->DoInline(L"DOF", GTS_SMALL_PRINT, gDisableDOF ? STATE_NORMAL : STATE_TOGGLE, NULL, 256) & 256)
-                        gDisableDOF = !gDisableDOF;
-                    
+                    #define INLINE_BOOL(name, variable) \
+                    if (manager->DoInline(L##name, GTS_SMALL_PRINT, variable ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256) \
+                        variable = !variable; \
                     manager->DoBreak();
-                    manager->DoInline(L"Fog", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256);
+                    
 
+                    INLINE_BOOL("Disable DOF", gDisableDOF);
+                    INLINE_BOOL("Disable Fog", gDisableFog);
+                    INLINE_BOOL("Show Outlines", gShowOutlines);
+                    INLINE_BOOL("Show Extra Info", gShowCameraInfo);
+
+                    #undef INLINE_BOOL
+                    
                     break;
                 }
 
@@ -134,7 +210,10 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                         CCameraClip* clip = gClips[i];
                         bool active = gCinemachine.IsPlaying() && gCinemachine.GetActiveClip() == clip;
                         if (manager->DoInline(clip->Name.c_str(), GTS_SMALL_PRINT, active ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+                        {
+                            gCameraMenu = MENU_PLAYBACK;
                             gCinemachine.Play(clip);
+                        }
 
                         manager->DoBreak();
                     }
@@ -147,6 +226,12 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
 
                 case MENU_PLAYBACK:
                 {
+                    // input doesn't work because we're not rendering anything
+                    if ((gPadData->ButtonsDown & PAD_BUTTON_CIRCLE) != 0)
+                    {
+                        gCinemachine.Stop();
+                        gCameraMenu = MENU_TIMELINE;
+                    }
                     // Position
                     // Transition Type
                     // Timing
@@ -155,6 +240,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                     // Focus
                         // Field of View
                         // Depth of Field
+                    break;
                 }
             }
 
@@ -169,6 +255,11 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
     if ((manager->EndFrame(512) & 512) != 0)
     {
         if (gCameraMenu == MENU_MAIN) gShowCameraMenu = false;
+        else if (gCameraMenu == MENU_PLAYBACK)
+        {
+            gCinemachine.Stop();
+            gCameraMenu = MENU_TIMELINE;
+        }
         else if (gCameraMenu == MENU_TIMELINE)
         {
             if (gCinemachine.IsPlaying())
@@ -200,23 +291,40 @@ void OnUpdateDebugCamera(CView* view)
     }
     else HandleCameraMovementInput(view);
 
-    gCinemachine.Update();
-    if (gCinemachine.IsPlaying())
-        gCinemachine.Apply(view->Camera);
-    else 
-        view->DebugCamera.Apply(view->Camera);
     
-    if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
-    {
-        gShowCameraMenu = !gShowCameraMenu;
-        gCameraMenu = MENU_MAIN;
-    }
+    #ifdef __SM64__
+        if (!ApplyMainAvatarCamera(view->Camera))
+        {
+            gCinemachine.Update();
+            if (gCinemachine.IsPlaying())
+                gCinemachine.Apply(view->Camera);
+            else 
+                view->DebugCamera.Apply(view->Camera);
+        }
+    #else
+        gCinemachine.Update();
+        if (gCinemachine.IsPlaying())
+            gCinemachine.Apply(view->Camera);
+        else 
+            view->DebugCamera.Apply(view->Camera);
+    #endif
 
-    if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+
+    if (!gDisableCameraInput)
     {
-        view->DebugCamera.Foc = view->DebugCamera.Pos - v4(0.0f, 0.0f, 3000.0f, 1.0f);
-        view->DebugCamera.Yaw = 0.0f;
-        view->DebugCamera.Pitch = 0.0f;
+        if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
+        {
+            gCinemachine.Stop();
+            gShowCameraMenu = !gShowCameraMenu;
+            gCameraMenu = MENU_MAIN;
+        }
+
+        if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+        {
+            view->DebugCamera.Foc = view->DebugCamera.Pos - v4(0.0f, 0.0f, 3000.0f, 1.0f);
+            view->DebugCamera.Yaw = 0.0f;
+            view->DebugCamera.Pitch = 0.0f;
+        }
     }
 
     if (gDisableDOF)
@@ -234,6 +342,10 @@ void OnUpdateDebugCamera(CView* view)
 
 MMString<wchar_t> gCameraFocString;
 MMString<wchar_t> gCameraPosString;
+MMString<wchar_t> gWorldListString;
+MMString<wchar_t> gWorldStrings[64];
+
+extern CRawVector<PWorld*> gWorlds;
 
 void OnDrawPostComp(COverlayUI* interface)
 {
@@ -244,6 +356,8 @@ void OnDrawPostComp(COverlayUI* interface)
         UpdateButtonPrompts();
         return;
     }
+
+    if (gCameraMenu == MENU_PLAYBACK) return;
 
     if (gShowCameraInfo)
     {
@@ -260,6 +374,43 @@ void OnDrawPostComp(COverlayUI* interface)
         StartDrawText(true, NULL, NULL, false, true, gResX, gResY);
         DrawText(gFont[FONT_DEFAULT], pos_str, 16.0f, 21.0f, 0.0f, 7.0f, text_color, -1.0f);
         DrawText(gFont[FONT_DEFAULT], foc_str, 16.0f, 35.0f, 0.0f, 7.0f, text_color, -1.0f);
+
+
+        sprintf(fmt, "Worlds [%d]:", gWorlds.size());
+        const tchar_t* worldlist_str = (const tchar_t*)MultiByteToWChar(gWorldListString, fmt, NULL);
+        DrawText(gFont[FONT_DEFAULT], worldlist_str, 16.0f, 49.0f, 0.0f, 7.0f, text_color, -1.0f);
+
+        for (int i = 0; i < gWorlds.size(); ++i)
+        {
+            PWorld* world = gWorlds[i];
+            RLevel* level = world->Level;
+
+            if (level == NULL)
+            {
+                sprintf(fmt, "[%d]: No attached level", i);
+                const tchar_t* world_str = (const tchar_t*)MultiByteToWChar(gWorldStrings[i], fmt, NULL);
+                DrawText(gFont[FONT_DEFAULT], world_str, 32.0f, 49.0f + ((i + 1) * 14.0f), 0.0f, 7.0f, text_color, -1.0f);
+            }
+            else
+            {
+                CGUID guid = level->GetGUID();
+                CFileDBRow* row = FileDB::FindByGUID(guid);
+                if (row != NULL)
+                {
+                    sprintf(fmt, "[%d]: %s (g%d)", i, row->FilePathX, level->GetGUID().guid);
+                    const tchar_t* world_str = (const tchar_t*)MultiByteToWChar(gWorldStrings[i], fmt, NULL);
+                    DrawText(gFont[FONT_DEFAULT], world_str, 32.0f, 49.0f + ((i + 1) * 14.0f), 0.0f, 7.0f, text_color, -1.0f);
+                }
+                else
+                {
+                    sprintf(fmt, "[%d]: g%d", i, level->GetGUID().guid);
+                    const tchar_t* world_str = (const tchar_t*)MultiByteToWChar(gWorldStrings[i], fmt, NULL);
+                    DrawText(gFont[FONT_DEFAULT], world_str, 32.0f, 49.0f + ((i + 1) * 14.0f), 0.0f, 7.0f, text_color, -1.0f);
+                }
+            }
+        }
+
+
         EndDrawText();
     }
 
@@ -269,9 +420,11 @@ void OnDrawPostComp(COverlayUI* interface)
 }
 
 extern "C" void _alearcam_update_hook();
+extern "C" void _alearcam_renderworld_hook();
 void InitCameraHooks()
 {
     MH_Poke32(0x00014acc, B(&_alearcam_update_hook, 0x00014acc));
+    MH_Poke32(0x001e6b8c, B(&_alearcam_renderworld_hook, 0x001e6b8c));
     MH_InitHook((void*)0x002716fc, (void*)&OnDrawPostComp);
     MH_InitHook((void*)0x001fc920, (void*)&OnUpdateDebugCamera);
 

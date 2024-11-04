@@ -21,7 +21,7 @@ struct vfloat {
 struct v2 {
     inline v2() { V = (__vector float){0.0f, 0.0f, 0.0f, 0.0f}; }
     inline v2(float v) { V = (__vector float){v, v, v, v}; }
-    inline v2(float x, float y) { V = (__vector float){x, y, x, y}; }
+    inline v2(float x, float y) { V = (__vector float){x, y, 0.0f, 0.0f}; }
     inline v2(__vector float v) { V = v; }
 
     inline vfloat getX() { return V[0]; }

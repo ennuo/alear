@@ -7,6 +7,8 @@
 #include <sys/synchronization.h>
 #include <sys/return_code.h>
 
+#include "StringUtil.h"
+
 class CCriticalSec {
 public:
 	sys_lwmutex_t cs; 
@@ -14,6 +16,21 @@ public:
 	const char* LockFile;
 	int LockLine;
 	int DEBUGIsLocked;
+
+	inline CCriticalSec(const char* name) : Name(name) {
+		sys_lwmutex_attribute_t attr;
+		attr.name[0] = '\0';
+		attr.attr_protocol = SYS_SYNC_FIFO;
+		attr.attr_recursive = SYS_SYNC_RECURSIVE;
+		
+		StringCopy<char, 8u>(attr.name, (char*) name);
+
+		sys_lwmutex_create(&this->cs, &attr);
+
+		this->DEBUGIsLocked = 0;
+		this->LockLine = -1;
+		this->LockFile = NULL;
+	}
 	
 	inline void Enter(const char* lock_file, int lock_line)
 	{ 

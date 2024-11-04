@@ -93,6 +93,11 @@ public:
         LocalBuffer[0] = 0;
     }
 
+    inline bool empty()
+    {
+        return size() == 0;
+    }
+
     MMString<T>* assign(MMString<T>* s)
     {
         if (this != s)

@@ -11,13 +11,13 @@
 namespace NVirtualMachine
 {
     template<typename ReturnType>
-    void ConvertReturnValue(void* vm_addr, CScriptContext* context, ReturnType* native)
+    void ConvertReturnValue(void*& vm_addr, CScriptContext* context, ReturnType& native)
     {
         SConvertScriptTypes<ReturnType>::NativeToVM
         (
-            (typename SConvertScriptTypes<ReturnType>::VMType*) vm_addr, 
+            (typename SConvertScriptTypes<ReturnType>::VMType&) vm_addr, 
             context, 
-            (typename SConvertScriptTypes<ReturnType>::NativeType*) native
+            (typename SConvertScriptTypes<ReturnType>::NativeType&) native
         );
     }
 
@@ -28,7 +28,7 @@ namespace NVirtualMachine
         static void Call(CScriptContext* context, void* ret, u8* arguments)
         {
             ReturnType value = Fn();
-            ConvertReturnValue<ReturnType>(ret, context, &value);
+            ConvertReturnValue<ReturnType>(ret, context, value);
         }
     };
 
@@ -44,9 +44,9 @@ namespace NVirtualMachine
             } 
             call;
             
-            SConvertScriptTypes<Arg1>::VMToNative(&call.a, context, (typename SConvertScriptTypes<Arg1>::VMType*) (&((CallStruct*)arguments)->a));
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
             ReturnType value = Fn(call.a);
-            ConvertReturnValue<ReturnType>(ret, context, &value);
+            ConvertReturnValue<ReturnType>(ret, context, value);
         }
     };
 
@@ -71,7 +71,7 @@ namespace NVirtualMachine
             } 
             call;
             
-            SConvertScriptTypes<Arg1>::VMToNative(&call.a, context, (typename SConvertScriptTypes<Arg1>::VMType*) (&((CallStruct*)arguments)->a));
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
             Fn(call.a);
 
             // how do we calculate argument alignment?

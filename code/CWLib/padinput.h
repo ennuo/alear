@@ -2,6 +2,7 @@
 #define PAD_INPUT_H
 
 #include "PadEnums.h"
+#include "PadIndex.inl"
 
 class PadData {
 public:
@@ -38,6 +39,6 @@ public:
     u32 OldButtons;
 };
 
-extern PadData gPadData[7];
+extern PadData gPadData[E_PAD_INDEX_COUNT];
 
 #endif // PAD_INPUT_H

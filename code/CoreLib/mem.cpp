@@ -11,6 +11,11 @@ void* operator new[](size_t sz)
     return CAllocatorMM::Malloc(gOtherBucket, sz);
 }
 
+// void* operator new(size_t size, align_val_t)
+// {
+//     return CAllocatorMM::Malloc(gOtherBucket, size);
+// }
+
 void operator delete(void* p)
 {
     CAllocatorMM::Free(gOtherBucket, p);
@@ -34,4 +39,11 @@ extern "C" void ps3_free(void* p)
 extern "C" void* ps3_realloc(void* ptr, size_t new_size)
 {
     return CAllocatorMM::Realloc(gOtherBucket, ptr, new_size);
+}
+
+extern "C" void* ps3_calloc(size_t num, size_t size)
+{
+    void* p = CAllocatorMM::Malloc(gOtherBucket, num * size);
+    if (p != NULL) memset(p, 0, num * size);
+    return p;
 }

@@ -36,10 +36,13 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         {
             creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
             CResourceDescriptor<RPlan> desc(71445);
-            if (BlockUntilResourceLoaded(mesh))
-                costume->SetPowerup(mesh, desc);
+            costume->SetPowerup(mesh, desc);
+            
             break;
         }
     }

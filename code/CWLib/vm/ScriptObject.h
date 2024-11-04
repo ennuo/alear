@@ -3,10 +3,13 @@
 
 #include <map>
 
-#include "VMTypes.h"
-#include "ReflectionVisitable.h"
-#include "MMString.h"
-#include "vector.h"
+#include <ReflectionVisitable.h>
+#include <MMString.h>
+#include <vector.h>
+
+#include "vm/VMTypes.h"
+#include "vm/ScriptInstance.h"
+#include "vm/InstanceLayout.h"
 
 enum EScriptObjectType 
 {
@@ -35,6 +38,7 @@ enum EScriptObjectType
 };
 
 class CScriptObject;
+class CScriptObjectInstance;
 class MMOTextStreamA;
 class CResource;
 
@@ -53,6 +57,7 @@ class CScriptObjectManager {
     typedef std::map<CResource*, unsigned int> ResourceMap;
 public:
     ScriptObjectUID RegisterStringA(const char* string);
+    CScriptObjectInstance* LookupInstance(ScriptObjectUID object_uid);
 public:
     ObjectVec ScriptObjects;
     u32 NextScriptObjectID;
@@ -108,6 +113,15 @@ public:
 private:
     MMString<wchar_t> String;
     bool Canonical;
+};
+
+class CScriptObjectInstance : public CScriptObject {
+public:
+    inline bool IsInstance() { return true; }
+    inline EScriptObjectType GetType() { return SO_INSTANCE; }
+    inline void Stream() {};
+protected:
+    CScriptInstance ScriptInstance;
 };
 
 extern CScriptObjectManager* gScriptObjectManager;

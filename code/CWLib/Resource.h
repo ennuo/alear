@@ -29,8 +29,10 @@ enum EResourceFlag {
 
 class CResource : public CReflectionVisitable, public CDependencyWalkable {
 public:
-    inline CGUID GetGUID() { return GUID; }
-private:
+    inline CGUID& GetGUID() { return GUID; }
+    inline CHash& GetLoadedHash() { return LoadedHash; }
+    inline EResourceType GetResourceType() { return ResourceType; }
+public:
     volatile u32 RefCount;
     volatile u32 WeakCount;
     EResourceLoadState LoadState;
@@ -62,6 +64,9 @@ public:
     {
         return LoadState == LOAD_STATE_LOADED;
     }
+
+    ReflectReturn Duplicate(CResource* resource);
+    void BlockUntilLoaded();
 public:
     // Force the vtable to be generated
     virtual void Unload() = 0;

@@ -13,3 +13,9 @@ CThing* PWorld::FindThingByScriptName(char const* name)
 {
     return PWorld_FindThingByScriptName(this, name);
 }
+
+MH_DefineFunc(PWorld_UpgradeAllScripts, 0x0002d7a4, TOC0, void, PWorld*);
+void PWorld::UpgradeAllScripts()
+{
+    PWorld_UpgradeAllScripts(this);
+}

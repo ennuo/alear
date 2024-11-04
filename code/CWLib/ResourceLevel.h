@@ -15,7 +15,7 @@ protected:
 };
 
 class RGame;
-class RLevel : CResource {
+class RLevel : public CResource {
 public:
     CThingPtr WorldThing;
     bool FixedUp;

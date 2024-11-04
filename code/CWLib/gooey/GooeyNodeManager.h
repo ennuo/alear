@@ -40,6 +40,7 @@ public:
     void EndFrame();
     u32 EndFrame(u32 accepted_input);
 
+    u32 DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, v2 size, v4 colour, u32 accepted_input);
     u32 DoFancyButtonNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonStyle button_style, EGooeyButtonState button_state, u32 accepted_input, CSDFIconParams* icon);
     u32 DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour);
     u32 DoButton(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
@@ -52,6 +53,17 @@ public:
     void RenderToTexture(u32 screen_width, u32 screen_height, int texture_width, int texture_height, bool stencil_clip, bool respect_fade);
     u64 GetAnonymousUID();
 public:
+    inline void DoSpacer()
+    {
+        CP<RTexture> texture;
+        DoImage(texture, v2(2.0f), v4(0.0f));
+    }
+
+    inline u32 DoImage(CP<RTexture> const& texture, v2 size, v4 colour)
+    {
+        return DoImageButtonNamed(GetAnonymousUID(), texture, size, colour, 0);
+    }
+
     inline u32 DoInline(wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input)
     {
         return DoInline(GetAnonymousUID(), text, text_style, button_state, icon, accepted_input);

@@ -5,6 +5,7 @@
 #include "PlayerColours.h"
 #include "Part.h"
 
+class CPoppet;
 class PYellowHead : public CPart {
 public:
     v4 GetActivePosition() const;
@@ -13,6 +14,10 @@ private:
     char Pad[0x30];
 public:
     CRenderYellowHead* RenderYellowHead;
+private:
+    char Pad0[0x8];
+public:
+    CPoppet* Poppet;
 };
 
 #endif // PART_YELLOW_HEAD_H

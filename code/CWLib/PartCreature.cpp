@@ -19,3 +19,9 @@ void PCreature::SetScubaGear(bool active)
 {
     return PCreature_SetScubaGear(this, active);
 }
+
+MH_DefineFunc(PCreature_BeSlapped, 0x00073800, TOC0, void, PCreature*, CThing const*, v2 force);
+void PCreature::BeSlapped(CThing const* thing, v2 force)
+{
+    PCreature_BeSlapped(this, thing, force);
+}

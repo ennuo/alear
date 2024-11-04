@@ -1,17 +1,24 @@
 #include "alear.h"
 #include "json.h"
 #include "serverswitcher.h"
-#include "styles.h"
+#include "customization/styles.h"
 #include "alearvm.h"
 #include "portal.h"
 #include "powerup.h"
 #include "alearconf.h"
 #include "podstyles.h"
 #include "alearcam.h"
+#include "alearoptui.h"
+#include "fwatch.h"
+
+#ifdef __SM64__
+#include <sm64/init.h>
+#endif 
 
 #include "MMString.h"
 #include "cell/thread.h"
 #include "LoadingScreen.h"
+
 #include "rpcs3.h"
 #include "ppcasm.h"
 
@@ -23,27 +30,35 @@ extern "C" void _gfxbind_hook_naked();
 bool AlearCheckPatch();
 bool AlearEpilogue()
 {
-    DebugLog("Performing init steps...\n");
+    DebugLog("Finishing init steps...\n");
 
     // fix this later
-    *((CP<RTranslationTable>*)&gAlearTrans) = LoadResourceByKey<RTranslationTable>(3709465117, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RTranslationTable>*)&gAlearTrans) = LoadResourceByKey<RTranslationTable>(3709465117u, 0, STREAM_PRIORITY_DEFAULT);
 
     DebugLog("FileDB::DBs:\n");
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
     for (int i = 0; i < FileDB::DBs.size(); ++i)
     {
+        gFileWatcher->AddFile(FileDB::DBs[i]->Path, OnDatabaseFileChanged);
         DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
     }
     
     return true;
 }
 
+// need this to load before a specific init step, so going to separate it out
+CInitStep gEmoteInitStep = { "Emotes", NULL, LoadEmotes, UnloadEmotes, NULL, false, NULL };
 CInitStep gAlearInitSteps[] =
 {
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
-    { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     { "Alear Server Switcher", NULL, AlearInitServerSwitcher, NULL, NULL, false, NULL },
     { "Alear Cinemachine", NULL, LoadCameraClips, NULL, NULL, false, NULL },
+    { "Alear File Watcher", NULL, InitFileWatcher, CloseFileWatcher, NULL, false, NULL },
+    { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
+    { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
+    #ifdef __SM64__
+    { "Super Mario 64", NULL, InitMarioLib, CloseMarioLib, NULL, false, NULL },
+    #endif
     // Need a NULL entry to indicate the end of the initialization steps
     { NULL, NULL, NULL, NULL, NULL, false, NULL }
 };
@@ -205,12 +220,13 @@ void AlearStartup()
     MH_Poke32(0x000997c8, B(&_gfxbind_hook_naked, 0x000997c8));
     AlearInitVMHook();
     AlearInitPortalHook();
-    AlearInitStyles();
+    InitStyleHooks();
     AlearInitCreatureHook();
     AlearInitConf();
     InitPodStyles();
     InitCameraHooks();
     ServerSwitcherNativeFunctions::Register();
+    InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
     
 
@@ -218,6 +234,11 @@ void AlearStartup()
     // adds the init steps for ps3test1, so make sure we're adding them after our own.
     AddInitSteps(gPs3Test1InitSteps);
     AddInitSteps(gAlearInitSteps);
+
+    CInitStep* target = gPs3Test1InitSteps;
+    while (strcmp(target->DebugText, "SceneGraph") != 0) target++;
+    target->ChainTo = &gEmoteInitStep;
+    gEmoteInitStep.ChainTo = target + 1;
 
     DebugLog("gInitSteps:\n");
     CInitStep* step = gInitSteps, *last = NULL;
@@ -228,6 +249,8 @@ void AlearStartup()
     }
 
     DebugLog("Module has been initialized!\n");
+
+    
 }
 
 void AlearShutdown()
@@ -247,6 +270,8 @@ bool AlearCheckPatch()
     void* handle = SetActiveLoadingScreen(&state, NULL, true);
     ThreadSleep(10000);
     CancelActiveLoadingScreen(handle, false, 0);
+
+    
 
     return false;
 }

@@ -28,6 +28,7 @@ public:
 
 extern CAllocatorBucket gOtherBucket;
 extern CAllocatorBucket gVectorBucket;
+extern CAllocatorBucket gStlBucket;
 
 /* mem_allocator.h: 85 */
 class CAllocatorMM {

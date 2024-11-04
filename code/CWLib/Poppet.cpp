@@ -6,3 +6,9 @@ v2 CPoppet::GetBubbleSize()
 {
     return CPoppet_GetBubbleSize(this);
 }
+
+MH_DefineFunc(CPoppet_RenderHoverObject, 0x00344ab4, TOC1, void, CPoppet*, CThing*, float);
+void CPoppet::RenderHoverObject(CThing* thing, float outline)
+{
+    CPoppet_RenderHoverObject(this, thing, outline);
+}

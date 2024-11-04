@@ -25,6 +25,7 @@ enum EDebugChannel
     DC_REPLAY,
     DC_ALEAR,
     DC_SCRIPT_DEBUG,
+    DC_SM64,
 
     NUM_DEBUG_CHANNELS
 };
@@ -45,6 +46,8 @@ void DebugLogChR(EDebugChannel channel, char* b, char* e);
 void DebugLogChF(EDebugChannel channel, const char* format, ...);
 void DebugLogChV(EDebugChannel channel, const char* format, va_list args);
 void DebugLogEnable(EDebugChannel channel, bool enable);
+
+extern "C" void DEBUG_PRINT(const char* format, ...);
 
 extern DebugChannelOptions g_DebugChannelMapping[];
 

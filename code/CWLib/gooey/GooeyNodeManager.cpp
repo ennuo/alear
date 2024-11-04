@@ -56,6 +56,12 @@ void CGooeyNodeManager::RenderToTexture(u32 screen_width, u32 screen_height, int
     CGooeyNodeManager_RenderToTexture(this, screen_width, screen_height, texture_width, texture_height, stencil_clip, respect_fade);
 }
 
+MH_DefineFunc(CGooeyNodeManager_DoImageButtonNamed, 0x003007e8, TOC0, u32, CGooeyNodeManager*, u64, CP<RTexture> const&, v2, v4, u32);
+u32 CGooeyNodeManager::DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, v2 size, v4 colour, u32 accepted_input)
+{
+    return CGooeyNodeManager_DoImageButtonNamed(this, uid, texture, size, colour, accepted_input);
+}
+
 MH_DefineFunc(CGooeyNodeManager_DoTextNamed, 0x002ffb48, TOC0, u32, CGooeyNodeManager*, u64, TextRange<wchar_t>, EGooeyTextStyle, v4);
 u32 CGooeyNodeManager::DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour)
 {

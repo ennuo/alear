@@ -1,28 +1,47 @@
 cmake_minimum_required(VERSION 3.20)
-project(alear VERSION 1.0.0 LANGUAGES C CXX ASM)
+project(alear VERSION 1.0.0 LANGUAGES CXX ASM)
 
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_C_STANDARD 99)
 
+# set(CMAKE_BUILD_TYPE "Release")
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin> CACHE INTERNAL "")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 include(ppu)
 
-file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/code/**.cpp")
+file(GLOB_RECURSE SRC_FILES 
+    "${PROJECT_SOURCE_DIR}/code/PrxLib/**.cpp"
+    "${PROJECT_SOURCE_DIR}/code/CoreLib/**.cpp"
+    "${PROJECT_SOURCE_DIR}/code/CWLib/**.cpp"
+    "${PROJECT_SOURCE_DIR}/code/Alear/**.cpp"
+    "${PROJECT_SOURCE_DIR}/code/main.cpp"
+)
+
+set(ENABLE_LIBSM64 1)
+
+set(SM64_SRC_FILES "")
+if (ENABLE_LIBSM64)
+    file(GLOB_RECURSE SM64_SRC_FILES "${PROJECT_SOURCE_DIR}/code/SM64/**.cpp")
+endif()
+
 file(GLOB_RECURSE HEADER_FILES "${PROJECT_SOURCE_DIR}/code/**.h")
 file(GLOB_RECURSE ASSEMBLY_FILES "${PROJECT_SOURCE_DIR}/code/**.s")
 
-add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${ASSEMBLY_FILES} ${HEADER_FILES})
+add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${SM64_SRC_FILES} ${ASSEMBLY_FILES} ${HEADER_FILES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/code/Alear
+    ${PROJECT_SOURCE_DIR}/code/SM64
     ${PROJECT_SOURCE_DIR}/code/CWLib
     ${PROJECT_SOURCE_DIR}/code/Spuge
     ${PROJECT_SOURCE_DIR}/code/CoreLib
     ${PROJECT_SOURCE_DIR}/code/PrxLib
     ${PROJECT_SOURCE_DIR}/code
+
+    ${PROJECT_SOURCE_DIR}/sdk/libsm64/include
 
     ${PS3_SDK}/target/common/include
 	${PS3_SDK}/target/ppu/include
@@ -55,13 +74,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(
-    ${CMAKE_PROJECT_NAME}
-    # Libraries
-    fs_stub
-    gcm_cmd
-)
-
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub gcm_cmd)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR} 
@@ -70,7 +83,12 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
 
 target_precompile_headers(${CMAKE_PROJECT_NAME} PUBLIC 
     code/CoreLib/mmtypes.h
-)   
+)
+
+if (ENABLE_LIBSM64)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC __SM64__=1)
+    target_link_libraries(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCE_DIR}/sdk/libsm64/libsm64.a)
+endif()
 
 # Create the sprx
 include(sprx)
