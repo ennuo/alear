@@ -5,6 +5,7 @@
 
 extern u32 gResX;
 extern u32 gResY;
+extern u32 gGraphicsFrameNum;
 
 class CGCMTextureState {
 public:

@@ -23,12 +23,14 @@ public:
 
     inline CThingPtr& operator=(CThingPtr const& rhs) 
     { 
+        Unset();
         Set(rhs.Thing);
         return *this;
     }
 
     inline CThingPtr& operator=(CThing* rhs) 
     { 
+        Unset();
         Set(rhs);
         return *this;
     }

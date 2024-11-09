@@ -1,6 +1,9 @@
 #ifndef STRING_UTIL_H
 #define STRING_UTIL_H
 
+#include <printf.h>
+#include <stdarg.h>
+
 size_t StringLength(const char* str);
 size_t StringLength(const wchar_t* s);
 size_t StringLength(const tchar_t* s);
@@ -31,6 +34,19 @@ inline bool IsWhiteSpace(wchar_t c)
 
 inline bool StringIsNullOrEmpty(char* str) {
 	return str == NULL || *str == '\0';
+}
+
+size_t FormatStringVarArg(char* dst, unsigned int size, char const* format, va_list args);
+
+/* StringUtil.h: 84 */
+template <unsigned int size>
+size_t FormatString(char dst[size], char* format, ...)
+{
+	va_list args;
+    va_start(args, format);
+	size_t len = FormatStringVarArg(dst, size, format, args);
+	va_end(args);
+	return len;
 }
 
 #endif // STRING_UTIL_H

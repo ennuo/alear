@@ -11,6 +11,8 @@
 #include "PartRenderMesh.h"
 #include "PartPhysicsWorld.h"
 #include "PartRenderPosition.h"
+#include "PartShape.h"
+#include "PartGeneratedMesh.h"
 
 class CThingPtr;
 class PJoint;
@@ -27,6 +29,8 @@ public:
 public:
     inline PRenderMesh* GetPRenderMesh() { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
     inline PPos* GetPPos() { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
+    inline PShape* GetPShape() { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
+    inline PGeneratedMesh* GetPGeneratedMesh() { return static_cast<PGeneratedMesh*>(Parts[PART_TYPE_GENERATED_MESH]); }
     inline PWorld* GetPWorld() { return static_cast<PWorld*>(Parts[PART_TYPE_WORLD]); }
     inline PYellowHead* GetPYellowHead() { return static_cast<PYellowHead*>(Parts[PART_TYPE_YELLOW_HEAD]); }
     inline PCreature* GetPCreature() { return static_cast<PCreature*>(Parts[PART_TYPE_CREATURE]); }

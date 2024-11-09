@@ -26,8 +26,9 @@ enum EResourceFlag {
 	FLAGS_MAX_MIP_128 = 65536
 };
 
-
 class CResource : public CReflectionVisitable, public CDependencyWalkable {
+public:
+    CResource(EResourceFlag flags, EResourceType type);
 public:
     inline CGUID& GetGUID() { return GUID; }
     inline CHash& GetLoadedHash() { return LoadedHash; }
@@ -68,13 +69,12 @@ public:
     ReflectReturn Duplicate(CResource* resource);
     void BlockUntilLoaded();
 public:
-    // Force the vtable to be generated
-    virtual void Unload() = 0;
-    virtual ReflectReturn LoadFinished(SRevision const& load_revision) = 0;
-    virtual void AddDependencies(CVector<CP<CResource> >& dependencies) = 0;
-    virtual u32 GetSizeInMemory() = 0;
-    virtual u32 GetSizeInGfxMemoryPool(u32 location) = 0;
-    virtual ~CResource() {}
+    virtual void Unload();
+    virtual ReflectReturn LoadFinished(SRevision const& load_revision);
+    virtual void AddDependencies(CVector<CP<CResource> >& dependencies);
+    virtual u32 GetSizeInMemory();
+    virtual u32 GetSizeInGfxMemoryPool(u32 location);
+    virtual ~CResource();
 };
 
 

@@ -1,6 +1,8 @@
 #include "alear.h"
 #include "json.h"
 #include "serverswitcher.h"
+#include "resources/ResourcePins.h"
+#include "resources/ResourceHooks.h"
 #include "customization/styles.h"
 #include "alearvm.h"
 #include "portal.h"
@@ -9,7 +11,9 @@
 #include "podstyles.h"
 #include "alearcam.h"
 #include "alearoptui.h"
+#include "alearshared.h"
 #include "fwatch.h"
+#include "pins.h"
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -18,6 +22,7 @@
 #include "MMString.h"
 #include "cell/thread.h"
 #include "LoadingScreen.h"
+#include <Serialise.h>
 
 #include "rpcs3.h"
 #include "ppcasm.h"
@@ -30,10 +35,35 @@ extern "C" void _gfxbind_hook_naked();
 bool AlearCheckPatch();
 bool AlearEpilogue()
 {
+    // CFilePath fp(FPR_GAMEDATA, "gamedata/alear/scratch/pintest.bin");
+    // ByteArray b; CHash hash;
+    // if (FileExists(fp) && FileLoad(fp, b, hash))
+    // {
+    //     CReflectionLoadVector vec(&b);
+    //     ReflectReturn ret = Reflect(vec, gPins);
+    //     DebugLog("pintest result=%08x\n", ret);
+    //     if (ret == REFLECT_OK)
+    //     {
+    //         CPin& pin = gPins[0];
+    //         DebugLog("CPin Serialization Test (size=%d):\n", gPins.size());
+    //         DebugLog("\tID: %08x\n", pin.ID);
+    //         DebugLog("\tProgressType: %08x\n", pin.ProgressType);
+    //         DebugLog("\tCategory: %08x\n", pin.Category);
+    //         DebugLog("\tTitleLamsKey: %08x\n", pin.TitleLamsKey);
+    //         DebugLog("\tDescriptionLamsKey: %08x\n", pin.DescriptionLamsKey);
+    //         DebugLog("\tIcon: g%08x\n", pin.Icon.GetGUID().guid);
+    //         DebugLog("\tInitialProgressValue: %08x\n", pin.InitialProgressValue);
+    //         DebugLog("\tTargetValue: %08x\n", pin.TargetValue);
+    //         DebugLog("\tBehaviourFlags: %08x\n", pin.BehaviourFlags);
+    //     }
+    // }
+
     DebugLog("Finishing init steps...\n");
 
     // fix this later
     *((CP<RTranslationTable>*)&gAlearTrans) = LoadResourceByKey<RTranslationTable>(3709465117u, 0, STREAM_PRIORITY_DEFAULT);
+    // *((CP<RPins>*)&gPins) = LoadResourceByKey<RPins>(2940665091u, 0, STREAM_PRIORITY_DEFAULT);
+
 
     DebugLog("FileDB::DBs:\n");
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
@@ -216,16 +246,18 @@ void AlearStartup()
     DebugLog("SPRX TOC Base: %x\n", gTocBase);
 
     // Setup all our hooks
+    InitSharedHooks();
     MH_InitHook((void*)0x0057d548, (void*)&AlearSetupDatabase);
     MH_Poke32(0x000997c8, B(&_gfxbind_hook_naked, 0x000997c8));
     AlearInitVMHook();
     AlearInitPortalHook();
     InitStyleHooks();
+    InitResourceHooks();
     AlearInitCreatureHook();
     AlearInitConf();
     InitPodStyles();
     InitCameraHooks();
-    ServerSwitcherNativeFunctions::Register();
+    InitPinHooks();
     InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
     

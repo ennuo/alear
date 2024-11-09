@@ -14,7 +14,20 @@
         "xtree": "cpp",
         "set": "cpp",
         "vector": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "stdexcept": "cpp",
+        "xstddef": "cpp",
+        "cmath": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "exception": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "utility": "cpp",
+        "xutility": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

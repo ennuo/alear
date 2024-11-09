@@ -10,6 +10,8 @@ class RPlan;
 class RScript;
 class RTranslationTable;
 class RFontFace;
+class RTexture;
+class RPins;
 
 enum EResourceType
 {
@@ -55,9 +57,46 @@ enum EResourceType
     RTYPE_TEXTURE_LIST=39,
     RTYPE_MUSIC_SETTING=40,
     RTYPE_MIXER_SETTINGS=41,
-    RTYPE_REPLAY_CONFIG=42,
-    RTYPE_PALETTE=43,
-    RTYPE_LAST=44
+    //RTYPE_REPLAY_CONFIG=42,
+    RTYPE_PALETTE,
+    RTYPE_REPLAY_CONFIG, // this is technically supposed to be before RTYPE_PALETTE, but LBP1 is weird
+
+    // these are all LBP2/LBP3 types, just adding them here
+    // in case i implement some of them
+    RTYPE_STATICMESH,
+    RTYPE_ANIMATED_TEXTURE,
+    RTYPE_VOIP_RECORDING,
+    RTYPE_PINS,
+    RTYPE_INSTRUMENT,
+    RTYPE_SAMPLE,
+    RTYPE_OUTFIT_LIST,
+    RTYPE_PAINTBRUSH,
+    RTYPE_THING_RECORDING,
+    RTYPE_PAINTING,
+    RTYPE_QUEST,
+    RTYPE_ANIMATION_BANK,
+    RTYPE_ANIMATION_SET,
+    RTYPE_SKELETON_MAP,
+    RTYPE_SKELETON_REGISTRY,
+    RTYPE_SKELETON_ANIM_STYLES,
+    RTYPE_CROSSPLAY_VITA,
+    RTYPE_STREAMING_CHUNK,
+    RTYPE_SHARED_ADVENTURE_DATA,
+    RTYPE_ADVENTURE_PLAY_PROFILE,
+    RTYPE_ANIMATION_MAP,
+    RTYPE_CACHED_COSTUME_DATA,
+    RTYPE_DATALABELS,
+    RTYPE_ADVENTURE_MAPS,
+    
+    // any custom resource types go here
+
+    // toolkit/workbench
+    RTYPE_BONESET = 128,
+    RTYPE_SHADER_CACHE,
+    RTYPE_SCENEGRAPH,
+    RTYPE_TYPE_LIBRARY,
+
+    RTYPE_LAST
 };
 
 /* ResourceDescriptor.h: 33  */
@@ -92,6 +131,8 @@ template <> inline EResourceType GetResourceType<RPlan>() { return RTYPE_PLAN; }
 template <> inline EResourceType GetResourceType<RScript>() { return RTYPE_SCRIPT; }
 template <> inline EResourceType GetResourceType<RTranslationTable>() { return RTYPE_TRANSLATION; }
 template <> inline EResourceType GetResourceType<RFontFace>() { return RTYPE_FONTFACE; }
+template <> inline EResourceType GetResourceType<RTexture>() { return RTYPE_TEXTURE; }
+template <> inline EResourceType GetResourceType<RPins>() { return RTYPE_PINS; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

@@ -1,4 +1,5 @@
 #include "StringUtil.h"
+#include <printf.h>
 
 size_t StringLength(const char* s)
 {
@@ -58,3 +59,10 @@ unsigned int StringCopy(wchar_t* dst, const wchar_t* src, unsigned int size)
 
 unsigned int StringCopy(char* dst, char const* src, unsigned int size);
 unsigned int StringCopy(wchar_t* dst, wchar_t const* src, unsigned int size);
+
+size_t FormatStringVarArg(char* dst, unsigned int size, char const* format, va_list args)
+{
+	dst[size - 1] = '\0';
+	vsnprintf(dst, size, format, args);
+	dst[size - 1] = '\0';
+}

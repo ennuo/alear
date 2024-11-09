@@ -65,6 +65,8 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
         -Os
         -fno-exceptions
         -fno-strict-aliasing
+        -ffunction-sections
+        -fdata-sections
         -fmodulo-sched
         #-v
     >
@@ -74,11 +76,15 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub gcm_cmd)
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub gcm_cmd http_stub http_util_stub)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR} 
     SCRIPT_DEBUG=1
+
+    __GCC__=1
+    _NO_EX=1
+    _HAS_EXCEPTIONS=0
 )
 
 target_precompile_headers(${CMAKE_PROJECT_NAME} PUBLIC 

@@ -2,6 +2,7 @@
 #define MEM_STL_BUCKETS_H
 
 #include <limits>
+#include <new>
 
 #include "mem_allocator.h"
 
@@ -40,8 +41,8 @@ public:
         typedef STLBucketAlloc<U> other;
     };
 
-    STLBucketAlloc() throw() {}  // not required, unless used
-    template <class U> STLBucketAlloc(STLBucketAlloc<U> const& u) throw() {}
+    STLBucketAlloc(){}  // not required, unless used
+    template <class U> STLBucketAlloc(STLBucketAlloc<U> const& u) {}
 
     pointer allocate(size_type n, STLBucketAlloc<void>::const_pointer = 0)
     {
@@ -55,7 +56,7 @@ public:
 
     void construct(pointer p, value_type const& val)
     {
-        ::new(p) value_type(val);
+        new(p) value_type(val);
     }
 
     void destroy(pointer p)
@@ -63,7 +64,7 @@ public:
         p->~value_type();
     }
 
-    size_type max_size() const throw()
+    size_type max_size() const
     {
         return std::numeric_limits<size_type>::max() / sizeof(value_type);
     }

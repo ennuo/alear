@@ -12,10 +12,10 @@ namespace NVirtualMachine
 {
     template<typename ReturnType>
     void ConvertReturnValue(void*& vm_addr, CScriptContext* context, ReturnType& native)
-    {
+{
         SConvertScriptTypes<ReturnType>::NativeToVM
         (
-            (typename SConvertScriptTypes<ReturnType>::VMType&) vm_addr, 
+            *((typename SConvertScriptTypes<ReturnType>::VMType*&) vm_addr), 
             context, 
             (typename SConvertScriptTypes<ReturnType>::NativeType&) native
         );

@@ -46,6 +46,8 @@ public:
     u32 DoButton(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
     u32 DoInline(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
 
+    void AddFrameColumn(SizingBehaviour behaviour, ELayoutMode layout);
+    
     void DoBreak();
     void DoHorizontalBreak(EGooeyBreakStyle style, v2 tex_scale);
 

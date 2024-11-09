@@ -1,3 +1,6 @@
+#ifndef POPPET_ENUMS_INL
+#define POPPET_ENUMS_INL
+
 typedef enum ECameraType {
     E_CAMERA_ZONE=0,
     E_PHOTO_BOOTH=1,
@@ -252,3 +255,5 @@ typedef enum EToolType {
     // custom tool type
     TOOL_SHAPE_PLASMA=30
 } EToolType;
+
+#endif // POPPET_ENUMS_INL

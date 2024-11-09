@@ -6,6 +6,8 @@
 
 class PPos;
 class PRenderMesh;
+class PGeneratedMesh;
+class PYellowHead;
 
 class RLevel;
 class PWorld : public CPart {
@@ -22,6 +24,11 @@ private:
 public:
     CRawVector<PRenderMesh*> ListPRenderMesh;
     CRawVector<PPos*> ListPPos;
+    CRawVector<void*> ListPTrigger;
+    CRawVector<PYellowHead*> ListPYellowHead;
+    CRawVector<void*> ListPAudioWorld;
+    CRawVector<void*> ListPAnimation;
+    CRawVector<PGeneratedMesh*> ListPGeneratedMesh;
 };
 
 #endif // PART_PHYSICS_WORLD_H

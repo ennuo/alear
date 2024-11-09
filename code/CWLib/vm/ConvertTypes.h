@@ -25,23 +25,6 @@ struct SConvertScriptTypes
 // template <typename Type> struct SConvertScriptTypes;
 
 template <>
-struct SConvertScriptTypes<int>
-{
-    typedef int NativeType;
-    typedef int VMType;
-
-    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
-    {
-        out = in;
-    }
-
-    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
-    {
-        out = in;
-    }
-};
-
-template <>
 struct SConvertScriptTypes<const char*>
 {
     typedef const char* NativeType;

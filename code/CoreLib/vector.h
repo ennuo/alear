@@ -15,10 +15,10 @@ public:
 		this->MaxSize = 0;
 	}
 
-	inline bool empty() { return this->Size == 0; }
-	inline u32 size() { return this->Size; }
-	inline u32 max_size() { return this->MaxSize; };
-	inline u32 capacity() { return this->MaxSize - this->Size; }
+	inline bool empty() const { return this->Size == 0; }
+	inline u32 size() const { return this->Size; }
+	inline u32 max_size() const { return this->MaxSize; };
+	inline u32 capacity() const { return this->MaxSize - this->Size; }
 
 	inline T* begin() { return Data; }
 	inline T* end() { return Data + Size; }
@@ -142,19 +142,21 @@ public:
 	inline T* erase(T* i) 
 	{
 		unsigned int return_index = i - this->Data;
-		unsigned int copy_index = return_index;
 		unsigned int index = return_index;
 
-		(&this->Data[return_index])->~T();
-		while (index != (this->Size - 1))
+		while (index < this->Size - 1)
 		{
+			T& prev = this->Data[index];
 			T& next = this->Data[++index];
-			new (&this->Data[copy_index++]) T(next);
-			(&next)->~T();
+			
+			(&prev)->~T();
+			new (&prev) T();
+			prev = next;
 		}
 
+		
 		this->Size--;
-		return this->Data + index;
+		return this->Data + return_index;
 	}
 
 	inline void clear()
@@ -184,6 +186,7 @@ public:
 					for (u32 i = 0; i < this->Size; ++i)
 					{
 						T& old = this->Data[i];
+						new (&data[i]) T();
 						data[i] = old;
 						(&old)->~T();
 					}
@@ -214,6 +217,6 @@ public:
 	}
 };
 
-typedef CRawVector<char> ByteArray;
+typedef CRawVector<char, CAllocatorMMAligned128> ByteArray;
 
 #endif // VECTOR_H

@@ -28,6 +28,9 @@ gResourceArray: 0x00946a5c
 gResourceCS: 0x00946a58
 gCaches: 0x009469b0
 gAnimBank: 0x009749d8
+gGraphicsFrameNum: 0x009daf24
+loose_accel: 0x009d7d40
+loose_damp: 0x009d7d30
 _ZN15NVirtualMachine26gRegisteredScriptFunctionsE: 0x0
 _ZN19CScriptObjectCustomI21CScriptedGooeyWrapperE15NativeObjectMapE: 0x00a25df8
 _ZN6CAudio4gSFXE: 0x009cc848

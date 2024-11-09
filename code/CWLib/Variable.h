@@ -53,12 +53,9 @@ typedef ReflectReturn (*ReflectFunctionPtr)(CGatherVariables&, void*);
 // TEMP SHIT UNTIL I FIGURE OUT THE REFLECTION NONSENSE
 #include "customization/slapstyles.h"
 #include "customization/emotes.h"
+#include <cell/DebugLog.h>
 
 // these ones are defined all over the place
-template <typename R>
-ReflectReturn Reflect(R& r, float& d);
-template <typename R>
-ReflectReturn Reflect(R& r, u32& d);
 template<typename R>
 ReflectReturn Reflect(R& r, CSlapMesh& d);
 template<typename R>
@@ -84,7 +81,19 @@ ReflectReturn Add(CGatherVariables& r, D& d, char* c);
 template<typename R, typename D>
 ReflectReturn ReflectVector(R& r, D& d)
 {
+    ReflectReturn ret;
+
     u32& size = d.GetSizeForSerialisation();
+    if (!r.IsGatherVariables())
+    {
+        ret = Reflect(r, size);
+        if (ret != REFLECT_OK) return ret;
+        DebugLog("attempting to serialize vector with %d elements...\n", size);
+
+        if (!r.RequestToAllocate(size * sizeof(D)))
+            return REFLECT_EXCESSIVE_ALLOCATIONS;
+    }
+
     u32 len = size;
     bool init = d.begin() != NULL;
 
@@ -109,9 +118,12 @@ ReflectReturn ReflectVector(R& r, D& d)
     }
     
     for (u32 i = 0; i < size; ++i)
-        Add(r, d[i], NULL);
+    {
+        ret = Add(r, d[i], NULL);
+        if (ret != REFLECT_OK) return ret;
+    }
     
-    return REFLECT_OK;
+    return ret;
 }
 
 template<typename R, typename D>
@@ -160,6 +172,9 @@ public:
     inline bool IsGatherVariables() { return true; }
     inline bool GetLoading() { return Purpose == GATHER_TYPE_LOAD; }
     inline bool GetSaving() { return Purpose == GATHER_TYPE_SAVE; }
+    inline bool GetCompressInts() { return false; }
+    inline bool RequestToAllocate(u64 size) { return true; }
+
     inline ReflectReturn ReadWrite(void*, int) { return REFLECT_OK; }
     inline CGatherVariables& AddChild() 
     { 

@@ -89,9 +89,19 @@ public:
 		return true;
 	}
 
-	s32 Compare(const TextRange<T>& range);
-	s32 Compare(const T* str);
+	inline s32 Compare(const TextRange<T>& range)
+	{
+		// this technically has a different implementation but i dont really care
+		u32 len = MIN(range.Length(), Length());
+		return strncmp(Begin, range.Begin, len);
+	}
 
+	s32 Compare(const T* str)
+	{
+		u32 len = MIN(StringLength(str), Length());
+		return strncmp(Begin, str, len);
+	}
+	
 	bool StartsWith(const char* str);
 public:
 	const T* Begin;

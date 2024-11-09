@@ -113,3 +113,9 @@ void CGooeyNodeManager::SetFrameStyle(EGooeyContainerStyle container_style)
 {
     CGooeyNodeManager_SetFrameStyle(this, container_style);
 }
+
+MH_DefineFunc(CGooeyNodeManager_AddFrameColumn, 0x002f9bb4, TOC0, void, CGooeyNodeManager*, SizingBehaviour, ELayoutMode);
+void CGooeyNodeManager::AddFrameColumn(SizingBehaviour behaviour, ELayoutMode layout)
+{
+    CGooeyNodeManager_AddFrameColumn(this, behaviour, layout);
+}

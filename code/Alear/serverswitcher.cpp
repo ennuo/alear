@@ -8,10 +8,8 @@
 
 CServerSwitcher* gServerSwitcher;
 
-CServerSwitcher::CServerSwitcher()
+CServerSwitcher::CServerSwitcher() : Servers()
 {
-    memset(Servers, 0, sizeof(Servers));
-
     // Use whatever is in the EBOOT as the primary server
     ServerIndex = DEFAULT_SERVER_INDEX;
     GetDefaultServerConfiguration(Servers[DEFAULT_SERVER_INDEX]);
@@ -102,7 +100,7 @@ bool CServerSwitcher::LoadFromJSON(char* json)
         }
         
         SServerConfiguration& configuration = Servers[Size++];
-        strcpy(configuration.Name, name);
+        MultiByteToWChar(configuration.Name, name, NULL);
         strcpy(configuration.HttpUrl, http);
         strcpy(configuration.SecureUrl, secure);
         strcpy(configuration.Digest, digest);
@@ -137,61 +135,22 @@ bool CServerSwitcher::Switch(int index)
 
 void CServerSwitcher::GetDefaultServerConfiguration(SServerConfiguration& configuration)
 {
-    strcpy(configuration.Name, "Default");
+    configuration.Name.assign(L"Default", StringLength(L"Default"));
     strcpy(configuration.HttpUrl, gServerURL);
     strcpy(configuration.SecureUrl, gServerSecureURL);
     strcpy(configuration.Digest, gServerDigest);
 }
 
-const char* CServerSwitcher::GetServerName(int index)
+wchar_t* CServerSwitcher::GetServerName(int index)
 {
     if (index >= Size) return NULL;
-    return Servers[index].Name;
+    return Servers[index].Name.c_str();
 }
 
 const char* CServerSwitcher::GetServerURL(int index)
 {
     if (index >= Size) return NULL;
     return Servers[index].HttpUrl;
-}
-
-namespace ServerSwitcherNativeFunctions
-{
-    int GetNumServers()
-    {
-        return gServerSwitcher->GetNumServers();
-    }
-
-    int GetServerIndex()
-    {
-        return gServerSwitcher->GetServerIndex();
-    }
-
-    const char* GetServerName(int index)
-    {
-        return gServerSwitcher->GetServerName(index);
-    }
-
-    const char* GetServerURL(int index)
-    {
-        return gServerSwitcher->GetServerURL(index);
-    }
-
-    void Switch(int index)
-    {
-        DebugLog("Beginning server switch...\n");
-        if (gServerSwitcher->Switch(index)) DebugLog("Successfully switched servers!\n");
-        else DebugLog("Failed to switch servers!\n");
-    }
-
-    void Register()
-    {
-        RegisterNativeFunction("ServerSwitcher", "GetNumServers__", true, NVirtualMachine::CNativeFunction0<int>::Call<GetNumServers>);
-        RegisterNativeFunction("ServerSwitcher", "GetServerIndex__", true, NVirtualMachine::CNativeFunction0<int>::Call<GetServerIndex>);
-        RegisterNativeFunction("ServerSwitcher", "GetServerName__i", true, NVirtualMachine::CNativeFunction1<const char*, int>::Call<GetServerName>);
-        RegisterNativeFunction("ServerSwitcher", "GetServerURL__i", true, NVirtualMachine::CNativeFunction1<const char*, int>::Call<GetServerURL>);
-        RegisterNativeFunction("ServerSwitcher", "Switch__", true, NVirtualMachine::CNativeFunction1V<int>::Call<Switch>);
-    }
 }
 
 bool AlearInitServerSwitcher()

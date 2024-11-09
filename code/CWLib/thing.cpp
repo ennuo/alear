@@ -31,7 +31,7 @@ void CThingPtr::Unset()
     if (Thing != NULL)
     {
         if (Next != NULL) Next->Prev = Prev;
-        if (Prev == NULL) Next->Prev = Next;
+        if (Prev == NULL) Thing->FirstPtr = Next;
         else Prev->Next = Next;
     }
 
@@ -42,8 +42,6 @@ void CThingPtr::Unset()
 
 void CThingPtr::Set(CThing* thing)
 {
-    Unset();
-
     Thing = thing;
     if (Thing != NULL)
     {

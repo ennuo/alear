@@ -28,7 +28,7 @@ CPortalManager::CPortalManager()
     
 }
 
-void OnWorldRenderUpdate()
+void RenderPortalCameras()
 {
     RLevel* level = gGame->Level;
     if (level == NULL) return;
@@ -46,16 +46,10 @@ void OnWorldRenderUpdate()
         texture.Create(gMemPools[MEM_POOL_LOCAL], 0x1, 640, 360, 1, 1, 0, 1, 1); // glFormat=1, should be A8R8G8B8
         g_TextureInitialized = true;
     }
-
-    // CRawVector causes a crash, look into that
-    // CVector<PWorld*> world_list;
-    // world_list.push_back(world);
-    // CaptureRenderGoodBit(world_list, gView.Camera, 4, false, true);
-    // CopyRenderToMemory(gcm.width, gcm.height, gcm.offset, gcm.pitch, false, CELL_GCM_TRANSFER_LOCAL_TO_LOCAL, false);
 }
 
 extern "C" void _portal_hook_naked();
 void AlearInitPortalHook()
 {
-    // MH_Poke32(0x00206174, B(&_portal_hook_naked, 0x00206174));
+    MH_Poke32(0x00206174, B(&_portal_hook_naked, 0x00206174));
 }

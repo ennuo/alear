@@ -4,25 +4,8 @@
 template <typename R>
 ReflectReturn Reflect(R& r, MMString<char>& d)
 {
+    DebugLog("!! WARNING !! We're trying to reflect a string!\n");
     return REFLECT_NOT_IMPLEMENTED;
-}
-
-template <typename R>
-ReflectReturn Reflect(R& r, float& d)
-{
-    return r.ReadWrite((void*)&d, sizeof(float));
-}
-
-template <typename R>
-ReflectReturn Reflect(R& r, u32& d)
-{
-    return r.ReadWrite((void*)&d, sizeof(u32));
-}
-
-template <typename R>
-ReflectReturn Reflect(R& r, bool& d)
-{
-    return r.ReadWrite((void*)&d, sizeof(bool));
 }
 
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
@@ -74,6 +57,27 @@ ReflectReturn Reflect(R& r, CEmoteBank& d)
     ADD(Emotes);
     return ret;
 }
+
+// this is technically meant to be a templated function, but I don't feel like rewriting it right now,
+// and we only need the CReflectionLoadVector version
+
+MH_DefineFunc(ReflectResourceCP_CReflectionLoadVector, 0x006e8ce8, TOC1, ReflectReturn, CReflectionLoadVector&, CP<CResource>*, EResourceType);
+template<typename R, typename D>
+ReflectReturn Reflect(R& r, CP<D>& d)
+{
+    if (r.IsGatherVariables() || r.GetSaving()) return REFLECT_NOT_IMPLEMENTED;
+    ReflectResourceCP_CReflectionLoadVector(r, (CP<CResource>*)&d, GetResourceType<D>());
+}
+
+
+template<typename R, typename D>
+ReflectReturn Reflect(R& r, CResourceDescriptor<D>& d)
+{
+    ReflectDescriptor(r, d, false, false);
+}
+
+template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CP<RTexture>& d);
+template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CResourceDescriptor<RTexture>& d);
 
 #undef ADD
 

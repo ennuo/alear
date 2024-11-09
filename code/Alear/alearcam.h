@@ -7,6 +7,7 @@
 #include <DebugCamera.h>
 
 extern bool gShowCameraHelper;
+extern bool gShowOutlines;
 
 void InitCameraHooks();
 
@@ -202,5 +203,6 @@ extern CVector<CCameraClip*> gClips;
 extern CCameraClip gStandardClip;
 extern CCinemachine gCinemachine;
 bool LoadCameraClips();
+void UpdateDebugCameraNotInUse();
 
 #endif // ALEAR_CAMERA_H

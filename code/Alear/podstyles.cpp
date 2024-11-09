@@ -16,54 +16,6 @@
 #include "hook.h"
 #include "ppcasm.h"
 
-const u32 gUserObjectMask = 0x40100480;
-
-bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner)
-{
-    CGUID item_guid = item->Plan.GetGUID();
-
-    u32 item_type = item->Details.Type;
-    u32 view_type = view->Descriptor.Type;
-
-    u32 item_subtype = item->Details.SubType;
-    u32 view_subtype = view->Descriptor.SubType;
-
-    if (view->HeartedOnly && (item->Flags & E_IIF_HEARTED) == 0) return false;
-    
-    if (item_guid == 0x12981 || item_guid == 0x15351) return false;
-    if ((item_type & view_type) == 0) return false;
-
-    if ((view_type & E_TYPE_USER_POD) != 0)
-    {
-        if ((item_type & E_TYPE_POD_TOOL) != 0) return true;
-
-        if ((item_subtype & E_SUBTYPE_POD_CONTROLLER) != 0 || (item_subtype & E_SUBTYPE_POD_MESH) != 0)
-            return (item_subtype & view_subtype) != 0;
-        
-        return (view_subtype & E_SUBTYPE_POD_CONTROLLER) == 0 && (view_subtype & E_SUBTYPE_POD_MESH) == 0;
-    }
-
-    if ((item_type & gUserObjectMask) == 0)
-    {
-        if (item_subtype != 0)
-            return (item_subtype & view_subtype) != 0;
-
-        return true;
-    }
-    
-    bool owns = item->Details.ToolType == TOOL_NOT_A_TOOL 
-                ? item->Details.IsCreatedBy(owner)
-                : (item_subtype & E_SUBTYPE_MADE_BY_OTHERS) == 0;
-    
-    if ((view_subtype & E_SUBTYPE_MADE_BY_ME) != 0 && owns)
-        return true;
-    
-    if ((view_subtype & E_SUBTYPE_MADE_BY_OTHERS) != 0)
-        return !owns;
-
-    return false;
-}
-
 CThing* GetPodThing(PWorld* world)
 {
     for (int i = 0; i < world->ListPRenderMesh.size(); ++i)
@@ -166,7 +118,6 @@ bool SetInventoryPodMesh(void* inventory, CThing* global_thing, CResourceDescrip
 extern "C" void  _setinventorypod_hook();
 void InitPodStyles()
 {
-    MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
     MH_InitHook((void*)0x0002be3c, (void*)&GetPodThing);
     MH_Poke32(0x0038adc4, B(&_setinventorypod_hook, 0x0038adc4));
 }

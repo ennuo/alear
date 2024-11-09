@@ -1,8 +1,8 @@
 #ifndef SERVER_SWITCHER_H
 #define SERVER_SWITCHER_H
 
-
-#include "filepath.h"
+#include <filepath.h>
+#include <MMString.h>
 
 const int MAX_DIGEST_CHARS = 18;
 
@@ -10,13 +10,12 @@ extern const char* gServerURL;
 extern const char* gServerSecureURL;
 extern const char* gServerDigest;
 
-struct __attribute__((packed, aligned(16))) SServerConfiguration
+struct SServerConfiguration
 {
     static const int MAX_URL_CHARS = 127;
     static const int MAX_NAME_CHARS = 31;
 
-    /// @brief Server instance name
-    char Name[MAX_NAME_CHARS + 1];
+    MMString<wchar_t> Name;
 
     /// @brief HTTP connection URL
     char HttpUrl[MAX_URL_CHARS + 1];
@@ -52,10 +51,10 @@ public:
     /// @return Whether a server switch occurred
     bool Switch(int index);
 
-    inline int GetServerIndex() { return ServerIndex; }
-    inline int GetNumServers() { return Size; }
+    inline int GetServerIndex() const { return ServerIndex; }
+    inline int GetNumServers() const { return Size; }
 
-    const char* GetServerName(int index);
+    wchar_t* GetServerName(int index);
     const char* GetServerURL(int index);
 
 private:

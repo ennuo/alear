@@ -1,9 +1,13 @@
 #include "alearoptui.h"
+#include "alearconf.h"
+#include "serverswitcher.h"
 #include "fwatch.h"
 
+#include <printf.h>
 #include <hook.h>
 #include <mmalex.h>
 #include <ppcasm.h>
+#include <filepath.h>
 #include <printf.h>
 #include <filepath.h>
 #include <refcount.h>
@@ -25,9 +29,13 @@
 #include <Resource.h>
 #include <ResourceLevel.h>
 #include <ResourceSystem.h>
+#include <ResourceGame.h>
 #include <ResourceScript.h>
+#include <PartYellowHead.h>
+#include <Poppet.h>
 #include <CritSec.h>
 #include <ResourceGFXTexture.h>
+#include <padinput.h>
 
 
 #ifdef __SM64__
@@ -260,6 +268,57 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
         PrintLoadedResources();
 }
 
+void DoConfigSubmenu(CGooeyNodeManager* manager)
+{
+    ConfigMap::iterator it;
+    for (it = gConfigMap.begin(); it != gConfigMap.end(); ++it)
+    {
+        DoSectionHeader(manager, (wchar_t*)it->first);
+        if (manager->StartFrame())
+        {
+            manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+            manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_START);
+            manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_END);
+            manager->SetFrameBorders(0.0f, 0.0f);
+            manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
+
+            for (CConfigOption* opt = it->second; opt != NULL; opt = opt->GetNext())
+            {
+                u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T3, STATE_NORMAL, NULL, 256);
+                manager->DoText(L"<N/A>", GTS_T3);
+                manager->DoBreak();
+            }
+
+            manager->EndFrame();
+        }
+
+        manager->DoBreak();
+    }
+}
+
+void DoServersSubmenu(CGooeyNodeManager* manager)
+{
+    DoSectionHeader(manager, L"Instances");
+
+    int server_index = gServerSwitcher->GetServerIndex();
+    if (manager->StartFrame())
+    {
+        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+        manager->SetFrameBorders(0.0f, 0.0f);
+        manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
+
+        for (int i = 0; i < gServerSwitcher->GetNumServers(); ++i)
+        {
+            wchar_t* server_name = gServerSwitcher->GetServerName(i);
+            u32 result = manager->DoInline(server_name, GTS_T3, STATE_NORMAL, NULL, 256);
+            if (result & 256) gServerSwitcher->Switch(i);
+            manager->DoBreak();
+        }
+
+        manager->EndFrame();
+    }
+}
+
 void ReloadDatabase(CFilePath& fp)
 {
     FileDB::Mutex.Enter(__FILE__, __LINE__);
@@ -312,22 +371,6 @@ void OnDatabaseFileChanged(CFilePath& fp)
     gReloadMap.push_back(fp);
 }
 
-void OnReleaseLevel()
-{
-    #ifdef __SM64__
-    ClearMarioAvatars();
-    #endif
-}
-
-void OnUpdateLevel()
-{
-    #ifdef __SM64__
-    UpdateMarioAvatars();
-    #endif
-    
-    ReloadPendingDatabases();
-}
-
 namespace AlearOptNativeFunctions
 {
     void DoGamedataSubmenu(CScriptObjectGooey* gooey)
@@ -338,9 +381,27 @@ namespace AlearOptNativeFunctions
         DoGamedataSubmenu(wrapper->Manager);
     }
 
+    void DoConfigSubmenu(CScriptObjectGooey* gooey)
+    {
+        if (gooey == NULL) return;
+        CScriptedGooeyWrapper* wrapper = gooey->GetNativeObject();
+        if (wrapper == NULL) return;
+        DoConfigSubmenu(wrapper->Manager);
+    }
+
+    void DoServersSubmenu(CScriptObjectGooey* gooey)
+    {
+        if (gooey == NULL) return;
+        CScriptedGooeyWrapper* wrapper = gooey->GetNativeObject();
+        if (wrapper == NULL) return;
+        DoServersSubmenu(wrapper->Manager);
+    }
+
     void Register()
     {
         RegisterNativeFunction("Start_Menu", "DoGamedataSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoGamedataSubmenu>);
+        RegisterNativeFunction("Start_Menu", "DoConfigSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoConfigSubmenu>);
+        RegisterNativeFunction("Start_Menu", "DoServersSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoServersSubmenu>);
     }
 }
 

@@ -15,4 +15,13 @@ public:
 void OnFillInfoBubbleBackground(CInfoBubble* bubble, CGooeyNodeManager* manager);
 void OnFillPoppetBackground(CPoppet* poppet, float alpha);
 
+enum EPopitStyleFlags {
+    STYLE_FLAGS_NONE,
+    STYLE_FLAGS_GRADIENT = 0x1
+};
+
+enum EPopitStyleID {
+    STYLEID_DEFAULT
+};
+
 #endif // POPIT_STYLES_H

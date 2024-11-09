@@ -5,9 +5,15 @@
 
 #include <GFXApi.h>
 #include <Poppet.h>
+#include <PoppetBubble.h>
 #include <PartYellowHead.h>
 
+#include <ResourceGame.h>
+#include <ResourceLevel.h>
+#include <thing.h>
+
 #include <gooey/GooeyNodeManager.h>
+#include <cell/DebugLog.h>
 
 void OnFillInfoBubbleBackground(CInfoBubble* bubble, CGooeyNodeManager* manager)
 {
@@ -81,4 +87,112 @@ void OnFillPoppetBackground(CPoppet* poppet, float alpha)
     NGfx::tgAddVertex(bl, col1, 0.0f, v, 0.0f, 0.0f);
 
     NGfx::tgDraw(CELL_GCM_PRIMITIVE_QUADS, NULL, true, 1, 0, true, v4(0.0f, 0.0f, 0.0f, 1.0f));
+}
+
+v2 CustomGetBubbleSize(CPoppet* poppet)
+{
+
+}
+
+PGeneratedMesh* GetMeshTarget()
+{
+    RLevel* level = gGame->Level;
+    if (level == NULL) return NULL;
+    CThing* thing = level->WorldThing;
+    if (thing == NULL) return NULL;
+    PWorld* world = thing->GetPWorld();
+    if (world == NULL) return NULL;
+
+    CThing* target_thing = world->GetThingByUID(5588);
+    if (target_thing != NULL)
+        return target_thing->GetPGeneratedMesh();
+
+    return NULL;
+}
+
+PShape* GetShapeTarget()
+{
+    RLevel* level = gGame->Level;
+    if (level == NULL) return NULL;
+    CThing* thing = level->WorldThing;
+    if (thing == NULL) return NULL;
+    PWorld* world = thing->GetPWorld();
+    if (world == NULL) return NULL;
+
+    CThing* target_thing = world->GetThingByUID(5588);
+    if (target_thing != NULL)
+        return target_thing->GetPShape();
+
+    return NULL;
+}
+
+
+int gLastNumVerts = 0;
+
+void CustomUpdateShape(CPoppetBubble* bubble, bool in_use)
+{
+    CPoppet* poppet = bubble->GetParent();
+
+    v2 bubble_size = poppet->GetBubbleSize();
+    EPoppetMode mode = poppet->GetMode();
+    EPoppetSubMode submode = poppet->GetSubMode();
+
+    PShape* shape = GetShapeTarget();
+    if (shape != NULL) 
+    {
+        if (gLastNumVerts != shape->Polygon.size())
+        {
+            PGeneratedMesh* generated = GetMeshTarget();
+            const CMesh* mesh = generated->SharedMesh;
+
+            DebugLogChF(DC_DEFAULT, "Mesh refresh: CMesh has %d vertices\n", mesh->NumVerts);
+            
+            float* vertices = (float*)((char*)mesh->SourceGeometry.CachedAddress + mesh->SourceStreamOffsets[0]);
+            for (int i = 0; i < mesh->NumVerts; ++i, vertices += 4)
+            {
+                DebugLogChF(DC_DEFAULT, "v %f %f %f\n", vertices[0], vertices[1], vertices[2]);
+            }
+
+            u16* indices = (u16*)(mesh->Indices.CachedAddress);
+            DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[0] + 1, indices[1] + 1, indices[2] + 1);
+            for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
+            {
+                if (indices[i] == 65535)
+                {
+                    if (i + 3 >= mesh->NumIndices) break;
+                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i + 1] + 1, indices[i + 2] + 1, indices[i + 3] + 1);
+                    i += 3;
+                    j = 0;
+                    continue;
+                }
+
+                if ((j & 1) != 0)
+                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i - 2] + 1, indices[i] + 1, indices[i - 1] + 1);
+                else
+                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i - 2] + 1, indices[i - 1] + 1, indices[i] + 1);
+            }
+
+            gLastNumVerts = shape->Polygon.size();
+        }
+
+        bubble->SetBubbleShape(shape);
+    }
+    else bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
+    
+
+    // if (submode == SUBMODE_NONE) bubble->SetBubbleBalloon(bubble_size.getX(), bubble_size.getY(), 1.0f);
+    // else bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
+
+    u32 id;
+    switch (submode)
+    {
+        case SUBMODE_INVENTORY: id = 0x3ab; break;
+        case SUBMODE_EYETOY: id = 0x3af; break;
+        case SUBMODE_ORGANISE_PAGE: id = 0x3a3; break;
+        case SUBMODE_DEBUG_MENU: id = 0x3a7; break;
+        case SUBMODE_REMOTE: id = 0x3b3; break;
+        default: id = 0x3b7; break;
+    }
+
+    bubble->SetBubbleModeID(id);
 }

@@ -39,5 +39,13 @@ public:
     static u32 ResizePolicy(u32 old_max_size, u32 new_size, u32 item_sizeof);
 };
 
+class CAllocatorMMAligned128 {
+public:
+    static void* Malloc(CAllocatorBucket& bucket, u32 size);
+    static void Free(CAllocatorBucket& bucket, void* data);
+    static void* Realloc(CAllocatorBucket& bucket, void* data, u32 size);
+    static u32 ResizePolicy(u32 old_max_size, u32 new_size, u32 item_sizeof);
+};
+
 
 #endif // MEM_ALLOCATOR_H

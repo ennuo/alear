@@ -5,6 +5,6 @@
 
 void InitAlearOptUiHooks();
 void OnDatabaseFileChanged(CFilePath& fp);
-void OnUpdateLevel();
+void ReloadPendingDatabases();
 
 #endif // ALEAR_OPT_UI_H

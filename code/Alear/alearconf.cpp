@@ -9,9 +9,25 @@
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
 
-bool gUseDivergenceCheck = true;
-bool gUsePopitGradients = true;
-bool gHideMSPF = true;
+ConfigMap gConfigMap;
+CConfigBool gUsePopitGradients(L"Popit", L"Gradient", true);
+CConfigBool gUseDivergenceCheck(L"Game", L"Divergence Check", true);
+CConfigBool gHideMSPF(L"Display", L"Hide MSPF Display", true);
+
+void CConfigOption::AddToRegistry()
+{
+    typename ConfigMap::iterator it = gConfigMap.find(Category);
+    if (it == gConfigMap.end())
+    {
+        gConfigMap.insert(ConfigMap::value_type(Category, this));
+        return;
+    }
+
+    CConfigOption* opt = it->second;
+    while (opt->Next != NULL)
+        opt->Next = opt->Next;
+    opt->Next = this;
+}
 
 bool GetEditMode() { return gGame->EditMode; }
 void SetEditMode(bool edit_mode) { gGame->EditMode = edit_mode; }
@@ -31,33 +47,6 @@ StaticCP<RTranslationTable> gAlearTrans;
 
 tchar_t EMPTY_STRING[] = { 0x20 };
 
-bool CustomTryTranslate(u32 key, tchar_t const*& out)
-{
-    RTranslationTable* alear_trans = gAlearTrans;
-    if (alear_trans != NULL && alear_trans->IsLoaded())
-    {
-        if (alear_trans->GetText(key, out))
-            return true;
-    }
-    
-    RTranslationTable* patch_trans = gPatchTrans;
-    if (patch_trans != NULL && patch_trans->IsLoaded())
-    {
-        if (patch_trans->GetText(key, out))
-            return true;
-    }
-
-    RTranslationTable* trans = gTranslationTable;
-    if (trans != NULL && trans->IsLoaded())
-    {
-        if (trans->GetText(key, out))
-            return true;
-    }
-
-    out = EMPTY_STRING;
-    return false;
-}
-
 extern "C" void _divergence_hook();
 void AlearInitConf()
 {
@@ -65,12 +54,8 @@ void AlearInitConf()
     // MH_Poke32(0x002daeac, BLR);
     MH_Poke32(0x002726fc, BLR);
 
-    MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);
-
 
     gFarDist = 35000.0f;
-
-    
 
     RegisterNativeFunction("Alear", "SetEditMode__b", true, NVirtualMachine::CNativeFunction1V<bool>::Call<SetEditMode>);
     RegisterNativeFunction("Alear", "GetEditMode__", true, NVirtualMachine::CNativeFunction0<bool>::Call<GetEditMode>);

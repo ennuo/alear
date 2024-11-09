@@ -32,7 +32,7 @@ bool LoadEmotes()
         DebugLog("An error occurred while loading data for emotes!\n");
         return false;
     }
-
+    
     CEmote* it = gEmotes.begin();
     for (; it != gEmotes.end(); ++it)
     {

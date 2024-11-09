@@ -83,11 +83,11 @@ const char* gNewLine = "\n";
 
 extern "C" void DEBUG_PRINT(const char* format, ...)
 {
-    va_list args;
-    va_start(args, format);
-    DebugLogChV(DC_SM64, format, args);
-    va_end(args);
+    // va_list args;
+    // va_start(args, format);
+    // DebugLogChV(DC_SM64, format, args);
+    // va_end(args);
     
-    unsigned int len;
-    sys_tty_write(0, gNewLine, 1, &len);
+    // unsigned int len;
+    // sys_tty_write(0, gNewLine, 1, &len);
 }

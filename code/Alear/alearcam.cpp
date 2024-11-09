@@ -56,45 +56,17 @@ bool gShowOutlines = false;
 
 CGooeyNodeManager* gCameraGooey;
 
-void OnRunPipelinePostProcessing()
+void UpdateDebugCameraNotInUse()
 {
-    if (!gShowOutlines) return;
+    if (gCinemachine.IsPlaying())
+        gCinemachine.Stop();
+    
+    #ifdef __SM64__
+    ClearMarioAvatars();
+    #endif
 
-    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
-    CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
-    if (player == NULL) return;
-    PYellowHead* yellowhead = player->GetPYellowHead();
-    if (yellowhead == NULL) return;
-    CPoppet* poppet = yellowhead->Poppet;
-    if (poppet == NULL) return;
-
-    cellGcmSetDepthTestEnable(gCellGcmCurrentContext, CELL_GCM_TRUE);
-    cellGcmSetDepthFunc(gCellGcmCurrentContext, CELL_GCM_LEQUAL);
-    for (int i = 0; i < gView.WorldList.size(); ++i)
-    {
-        PWorld* world = gView.WorldList[i];
-        for (int j = 0; j < world->Things.size(); ++j)
-        {
-            CThing* thing = world->Things[j];
-            poppet->RenderHoverObject(thing, 5.0f);
-        }
-    }
-}
-
-void OnPredictionOrRenderUpdate()
-{
-    if (!gView.DebugCameraActive)
-    {
-        if (gCinemachine.IsPlaying())
-            gCinemachine.Stop();
-        
-        #ifdef __SM64__
-        ClearMarioAvatars();
-        #endif
-
-        gDisableCameraInput = false;
-        gShowCameraMenu = false;
-    }
+    gDisableCameraInput = false;
+    gShowCameraMenu = false;
 }
 
 float UnpackAnalogue(u16 raw)

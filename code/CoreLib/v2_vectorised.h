@@ -47,4 +47,6 @@ struct v2 {
     float V __attribute__ ((__vector_size__ (16)));
 };
 
+typedef vfloat floatInV2;
+
 #endif // V2_VECTORISED_H

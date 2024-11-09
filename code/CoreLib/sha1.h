@@ -8,20 +8,28 @@ enum ESHA1Result {
     SHA1_STATE_ERROR
 };
 
-struct CSHA1Context { // sha1.h: 55
+struct SHA1_CONTEXT {
+    u32  h0,h1,h2,h3,h4;
+    u32  nblocks;
+    unsigned char buf[64];
+    int  count;
+};
+
+class CSHA1Context { // sha1.h: 55
+public:
+    inline CSHA1Context()
+    {
+        Reset();
+    }
+
+public:
+    ESHA1Result Reset();
+    ESHA1Result AddData(const uint8_t* message_array, unsigned int length);
+    ESHA1Result Result(uint8_t* message_digest);
+private:
     int Computed;
     ESHA1Result Corrupted;
-    struct 
-    {
-        u32 h0;
-        u32 h1;
-        u32 h2;
-        u32 h3;
-        u32 h4;
-        u32 nblocks;
-        unsigned char buf[64];
-        int count;
-    } Context;
+    SHA1_CONTEXT Context;
 };
 
 #endif // SHA1_H

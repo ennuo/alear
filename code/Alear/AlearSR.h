@@ -1,0 +1,11 @@
+#ifndef ALEAR_REVISIONS_H
+#define ALEAR_REVISIONS_H
+
+enum AlearSR {
+    ALEAR_INITIAL = 1,
+    ALEAR_POPIT_STYLES,
+    
+    ALEAR_LATEST_PLUS_ONE
+};
+
+#endif // ALEAR_REVISIONS_H
