@@ -11,12 +11,27 @@ public:
     {
         return new T[c];
     }
+
+    static void Copy(T* d, const T* s, size_t n)
+    {
+        memcpy(d, s, n * sizeof(T));
+    }
+
+    static void Move(T* d, const T* s, size_t n)
+    {
+        memmove(d, s, n * sizeof(T));
+    }
 };
 
 template <typename T>
 class MMString {
     static const u32 LOCAL_STORE_BYTES = 16;
     static const u32 LOCAL_STORE_CHARS = (LOCAL_STORE_BYTES - sizeof(T)) / sizeof(T);
+public:
+    typedef StringTraits<T> Traits;
+    typedef size_t size_type;
+    typedef T* iterator;
+    typedef const T* const_iterator;
 public:
     MMString()
     {
@@ -66,13 +81,98 @@ public:
         return (l > LOCAL_STORE_CHARS) ? (T)-1 : LOCAL_STORE_CHARS - l;
     }
 
+    MMString<T>& append(const T* s) { return append(s, StringLength(s)); }
+    MMString<T>& append(const T* s, size_t s_l)
+    {
+        int old_length = length();
+        int new_length = old_length + s_l;
+
+        if (!IsUsingLocalData())
+        {
+            if (new_length <= HeapData.Capacity)
+            {
+                Traits::Copy(HeapData.Buffer + old_length, s, s_l);
+                HeapData.Buffer[new_length] = '\0';
+                HeapData.Length = new_length;
+
+                return *this;
+            }
+
+            T* data = Traits::Malloc(new_length + 1);
+            Traits::Copy(data, HeapData.Buffer, old_length);
+            Traits::Copy(data + old_length, s, s_l);
+
+            if (HeapData.Buffer != NULL)
+                delete[] HeapData.Buffer;
+            
+            HeapData.Buffer = data;
+            HeapData.Capacity = new_length + 1;
+            HeapData.Length = new_length;
+
+            return *this;
+        }
+
+        LocalData.LocalStoreFlag = MakeLocalStoreFlag(new_length);
+        if (CanUseLocalData(new_length))
+        {
+            Traits::Copy(LocalBuffer + old_length, s, s_l);
+            LocalBuffer[new_length] = 0;
+        }
+        else
+        {
+            T* data = Traits::Malloc(new_length + 1);
+            Traits::Copy(data, LocalBuffer, old_length);
+            Traits::Copy(data + old_length, s, s_l);
+            data[new_length] = 0;
+
+            HeapData.Buffer = data;
+            HeapData.Capacity = new_length + 1;
+            HeapData.Length = new_length;
+        }
+
+        return *this;
+    }
+
+    void reserve(size_t l) { Grow(l); }
+
+    bool Grow(size_t l)
+    {
+        int len = length();
+        if (IsUsingLocalData())
+        {
+            if (CanUseLocalData(l)) return true;
+
+            T* data = Traits::Malloc(l + 1);
+            Traits::Copy(data, LocalBuffer, len);
+            data[len] = '\0';
+
+            HeapData.Buffer = data;
+            HeapData.Capacity = l + 1;
+            HeapData.Length = len;
+            LocalData.LocalStoreFlag = MakeLocalStoreFlag(l);
+
+            return true;
+        }
+
+        if (HeapData.Capacity >= l) return true;
+        
+        T* data = Traits::Malloc(l + 1);
+        Traits::Copy(data, HeapData.Buffer, len);
+        delete[] HeapData.Buffer;
+
+        HeapData.Buffer = data;
+        HeapData.Capacity = l + 1;
+
+        return true;
+    }
+
     void Construct(const T* s, size_t l)
     {
         T flag = MakeLocalStoreFlag(l);
         T* data = LocalBuffer;
         if (flag == (T)-1)
         {
-            data = StringTraits<T>::Malloc(l + 1);
+            data = Traits::Malloc(l + 1);
 
             HeapData.Buffer = data;
             HeapData.Length = l;
@@ -80,7 +180,7 @@ public:
         }
 
         LocalData.LocalStoreFlag = flag;
-        memmove(data, s, l * sizeof(T));
+        Traits::Move(data, s, l);
         data[l] = 0;
     }
 
@@ -98,7 +198,7 @@ public:
         return size() == 0;
     }
 
-    MMString<T>* assign(MMString<T>* s)
+    MMString<T>& assign(MMString<T>* s)
     {
         if (this != s)
         {
@@ -107,10 +207,10 @@ public:
             Construct(s->c_str(), s->size());
         }
 
-        return this;
+        return *this;
     }
 
-    MMString<T>* assign(const T* s, size_t l)
+    MMString<T>& assign(const T* s, size_t l)
     {
         // If the string already has data in it...
         if (!IsUsingLocalData())
@@ -119,16 +219,16 @@ public:
             // just copy the string in
             if (l <= HeapData.Capacity)
             {
-                memmove(HeapData.Buffer, s, l * sizeof(T));
+                Traits::Move(HeapData.Buffer, s, l);
                 HeapData.Buffer[l] = 0;
                 HeapData.Length = l;
-                return this;
+                return *this;
             }
 
             // Otherwise allocate a new buffer
 
-            T* data = StringTraits<T>::Malloc(l + 1);
-            memmove(data, s, l * sizeof(T));
+            T* data = Traits::Malloc(l + 1);
+            Traits::Move(data, s, l);
             data[l] = 0;
 
             if (HeapData.Buffer != NULL)
@@ -141,7 +241,17 @@ public:
         // String is empty or uses local data, need to construct
         else Construct(s, l);
 
-        return this;
+        return *this;
+    }
+
+    MMString<T>& operator=(T const* s)
+    {
+        return assign(s, StringLength(s));
+    }
+
+    MMString<T>& operator+=(T const* s)
+    {
+        return append(s);
     }
 
     inline int compare(T* s)
@@ -154,6 +264,20 @@ public:
         if (IsUsingLocalData())
             return LOCAL_STORE_CHARS - LocalData.LocalStoreFlag;
         return HeapData.Length;
+    }
+
+    inline size_t length()
+    {
+        if (IsUsingLocalData())
+            return LOCAL_STORE_CHARS - LocalData.LocalStoreFlag;
+        return HeapData.Length;
+    }
+
+    inline size_t capacity()
+    {
+        if (IsUsingLocalData())
+            return LOCAL_STORE_CHARS;
+        return HeapData.Capacity;
     }
 
     inline T* c_str()

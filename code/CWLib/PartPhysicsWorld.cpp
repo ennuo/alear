@@ -19,3 +19,9 @@ void PWorld::UpgradeAllScripts()
 {
     PWorld_UpgradeAllScripts(this);
 }
+
+MH_DefineFunc(PWorld_GetWaterLevelWorldYCoords, 0x0002e294, TOC0, float, const PWorld*);
+float PWorld::GetWaterLevelWorldYCoords() const
+{
+    return PWorld_GetWaterLevelWorldYCoords(this);
+}

@@ -15,6 +15,7 @@ public:
     CThing* GetThingByUID(u32 uid);
     CThing* FindThingByScriptName(char const* name);
     void UpgradeAllScripts();
+    float GetWaterLevelWorldYCoords() const;
 public:
     u32 ThingUIDCounter;
     CRawVector<CThing*> Things;

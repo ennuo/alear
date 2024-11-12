@@ -195,12 +195,12 @@ void AttachCustomRevisionHooks()
 
 void InitResourceHooks()
 {
-    AttachResourceAllocationHooks();
-    AttachResourceDependinateHooks();
-    AttachResourceLoadHooks();
-    AttachResourceIds();
-    AttachResourceNames();
+    // AttachResourceAllocationHooks();
+    // AttachResourceDependinateHooks();
+    // AttachResourceLoadHooks();
+    // AttachResourceIds();
+    // AttachResourceNames();
     //AttachCustomRevisionHooks();
 
-    MH_Poke32(0x00087850, B(&_get_serialisationtype_hook, 0x00087850));
+    // MH_Poke32(0x00087850, B(&_get_serialisationtype_hook, 0x00087850));
 }

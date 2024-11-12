@@ -15,7 +15,8 @@
             "defines": [
                 "SN_TARGET_PS3",
                 "_DEBUG",
-                "__GCC__"
+                "__GCC__",
+                "__GNUC__"
             ],
             "compilerPath": "${SCE_PS3_ROOT}/host-win32/ppu/bin/ppu-lv2-gcc.exe",
             "cStandard": "c99",

@@ -87,7 +87,7 @@ CInitStep gAlearInitSteps[] =
     { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     #ifdef __SM64__
-    { "Super Mario 64", NULL, InitMarioLib, CloseMarioLib, NULL, false, NULL },
+    { "Super Mario 64", NULL, NULL, CloseMarioLib, InitMarioLib, false, NULL },
     #endif
     // Need a NULL entry to indicate the end of the initialization steps
     { NULL, NULL, NULL, NULL, NULL, false, NULL }
@@ -260,6 +260,8 @@ void AlearStartup()
     InitPinHooks();
     InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
+
+    MH_Poke32(0x0001da24, 0x39200001);
     
 
     // This module gets initialized by replacing the function that normally
@@ -279,10 +281,8 @@ void AlearStartup()
         DebugLog("\t%s\n", step->DebugText);
         step = ((last = step)->ChainTo == NULL) ? ++step : last->ChainTo;
     }
-
-    DebugLog("Module has been initialized!\n");
-
     
+    DebugLog("Module has been initialized!\n");
 }
 
 void AlearShutdown()
@@ -293,6 +293,7 @@ void AlearShutdown()
 bool AlearCheckPatch()
 {
     if (!IsUsingLLVM()) return true;
+    GeneratePatchYML();
 
     CTextState state(0xd, 0, 0, 0x0, 0, NULL);
 

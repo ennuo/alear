@@ -40,7 +40,7 @@ u32 CAllocatorMM::ResizePolicy(u32 old_max_size, u32 new_size, u32 item_sizeof)
 
 void* CAllocatorMMAligned128::Malloc(CAllocatorBucket& bucket, u32 size)
 {
-	return CAllocatorBucket_AlignedMalloc(bucket, size + 0x7f & 0xffffff80, 0x80);
+	return CAllocatorBucket_AlignedMalloc(bucket, size + 0x7f & 0xffffff80, 128);
 }
 
 void CAllocatorMMAligned128::Free(CAllocatorBucket& bucket, void* data)
@@ -50,7 +50,7 @@ void CAllocatorMMAligned128::Free(CAllocatorBucket& bucket, void* data)
 
 void* CAllocatorMMAligned128::Realloc(CAllocatorBucket& bucket, void* data, u32 size)
 {
-	return CAllocatorBucket_AlignedRealloc(bucket, data, size + 0x7f & 0xffffff80, 0x80);
+	return CAllocatorBucket_AlignedRealloc(bucket, data, size + 0x7f & 0xffffff80, 128);
 }
 
 /* mem_allocator.cpp: 757 */

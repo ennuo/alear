@@ -13,10 +13,12 @@
 #include "PartRenderPosition.h"
 #include "PartShape.h"
 #include "PartGeneratedMesh.h"
+#include "PartGroup.h"
+#include "PartLevelSettings.h"
 
 class CThingPtr;
 class PJoint;
-class PBody;
+class PBody : public CPart {};
 class PPos;
 
 class CThing : public CReflectionVisitable {
@@ -27,6 +29,7 @@ public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
 public:
+    inline PBody* GetPBody() { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
     inline PRenderMesh* GetPRenderMesh() { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
     inline PPos* GetPPos() { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
     inline PShape* GetPShape() { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
@@ -35,6 +38,8 @@ public:
     inline PYellowHead* GetPYellowHead() { return static_cast<PYellowHead*>(Parts[PART_TYPE_YELLOW_HEAD]); }
     inline PCreature* GetPCreature() { return static_cast<PCreature*>(Parts[PART_TYPE_CREATURE]); }
     inline PCostume* GetPCostume() { return static_cast<PCostume*>(Parts[PART_TYPE_COSTUME]); }
+    inline PGroup* GetPGroup() { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
+    inline PLevelSettings* GetPLevelSettings() { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];
@@ -53,6 +58,8 @@ public:
     u16 ChangedBy;
     bool Stamping;
 };
+
+extern float (*GetWorldAngle)(CThing* thing);
 
 #include "hack_thingptr.h"
 

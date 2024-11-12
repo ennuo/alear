@@ -47,49 +47,56 @@
 void DumpMeshToFile(CThing* thing)
 {
     PGeneratedMesh* generated = thing->GetPGeneratedMesh();
-    if (generated == NULL) return;
+    PPos* part_pos = thing->GetPPos();
+    if (generated == NULL || part_pos == NULL) return;
 
     const CMesh* mesh = generated->SharedMesh;
 
     char path[CELL_FS_MAX_FS_FILE_NAME_LENGTH];
-    sprintf(path, "output/meshgen/%d.obj", thing->UID);
+    sprintf(path, "output/meshgen/%d_glb", thing->UID);
     CFilePath fp(FPR_GAMEDATA, path);
 
     FileHandle fd;
     FileOpen(fp, &fd, OPEN_WRITE);
-    cellFsFtruncate(fd, 0);
 
-    char buf[512];
+    MMString<char> gltf;
+    gltf.reserve(10000); // reserve a reasonable amount of space for all the strcat bullshit
 
     float* vertices = (float*)((char*)mesh->SourceGeometry.CachedAddress + mesh->SourceStreamOffsets[0]);
-    for (int i = 0; i < mesh->NumVerts; ++i, vertices += 4)
-    {
-        sprintf(buf, "v %f %f %f\n", vertices[0], vertices[1], vertices[2]);
-        FileWrite(fd, buf, StringLength(buf));
-    }
+    float* uv = ((float*)mesh->AttributeData.CachedAddress);
 
     u16* indices = (u16*)(mesh->Indices.CachedAddress);
-
-    sprintf(buf, "f %d %d %d\n", indices[0] + 1, indices[1] + 1, indices[2] + 1);
-    FileWrite(fd, buf, StringLength(buf));
+    CRawVector<u16> triangles((mesh->NumVerts - 2) * 3);
+    triangles.push_back(indices[0]);
+    triangles.push_back(indices[1]);
+    triangles.push_back(indices[2]);
     for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
     {
         if (indices[i] == 65535)
         {
             if (i + 3 >= mesh->NumIndices) break;
-            sprintf(buf, "f %d %d %d\n", indices[i + 1] + 1, indices[i + 2] + 1, indices[i + 3] + 1);
-            FileWrite(fd, buf, StringLength(buf));
+
+            triangles.push_back(indices[i + 1]);
+            triangles.push_back(indices[i + 2]);
+            triangles.push_back(indices[i + 3]);
+
             i += 3;
             j = 0;
             continue;
         }
 
         if ((j & 1) != 0)
-            sprintf(buf, "f %d %d %d\n", indices[i - 2] + 1, indices[i] + 1, indices[i - 1] + 1);
+        {
+            triangles.push_back(indices[i - 2]);
+            triangles.push_back(indices[i]);
+            triangles.push_back(indices[i - 1]);
+        }
         else
-            sprintf(buf, "f %d %d %d\n", indices[i - 2] + 1, indices[i - 1] + 1, indices[i] + 1);
-
-        FileWrite(fd, buf, StringLength(buf));
+        {
+            triangles.push_back(indices[i - 2]);
+            triangles.push_back(indices[i - 1]);
+            triangles.push_back(indices[i]);
+        }
     }
 
 
@@ -162,6 +169,10 @@ void OnUpdateLevel()
 
 void OnRunPipelinePostProcessing()
 {
+    #if __SM64__
+    UpdateMarioDebugRender();
+    #endif 
+
     if (gShowOutlines) RenderShapeOutlines();
 }
 
@@ -169,6 +180,9 @@ void OnPredictionOrRenderUpdate()
 {
     if (!gView.DebugCameraActive)
         UpdateDebugCameraNotInUse();
+    #if __SM64__
+    UpdateMarioAvatarsRender();
+    #endif
 }
 
 void OnWorldRenderUpdate()

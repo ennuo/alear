@@ -10,12 +10,26 @@
 
 struct v4hack { v4 V; };
 extern void* gTocBase;
+extern u8* gStubBaseAddress;
 
 struct shkOpd
 {
     void* Function;
     void* TOC;
 };
+
+struct ps3_write {
+
+    ps3_write() {}
+    ps3_write(u32 addr, u32 word) { Address = addr; Word = word; }
+    
+    u32 Address;
+    u32 Word;
+};
+
+#define MAX_WRITES (1024)
+extern ps3_write gWriteCache[MAX_WRITES];
+extern u32 gNumWrites;
 
 u32 sys_dbg_read_process_memory(uint64_t address, void* data, size_t size);
 u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size);

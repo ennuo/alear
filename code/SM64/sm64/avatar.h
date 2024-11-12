@@ -9,6 +9,8 @@
 #include <thing.h>
 #include <padinput.h>
 
+#include <cell/DebugLog.h>
+
 #include <DebugCamera.h>
 #include <ResourceGFXMesh.h>
 
@@ -20,52 +22,85 @@ public:
         Id = -1;
     }
 public:
+    #define CONVERT_ANGLE( x ) ((s16)( -(x) / 180.0f * 32768.0f ))
     inline bool UpdatePosition()
     {
-        if (ShouldDestroy()) return false;
-        
+        if (!IsValid()) return false;
+
         PPos* part_pos = Thing->GetPPos();
         if (part_pos == NULL) return false;
 
         m44 wpos = part_pos->Game.WorldPosition;
         v4 pos = wpos.getCol3();
 
-        s32 posx = (s32)pos.getX();
-        s32 posy = (s32)pos.getY();
-        s32 posz = (s32)pos.getZ();
-        
-        s32 old_posx = (s32)Object.transform.position[0];
-        s32 old_posy = (s32)Object.transform.position[1];
-        s32 old_posz = (s32)Object.transform.position[2];
+        s16 posx = (s16)pos.getX();
+        s16 posy = (s16)pos.getY();
+        s16 posz = (s16)pos.getZ();
 
-        if (old_posx != posx || old_posy != posy || old_posz != posz)
+        s16& old_posx = LastPosition[0];
+        s16& old_posy = LastPosition[1];
+        s16& old_posz = LastPosition[2];
+        s16& old_angle = LastRotation;
+
+        const float rad2deg = 360.0f / (M_PI * 2.0f);
+        float angle = GetWorldAngle(Thing);
+
+
+        m44 debug_pos = m44::rotationZ(angle) * m44::scale(v3(1.0f, -1.0f, 1.0f));
+        debug_pos.setCol3(wpos.getCol3());
+        if (CollisionView != NULL)
         {
-            Object.transform.position[0] = pos.getX();
-            Object.transform.position[1] = pos.getY();
-            Object.transform.position[2] = pos.getZ();
+            PPos* debug_part = CollisionView->GetPPos();
+            if (debug_part != NULL)
+                debug_part->SetWorldPos(debug_pos, false, 0);
+        }
 
-            sm64_surface_object_move(Id, &Object.transform);
+        if (angle < -M_PI) angle += M_PI * 2.0f;
+        if (angle > M_PI) angle -= M_PI * 2.0f;
+        angle *= rad2deg;
+
+        s16 new_angle = CONVERT_ANGLE(angle);
+        
+        if (old_posx != posx || old_posy != posy || old_posz != posz || old_angle != new_angle)
+        {
+            SM64ObjectTransform transform;
+            memset(&transform, 0, sizeof(SM64ObjectTransform));
+
+            transform.position[0] = pos.getX();
+            transform.position[1] = pos.getY();
+            transform.position[2] = pos.getZ();
+            transform.eulerRotation[2] = angle;
+
+            DebugLogChF(DC_SM64, "updating physobj: %d, pos: [%f, %f, %f], rot: %f\n", Id, (float)pos.getX(), (float)pos.getY(), (float)pos.getZ(), angle);
+
+            LastPosition[0] = posx;
+            LastPosition[1] = posy;
+            LastPosition[2] = posz;
+            LastRotation = new_angle;
+
+            sm64_surface_object_move(Id, &transform);
 
             return true;
         }
 
         return false;
     }
+    #undef CONVERT_ANGLE
 
     inline bool ShouldDestroy()
     {
         if (!IsValid()) return true;
-
-        PGeneratedMesh* part = Thing->GetPGeneratedMesh();
-        if (part == NULL) return true;
-
-        return part->SharedMesh == NULL;
+        return Thing->GetPShape() == NULL;
     }
     
     inline bool IsValid() { return Id != -1 && Thing != NULL; }
 public:
+    v4 LocalMin;
+    v4 LocalMax;
+    s16 LastPosition[3];
+    s16 LastRotation;
     CThingPtr Thing;
-    SM64SurfaceObject Object;
+    CThingPtr CollisionView;
     s32 Id;
 };
 
@@ -78,6 +113,8 @@ public:
     inline bool IsValid() { return Id != -1; }
 public:
     void Tick();
+    void UpdateThing();
+    void DoDebugRender();
     inline void ApplyCamera(CCamera* camera)
     {
         Camera.Apply(camera);
@@ -90,10 +127,11 @@ private:
     void UpdateWorld();
     void UpdateInput();
     void UpdateMesh();
-    void UpdateThing();
     
     void UpdateSimObjects();
     bool SimObjectExists(u32 uid);
+    bool IsShapeNearby(CThing* thing);
+    bool IsMarioThing(CThing* thing);
 public:
     SM64MarioInputs Inputs;
     SM64MarioState State;
@@ -102,11 +140,14 @@ private:
     s32 Id;
     PadData* Pad;
     CThingPtr Thing;
+    CThingPtr PhysicsThing;
     CP<RMesh> Mesh;
     float CameraRotation;
     float CameraPos[3];
     CDebugCamera Camera;
     CVector<CMarioThing> SimObjects;
+    v4 MarioSearchMin;
+    v4 MarioSearchMax;
     bool Paused;
 private:
     float Position[9 * SM64_GEO_MAX_TRIANGLES];

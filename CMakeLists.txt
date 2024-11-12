@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_C_STANDARD 99)
 
-# set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin> CACHE INTERNAL "")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
@@ -20,7 +20,7 @@ file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/code/main.cpp"
 )
 
-set(ENABLE_LIBSM64 1)
+set(ENABLE_LIBSM64 0)
 
 set(SM64_SRC_FILES "")
 if (ENABLE_LIBSM64)
@@ -41,6 +41,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/code/PrxLib
     ${PROJECT_SOURCE_DIR}/code
 
+    ${PROJECT_SOURCE_DIR}/sdk/fmod
     ${PROJECT_SOURCE_DIR}/sdk/libsm64/include
 
     ${PS3_SDK}/target/common/include
@@ -76,7 +77,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub gcm_cmd http_stub http_util_stub)
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd http_stub http_util_stub)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR} 

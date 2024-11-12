@@ -51,5 +51,5 @@ void RenderPortalCameras()
 extern "C" void _portal_hook_naked();
 void AlearInitPortalHook()
 {
-    MH_Poke32(0x00206174, B(&_portal_hook_naked, 0x00206174));
+    // MH_Poke32(0x00206174, B(&_portal_hook_naked, 0x00206174));
 }

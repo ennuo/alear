@@ -3,5 +3,6 @@
 
 bool IsRPCS3();
 bool IsUsingLLVM();
+void GeneratePatchYML();
 
 #endif // RPCS3_H

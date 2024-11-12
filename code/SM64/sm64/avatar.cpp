@@ -1,16 +1,24 @@
 #include "sm64/avatar.h"
 
+#include <cell/gcm.h>
+
 #include <cell/DebugLog.h>
 #include <mmalex.h>
 
 #include <ResourceSystem.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <ResourcePlan.h>
 #include <PartPhysicsWorld.h>
 #include <PartRenderPosition.h>
 #include <PartRenderMesh.h>
 #include <Mesh.h>
 #include <PartGeneratedMesh.h>
+
+#include <Poppet.h>
+#include <GFXApi.h>
+
+#include <network/NetworkManager.h>
 
 inline float UnpackAnalogue(u16 raw)
 {
@@ -23,6 +31,8 @@ CVector<CMarioAvatar*> gMarioAvatars;
 bool gMarioInputEnabled;
 
 const u32 E_KEY_MARIO_MESH = 2673761222u;
+const u32 E_KEY_MARIO_OBJ = 4244711528u;
+const u32 E_KEY_MARIO_OBJ_NO_PHYS = 2954560587u;
 
 CMarioAvatar::CMarioAvatar(EPadIndex pad, float x, float y, float z)
 {
@@ -39,17 +49,20 @@ CMarioAvatar::CMarioAvatar(EPadIndex pad, float x, float y, float z)
     InitThing();
 }
 
+MH_DefineFunc(DeleteGroupAndChildrenAndJoints, 0x003f6eec, TOC1, void, CThing*);
 CMarioAvatar::~CMarioAvatar()
 {
-    if (Thing.GetThing() != NULL)
-        delete Thing.GetThing();
-    if (IsValid())
-        sm64_mario_delete(Id);
+    if (Thing != NULL) DeleteGroupAndChildrenAndJoints(Thing);
+    
+    if (IsValid()) sm64_mario_delete(Id);
 
     for (CMarioThing* it = SimObjects.begin(); it != SimObjects.end(); ++it)
     {
-        sm64_surface_object_delete(it->Id);
-        delete[] it->Object.surfaces;
+        if (it->CollisionView != NULL)
+            DeleteGroupAndChildrenAndJoints(it->CollisionView);
+        if (it->Id != -1)
+            sm64_surface_object_delete(it->Id);
+        it->Id = -1;
     }
 }
 
@@ -73,118 +86,201 @@ bool CMarioAvatar::SimObjectExists(u32 uid)
     return false;
 }
 
+bool CMarioAvatar::IsShapeNearby(CThing* thing)
+{
+    v4 bb_min = MarioSearchMin;
+    v4 bb_max = MarioSearchMax;
+
+    if (thing == NULL) return false;
+    PShape* shape = thing->GetPShape();
+    if (shape == NULL) return false;
+
+    v4 thing_min = *((v4*)&shape->Game.Min);
+    v4 thing_max = *((v4*)&shape->Game.Max);
+
+    return
+        thing_min.getX() > bb_min.getX() &&
+        thing_min.getY() > bb_min.getY() &&
+        thing_min.getZ() > bb_min.getZ() &&
+
+        thing_max.getX() < bb_max.getX() &&
+        thing_max.getY() < bb_max.getY() &&
+        thing_max.getZ() < bb_max.getZ();
+}
+
 void CMarioAvatar::UpdateSimObjects()
 {
     CMarioThing* it = SimObjects.begin();
     while (it != SimObjects.end())
     {
-        if (it->ShouldDestroy())
+        if (it->ShouldDestroy() || !IsShapeNearby(it->Thing))
         {
-            DebugLogChF(DC_SM64, "Removing object id %d from world since thing no longer exists in world\n", it->Id);
-            sm64_surface_object_delete(it->Id);
-            delete[] it->Object.surfaces;
+            // DebugLogChF(DC_SM64, "Removing object id %d from world since thing no longer exists in world\n", it->Id);
+            // sm64_surface_object_delete(it->Id);
+            // it = SimObjects.erase(it);
 
-            it = SimObjects.erase(it);
-
+            it++;
             continue;
         }
 
         it->UpdatePosition();
         
-        PGeneratedMesh* part_mesh = Thing->GetPGeneratedMesh();
-        if (part_mesh != NULL && part_mesh->SharedMesh == NULL)
-        {
-            DebugLog("WARNING: %d is no longer visible, but we're still calculating it!\n", it->Id);
-        }
+        // PGeneratedMesh* part_mesh = Thing->GetPGeneratedMesh();
+        // if (part_mesh != NULL && part_mesh->SharedMesh == NULL)
+        // {
+        //     DebugLog("WARNING: %d is no longer visible, but we're still calculating it!\n", it->Id);
+        // }
 
         it++;
     }
 }
 
+bool CMarioAvatar::IsMarioThing(CThing* thing)
+{
+    if (Thing == NULL || Thing->GroupHead == NULL) return false;
+    PGroup* group = Thing->GroupHead->GetPGroup();
+    if (group == NULL) return false;
+    return group->HasMember(thing);
+}
+
+MH_DefineFunc(PShape_InitialisePolygon, 0x0005c7e0, TOC0, void, PShape*);
+MH_DefineFunc(TriangulateByEarClipping, 0x005d3c7c, TOC0, void, CRawVector<v2, CAllocatorMMAligned128>& polygon, CRawVector<unsigned int>& loops, CRawVector<unsigned int>& triangles, bool flipped);
+// MH_DefineFunc(Decompose, 0x0, TOC0, void, float& s, q4& r, v3& t, m44& m);
 void CMarioAvatar::UpdateWorld()
 {
     if (Thing == NULL) return;
     UpdateSimObjects();
-    
 
     PWorld* world = Thing->World;
-    for (PGeneratedMesh** it = world->ListPGeneratedMesh.begin(); it != world->ListPGeneratedMesh.end(); ++it)
-    {
-        CThing* thing = (*it)->GetThing();
-        if (thing == NULL) continue;
+    sm64_set_mario_water_level(Id, (s32)world->GetWaterLevelWorldYCoords());
 
-        PGeneratedMesh* part_mesh = thing->GetPGeneratedMesh();
+    for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    {
+        CThing* thing = (*it);
+        if (thing == NULL || IsMarioThing(thing)) continue;
+
         PPos* part_pos = thing->GetPPos();
         PShape* part_shape = thing->GetPShape();
-        if (part_pos == NULL || part_shape == NULL || part_mesh == NULL) continue;
+        PBody* part_body = thing->GetPBody();
 
-        if (!part_mesh->WasJustVisible) continue;
+        if (part_pos == NULL || part_shape == NULL || thing->BodyRoot == NULL) continue;
+
         if (SimObjectExists(thing->UID)) continue;
+        if (part_shape->Polygon.size() == 0) continue;
 
         m44 wpos = part_pos->Game.WorldPosition;
         v4 pos = wpos.getCol3();
 
-        m33 com3 = wpos.getUpper3x3();
-        m44 com = m44::identity();
-        com = com.setUpper3x3(com3);
-        m44 inv_com = com;
-    
+        int num_verts = part_shape->Polygon.size();
+        v4* polygon = (v4*)part_shape->Polygon.begin();
 
-        inv_com = inv_com.setCol3(v4(0.0f, 0.0f, 0.0f, 1.0f));
+        float scale_x = Vectormath::Aos::length(wpos.getCol0());
+        float scale_y = Vectormath::Aos::length(wpos.getCol1());
+        float scale_z = Vectormath::Aos::length(wpos.getCol2());
+        bool is_flipped = Vectormath::Aos::determinant(wpos) < 0.0f;
+        m44 wpos_scalerot = m44::scale(v3(is_flipped ? scale_x * -1.0f : scale_x, scale_y, scale_z));
 
-        const CMesh* mesh = part_mesh->SharedMesh;
-        if (mesh == NULL) continue;
+        m44 transform = wpos_scalerot;
 
-        float* vertices = (float*)((char*)mesh->SourceGeometry.CachedAddress + mesh->SourceStreamOffsets[0]);
-        u16* indices = (u16*)(mesh->Indices.CachedAddress);
+        CThing* debug_thing = new CThing();
+        debug_thing->SetWorld(world, 0);
+        it = world->Things.begin();
+        debug_thing->AddPart(PART_TYPE_POS);
+        debug_thing->AddPart(PART_TYPE_SHAPE);
 
-        CRawVector<u16> triangles((mesh->NumVerts - 2) * 3);
-        triangles.push_back(indices[0]);
-        triangles.push_back(indices[1]);
-        triangles.push_back(indices[2]);
-        for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
+        PShape* debug_shape = debug_thing->GetPShape();
+
+        v4 local_min = v4(INFINITY);
+        v4 local_max = v4(-INFINITY);
+
+        CRawVector<v4, CAllocatorMMAligned128> vertices(num_verts * 2);
+        for (int i = 0; i < num_verts; ++i)
         {
-            if (indices[i] == 65535)
-            {
-                if (i + 3 >= mesh->NumIndices) break;
+            v4 v = transform * polygon[i];
 
-                triangles.push_back(indices[i + 1]);
-                triangles.push_back(indices[i + 2]);
-                triangles.push_back(indices[i + 3]);
+            debug_shape->Polygon.push_back(*((v2*)&v));
 
-                i += 3;
-                j = 0;
-                continue;
-            }
+            v.setZ(part_shape->Thickness);
+            v.setW(1.0f);
 
-            if ((j & 1) != 0)
-            {
-                triangles.push_back(indices[i - 2]);
-                triangles.push_back(indices[i]);
-                triangles.push_back(indices[i - 1]);
-            }
-            else
-            {
-                triangles.push_back(indices[i - 2]);
-                triangles.push_back(indices[i - 1]);
-                triangles.push_back(indices[i]);
-            }
+            vertices.push_back(v);
+
+            local_min = Vectormath::Aos::minPerElem(local_min, v);
+            local_max = Vectormath::Aos::maxPerElem(local_max, v);
         }
 
+        for (int i = 0; i < num_verts; ++i)
+        {
+            v4 v = transform * polygon[i];
+            v.setZ(-part_shape->Thickness);
+            v.setW(1.0f);
+            vertices.push_back(v);
+
+            local_min = Vectormath::Aos::minPerElem(local_min, v);
+            local_max = Vectormath::Aos::maxPerElem(local_max, v);
+        }
+
+        #define PUSH_3(x, y, z) triangles.push_back(x); triangles.push_back(y); triangles.push_back(z);
+        CRawVector<unsigned int> triangles(num_verts * 2 * 3);
+        int offset = 0, front = 0, back = num_verts;
+        for (unsigned int* it = part_shape->Loops.begin(); it != part_shape->Loops.end(); ++it)
+        {
+            unsigned int loop = *it;
+            for (int i = offset; i < offset + loop - 1; ++i)
+            {
+                PUSH_3((i + 1) + back, i + back, i);
+                PUSH_3((i + 1) + back, i, i + 1);
+            }
+
+            PUSH_3(offset, offset + loop + back - 1, offset + loop - 1);
+            PUSH_3(offset, offset + back, offset + loop + back - 1);
+
+            offset += loop;
+        }
+        #undef PUSH_3
+
+        for (int i = 0; i < part_shape->Loops.size(); ++i)
+            debug_shape->Loops.push_back(part_shape->Loops[i]);
+        PShape_InitialisePolygon(debug_shape);
+        
+
+
+
+        CRawVector<unsigned int> indices;
+        TriangulateByEarClipping(part_shape->Polygon, part_shape->Loops, indices, is_flipped);
+        for (int i = 0; i < indices.size(); ++i)
+            triangles.push_back(indices[i]);
+        
         CMarioThing obj;
+        SM64SurfaceObject surface_obj;
+        memset(&surface_obj, 0, sizeof(SM64SurfaceObject));
 
         obj.Thing = thing;
+        obj.LocalMin = local_min;
+        obj.LocalMax = local_max;
 
-        obj.Object.transform.position[0] = pos.getX();
-        obj.Object.transform.position[1] = pos.getY();
-        obj.Object.transform.position[2] = pos.getZ();
+        surface_obj.transform.position[0] = pos.getX();
+        surface_obj.transform.position[1] = pos.getY();
+        surface_obj.transform.position[2] = pos.getZ();
 
-        obj.Object.surfaceCount = triangles.size() / 3;
-        obj.Object.surfaces = new SM64Surface[obj.Object.surfaceCount];
+        obj.LastPosition[0] = (s16)surface_obj.transform.position[0];
+        obj.LastPosition[1] = (s16)surface_obj.transform.position[1];
+        obj.LastPosition[2] = (s16)surface_obj.transform.position[2];
 
-        for (int i = 0; i < obj.Object.surfaceCount; ++i)
+        const float rad2deg = 360.0f / (M_PI * 2.0f);
+        float angle = GetWorldAngle(Thing);
+        if (angle < -M_PI) angle += M_PI * 2.0f;
+        if (angle > M_PI) angle -= M_PI * 2.0f;
+        angle *= rad2deg;
+        surface_obj.transform.eulerRotation[2] = angle;
+
+
+        surface_obj.surfaceCount = triangles.size() / 3;
+        surface_obj.surfaces = new SM64Surface[surface_obj.surfaceCount];
+
+        for (int i = 0; i < surface_obj.surfaceCount; ++i)
         {
-            SM64Surface& surface = obj.Object.surfaces[i];
+            SM64Surface& surface = surface_obj.surfaces[i];
             surface.type = SURFACE_DEFAULT;
             surface.force = 0;
             surface.terrain = TERRAIN_GRASS;
@@ -193,10 +289,7 @@ void CMarioAvatar::UpdateWorld()
             {
                 u16 face = triangles[(i * 3) + j];
 
-                float* vertex = vertices + (face * 4);
-
-                v4 v(vertex[0], vertex[1], vertex[2], 1.0f);
-                v = inv_com * v;
+                v4 v = vertices[face];
 
                 surface.vertices[j][0] = (s32)((float)v.getX());
                 surface.vertices[j][1] = (s32)((float)v.getY());
@@ -204,9 +297,41 @@ void CMarioAvatar::UpdateWorld()
             }
         }
 
-        obj.Id = sm64_surface_object_create(&obj.Object);
+        obj.CollisionView = debug_thing;
+        obj.Id = sm64_surface_object_create(&surface_obj);
+
+        delete[] surface_obj.surfaces;
+        surface_obj.surfaces = 0;
+        surface_obj.surfaceCount = 0;
+
         SimObjects.push_back(obj);
-        DebugLogChF(DC_SM64, "Adding SM64Object with %d vertices, and %d indices, and %d triangles\n", mesh->NumVerts, triangles.size(), triangles.size() / 3);
+        DebugLogChF(DC_SM64, "physobj thing %d -> simobject %d, num_verts=%d, num_tris=%d, rotation=%f, baked_scale=[%f, %f, %f]\n",
+            thing->UID, obj.Id,
+            num_verts,
+            triangles.size() / 3,
+            angle,
+            scale_x, scale_y, scale_z
+        );
+    }
+}
+
+void CMarioAvatar::DoDebugRender()
+{
+    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+    CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
+    if (player == NULL) return;
+    PYellowHead* yellowhead = player->GetPYellowHead();
+    if (yellowhead == NULL) return;
+    CPoppet* poppet = yellowhead->Poppet;
+    if (poppet == NULL) return;
+
+    cellGcmSetDepthTestEnable(gCellGcmCurrentContext, CELL_GCM_TRUE);
+    cellGcmSetDepthFunc(gCellGcmCurrentContext, CELL_GCM_LEQUAL);
+    for (CMarioThing* it = SimObjects.begin(); it != SimObjects.end(); ++it)
+    {
+        CThing* thing = it->CollisionView;
+        if (thing == NULL) continue;
+        poppet->RenderHoverObject(thing, 5.0f);
     }
 }
 
@@ -216,34 +341,42 @@ void CMarioAvatar::InitThing()
     CThing* world_thing = gGame->Level->WorldThing;
     if (world_thing == NULL || (world = world_thing->GetPWorld()) == NULL) return;
 
-    Thing = new CThing();
-    Thing->SetWorld(world, 0);
-    Thing->AddPart(PART_TYPE_POS);
-    Thing->AddPart(PART_TYPE_RENDER_MESH);
+    CP<RPlan> stub = LoadResourceByKey<RPlan>(E_KEY_MARIO_OBJ_NO_PHYS, 0, STREAM_PRIORITY_DEFAULT);
+    stub->BlockUntilLoaded();
 
-    PPos* pos = Thing->GetPPos();
-    if (pos != NULL)
-        pos->ThingOfWhichIAmABone = Thing;
+    NetworkPlayerID default_id;
+    memset(&default_id, 0, sizeof(NetworkPlayerID));
+    StringCopy<char, 16>(default_id.handle.data, "mold");
+    Thing = RPlan::MakeClone(stub, world, default_id, true);
+    Thing->GetPRenderMesh()->Mesh = Mesh;
 
-    PRenderMesh* render_mesh = Thing->GetPRenderMesh();
-    if (render_mesh != NULL)
+    PGroup* group = Thing->GroupHead->GetPGroup();
+    for (CThing** it = group->GroupMemberList.begin(); it != group->GroupMemberList.end(); ++it)
     {
-        render_mesh->Mesh = Mesh;
-        render_mesh->BoneThings.push_back(Thing);
+        CThing* thing = *it;
+        if (thing->GetPShape() != NULL && thing != Thing.GetThing())
+            PhysicsThing = thing;
     }
 }
 
 void CMarioAvatar::Tick()
 {
     if (!IsValid()) return;
-    
+    if (Thing != NULL)
+    {
+        v4 mario_radius = v4(3000.0f);
+        v4 mario_pos = Thing->GetPPos()->GetBestGameplayPosv4();
+        MarioSearchMin = mario_pos - mario_radius;
+        MarioSearchMax = mario_pos + mario_radius;
+    }
+
     UpdateInput();
     UpdateWorld();
 
     sm64_mario_tick(Id, &Inputs, &State, &Geometry);
 
     UpdateMesh();
-    UpdateThing();
+    // UpdateThing();
 }
 
 void CMarioAvatar::UpdateInput()
@@ -256,12 +389,15 @@ void CMarioAvatar::UpdateInput()
 
     Inputs.stickX = UnpackAnalogue(Pad->LeftStickX);
     Inputs.stickY = UnpackAnalogue(Pad->LeftStickY);
-    Inputs.buttonA = (Pad->Buttons & PAD_BUTTON_CIRCLE) != 0;
+    Inputs.buttonA = (Pad->Buttons & PAD_BUTTON_CROSS) != 0;
     Inputs.buttonB = (Pad->Buttons & PAD_BUTTON_SQUARE) != 0;
-    Inputs.buttonZ = (Pad->Buttons & PAD_BUTTON_L1) != 0;
+    Inputs.buttonZ = (Pad->Buttons & PAD_BUTTON_L2) != 0;
 
+    sm64_set_sound_volume(100.0f);
     if (Pad->ButtonsDown & PAD_BUTTON_TRIANGLE)
-        sm64_mario_interact_cap(Id, MARIO_WING_CAP, 0, false);
+        sm64_play_sound_global(SOUND_GENERAL_BREAK_BOX);
+        // sm64_mario_interact_cap(Id, MARIO_WING_CAP, 0, false);
+    
 
     float x0 = UnpackAnalogue(Pad->RightStickX);
     CameraRotation += x0 * (1.0f / 30.0f) * 2.0f;
@@ -284,6 +420,12 @@ void CMarioAvatar::UpdateThing()
 
     m44 m = m44::identity();
     m.setCol3(v4(State.position[0], State.position[1], State.position[2], 1.0f));
+
+    m44 pm = m44::identity();
+    pm.setCol3(v4(State.position[0], State.position[1] + 28.7866f, State.position[2], 1.0f));
+
+    if (PhysicsThing.GetThing() != NULL)
+        PhysicsThing->GetPPos()->SetWorldPos(pm, true, 0);
     pos->SetWorldPos(m, false, 0);
 }
 

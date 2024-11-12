@@ -1,4 +1,5 @@
 #include "hook.h"
+#include "rpcs3.h"
 
 #include <sys/process.h>
 #include <sys/syscall.h>
@@ -23,11 +24,22 @@ u32 sys_dbg_read_process_memory(uint64_t address, void* data, size_t size)
 
 u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size)
 {
+    if (IsRPCS3())
+    {
+        int num_words = size / sizeof(u32);
+        for (int i = 0; i < num_words; ++i)
+            gWriteCache[gNumWrites++] = ps3_write(address + (i * sizeof(u32)), *(((u32*)data) + i));
+    }
+
     system_call_4(905, (u64)sys_process_getpid(), address, size, (u64)data);
     return_to_user_prog(u32);
 }
 
-static u8 g_StubData[0x10000] __attribute__((section(".text#"))) = { 0 };
+ps3_write gWriteCache[MAX_WRITES];
+u32 gNumWrites;
+
+static u8 g_StubData[4096] __attribute__((section(".text#"))) = { 0 };
+u8* gStubBaseAddress = g_StubData;
 static u8* g_StubAddress = g_StubData;
 static bool g_HookInit = false;
 

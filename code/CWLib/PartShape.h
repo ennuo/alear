@@ -7,6 +7,13 @@
 #include "Part.h"
 
 class PShape : public CPart {
+struct Forked {
+    v2 Min;
+    v2 Max;
+    CRawVector<v2, CAllocatorMMAligned128> GlobalPolygon; // 0x20
+    CVector<void*> Convexes; // technically CVector<CCompactConvex, CAllocatorMMAligned128>, but need a dummy type
+    v2* SharedVertices;
+};
 public:
     float Moment;
     v4 EditorColourTint;
@@ -23,15 +30,19 @@ public:
 private:
     char Pad0[0xf];
 public:
-    float Thickness;
-private:
-    char Pad1[0xc];
-public:
+    floatInV2 Thickness;
     float MassDepth;
     CRawVector<v2, CAllocatorMMAligned128> Polygon;
     CRawVector<unsigned int> Loops;
     CP<RMaterial> MMaterial;
     CP<RMaterial> OldMMaterial;
+private:
+    char Pad2[0x2c];
+public:
+    Forked Game; // 0xf0
+    Forked Rend;
+    Forked* Fork;
+    CRawVector<unsigned int, CAllocatorMMAligned128> SharedIndices; // 0x174
 };
 
 #endif // PART_SHAPE_H

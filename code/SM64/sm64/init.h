@@ -10,6 +10,8 @@ void CloseMarioLib();
 
 void ClearMarioAvatars();
 void UpdateMarioAvatars();
+void UpdateMarioAvatarsRender();
+void UpdateMarioDebugRender();
 void SpawnMarioAvatar(EPadIndex pad, float x, float y, float z);
 bool ApplyMainAvatarCamera(CCamera* camera);
 

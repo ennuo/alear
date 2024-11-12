@@ -17,6 +17,8 @@ public:
 
 class RPlan : public CResource {
 public:
+    static CThing* MakeClone(RPlan* plan, PWorld* world, NetworkPlayerID& default_creator, bool remap_uids);
+public:
     CThing* AssignedThing;
     u32 Revision;
     u32 BranchDescription;

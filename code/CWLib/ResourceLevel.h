@@ -17,6 +17,13 @@ protected:
 class RGame;
 class RLevel : public CResource {
 public:
+    inline PWorld* GetWorld() 
+    {
+        if (WorldThing.GetThing() != NULL)
+            return WorldThing->GetPWorld();
+        return NULL;
+    }
+public:
     CThingPtr WorldThing;
     bool FixedUp;
     CPlayerRecord PlayerRecord;

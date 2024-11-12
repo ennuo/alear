@@ -11,6 +11,7 @@ class RScript;
 class RTranslationTable;
 class RFontFace;
 class RTexture;
+class RMaterial;
 class RPins;
 
 enum EResourceType
@@ -133,6 +134,7 @@ template <> inline EResourceType GetResourceType<RTranslationTable>() { return R
 template <> inline EResourceType GetResourceType<RFontFace>() { return RTYPE_FONTFACE; }
 template <> inline EResourceType GetResourceType<RTexture>() { return RTYPE_TEXTURE; }
 template <> inline EResourceType GetResourceType<RPins>() { return RTYPE_PINS; }
+template <> inline EResourceType GetResourceType<RMaterial>() { return RTYPE_MATERIAL; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

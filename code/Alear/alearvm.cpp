@@ -166,7 +166,7 @@ void AlearInitVMHook()
     u32 addr = (u32)(&_alearvm_hook_naked);
     for (int i = g_RetailInstructionCount; i < NUM_INSTRUCTION_TYPES; ++i)
         gSwitchTable[i] = addr - (u32)gSwitchTable;
-
+    
     // Now switch out the pointer in the TOC
     MH_Poke32(0x00921b20, (u32)gSwitchTable);
 }

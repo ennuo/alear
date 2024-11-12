@@ -37,7 +37,7 @@ public:
 		bool printed = false;
 		while (true) 
 		{
-			int res = sys_lwmutex_lock(&this->cs, 2000000);
+			int res = sys_lwmutex_lock(&this->cs, /* 2000000 */ SYS_NO_TIMEOUT);
 			if (res != ETIMEDOUT)
 			{
 				if (res == CELL_OK) {

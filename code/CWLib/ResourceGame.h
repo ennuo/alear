@@ -3,6 +3,7 @@
 
 class RLevel;
 class CThing;
+class PWorld;
 
 #include "Resource.h"
 #include "PlayerNumber.inl"
@@ -10,6 +11,8 @@ class CThing;
 class RGame : public CResource {
 public:
     CThing* GetYellowheadFromPlayerNumber(EPlayerNumber player_number);
+public:
+    PWorld* GetWorld();
 public:
     u32 PauseState;
     float PauseT;

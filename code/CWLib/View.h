@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "DebugCamera.h"
 #include "PartPhysicsWorld.h"
+#include "PartLevelSettings.h"
 
 #include "vector.h"
 
@@ -42,6 +43,7 @@ public:
     CCamera RendCamera;
 };
 
+extern PLevelSettings* (*GGetLevelSettings)(PWorld* world);
 extern CView gView;
 
 #endif // VIEW_H

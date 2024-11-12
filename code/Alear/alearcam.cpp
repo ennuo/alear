@@ -47,11 +47,11 @@ enum ECameraMenu {
 
 ECameraMenu gCameraMenu = MENU_MAIN;
 bool gShowCameraMenu = false;
-bool gShowCameraInfo = true;
+bool gShowCameraInfo = false;
 bool gUseLegacyDebugCamera = false;
 bool gDisableCameraInput = false;
 bool gDisableDOF = true;
-bool gDisableFog = true;
+bool gDisableFog = false;
 bool gShowOutlines = false;
 
 CGooeyNodeManager* gCameraGooey;
@@ -150,7 +150,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                         if (player != NULL && player->GetPYellowHead() != NULL)
                         {
                             v4 pos = player->GetPYellowHead()->GetActivePosition();
-                            SpawnMarioAvatar(E_PAD_INDEX_0, (float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
+                            SpawnMarioAvatar(E_PAD_INDEX_0, (float)pos.getX(), (float)pos.getY() + 90.0f, (float)pos.getZ());
                         }
                     }
                     #endif
@@ -305,10 +305,21 @@ void OnUpdateDebugCamera(CView* view)
         gView.DofMin = 0.0f;
     }
 
-    if (gDisableFog)
+
+    gView.FogMin = 0.0f;
+    gView.FogMax = 0.0f;   
+    if (!gDisableFog)
     {
-        gView.FogMin = 0.0f;
-        gView.FogMax = 0.0f;   
+        const float fog_bias = 0.0f;
+        PLevelSettings* settings = GGetLevelSettings(gGame->GetWorld());
+        if (settings != NULL)
+        {
+            if (settings->FogNear <= settings->FogFar)
+            {
+                gView.FogMax = settings->FogFar + fog_bias;
+                gView.FogMin = fog_bias + settings->FogNear;
+            }
+        }
     }
 }
 
