@@ -10,6 +10,9 @@ extern bool gShowCameraHelper;
 extern bool gShowOutlines;
 
 void InitCameraHooks();
+void UpdateDebugCameraNotInUse();
+
+#ifdef __CINEMACHINE__
 
 enum ECameraShotType {
     SHOT_CUT,
@@ -203,6 +206,7 @@ extern CVector<CCameraClip*> gClips;
 extern CCameraClip gStandardClip;
 extern CCinemachine gCinemachine;
 bool LoadCameraClips();
-void UpdateDebugCameraNotInUse();
+
+#endif
 
 #endif // ALEAR_CAMERA_H

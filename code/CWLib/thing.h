@@ -28,6 +28,7 @@ public:
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
+    void RemovePart(EPartType type);
 public:
     inline PBody* GetPBody() { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
     inline PRenderMesh* GetPRenderMesh() { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }

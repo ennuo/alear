@@ -20,7 +20,8 @@ file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/code/main.cpp"
 )
 
-set(ENABLE_LIBSM64 0)
+set(ENABLE_LIBSM64 1)
+set(ENABLE_CINEMACHINE 0)
 
 set(SM64_SRC_FILES "")
 if (ENABLE_LIBSM64)
@@ -91,6 +92,10 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
 target_precompile_headers(${CMAKE_PROJECT_NAME} PUBLIC 
     code/CoreLib/mmtypes.h
 )
+
+if(ENABLE_CINEMACHINE)
+    target_compile_definitions((${CMAKE_PROJECT_NAME} PUBLIC __CINEMACHINE__=1))
+endif()
 
 if (ENABLE_LIBSM64)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC __SM64__=1)

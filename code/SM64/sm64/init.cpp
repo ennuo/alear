@@ -96,8 +96,7 @@ bool InitMarioLib()
     delete[] texture;
 
     gAudioCS = new CCriticalSec("MyAn");
-    gReadBuffer = (char*)CAllocatorMMAligned128::Malloc(gOtherBucket, RB_MAX_SIZE);
-
+    gReadBuffer = new char[RB_MAX_SIZE];
 
     FMOD_CREATESOUNDEXINFO exinfo;
     memset(&exinfo, 0, sizeof(FMOD_CREATESOUNDEXINFO));
@@ -108,7 +107,6 @@ bool InitMarioLib()
     exinfo.defaultfrequency = 32000;
     exinfo.format = FMOD_SOUND_FORMAT_PCM16;
     exinfo.pcmreadcallback = OnReadMarioAudio;
-    // exinfo.pcmsetposcallback = OnSetMarioAudioPos;
 
     FMOD_RESULT res = CAudio::System->createSound(NULL, FMOD_LOOP_NORMAL | FMOD_OPENUSER | FMOD_CREATESTREAM | FMOD_2D, &exinfo, &gSound);
     if (res != FMOD_OK)
@@ -146,7 +144,6 @@ void UpdateMarioAvatars()
     gAudioCS->Enter(__FILE__, __LINE__);
     int num_samples = sm64_audio_tick(gReadBufferSize / sizeof(DualSample16), 1100, (s16*)(gReadBuffer + gReadBufferSize));
     gReadBufferSize += num_samples * 2 * sizeof(DualSample16);
-    DebugLog("readbuf: 0x%08x, readbufsize: %d\n", gReadBuffer, gReadBufferSize);
     gAudioCS->Leave();
 
     if (!gStartedSound)

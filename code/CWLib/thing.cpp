@@ -21,6 +21,12 @@ void CThing::AddPart(EPartType type)
     CThing_AddPart(this, type);
 }
 
+MH_DefineFunc(CThing_RemovePart, 0x000216a4, TOC0, void, CThing*, EPartType);
+void CThing::RemovePart(EPartType type)
+{
+    CThing_RemovePart(this, type);
+}
+
 MH_DefineFunc(CThing_SetWorld, 0x0001f5ec, TOC0, void, CThing*, PWorld*, u32);
 void CThing::SetWorld(PWorld* world, u32 preferred_uid)
 {

@@ -82,7 +82,9 @@ CInitStep gAlearInitSteps[] =
 {
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
     { "Alear Server Switcher", NULL, AlearInitServerSwitcher, NULL, NULL, false, NULL },
+    #ifdef __CINEMACHINE__
     { "Alear Cinemachine", NULL, LoadCameraClips, NULL, NULL, false, NULL },
+    #endif
     { "Alear File Watcher", NULL, InitFileWatcher, CloseFileWatcher, NULL, false, NULL },
     { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },

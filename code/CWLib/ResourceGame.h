@@ -11,6 +11,7 @@ class PWorld;
 class RGame : public CResource {
 public:
     CThing* GetYellowheadFromPlayerNumber(EPlayerNumber player_number);
+    void TeleportPlayer(CThing* player, v2 const& position);
 public:
     PWorld* GetWorld();
 public:

@@ -44,17 +44,6 @@ public:
 
         const float rad2deg = 360.0f / (M_PI * 2.0f);
         float angle = GetWorldAngle(Thing);
-
-
-        m44 debug_pos = m44::rotationZ(angle) * m44::scale(v3(1.0f, -1.0f, 1.0f));
-        debug_pos.setCol3(wpos.getCol3());
-        if (CollisionView != NULL)
-        {
-            PPos* debug_part = CollisionView->GetPPos();
-            if (debug_part != NULL)
-                debug_part->SetWorldPos(debug_pos, false, 0);
-        }
-
         if (angle < -M_PI) angle += M_PI * 2.0f;
         if (angle > M_PI) angle -= M_PI * 2.0f;
         angle *= rad2deg;
@@ -95,12 +84,9 @@ public:
     
     inline bool IsValid() { return Id != -1 && Thing != NULL; }
 public:
-    v4 LocalMin;
-    v4 LocalMax;
     s16 LastPosition[3];
     s16 LastRotation;
     CThingPtr Thing;
-    CThingPtr CollisionView;
     s32 Id;
 };
 

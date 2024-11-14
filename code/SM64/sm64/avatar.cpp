@@ -58,12 +58,15 @@ CMarioAvatar::~CMarioAvatar()
 
     for (CMarioThing* it = SimObjects.begin(); it != SimObjects.end(); ++it)
     {
-        if (it->CollisionView != NULL)
-            DeleteGroupAndChildrenAndJoints(it->CollisionView);
         if (it->Id != -1)
             sm64_surface_object_delete(it->Id);
         it->Id = -1;
     }
+
+    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+    CThing* sackboy = gGame->GetYellowheadFromPlayerNumber(leader);
+    if (sackboy != NULL)
+        sackboy->GetPRenderMesh()->Visible = true;
 }
 
 void CMarioAvatar::InitMesh()
@@ -124,12 +127,6 @@ void CMarioAvatar::UpdateSimObjects()
         }
 
         it->UpdatePosition();
-        
-        // PGeneratedMesh* part_mesh = Thing->GetPGeneratedMesh();
-        // if (part_mesh != NULL && part_mesh->SharedMesh == NULL)
-        // {
-        //     DebugLog("WARNING: %d is no longer visible, but we're still calculating it!\n", it->Id);
-        // }
 
         it++;
     }
@@ -145,7 +142,6 @@ bool CMarioAvatar::IsMarioThing(CThing* thing)
 
 MH_DefineFunc(PShape_InitialisePolygon, 0x0005c7e0, TOC0, void, PShape*);
 MH_DefineFunc(TriangulateByEarClipping, 0x005d3c7c, TOC0, void, CRawVector<v2, CAllocatorMMAligned128>& polygon, CRawVector<unsigned int>& loops, CRawVector<unsigned int>& triangles, bool flipped);
-// MH_DefineFunc(Decompose, 0x0, TOC0, void, float& s, q4& r, v3& t, m44& m);
 void CMarioAvatar::UpdateWorld()
 {
     if (Thing == NULL) return;
@@ -165,6 +161,14 @@ void CMarioAvatar::UpdateWorld()
 
         if (part_pos == NULL || part_shape == NULL || thing->BodyRoot == NULL) continue;
 
+        CP<RMaterial>& material = part_shape->MMaterial;
+        if (!material) continue;
+
+        CGUID& guid = material->GetGUID();
+        if (
+            guid == 11455 || guid == 3247 || guid == 8390 || guid == 17661 || 
+            guid == 66189 || guid == 66206 || guid == 30622 || guid == 6448) continue;
+
         if (SimObjectExists(thing->UID)) continue;
         if (part_shape->Polygon.size() == 0) continue;
 
@@ -182,31 +186,15 @@ void CMarioAvatar::UpdateWorld()
 
         m44 transform = wpos_scalerot;
 
-        CThing* debug_thing = new CThing();
-        debug_thing->SetWorld(world, 0);
-        it = world->Things.begin();
-        debug_thing->AddPart(PART_TYPE_POS);
-        debug_thing->AddPart(PART_TYPE_SHAPE);
-
-        PShape* debug_shape = debug_thing->GetPShape();
-
-        v4 local_min = v4(INFINITY);
-        v4 local_max = v4(-INFINITY);
-
         CRawVector<v4, CAllocatorMMAligned128> vertices(num_verts * 2);
         for (int i = 0; i < num_verts; ++i)
         {
             v4 v = transform * polygon[i];
 
-            debug_shape->Polygon.push_back(*((v2*)&v));
-
             v.setZ(part_shape->Thickness);
             v.setW(1.0f);
 
             vertices.push_back(v);
-
-            local_min = Vectormath::Aos::minPerElem(local_min, v);
-            local_max = Vectormath::Aos::maxPerElem(local_max, v);
         }
 
         for (int i = 0; i < num_verts; ++i)
@@ -215,9 +203,6 @@ void CMarioAvatar::UpdateWorld()
             v.setZ(-part_shape->Thickness);
             v.setW(1.0f);
             vertices.push_back(v);
-
-            local_min = Vectormath::Aos::minPerElem(local_min, v);
-            local_max = Vectormath::Aos::maxPerElem(local_max, v);
         }
 
         #define PUSH_3(x, y, z) triangles.push_back(x); triangles.push_back(y); triangles.push_back(z);
@@ -239,13 +224,6 @@ void CMarioAvatar::UpdateWorld()
         }
         #undef PUSH_3
 
-        for (int i = 0; i < part_shape->Loops.size(); ++i)
-            debug_shape->Loops.push_back(part_shape->Loops[i]);
-        PShape_InitialisePolygon(debug_shape);
-        
-
-
-
         CRawVector<unsigned int> indices;
         TriangulateByEarClipping(part_shape->Polygon, part_shape->Loops, indices, is_flipped);
         for (int i = 0; i < indices.size(); ++i)
@@ -256,8 +234,6 @@ void CMarioAvatar::UpdateWorld()
         memset(&surface_obj, 0, sizeof(SM64SurfaceObject));
 
         obj.Thing = thing;
-        obj.LocalMin = local_min;
-        obj.LocalMax = local_max;
 
         surface_obj.transform.position[0] = pos.getX();
         surface_obj.transform.position[1] = pos.getY();
@@ -297,7 +273,6 @@ void CMarioAvatar::UpdateWorld()
             }
         }
 
-        obj.CollisionView = debug_thing;
         obj.Id = sm64_surface_object_create(&surface_obj);
 
         delete[] surface_obj.surfaces;
@@ -317,22 +292,7 @@ void CMarioAvatar::UpdateWorld()
 
 void CMarioAvatar::DoDebugRender()
 {
-    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
-    CThing* player = gGame->GetYellowheadFromPlayerNumber(leader);
-    if (player == NULL) return;
-    PYellowHead* yellowhead = player->GetPYellowHead();
-    if (yellowhead == NULL) return;
-    CPoppet* poppet = yellowhead->Poppet;
-    if (poppet == NULL) return;
 
-    cellGcmSetDepthTestEnable(gCellGcmCurrentContext, CELL_GCM_TRUE);
-    cellGcmSetDepthFunc(gCellGcmCurrentContext, CELL_GCM_LEQUAL);
-    for (CMarioThing* it = SimObjects.begin(); it != SimObjects.end(); ++it)
-    {
-        CThing* thing = it->CollisionView;
-        if (thing == NULL) continue;
-        poppet->RenderHoverObject(thing, 5.0f);
-    }
 }
 
 void CMarioAvatar::InitThing()
@@ -370,6 +330,7 @@ void CMarioAvatar::Tick()
         MarioSearchMax = mario_pos + mario_radius;
     }
 
+
     UpdateInput();
     UpdateWorld();
 
@@ -392,11 +353,10 @@ void CMarioAvatar::UpdateInput()
     Inputs.buttonA = (Pad->Buttons & PAD_BUTTON_CROSS) != 0;
     Inputs.buttonB = (Pad->Buttons & PAD_BUTTON_SQUARE) != 0;
     Inputs.buttonZ = (Pad->Buttons & PAD_BUTTON_L2) != 0;
-
+    
     sm64_set_sound_volume(100.0f);
     if (Pad->ButtonsDown & PAD_BUTTON_TRIANGLE)
-        sm64_play_sound_global(SOUND_GENERAL_BREAK_BOX);
-        // sm64_mario_interact_cap(Id, MARIO_WING_CAP, 0, false);
+        sm64_mario_interact_cap(Id, MARIO_WING_CAP, 0, false);
     
 
     float x0 = UnpackAnalogue(Pad->RightStickX);
@@ -427,6 +387,17 @@ void CMarioAvatar::UpdateThing()
     if (PhysicsThing.GetThing() != NULL)
         PhysicsThing->GetPPos()->SetWorldPos(pm, true, 0);
     pos->SetWorldPos(m, false, 0);
+
+    EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
+    CThing* sackboy = gGame->GetYellowheadFromPlayerNumber(leader);
+    if (sackboy != NULL)
+    {
+        sackboy->GetPRenderMesh()->Visible = false;
+
+        v2 pos(State.position[0], State.position[1], State.position[2], 1.0f);
+        // gGame->TeleportPlayer(sackboy, pos);
+        sackboy->GetPPos()->SetWorldPos(m, false, 0);
+    }
 }
 
 void CMarioAvatar::UpdateMesh()

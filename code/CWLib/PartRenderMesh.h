@@ -17,6 +17,10 @@ public:
     CVector<CThingPtr> BoneThings;
     CP<RMesh> Mesh;
     void* MeshInstance;
+private:
+    char Pad2[0x12];
+public:
+    bool Visible;
 };
 
 #endif // PART_RENDER_MESH_H

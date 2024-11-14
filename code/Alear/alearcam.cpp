@@ -58,8 +58,10 @@ CGooeyNodeManager* gCameraGooey;
 
 void UpdateDebugCameraNotInUse()
 {
+    #ifdef __CINEMACHINE__
     if (gCinemachine.IsPlaying())
         gCinemachine.Stop();
+    #endif
     
     #ifdef __SM64__
     ClearMarioAvatars();
@@ -124,15 +126,15 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
             manager->SetFrameBorders(0.0f, 0.0f);
             manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
 
-
             switch (gCameraMenu)
             {
                 case MENU_MAIN:
                 {
+                    #ifdef __CINEMACHINE__
                     if (manager->DoInline(L"Cinemachine", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
                         gCameraMenu = MENU_TIMELINE;
-                    
                     manager->DoBreak();
+                    #endif
                     
                     if (manager->DoInline(L"Settings", GTS_SMALL_PRINT, STATE_NORMAL, NULL, 256) & 256)
                         gCameraMenu = MENU_SETTINGS;
@@ -175,6 +177,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                     break;
                 }
 
+                #ifdef __CINEMACHINE__
                 case MENU_TIMELINE:
                 {
                     for (int i = 0; i < gClips.size(); ++i)
@@ -214,6 +217,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                         // Depth of Field
                     break;
                 }
+                #endif
             }
 
 
@@ -227,6 +231,8 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
     if ((manager->EndFrame(512) & 512) != 0)
     {
         if (gCameraMenu == MENU_MAIN) gShowCameraMenu = false;
+
+        #ifdef __CINEMACHINE__
         else if (gCameraMenu == MENU_PLAYBACK)
         {
             gCinemachine.Stop();
@@ -239,6 +245,8 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
             else
                 gCameraMenu = MENU_MAIN;
         }
+        #endif
+
         else gCameraMenu = MENU_MAIN;
     }
 }
@@ -263,30 +271,40 @@ void OnUpdateDebugCamera(CView* view)
     }
     else HandleCameraMovementInput(view);
 
-    
-    #ifdef __SM64__
-        if (!ApplyMainAvatarCamera(view->Camera))
-        {
+    #ifdef __CINEMACHINE__
+        #ifdef __SM64__
+            if (!ApplyMainAvatarCamera(view->Camera))
+            {
+                gCinemachine.Update();
+                if (gCinemachine.IsPlaying())
+                    gCinemachine.Apply(view->Camera);
+                else 
+                    view->DebugCamera.Apply(view->Camera);
+            }
+        #else
             gCinemachine.Update();
             if (gCinemachine.IsPlaying())
                 gCinemachine.Apply(view->Camera);
             else 
                 view->DebugCamera.Apply(view->Camera);
-        }
+        #endif
     #else
-        gCinemachine.Update();
-        if (gCinemachine.IsPlaying())
-            gCinemachine.Apply(view->Camera);
-        else 
+        #ifdef __SM64__
+            if (!ApplyMainAvatarCamera(view->Camera))
+                view->DebugCamera.Apply(view->Camera);
+        #else
             view->DebugCamera.Apply(view->Camera);
+        #endif
     #endif
-
 
     if (!gDisableCameraInput)
     {
         if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
         {
+            #ifdef __CINEMACHINE__
             gCinemachine.Stop();
+            #endif
+
             gShowCameraMenu = !gShowCameraMenu;
             gCameraMenu = MENU_MAIN;
         }
@@ -344,8 +362,13 @@ void OnDrawPostComp(COverlayUI* interface)
 
     if (gShowCameraInfo)
     {
+        #ifdef __CINEMACHINE__
         v4 camera_pos = gCinemachine.IsPlaying() ? gCinemachine.Camera.Pos : gView.DebugCamera.Pos;
         v4 camera_foc = gCinemachine.IsPlaying() ? gCinemachine.Camera.Foc : gView.DebugCamera.Foc;
+        #else
+        v4 camera_pos = gView.DebugCamera.Pos;
+        v4 camera_foc = gView.DebugCamera.Foc;
+        #endif
 
         char fmt[1024];
         sprintf(fmt, "Position: <%f, %f, %f>", (float)camera_pos.getX(), (float)camera_pos.getY(), (float)camera_pos.getZ());
@@ -413,6 +436,8 @@ void InitCameraHooks()
 
     MH_Poke32(0x00014b2c, 0x540003de); // change teleport to select
 }
+
+#ifdef __CINEMACHINE__
 
 CVector<CCameraClip*> gClips(16);
 CCinemachine gCinemachine;
@@ -733,3 +758,5 @@ void CCinemachine::Update()
         }
     }
 }
+
+#endif
