@@ -31,6 +31,9 @@ gAnimBank: 0x009749d8
 gGraphicsFrameNum: 0x009daf24
 loose_accel: 0x009d7d40
 loose_damp: 0x009d7d30
+_ZN10NGuidSubst12gRegionSubstE: 0x009470c0
+_ZN10NGuidSubst12gButtonSubstE: 0x009470a8
+_ZN10NGuidSubst14gLanguageSubstE: 0x009470b4
 _ZN6CAudio6SystemE: 0x009cc810
 _ZN6CAudio11EventSystemE: 0x009cc814
 _ZN15NVirtualMachine26gRegisteredScriptFunctionsE: 0x0

@@ -11,6 +11,7 @@ extern bool gShowOutlines;
 
 void InitCameraHooks();
 void UpdateDebugCameraNotInUse();
+void UpdateDebugCamera();
 
 #ifdef __CINEMACHINE__
 

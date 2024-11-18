@@ -1,5 +1,6 @@
 #include "StringUtil.h"
 #include <printf.h>
+#include <hook.h>
 
 size_t StringLength(const char* s)
 {
@@ -65,4 +66,11 @@ size_t FormatStringVarArg(char* dst, unsigned int size, char const* format, va_l
 	dst[size - 1] = '\0';
 	vsnprintf(dst, size, format, args);
 	dst[size - 1] = '\0';
+}
+
+
+MH_DefineFunc(FormatStringVarArg_wstr, 0x00590ac0, TOC1, size_t, wchar_t*, unsigned int, wchar_t const*, va_list);
+size_t FormatStringVarArg(wchar_t* dst, unsigned int size, wchar_t const* format, va_list args)
+{
+	return FormatStringVarArg_wstr(dst, size, format, args);
 }

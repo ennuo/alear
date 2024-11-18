@@ -33,8 +33,11 @@
 
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <ResourceGuidSubst.h>
 #include <ResourceGFXFont.h>
 #include <ResourceTranslationTable.h>
+#include <ResourceFileOfBytes.h>
+#include <ResourceSystem.h>
 
 #include <gooey/GooeyNodeManager.h>
 #include <network/NetworkManager.h>
@@ -160,7 +163,7 @@ void OnUpdateLevel()
             poppet->GetSubMode() == SUBMODE_NONE && 
             (gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
         {
-            DumpMeshToFile(hover);
+            // DumpMeshToFile(hover);
         }
 
     }
@@ -180,6 +183,8 @@ void OnPredictionOrRenderUpdate()
 {
     if (!gView.DebugCameraActive)
         UpdateDebugCameraNotInUse();
+    else
+        UpdateDebugCamera();
     #if __SM64__
     UpdateMarioAvatarsRender();
     #endif
@@ -195,36 +200,46 @@ void OnUpdateHttpTasks()
     gPinsTask.Update();
 }
 
+CVector<CP<RTranslationTable> > gTranslations;
 bool CustomTryTranslate(u32 key, tchar_t const*& out)
 {
     static tchar_t EMPTY_STRING[] = { 0x20 };
 
-    RTranslationTable* alear_trans = gAlearTrans;
-    if (alear_trans != NULL && alear_trans->IsLoaded())
+    if (gTranslations.size() == 0)
     {
-        if (alear_trans->GetText(key, out))
-            return true;
+        CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_TRANSLATIONS_RLST, 0, STREAM_PRIORITY_DEFAULT);
+        rlst->BlockUntilLoaded();
+
+        CVector<MMString<char> > lines;
+        LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+
+        for (int i = 0; i < lines.size(); ++i)
+        {
+            MMString<char>& line = lines[i];
+            CFilePath fp(FPR_BLURAY, line.c_str());
+            CP<RTranslationTable> subst = LoadResourceByFilename<RTranslationTable>(fp, 0, STREAM_PRIORITY_DEFAULT, false); 
+            gTranslations.push_back(subst);
+        }
+        
+        gTranslations.push_back(gPatchTrans);
+        gTranslations.push_back(gTranslationTable);
+
+        BlockUntilResourcesLoaded((CResource**)gTranslations.begin(), gTranslations.size());
+    }
+
+    for (int i = 0; i < gTranslations.size(); ++i)
+    {
+        RTranslationTable* table = gTranslations[i];
+        if (table == NULL || !table->IsLoaded()) continue;
+        if (table->GetText(key, out)) return true;
     }
     
-    RTranslationTable* patch_trans = gPatchTrans;
-    if (patch_trans != NULL && patch_trans->IsLoaded())
-    {
-        if (patch_trans->GetText(key, out))
-            return true;
-    }
-
-    RTranslationTable* trans = gTranslationTable;
-    if (trans != NULL && trans->IsLoaded())
-    {
-        if (trans->GetText(key, out))
-            return true;
-    }
-
     out = EMPTY_STRING;
     return false;
 }
 
 const u32 gUserObjectMask = 0x40100480;
+const u32 gPodMask = E_TYPE_USER_POD | E_TYPE_POD_TOOL;
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner)
 {
     CGUID item_guid = item->Plan.GetGUID();
@@ -240,7 +255,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     if (item_guid == 0x12981 || item_guid == 0x15351) return false;
     if ((item_type & view_type) == 0) return false;
 
-    if ((view_type & E_TYPE_USER_POD) != 0)
+    if (view_type == gPodMask)
     {
         if ((item_type & E_TYPE_POD_TOOL) != 0) return true;
 
@@ -271,8 +286,61 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     return false;
 }
 
+CVector<CP<RGuidSubst> > gSubsts;
+bool CustomDoGUIDSubstitution(CGUID g, CGUID& o)
+{
+    RGuidSubst* substs[3] =
+    {
+        NGuidSubst::gRegionSubst,
+        NGuidSubst::gButtonSubst,
+        NGuidSubst::gLanguageSubst
+    };
+
+    o = g;
+
+    for (int i = 0; i < gSubsts.size(); ++i)
+    {
+        RGuidSubst* subst = gSubsts[i];
+        if (subst == NULL || !subst->IsLoaded()) continue;
+        if (subst->Get(g, o)) return true;
+    }
+
+    for (int i = 0; i < ARRAY_LENGTH(substs); ++i)
+    {
+        RGuidSubst* subst = substs[i];
+        if (subst == NULL || !subst->IsLoaded()) continue;
+        if (subst->Get(g, o)) return true;
+    }
+
+    return false;
+}
+
+void OnLoadSubstTablesFinished()
+{
+    gSubsts.clear();
+
+    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_GSUB_RLST, 0, STREAM_PRIORITY_DEFAULT);
+    rlst->BlockUntilLoaded();
+
+    CVector<MMString<char> > lines;
+    LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        MMString<char>& line = lines[i];
+        CFilePath fp(FPR_BLURAY, line.c_str());
+        CP<RGuidSubst> subst = LoadResourceByFilename<RGuidSubst>(fp, 0, STREAM_PRIORITY_DEFAULT, false); 
+        gSubsts.push_back(subst);
+    }
+
+    BlockUntilResourcesLoaded((CResource**)gSubsts.begin(), gSubsts.size());
+}
+
+extern "C" uintptr_t _gsub_rlst_hook;
 void InitSharedHooks()
 {
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
     MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);
+    MH_InitHook((void*)0x0009c52c, (void*)&CustomDoGUIDSubstitution);
+    MH_PokeBranch(0x000b94e4, &_gsub_rlst_hook);
 }

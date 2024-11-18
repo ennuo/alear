@@ -18,6 +18,10 @@ private:
     char Pad0[0x8];
 public:
     CPoppet* Poppet;
+private:
+    char Pad1[0x24];
+public:
+    u32 SuicideHoldFrameCount;
 };
 
 #endif // PART_YELLOW_HEAD_H

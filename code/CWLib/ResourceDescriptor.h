@@ -13,6 +13,8 @@ class RFontFace;
 class RTexture;
 class RMaterial;
 class RPins;
+class RGuidSubst;
+class RFileOfBytes;
 
 enum EResourceType
 {
@@ -135,6 +137,8 @@ template <> inline EResourceType GetResourceType<RFontFace>() { return RTYPE_FON
 template <> inline EResourceType GetResourceType<RTexture>() { return RTYPE_TEXTURE; }
 template <> inline EResourceType GetResourceType<RPins>() { return RTYPE_PINS; }
 template <> inline EResourceType GetResourceType<RMaterial>() { return RTYPE_MATERIAL; }
+template <> inline EResourceType GetResourceType<RGuidSubst>() { return RTYPE_GUID_SUBST; }
+template <> inline EResourceType GetResourceType<RFileOfBytes>() { return RTYPE_FILE_OF_BYTES; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

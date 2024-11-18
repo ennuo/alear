@@ -28,7 +28,7 @@ void CFileWatcher::WorkerThreadFunctionStatic(u64 arg)
 
 void CFileWatcher::WorkerThreadFunction()
 {
-    while (true)
+    while (!WantQuitOrWantQuitRequested())
     {
         CS.Enter(__FILE__, __LINE__);
 

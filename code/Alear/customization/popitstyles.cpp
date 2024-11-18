@@ -51,8 +51,8 @@ void OnFillPoppetBackground(CPoppet* poppet, float alpha)
     c32 tertiary = yellowhead->GetColour(PLAYER_COLOUR_TERTIARY);
 
     v2 bubble_size = poppet->GetBubbleSize();
-    float w = bubble_size.V[0];
-    float h = bubble_size.V[1];
+    float w = bubble_size.getX();
+    float h = bubble_size.getY();
     
     u32 a = (u32)(alpha * 255.0f);
 
@@ -89,9 +89,70 @@ void OnFillPoppetBackground(CPoppet* poppet, float alpha)
     NGfx::tgDraw(CELL_GCM_PRIMITIVE_QUADS, NULL, true, 1, 0, true, v4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
+const float REMOTE_HEIGHT = 200.0f;
+const float REMOTE_WIDTH = 200.0f;
+const float MAIN_EDIT_HEIGHT = 544.0f;
+const float MAIN_EDIT_WIDTH = 512.0f;
+const float MAIN_PLAY_HEIGHT = 450.0f;
+const float MAIN_PLAY_WIDTH = 320.0f;
+const float POPPET_SINGLE_PLAYER_WIDTH = 928.0f;
+const float TWEAK_MENU_WIDTH = 592.0f;
+const float POPPET_DEFAULT_WIDTH = 512.0f;
+const float DOCK_HEIGHT_2 = 1900.0f;
+const float DOCK_HEIGHT_1 = 950.0f;
+const float SINGLE_PLAYER_HEIGHT = 1024.0f;
+const float DEFAULT_HEIGHT = 1024.0f;
+
+
+
 v2 CustomGetBubbleSize(CPoppet* poppet)
 {
+    EPoppetMode mode = poppet->GetMode();
+    EPoppetSubMode submode = poppet->GetSubMode();
 
+    if (poppet->IsDocked())
+    {
+        float width = POPPET_DEFAULT_WIDTH;
+        float height = DOCK_HEIGHT_1;
+
+        v4 dock_pos = poppet->GetDockPos();
+        if (dock_pos.getZ() > 1.0f) width = POPPET_SINGLE_PLAYER_WIDTH;
+        else if (mode == MODE_TWEAK) width = TWEAK_MENU_WIDTH;
+
+        if (dock_pos.getW() > 1.0f) height = DOCK_HEIGHT_2;
+
+        return v2(width, height);
+    }
+
+    if (submode == SUBMODE_REMOTE) return v2(REMOTE_WIDTH, REMOTE_HEIGHT);
+    if (mode == MODE_MENU)
+    {
+        PYellowHead* yellowhead = poppet->PlayerThing->GetPYellowHead();
+        if (yellowhead != NULL && yellowhead->SuicideHoldFrameCount != 0)
+            return v2(250.0f, 250.0f);
+        
+        if (submode == SUBMODE_EMOTES)
+            return v2(MAIN_EDIT_WIDTH, MAIN_EDIT_HEIGHT);
+
+        if (submode != SUBMODE_NONE)
+            return v2(POPPET_SINGLE_PLAYER_WIDTH, SINGLE_PLAYER_HEIGHT);
+        
+        if (gGame->EditMode)
+            return v2(MAIN_EDIT_WIDTH, MAIN_EDIT_HEIGHT);
+
+        return v2(MAIN_PLAY_WIDTH, MAIN_PLAY_HEIGHT);
+    }
+
+    if (mode == MODE_CURSOR)
+    {
+        if (submode == SUBMODE_GRAB_PLAN || submode == SUBMODE_GRAB_PHOTO)
+            return poppet->Inventory.SelectBoxBounds;
+        return v2(10.0f, 10.0f);
+    }
+
+    if (mode != MODE_TWEAK) return v2(0.0f);
+
+    return v2(TWEAK_MENU_WIDTH, MAIN_EDIT_HEIGHT);
 }
 
 PGeneratedMesh* GetMeshTarget()
@@ -137,51 +198,10 @@ void CustomUpdateShape(CPoppetBubble* bubble, bool in_use)
     EPoppetMode mode = poppet->GetMode();
     EPoppetSubMode submode = poppet->GetSubMode();
 
-    PShape* shape = GetShapeTarget();
-    if (shape != NULL) 
-    {
-        if (gLastNumVerts != shape->Polygon.size())
-        {
-            PGeneratedMesh* generated = GetMeshTarget();
-            const CMesh* mesh = generated->SharedMesh;
+    bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
 
-            DebugLogChF(DC_DEFAULT, "Mesh refresh: CMesh has %d vertices\n", mesh->NumVerts);
-            
-            float* vertices = (float*)((char*)mesh->SourceGeometry.CachedAddress + mesh->SourceStreamOffsets[0]);
-            for (int i = 0; i < mesh->NumVerts; ++i, vertices += 4)
-            {
-                DebugLogChF(DC_DEFAULT, "v %f %f %f\n", vertices[0], vertices[1], vertices[2]);
-            }
-
-            u16* indices = (u16*)(mesh->Indices.CachedAddress);
-            DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[0] + 1, indices[1] + 1, indices[2] + 1);
-            for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
-            {
-                if (indices[i] == 65535)
-                {
-                    if (i + 3 >= mesh->NumIndices) break;
-                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i + 1] + 1, indices[i + 2] + 1, indices[i + 3] + 1);
-                    i += 3;
-                    j = 0;
-                    continue;
-                }
-
-                if ((j & 1) != 0)
-                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i - 2] + 1, indices[i] + 1, indices[i - 1] + 1);
-                else
-                    DebugLogChF(DC_DEFAULT, "f %d %d %d\n", indices[i - 2] + 1, indices[i - 1] + 1, indices[i] + 1);
-            }
-
-            gLastNumVerts = shape->Polygon.size();
-        }
-
-        bubble->SetBubbleShape(shape);
-    }
+    if (submode == SUBMODE_EMOTES) bubble->SetBubbleCircle(MAX(bubble_size.getX(), bubble_size.getY()) / 2.0f);
     else bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
-    
-
-    // if (submode == SUBMODE_NONE) bubble->SetBubbleBalloon(bubble_size.getX(), bubble_size.getY(), 1.0f);
-    // else bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
 
     u32 id;
     switch (submode)

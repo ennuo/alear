@@ -52,7 +52,7 @@ CMarioAvatar::CMarioAvatar(EPadIndex pad, float x, float y, float z)
 MH_DefineFunc(DeleteGroupAndChildrenAndJoints, 0x003f6eec, TOC1, void, CThing*);
 CMarioAvatar::~CMarioAvatar()
 {
-    if (Thing != NULL) DeleteGroupAndChildrenAndJoints(Thing);
+    // if (Thing != NULL) DeleteGroupAndChildrenAndJoints(Thing);
     
     if (IsValid()) sm64_mario_delete(Id);
 
@@ -148,7 +148,7 @@ void CMarioAvatar::UpdateWorld()
     UpdateSimObjects();
 
     PWorld* world = Thing->World;
-    sm64_set_mario_water_level(Id, (s32)world->GetWaterLevelWorldYCoords());
+    // sm64_set_mario_water_level(Id, (s32)world->GetWaterLevelWorldYCoords());
 
     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
     {
@@ -176,20 +176,25 @@ void CMarioAvatar::UpdateWorld()
         v4 pos = wpos.getCol3();
 
         int num_verts = part_shape->Polygon.size();
-        v4* polygon = (v4*)part_shape->Polygon.begin();
+        v4* polygon = (v4*)part_shape->Game.GlobalPolygon.begin();
 
         float scale_x = Vectormath::Aos::length(wpos.getCol0());
         float scale_y = Vectormath::Aos::length(wpos.getCol1());
         float scale_z = Vectormath::Aos::length(wpos.getCol2());
         bool is_flipped = Vectormath::Aos::determinant(wpos) < 0.0f;
-        m44 wpos_scalerot = m44::scale(v3(is_flipped ? scale_x * -1.0f : scale_x, scale_y, scale_z));
+        is_flipped = false;
 
+        v3 scale(scale_x, scale_y, scale_z);
+        scale *= is_flipped ? -1.0f : 1.0f;
+        
+        m44 wpos_scalerot = m44::scale(scale);
         m44 transform = wpos_scalerot;
 
         CRawVector<v4, CAllocatorMMAligned128> vertices(num_verts * 2);
         for (int i = 0; i < num_verts; ++i)
         {
-            v4 v = transform * polygon[i];
+            // v4 v = transform * polygon[i];
+            v4 v = polygon[i] - pos;
 
             v.setZ(part_shape->Thickness);
             v.setW(1.0f);
@@ -199,13 +204,24 @@ void CMarioAvatar::UpdateWorld()
 
         for (int i = 0; i < num_verts; ++i)
         {
-            v4 v = transform * polygon[i];
+            // v4 v = transform * polygon[i];
+            v4 v = polygon[i] - pos;
+
             v.setZ(-part_shape->Thickness);
             v.setW(1.0f);
             vertices.push_back(v);
         }
 
-        #define PUSH_3(x, y, z) triangles.push_back(x); triangles.push_back(y); triangles.push_back(z);
+        #define PUSH_3(x, y, z) \
+        if (is_flipped) \
+        { \
+            triangles.push_back(x); triangles.push_back(z); triangles.push_back(y); \
+        } \
+        else \
+        { \
+            triangles.push_back(x); triangles.push_back(y); triangles.push_back(z); \
+        }
+        
         CRawVector<unsigned int> triangles(num_verts * 2 * 3);
         int offset = 0, front = 0, back = num_verts;
         for (unsigned int* it = part_shape->Loops.begin(); it != part_shape->Loops.end(); ++it)
@@ -225,7 +241,7 @@ void CMarioAvatar::UpdateWorld()
         #undef PUSH_3
 
         CRawVector<unsigned int> indices;
-        TriangulateByEarClipping(part_shape->Polygon, part_shape->Loops, indices, is_flipped);
+        TriangulateByEarClipping(part_shape->Polygon, part_shape->Loops, indices, true);
         for (int i = 0; i < indices.size(); ++i)
             triangles.push_back(indices[i]);
         
@@ -248,7 +264,9 @@ void CMarioAvatar::UpdateWorld()
         if (angle < -M_PI) angle += M_PI * 2.0f;
         if (angle > M_PI) angle -= M_PI * 2.0f;
         angle *= rad2deg;
-        surface_obj.transform.eulerRotation[2] = angle;
+        // surface_obj.transform.eulerRotation[2] = angle;
+
+
 
 
         surface_obj.surfaceCount = triangles.size() / 3;
@@ -319,6 +337,7 @@ void CMarioAvatar::InitThing()
     }
 }
 
+#include <mario_animation_ids.h>
 void CMarioAvatar::Tick()
 {
     if (!IsValid()) return;
@@ -334,6 +353,7 @@ void CMarioAvatar::Tick()
     UpdateInput();
     UpdateWorld();
 
+    sm64_set_mario_position(Id, 15.095087f, -420.0f, -381.0f);
     sm64_mario_tick(Id, &Inputs, &State, &Geometry);
 
     UpdateMesh();

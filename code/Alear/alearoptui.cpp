@@ -285,7 +285,47 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
             for (CConfigOption* opt = it->second; opt != NULL; opt = opt->GetNext())
             {
                 u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T3, STATE_NORMAL, NULL, 256);
-                manager->DoText(L"<N/A>", GTS_T3);
+                
+                switch (opt->GetType())
+                {
+                    // DPAD
+                    // 0x1
+                    // 0x2
+                    // 0x4
+                    // 0x8
+
+                    // STICK
+                    // 0x10
+                    // 0x20
+                    // 0x40
+                    // 0x80
+                    
+                    // 0x100 = CROSS
+                    // 0x200 = CIRCLE
+
+
+                    case OPT_BOOL:
+                    {
+                        CConfigBool& b = *(CConfigBool*)opt;
+                        if (result & 256) b = !b;
+                        manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T3);
+
+                        break;
+                    }
+                    case OPT_FLOAT:
+                    {
+                        wchar_t fstr[256];
+                        CConfigFloat& f = *(CConfigFloat*)opt;
+                        FormatString<256>(fstr, L"%.1f", (float)f);
+                        manager->DoText(fstr, GTS_T3);
+                        break;
+                    }
+                    default:
+                    {
+                        manager->DoText(L"<N/A>", GTS_T3);
+                        break;
+                    }
+                }
                 manager->DoBreak();
             }
 
@@ -310,7 +350,7 @@ void DoServersSubmenu(CGooeyNodeManager* manager)
         for (int i = 0; i < gServerSwitcher->GetNumServers(); ++i)
         {
             wchar_t* server_name = gServerSwitcher->GetServerName(i);
-            u32 result = manager->DoInline(server_name, GTS_T3, STATE_NORMAL, NULL, 256);
+            u32 result = manager->DoInline(server_name, GTS_T3, server_index == i ? STATE_TOGGLE : STATE_NORMAL, NULL, 256);
             if (result & 256) gServerSwitcher->Switch(i);
             manager->DoBreak();
         }
@@ -359,7 +399,7 @@ void ReloadPendingDatabases()
     if (gReloadMap.size() != 0)
     {
         gReloadMap.clear();
-        //ReloadReadonlyCaches();
+        ReloadReadonlyCaches();
         ReloadModifiedResources();
     }
 }

@@ -35,36 +35,6 @@ extern "C" void _gfxbind_hook_naked();
 bool AlearCheckPatch();
 bool AlearEpilogue()
 {
-    // CFilePath fp(FPR_GAMEDATA, "gamedata/alear/scratch/pintest.bin");
-    // ByteArray b; CHash hash;
-    // if (FileExists(fp) && FileLoad(fp, b, hash))
-    // {
-    //     CReflectionLoadVector vec(&b);
-    //     ReflectReturn ret = Reflect(vec, gPins);
-    //     DebugLog("pintest result=%08x\n", ret);
-    //     if (ret == REFLECT_OK)
-    //     {
-    //         CPin& pin = gPins[0];
-    //         DebugLog("CPin Serialization Test (size=%d):\n", gPins.size());
-    //         DebugLog("\tID: %08x\n", pin.ID);
-    //         DebugLog("\tProgressType: %08x\n", pin.ProgressType);
-    //         DebugLog("\tCategory: %08x\n", pin.Category);
-    //         DebugLog("\tTitleLamsKey: %08x\n", pin.TitleLamsKey);
-    //         DebugLog("\tDescriptionLamsKey: %08x\n", pin.DescriptionLamsKey);
-    //         DebugLog("\tIcon: g%08x\n", pin.Icon.GetGUID().guid);
-    //         DebugLog("\tInitialProgressValue: %08x\n", pin.InitialProgressValue);
-    //         DebugLog("\tTargetValue: %08x\n", pin.TargetValue);
-    //         DebugLog("\tBehaviourFlags: %08x\n", pin.BehaviourFlags);
-    //     }
-    // }
-
-    DebugLog("Finishing init steps...\n");
-
-    // fix this later
-    *((CP<RTranslationTable>*)&gAlearTrans) = LoadResourceByKey<RTranslationTable>(3709465117u, 0, STREAM_PRIORITY_DEFAULT);
-    // *((CP<RPins>*)&gPins) = LoadResourceByKey<RPins>(2940665091u, 0, STREAM_PRIORITY_DEFAULT);
-
-
     DebugLog("FileDB::DBs:\n");
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
     for (int i = 0; i < FileDB::DBs.size(); ++i)
@@ -214,12 +184,12 @@ void AlearSetupDatabase()
         }
     }
     
-    CFilePath alear_fp(FPR_GAMEDATA, "/gamedata/alear/boot.map");
-    if (FileExists(alear_fp))
-    {
-        FileDB::DBs.push_back(CFileDB::Construct(alear_fp));
-    }
-    else DebugLog("WARNING: %s isn't present, this may cause issues!\n", alear_fp.c_str());
+    // CFilePath alear_fp(FPR_GAMEDATA, "/gamedata/alear/boot.map");
+    // if (FileExists(alear_fp))
+    // {
+    //     FileDB::DBs.push_back(CFileDB::Construct(alear_fp));
+    // }
+    // else DebugLog("WARNING: %s isn't present, this may cause issues!\n", alear_fp.c_str());
 
     AlearLoadDatabaseConfiguration();
 

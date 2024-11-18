@@ -251,16 +251,11 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
     }
 }
 
-void OnUpdateDebugCamera(CView* view)
+void UpdateDebugCamera()
 {
-    if (gUseLegacyDebugCamera || view->MaverickCam)
-    {
-        view->DebugCamera.Update(view->MaverickCam);
-        view->DebugCamera.Apply(view->Camera);
-        return;
-    }
-    
-    
+    CView* view = &gView;
+    if (gUseLegacyDebugCamera || gView.MaverickCam) return;
+
     if (gShowCameraMenu)
     {
         if (gCameraGooey == NULL)
@@ -271,18 +266,50 @@ void OnUpdateDebugCamera(CView* view)
     }
     else HandleCameraMovementInput(view);
 
+    #if __CINEMACHINE__
+    gCinemachine.Update();
+    #endif
+
+    if (!gDisableCameraInput)
+    {
+        if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
+        {
+            #ifdef __CINEMACHINE__
+            gCinemachine.Stop();
+            #endif
+            
+            gShowCameraMenu = !gShowCameraMenu;
+            gCameraMenu = MENU_MAIN;
+        }
+
+        if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+        {
+            view->DebugCamera.Foc = view->DebugCamera.Pos - v4(0.0f, 0.0f, 3000.0f, 1.0f);
+            view->DebugCamera.Yaw = 0.0f;
+            view->DebugCamera.Pitch = 0.0f;
+        }
+    }
+}
+
+void OnUpdateDebugCameraForRender(CView* view)
+{
+    if (gUseLegacyDebugCamera || view->MaverickCam)
+    {
+        view->DebugCamera.Update(view->MaverickCam);
+        view->DebugCamera.Apply(view->Camera);
+        return;
+    }
+
     #ifdef __CINEMACHINE__
         #ifdef __SM64__
             if (!ApplyMainAvatarCamera(view->Camera))
             {
-                gCinemachine.Update();
                 if (gCinemachine.IsPlaying())
                     gCinemachine.Apply(view->Camera);
                 else 
                     view->DebugCamera.Apply(view->Camera);
             }
         #else
-            gCinemachine.Update();
             if (gCinemachine.IsPlaying())
                 gCinemachine.Apply(view->Camera);
             else 
@@ -296,26 +323,6 @@ void OnUpdateDebugCamera(CView* view)
             view->DebugCamera.Apply(view->Camera);
         #endif
     #endif
-
-    if (!gDisableCameraInput)
-    {
-        if ((gPadData->ButtonsDown & PAD_BUTTON_START) != 0)
-        {
-            #ifdef __CINEMACHINE__
-            gCinemachine.Stop();
-            #endif
-
-            gShowCameraMenu = !gShowCameraMenu;
-            gCameraMenu = MENU_MAIN;
-        }
-
-        if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
-        {
-            view->DebugCamera.Foc = view->DebugCamera.Pos - v4(0.0f, 0.0f, 3000.0f, 1.0f);
-            view->DebugCamera.Yaw = 0.0f;
-            view->DebugCamera.Pitch = 0.0f;
-        }
-    }
 
     if (gDisableDOF)
     {
@@ -432,7 +439,7 @@ void InitCameraHooks()
     MH_Poke32(0x00014acc, B(&_alearcam_update_hook, 0x00014acc));
     MH_Poke32(0x001e6b8c, B(&_alearcam_renderworld_hook, 0x001e6b8c));
     MH_InitHook((void*)0x002716fc, (void*)&OnDrawPostComp);
-    MH_InitHook((void*)0x001fc920, (void*)&OnUpdateDebugCamera);
+    MH_InitHook((void*)0x001fc920, (void*)&OnUpdateDebugCameraForRender);
 
     MH_Poke32(0x00014b2c, 0x540003de); // change teleport to select
 }

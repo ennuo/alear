@@ -9,6 +9,8 @@ typedef void (*RemoveRefFunc)(void*);
 
 /* refcount.h: 13 */
 class CBaseCounted {
+protected:
+	virtual ~CBaseCounted() {}
 public:
 	int AddRef() const { return cellAtomicIncr32((uint32_t*) &RefCount); }
 	int Release() const { return cellAtomicDecr32((uint32_t*) &RefCount); }
@@ -26,8 +28,8 @@ public:
 	bool operator!=(const T* rhs) const { return Ref != rhs.Ref; }
 
 	const T& operator*() const { return *Ref; }
-	T* operator->() { return Ref; }
-	operator T*() { return Ref; }
+	T* operator->() const { return Ref; }
+	operator T*() const { return Ref; }
 	T* GetRef() const { return Ref; }
 public:
 	CP() { Ref = NULL; }

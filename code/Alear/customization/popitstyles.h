@@ -14,6 +14,7 @@ public:
 
 void OnFillInfoBubbleBackground(CInfoBubble* bubble, CGooeyNodeManager* manager);
 void OnFillPoppetBackground(CPoppet* poppet, float alpha);
+v2 CustomGetBubbleSize(CPoppet* poppet);
 
 enum EPopitStyleFlags {
     STYLE_FLAGS_NONE,

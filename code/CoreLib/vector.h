@@ -20,11 +20,11 @@ public:
 	inline u32 max_size() const { return this->MaxSize; };
 	inline u32 capacity() const { return this->MaxSize - this->Size; }
 
-	inline T* begin() { return Data; }
-	inline T* end() { return Data + Size; }
-	inline T& operator[](int index) { return this->Data[index]; }
-	inline T& front() { return this->Data[0]; }
-	inline T& back() { return this->Data[this->Size - 1]; }
+	inline T* begin() const { return Data; }
+	inline T* end() const { return Data + Size; }
+	inline T& operator[](int index) const { return this->Data[index]; }
+	inline T& front() const { return this->Data[0]; }
+	inline T& back() const { return this->Data[this->Size - 1]; }
 	
 	inline u32& GetSizeForSerialisation() { return Size; }
 protected:

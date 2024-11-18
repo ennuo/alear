@@ -141,10 +141,10 @@ void UpdateMarioAvatars()
     for (; it != gMarioAvatars.end(); ++it)
         (*it)->Tick();
 
-    gAudioCS->Enter(__FILE__, __LINE__);
-    int num_samples = sm64_audio_tick(gReadBufferSize / sizeof(DualSample16), 1100, (s16*)(gReadBuffer + gReadBufferSize));
-    gReadBufferSize += num_samples * 2 * sizeof(DualSample16);
-    gAudioCS->Leave();
+    // gAudioCS->Enter(__FILE__, __LINE__);
+    // int num_samples = sm64_audio_tick(gReadBufferSize / sizeof(DualSample16), 1100, (s16*)(gReadBuffer + gReadBufferSize));
+    // gReadBufferSize += num_samples * 2 * sizeof(DualSample16);
+    // gAudioCS->Leave();
 
     if (!gStartedSound)
     {

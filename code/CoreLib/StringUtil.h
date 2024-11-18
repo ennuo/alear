@@ -37,6 +37,19 @@ inline bool StringIsNullOrEmpty(char* str) {
 }
 
 size_t FormatStringVarArg(char* dst, unsigned int size, char const* format, va_list args);
+size_t FormatStringVarArg(wchar_t* dst, unsigned int size, wchar_t const* format, va_list args);
+
+
+template <unsigned int size>
+size_t FormatString(wchar_t dst[size], wchar_t* format, ...)
+{
+	va_list args;
+    va_start(args, format);
+	size_t len = FormatStringVarArg(dst, size, format, args);
+	va_end(args);
+	return len;
+}
+
 
 /* StringUtil.h: 84 */
 template <unsigned int size>

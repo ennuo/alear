@@ -133,3 +133,15 @@ bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out)
 {
 	return _FileLoad(fp, bufout, hash_out);
 }
+
+MH_DefineFunc(_LinesLoad, 0x0057bcc8, TOC1, bool, const ByteArray&, CVector<MMString<char> >&, ParseFn)
+bool LinesLoad(const ByteArray& bytes, CVector<MMString<char> >& out, ParseFn parsefunc)
+{
+	return _LinesLoad(bytes, out, parsefunc);
+}
+
+MH_DefineFunc(_StripAndIgnoreHash, 0x0057baf0, TOC1, bool, TextRange<char>& range)
+bool StripAndIgnoreHash(TextRange<char>& range)
+{
+	return _StripAndIgnoreHash(range);
+}

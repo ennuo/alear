@@ -17,4 +17,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
 
 void InitSharedHooks();
 
+#define E_GSUB_RLST 3536200819u
+#define E_TRANSLATIONS_RLST 4014013721u
+
 #endif // ALEAR_UNITY_H

@@ -57,10 +57,12 @@ bool CPoppetBubble::SetBubbleObject(CThing* thing, bool centre)
     return CPoppetBubble_SetBubbleObject(this, thing, centre);
 }
 
+MH_DefineFunc(CPopeptBubble_SetBubbleModeID, 0x003586dc, TOC1, void, CPoppetBubble*, u32);
 void CPoppetBubble::SetBubbleModeID(u32 id)
 {
-    if (BubbleModeID != id) TheBubble.SetWibbly();
-    BubbleModeID = id;
+    CPopeptBubble_SetBubbleModeID(this, id);
+    // if (BubbleModeID != id) TheBubble.SetWibbly();
+    // BubbleModeID = id;
 }
 
 bool CPoppetBubble::FindBoundaryPosition(v2 direction, v2& pos_out) const

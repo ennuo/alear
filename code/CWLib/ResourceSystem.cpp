@@ -32,3 +32,5 @@ bool _BlockUntilAllResourcesLoaded(EWaitForStreamingResources streaming_resource
 }
 
 const char* gResourceNames[RTYPE_LAST];
+
+MH_DefineFunc(LoadResourceByFilenameGeneric, 0x0008ee08, TOC0, CP<CResource>, CFilePath const& filename, EResourceType type, unsigned int flags, CStreamPriority stream_priority_override, bool can_create);

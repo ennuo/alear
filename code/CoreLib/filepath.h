@@ -96,4 +96,7 @@ bool FileLoad(CFilePath const& filename, ByteArray& out, ParseFn parsefunc);
 // not a function in the game, just figure it'd be useful to have for JSON
 char* FileLoadText(CFilePath& fp);
 
+bool StripAndIgnoreHash(TextRange<char>& range);
+bool LinesLoad(const ByteArray& bytes, CVector<MMString<char> >& out, ParseFn parsefunc);
+
 #endif // FILE_PATH_H

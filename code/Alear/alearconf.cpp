@@ -9,10 +9,13 @@
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
 
+void OnSetRenderDistanceToggle();
+
 ConfigMap gConfigMap;
 CConfigBool gUsePopitGradients(L"Popit", L"Gradient", true);
 CConfigBool gUseDivergenceCheck(L"Game", L"Divergence Check", true);
-CConfigBool gHideMSPF(L"Display", L"Hide MSPF Display", true);
+CConfigBool gExtendedRenderDistance(L"Render", L"Extended Render Distance", false, OnSetRenderDistanceToggle);
+// CConfigFloat gRenderDistance(L"Render", L"Render Distance", 20000.0f, 0.0f, NAN, 1000.0f);
 
 void CConfigOption::AddToRegistry()
 {
@@ -43,8 +46,13 @@ void AddLevelListToInventory(int guid)
     Debug_DoInventoryStuff(guid);
 }
 
-StaticCP<RTranslationTable> gAlearTrans;
+void OnSetRenderDistanceToggle()
+{
+    if (gExtendedRenderDistance) gFarDist = 35000.0f;
+    else gFarDist = 20000.0f;
+}
 
+// CConfigBool gHideMSPF(L"Display", L"Hide MSPF Display", true);
 tchar_t EMPTY_STRING[] = { 0x20 };
 
 extern "C" void _divergence_hook();
@@ -55,7 +63,7 @@ void AlearInitConf()
     MH_Poke32(0x002726fc, BLR);
 
 
-    gFarDist = 35000.0f;
+    // gFarDist = 35000.0f;
 
     RegisterNativeFunction("Alear", "SetEditMode__b", true, NVirtualMachine::CNativeFunction1V<bool>::Call<SetEditMode>);
     RegisterNativeFunction("Alear", "GetEditMode__", true, NVirtualMachine::CNativeFunction0<bool>::Call<GetEditMode>);

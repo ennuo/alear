@@ -29,7 +29,8 @@ void InitPopitStyleHooks()
 {
     MH_InitHook((void*)0x0029a768, (void*)&OnFillInfoBubbleBackground);
     MH_InitHook((void*)0x00344084, (void*)&OnFillPoppetBackground);
-    //MH_Poke32(0x0035b410, B(&_popit_update_menu_shape_hook, 0x0035b410));
+    MH_InitHook((void*)0x00343dc4, (void*)&CustomGetBubbleSize);
+    MH_Poke32(0x0035b410, B(&_popit_update_menu_shape_hook, 0x0035b410));
 }
 
 void InitStyleHooks()
