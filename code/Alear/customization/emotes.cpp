@@ -8,6 +8,7 @@
 #include <Resource.h>
 
 CVector<CEmote> gEmotes;
+CVector<CAnimBank*> gAnimBanks;
 
 bool LoadEmotes()
 {

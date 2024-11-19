@@ -14,6 +14,7 @@
 #include "alearshared.h"
 #include "fwatch.h"
 #include "pins.h"
+#include "outfits.h"
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -57,6 +58,7 @@ CInitStep gAlearInitSteps[] =
     #endif
     { "Alear File Watcher", NULL, InitFileWatcher, CloseFileWatcher, NULL, false, NULL },
     { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
+    { "Outfit Lists", NULL, LoadOutfits, NULL, NULL, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     #ifdef __SM64__
     { "Super Mario 64", NULL, NULL, CloseMarioLib, InitMarioLib, false, NULL },
@@ -230,6 +232,7 @@ void AlearStartup()
     InitPodStyles();
     InitCameraHooks();
     InitPinHooks();
+    InitOutfitHooks();
     InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
 

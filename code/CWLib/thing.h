@@ -15,6 +15,7 @@
 #include "PartGeneratedMesh.h"
 #include "PartGroup.h"
 #include "PartLevelSettings.h"
+#include "PartGameplayData.h"
 
 class CThingPtr;
 class PJoint;
@@ -41,6 +42,7 @@ public:
     inline PCostume* GetPCostume() { return static_cast<PCostume*>(Parts[PART_TYPE_COSTUME]); }
     inline PGroup* GetPGroup() { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
     inline PLevelSettings* GetPLevelSettings() { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
+    inline PGameplayData* GetPGameplayData() { return static_cast<PGameplayData*>(Parts[PART_TYPE_GAMEPLAY_DATA]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

@@ -10,6 +10,7 @@ class PYellowHead : public CPart {
 public:
     v4 GetActivePosition() const;
     c32 GetColour(EPlayerColour colour);
+    void CollectItem(CThing* egg_holding_item, bool new_item);
 private:
     char Pad[0x30];
 public:

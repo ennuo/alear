@@ -13,3 +13,9 @@ c32 PYellowHead::GetColour(EPlayerColour colour)
 {
     return PYellowHead_GetColour(this, colour);
 }
+
+MH_DefineFunc(PYellowHead_CollectItem, 0x00055480, TOC0, void, PYellowHead*, CThing*, bool);
+void PYellowHead::CollectItem(CThing* egg_holding_thing, bool new_item)
+{
+    return PYellowHead_CollectItem(this, egg_holding_thing, new_item);
+}

@@ -4,9 +4,10 @@
 #include "Resource.h"
 #include "ResourceGFXTexture.h"
 #include "InventoryItem.h"
-#include "thing.h"
 #include "vector.h"
 #include "refcount.h"
+
+class CThing;
 
 class CPlanDetails : public CInventoryItemDetails {
 public:

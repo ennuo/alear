@@ -5,6 +5,7 @@
 #include "MMString.h"
 #include "AlearSR.h"
 #include "vector.h"
+#include "GuidHash.h"
 #include "fifo.h"
 
 const u8 COMPRESS_INTS = 0x1; // file.h: 10
@@ -218,6 +219,13 @@ template <typename D>
 ReflectReturn Add(CReflectionFindDependencies& r, D& d, char* c)
 {
     return Reflect(r, d);
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, CGUID& d)
+{
+    return Reflect(r, d.guid);
+    // return Add(r, d.guid, "guid");
 }
 
 #include <refcount.h>

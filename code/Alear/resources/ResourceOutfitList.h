@@ -19,9 +19,20 @@ public:
     {
     }
 public:
+    COutfit* GetOutfitFromComponent(CGUID& guid);
+public:
     u32 GetSizeInMemory() { return sizeof(ROutfitList); }
 public:
     CVector<COutfit> Outfits;
 };
+
+extern CVector<CP<ROutfitList> > gOutfitLists;
+
+#include "Serialise.h"
+#include "Variable.h"
+template <typename R>
+ReflectReturn Reflect(R& r, COutfit& d);
+template <typename R>
+ReflectReturn Reflect(R& r, ROutfitList& d);
 
 #endif // RESOURCE_OUTFIT_LIST_H

@@ -4,6 +4,7 @@
 #include "alearcam.h"
 #include "alearconf.h"
 #include "pins.h"
+#include "outfits.h"
 
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
@@ -166,6 +167,15 @@ void OnUpdateLevel()
             // DumpMeshToFile(hover);
         }
 
+    }
+
+    if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+    {
+        CP<RPlan> plan = LoadResourceByKey<RPlan>(31704, 0, STREAM_PRIORITY_DEFAULT);
+        plan->BlockUntilLoaded();
+        PYellowHead* yellowhead = world->ListPYellowHead[0];
+        CThing* player_thing = yellowhead->GetThing();
+        CreateOutfitCollectBubble(player_thing, plan);
     }
 
 }

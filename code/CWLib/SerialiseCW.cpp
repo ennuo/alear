@@ -73,11 +73,15 @@ ReflectReturn Reflect(R& r, CP<D>& d)
 template<typename R, typename D>
 ReflectReturn Reflect(R& r, CResourceDescriptor<D>& d)
 {
-    ReflectDescriptor(r, d, false, false);
+    return ReflectDescriptor(r, d, true, false);
 }
 
 template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CP<RTexture>& d);
 template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CResourceDescriptor<RTexture>& d);
+
+template ReflectReturn Reflect<CReflectionLoadVector, RPlan>(CReflectionLoadVector& r, CP<RPlan>& d);
+template ReflectReturn Reflect<CReflectionLoadVector, RPlan>(CReflectionLoadVector& r, CResourceDescriptor<RPlan>& d);
+
 
 #undef ADD
 

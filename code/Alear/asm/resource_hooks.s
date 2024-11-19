@@ -1,6 +1,7 @@
 .set REFLECT_OK, 0
 .set RTYPE_ANIMATED_TEXTURE, 45
-.set RTYPE_PINs, 47
+.set RTYPE_PINS, 47
+.set RTYPE_OUTFIT_LIST, 50
 
 .global _allocatenewresource_rtype_pins
 _allocatenewresource_rtype_pins:
@@ -17,6 +18,21 @@ _allocatenewresource_rtype_pins:
     mr %r25, %r29
     ba 0x00088bb8
 
+.global _allocatenewresource_rtype_outfit_list
+_allocatenewresource_rtype_outfit_list:
+    rldicl %r3, %r31, 0x0, 0x20
+    
+    std %r2, 0x28(%r1)
+    lis %r7, _Z26AllocateOutfitListResource13EResourceFlag@h      
+    ori %r7, %r7, _Z26AllocateOutfitListResource13EResourceFlag@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z26AllocateOutfitListResource13EResourceFlag
+    ld %r2, 0x28(%r1)
+    
+    mr %r29, %r3
+    mr %r25, %r29
+    ba 0x00088bb8
+
 .global _reflectresource_load_rtype_pins
 _reflectresource_load_rtype_pins:
     rldicl %r3, %r3, 0x0, 0x20
@@ -27,6 +43,21 @@ _reflectresource_load_rtype_pins:
     ori %r7, %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R5RPins@l
     lwz %r2, 0x4(%r7)
     bl ._Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R5RPins
+    ld %r2, 0x28(%r1)
+
+    mr %r27, %r3
+    ba 0x0072735c
+
+.global _reflectresource_load_rtype_outfit_list
+_reflectresource_load_rtype_outfit_list:
+    rldicl %r3, %r3, 0x0, 0x20
+    rldicl %r4, %r4, 0x0, 0x20
+
+    std %r2, 0x28(%r1)
+    lis %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R11ROutfitList@h      
+    ori %r7, %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R11ROutfitList@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R11ROutfitList
     ld %r2, 0x28(%r1)
 
     mr %r27, %r3
@@ -96,8 +127,13 @@ _reflectresource_dependinate_ok:
 
 .global _get_serialisationtype_hook
 _get_serialisationtype_hook:
-    cmpwi %cr7, %r3, RTYPE_PINs
-    bne %cr7, FallbackGetSerialisationType
+    cmpwi %cr7, %r3, RTYPE_PINS
+    beq %cr7, _SerialisationType_Binary
+    cmpwi %cr7, %r3, RTYPE_OUTFIT_LIST
+    beq %cr7, _SerialisationType_Binary
+    b FallbackGetSerialisationType
+
+_SerialisationType_Binary:
     li %r3, 0
     blr
 

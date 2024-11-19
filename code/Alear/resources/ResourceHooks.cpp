@@ -1,5 +1,7 @@
 #include "resources/ResourceHooks.h"
 #include "resources/ResourcePins.h"
+#include "resources/ResourceOutfitList.h"
+#include "resources/ResourceAnimatedTexture.h"
 #include "customization/popitstyles.h"
 
 #include "AlearSR.h"
@@ -14,7 +16,9 @@
 #include <ppcasm.h>
 
 extern "C" uintptr_t _allocatenewresource_rtype_pins;
+extern "C" uintptr_t _allocatenewresource_rtype_outfit_list;
 extern "C" uintptr_t _reflectresource_load_rtype_pins;
+extern "C" uintptr_t _reflectresource_load_rtype_outfit_list;
 extern "C" uintptr_t _reflectresource_dependinate_ok;
 extern "C" uintptr_t _get_serialisationtype_hook;
 extern "C" uintptr_t _reflectresource_extra_load_rtype_synced_profile;
@@ -53,6 +57,12 @@ RPins* AllocatePinsResource(EResourceFlag flags)
     return new RPins(flags); 
 }
 
+ROutfitList* AllocateOutfitListResource(EResourceFlag flags)
+{
+    DebugLog("Attempting to allocate new ROutfitList resource instance!\n");
+    return new ROutfitList(flags);
+}
+
 void AttachResourceNames()
 {
     MH_Poke32(0x000877c0, 0x2b830000 + (RTYPE_LAST - 1));
@@ -67,6 +77,7 @@ void AttachResourceNames()
     MH_Read(TABLE_ADDR, TABLE, ID_COUNT * sizeof(char*));
     
     TABLE[RTYPE_PINS] = "RPins";
+    TABLE[RTYPE_OUTFIT_LIST] = "ROutfitList";
 
     // Replace the TOC reference with our newly allocated table
     MH_Poke32(0x0091d4ac, (u32)TABLE);
@@ -95,6 +106,7 @@ void AttachResourceDependinateHooks()
     }
 
     TABLE[RTYPE_PINS] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
+    TABLE[RTYPE_OUTFIT_LIST] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092e160, (u32)TABLE);
@@ -123,6 +135,7 @@ void AttachResourceLoadHooks()
     }
 
     TABLE[RTYPE_PINS] = (u32)&_reflectresource_load_rtype_pins - (u32)TABLE;
+    TABLE[RTYPE_OUTFIT_LIST] = (u32)&_reflectresource_load_rtype_outfit_list - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092e164, (u32)TABLE);
@@ -143,6 +156,7 @@ void AttachResourceIds()
     MH_Read(TABLE_ADDR, TABLE, ID_COUNT * sizeof(char*));
     
     TABLE[RTYPE_PINS] = "PINb";
+    TABLE[RTYPE_OUTFIT_LIST] = "OUTb";
 
     // Replace the TOC reference with our newly allocated table
     MH_Poke32(0x0091d4b0, (u32)TABLE);
@@ -171,6 +185,7 @@ void AttachResourceAllocationHooks()
     }
 
     TABLE[RTYPE_PINS] = (u32)&_allocatenewresource_rtype_pins - (u32)TABLE;
+    TABLE[RTYPE_OUTFIT_LIST] = (u32)&_allocatenewresource_rtype_outfit_list - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0091d678, (u32)TABLE);
@@ -195,12 +210,12 @@ void AttachCustomRevisionHooks()
 
 void InitResourceHooks()
 {
-    // AttachResourceAllocationHooks();
-    // AttachResourceDependinateHooks();
-    // AttachResourceLoadHooks();
-    // AttachResourceIds();
-    // AttachResourceNames();
+    AttachResourceAllocationHooks();
+    AttachResourceDependinateHooks();
+    AttachResourceLoadHooks();
+    AttachResourceIds();
+    AttachResourceNames();
     //AttachCustomRevisionHooks();
 
-    // MH_Poke32(0x00087850, B(&_get_serialisationtype_hook, 0x00087850));
+    MH_Poke32(0x00087850, B(&_get_serialisationtype_hook, 0x00087850));
 }

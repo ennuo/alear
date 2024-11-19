@@ -15,6 +15,7 @@ class RMaterial;
 class RPins;
 class RGuidSubst;
 class RFileOfBytes;
+class ROutfitList;
 
 enum EResourceType
 {
@@ -139,6 +140,7 @@ template <> inline EResourceType GetResourceType<RPins>() { return RTYPE_PINS; }
 template <> inline EResourceType GetResourceType<RMaterial>() { return RTYPE_MATERIAL; }
 template <> inline EResourceType GetResourceType<RGuidSubst>() { return RTYPE_GUID_SUBST; }
 template <> inline EResourceType GetResourceType<RFileOfBytes>() { return RTYPE_FILE_OF_BYTES; }
+template <> inline EResourceType GetResourceType<ROutfitList>() { return RTYPE_OUTFIT_LIST; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>
