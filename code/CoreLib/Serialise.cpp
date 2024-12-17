@@ -55,3 +55,10 @@ ReflectReturn ReflectDescriptor(CReflectionLoadVector& r, CResourceDescriptorBas
 {
     return ReflectDescriptor_ReflectionLoadVector(r, d, cp, type);
 }
+
+MH_DefineFunc(ReflectDescriptor_ReflectionSaveVector, 0x0062e8e8, TOC0, ReflectReturn, CReflectionSaveVector&, CResourceDescriptorBase&, bool, bool);
+template <>
+ReflectReturn ReflectDescriptor(CReflectionSaveVector& r, CResourceDescriptorBase& d, bool cp, bool type)
+{
+    return ReflectDescriptor_ReflectionSaveVector(r, d, cp, type);
+}

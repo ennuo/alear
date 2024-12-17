@@ -12,6 +12,7 @@
 #include "alearcam.h"
 #include "alearoptui.h"
 #include "alearshared.h"
+#include "alearsync.h"
 #include "fwatch.h"
 #include "pins.h"
 #include "outfits.h"
@@ -29,6 +30,8 @@
 #include "ppcasm.h"
 
 #include "ResourceSystem.h"
+#include <FartRO.h>
+#include <resources/ResourceAnimatedTexture.h>
 
 
 extern "C" void _gfxbind_hook_naked();
@@ -37,11 +40,13 @@ bool AlearCheckPatch();
 bool AlearEpilogue()
 {
     DebugLog("FileDB::DBs:\n");
-    CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
-    for (int i = 0; i < FileDB::DBs.size(); ++i)
     {
-        gFileWatcher->AddFile(FileDB::DBs[i]->Path, OnDatabaseFileChanged);
-        DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
+        CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
+        for (int i = 1; i < FileDB::DBs.size(); ++i)
+        {
+            gFileWatcher->AddFile(FileDB::DBs[i]->Path, OnDatabaseFileChanged);
+            DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
+        }
     }
     
     return true;
@@ -52,6 +57,7 @@ CInitStep gEmoteInitStep = { "Emotes", NULL, LoadEmotes, UnloadEmotes, NULL, fal
 CInitStep gAlearInitSteps[] =
 {
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
+    { "Alear Sync", NULL, NULL, NULL, InitAlearSync, false, NULL  },
     { "Alear Server Switcher", NULL, AlearInitServerSwitcher, NULL, NULL, false, NULL },
     #ifdef __CINEMACHINE__
     { "Alear Cinemachine", NULL, LoadCameraClips, NULL, NULL, false, NULL },
@@ -173,10 +179,40 @@ void AlearHookHD()
     MH_Poke32(0x003e3f0c + 0x04, LI(4, height));
 }
 
+#include <Directory.h>
+void InitSyncCache()
+{
+
+    
+    CFilePath fp(FPR_GAMEDATA, gSyncCachePath);
+    DirectoryCreate(fp);
+    
+    if (!FileExists(fp))
+    {
+        Footer footer;
+        footer.count = 0;
+        footer.magic = FARC;
+
+        FileHandle fd;
+        FileOpen(fp, &fd, OPEN_WRITE);
+        FileWrite(fd, (void*)&footer, sizeof(Footer));
+        FileClose(&fd);
+    }
+
+    gCaches[CT_SYNC] = MakeROCache(fp, true, false);
+}
+
 void AlearSetupDatabase()
 {
+    // lazy so we're throwing the init for the sync cache in here
+    InitSyncCache();
+
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
 
+    CFilePath syncfp(FPR_GAMEDATA, gSyncDatabasePath);
+    gSyncDatabase = CFileDB::Construct(syncfp);
+    FileDB::DBs.push_back(gSyncDatabase);
+    
     if (gEnableFHD)
     {
         CFilePath fp(FPR_GAMEDATA, "/gamedata/alear/hd/patch.map");
@@ -209,6 +245,8 @@ void AlearSetupDatabase()
         FileDB::DBs[i]->Load();
 }
 
+#include <gooey/GooeyImage.h>
+
 void AlearStartup()
 {
     DebugLog("Alear version %d.%d build date: " __DATE__ " time: " __TIME__ "\n", ALEAR_MAJOR_VERSION, ALEAR_MINOR_VERSION);
@@ -219,8 +257,11 @@ void AlearStartup()
     DebugLog("First Alear CInitStep: %s\n", gAlearInitSteps[0].DebugText);
     DebugLog("SPRX TOC Base: %x\n", gTocBase);
 
+    DebugLog("sizeof(CGooeyImage) = 0x%08x\n", sizeof(CGooeyImage));
+
     // Setup all our hooks
     InitSharedHooks();
+    InitLogicSystemHooks();
     MH_InitHook((void*)0x0057d548, (void*)&AlearSetupDatabase);
     MH_Poke32(0x000997c8, B(&_gfxbind_hook_naked, 0x000997c8));
     AlearInitVMHook();

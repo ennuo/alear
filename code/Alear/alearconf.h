@@ -79,6 +79,13 @@ public:
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
     }
+
+    inline CConfigFloat(const wchar_t* category, const wchar_t* name, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
+    CConfigOption(OPT_FLOAT, category, name), Value(default_value),
+    MinValue(min_value), MaxValue(max_value), Step(step)
+    {
+        Invoke = invoke;
+    }
 public:
     inline float& operator&() { return Value; }
     inline operator float() const { return Value; }

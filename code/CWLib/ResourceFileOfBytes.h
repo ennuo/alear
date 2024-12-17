@@ -6,7 +6,7 @@
 
 class RFileOfBytes : public CResource {
 public:
-    inline const ByteArray& GetData() const { return Data; }
+    inline ByteArray& GetData() { return Data; }
 protected:
     ByteArray Data;
 };

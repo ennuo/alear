@@ -26,6 +26,7 @@ enum EDebugChannel
     DC_ALEAR,
     DC_SCRIPT_DEBUG,
     DC_SM64,
+    DC_MOLD,
 
     NUM_DEBUG_CHANNELS
 };

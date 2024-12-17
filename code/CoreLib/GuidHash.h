@@ -57,7 +57,7 @@ public:
 	inline void Clear() { memset(Bytes, 0, 0x14); }
 	inline void* GetBuf() { return (void*)&Bytes; }
 
-	inline int Compare(CHash& b) { return memcmp(Bytes, b.Bytes, HASH_BUF_LENGTH); }
+	inline int Compare(CHash const& b) const { return memcmp(Bytes, b.Bytes, HASH_BUF_LENGTH); }
 
 	inline bool operator !() const { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) == 0; }
 	inline bool operator==(CHash& rhs) { return Compare(rhs) == 0; }

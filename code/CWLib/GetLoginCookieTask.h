@@ -2,6 +2,7 @@
 #define GET_LOGIN_COOKIE_TASK_H
 
 #include <HTTPClient.h>
+#include <CritSec.h>
 
 enum EAuthenticatedTaskUpdateResult {
     ATUR_NOT_RUNNING,
@@ -17,5 +18,9 @@ private:
     u32 CookieID;
     u32 RetryAttempts;
 };
+
+extern bool (*GetNPTicket)();
+extern CCriticalSec gCookieSec;
+extern ByteArray gNPTicket;
 
 #endif // GET_LOGIN_COOKIE_TASK_H

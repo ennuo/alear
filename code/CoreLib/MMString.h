@@ -55,7 +55,7 @@ public:
         Construct(s, l);
     }
 
-    MMString(MMString<char>* s)
+    MMString(MMString<T>* s)
     {
         Construct(s->c_str(), s->size());
     }
@@ -71,7 +71,7 @@ public:
         return l <= LOCAL_STORE_CHARS;
     }
 
-    inline bool IsUsingLocalData()
+    inline bool IsUsingLocalData() const
     {
         return LocalData.LocalStoreFlag != (T)-1;
     }
@@ -79,6 +79,17 @@ public:
     inline T MakeLocalStoreFlag(size_t l)
     {
         return (l > LOCAL_STORE_CHARS) ? (T)-1 : LOCAL_STORE_CHARS - l;
+    }
+
+    void Terminate(size_t l)
+    {
+        LocalData.LocalStoreFlag = MakeLocalStoreFlag(l);
+        if (IsUsingLocalData()) LocalBuffer[l] = 0;
+        else
+        {
+            HeapData.Buffer[l] = 0;
+            HeapData.Length = l;
+        }
     }
 
     MMString<T>& append(const T* s) { return append(s, StringLength(s)); }
@@ -106,8 +117,9 @@ public:
                 delete[] HeapData.Buffer;
             
             HeapData.Buffer = data;
-            HeapData.Capacity = new_length + 1;
+            HeapData.Capacity = new_length;
             HeapData.Length = new_length;
+            HeapData.Buffer[new_length] = '\0';
 
             return *this;
         }
@@ -126,7 +138,7 @@ public:
             data[new_length] = 0;
 
             HeapData.Buffer = data;
-            HeapData.Capacity = new_length + 1;
+            HeapData.Capacity = new_length;
             HeapData.Length = new_length;
         }
 
@@ -134,6 +146,24 @@ public:
     }
 
     void reserve(size_t l) { Grow(l); }
+
+    void resize(size_t l, char c)
+    {
+        u32 len = length();
+
+        if (l < len)
+        {
+            Terminate(l);
+            return;
+        }
+
+        if (len < l && Grow(l))
+        {
+            T* buf = begin() + len;
+            for (int i = 0; i < l - len; ++i) buf[i] = c;
+            Terminate(l);
+        }
+    }
 
     bool Grow(size_t l)
     {
@@ -147,7 +177,7 @@ public:
             data[len] = '\0';
 
             HeapData.Buffer = data;
-            HeapData.Capacity = l + 1;
+            HeapData.Capacity = l;
             HeapData.Length = len;
             LocalData.LocalStoreFlag = MakeLocalStoreFlag(l);
 
@@ -161,7 +191,7 @@ public:
         delete[] HeapData.Buffer;
 
         HeapData.Buffer = data;
-        HeapData.Capacity = l + 1;
+        HeapData.Capacity = l;
 
         return true;
     }
@@ -244,6 +274,11 @@ public:
         return *this;
     }
 
+    MMString<T>& operator=(MMString<T> const& s)
+    {
+        return assign(s.c_str(), s.size());
+    }
+
     MMString<T>& operator=(T const* s)
     {
         return assign(s, StringLength(s));
@@ -259,14 +294,14 @@ public:
         return StringCompare(c_str(), s);
     }
 
-    inline size_t size()
+    inline size_t size() const
     {
         if (IsUsingLocalData())
             return LOCAL_STORE_CHARS - LocalData.LocalStoreFlag;
         return HeapData.Length;
     }
 
-    inline size_t length()
+    inline size_t length() const
     {
         if (IsUsingLocalData())
             return LOCAL_STORE_CHARS - LocalData.LocalStoreFlag;
@@ -280,7 +315,12 @@ public:
         return HeapData.Capacity;
     }
 
-    inline T* c_str()
+    inline T* begin()
+    {
+        return IsUsingLocalData() ? (T*)&LocalBuffer : HeapData.Buffer;
+    }
+
+    inline T* c_str() const
     {
         return IsUsingLocalData() ? (T*)&LocalBuffer : HeapData.Buffer;
     }

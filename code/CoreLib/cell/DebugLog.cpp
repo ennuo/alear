@@ -31,7 +31,8 @@ DebugChannelOptions g_DebugChannelMapping[] = {
     #else
     { 4, false, "DC_SCRIPT_DEBUG", "ScriptDebug" },
     #endif 
-    { 4, true, "DC_SM64", "SM64" }
+    { 4, true, "DC_SM64", "SM64" },
+    { 4, true, "DC_ALEARSYNC", "AlearSync" }
 };
 
 void DebugLog(const char* format, ...) {

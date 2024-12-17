@@ -13,6 +13,7 @@ CFileDB* CFileDB::Construct(CFilePath& path)
 
 namespace FileDB {
     MH_DefineFunc(FindByGUID, 0x0057c8d8, TOC1, CFileDBRow*, const CGUID& guid);
+    MH_DefineFunc(FindByPath, 0x0057cb90, TOC1, CFileDBRow*, const CFilePath&, bool);
 };
 
 

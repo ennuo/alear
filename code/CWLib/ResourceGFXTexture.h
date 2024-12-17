@@ -9,7 +9,7 @@
 #include "TextureType.h"
 
 class RTexture : public CResource {
-private:
+public:
     u32 DeterministicWidth;
     u32 DeterministicHeight;
     CellGcmTexture gcmtexture;

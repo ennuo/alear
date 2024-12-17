@@ -32,7 +32,7 @@ public:
 public:
     inline CGUID& GetGUID() { return GUID; }
     inline CHash& GetLoadedHash() { return LoadedHash; }
-    inline EResourceType GetResourceType() { return ResourceType; }
+    inline EResourceType GetResourceType() const { return ResourceType; }
 public:
     volatile u32 RefCount;
     volatile u32 WeakCount;
@@ -47,6 +47,8 @@ protected:
     CHash LoadedHash;
     u32 CachedSizeInMemory;
 public:
+    inline u32 GetRefCount() { return RefCount; }
+    
     inline u32 AddRef() 
     {
         Flags |= FLAG_REF_COUNT_DIRTY;
@@ -64,6 +66,11 @@ public:
     inline bool IsLoaded()
     {
         return LoadState == LOAD_STATE_LOADED;
+    }
+
+    inline bool IsError()
+    {
+        return LoadState >= LOAD_STATE_ERROR;
     }
 
     ReflectReturn Duplicate(CResource* resource);

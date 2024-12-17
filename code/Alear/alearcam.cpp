@@ -1,5 +1,5 @@
 #include "alearcam.h"
-#include "alearlauncher.h"
+#include "alearsync.h"
 
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
@@ -53,6 +53,8 @@ bool gDisableCameraInput = false;
 bool gDisableDOF = true;
 bool gDisableFog = false;
 bool gShowOutlines = false;
+bool gRenderOnlyPopit = false;
+
 
 CGooeyNodeManager* gCameraGooey;
 
@@ -170,6 +172,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                     INLINE_BOOL("Disable DOF", gDisableDOF);
                     INLINE_BOOL("Disable Fog", gDisableFog);
                     INLINE_BOOL("Show Outlines", gShowOutlines);
+                    INLINE_BOOL("Show Popit Only", gRenderOnlyPopit);
                     INLINE_BOOL("Show Extra Info", gShowCameraInfo);
 
                     #undef INLINE_BOOL
@@ -355,11 +358,29 @@ MMString<wchar_t> gWorldStrings[64];
 
 extern CRawVector<PWorld*> gWorlds;
 
+v4 GetCameraPosition()
+{
+    #ifdef __CINEMACHINE__
+    return gCinemachine.IsPlaying() ? gCinemachine.Camera.Pos : gView.DebugCamera.Pos;
+    #else
+    return gView.DebugCamera.Pos;
+    #endif
+}
+
+v4 GetCameraFocus()
+{
+    #ifdef __CINEMACHINE__
+    return gCinemachine.IsPlaying() ? gCinemachine.Camera.Foc : gView.DebugCamera.Foc;
+    #else
+    return gView.DebugCamera.Foc;
+    #endif
+}
+
 void OnDrawPostComp(COverlayUI* interface)
 {
-    UpdateAlearLauncher();
-    
-    if (!gView.DebugCameraActive)
+    RenderDownloadInfo();
+
+    if (!gView.DebugCameraActive && !gRenderOnlyPopit)
     {
         UpdateButtonPrompts();
         return;

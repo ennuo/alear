@@ -8,6 +8,11 @@ class RMesh;
 class CThing;
 
 class CSackBoyAnim {
+public:
+    // actual ctor doesn't matter, just make sure everything is zero init
+    inline CSackBoyAnim() { memset(this, 0, sizeof(CSackBoyAnim)); }
+public:
+    void LoadAnims(CAnimBank* ab, bool cached);
 private:
     void FreezeSolid();
     void SetEffectMesh(RMesh* mesh);

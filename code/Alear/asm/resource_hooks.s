@@ -33,6 +33,21 @@ _allocatenewresource_rtype_outfit_list:
     mr %r25, %r29
     ba 0x00088bb8
 
+.global _allocatenewresource_rtype_animated_texture
+_allocatenewresource_rtype_animated_texture:
+    rldicl %r3, %r31, 0x0, 0x20
+
+    std %r2, 0x28(%r1)
+    lis %r7, _Z31AllocateAnimatedTextureResource13EResourceFlag@h      
+    ori %r7, %r7, _Z31AllocateAnimatedTextureResource13EResourceFlag@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z31AllocateAnimatedTextureResource13EResourceFlag
+    ld %r2, 0x28(%r1)
+    
+    mr %r29, %r3
+    mr %r25, %r29
+    ba 0x00088bb8
+
 .global _reflectresource_load_rtype_pins
 _reflectresource_load_rtype_pins:
     rldicl %r3, %r3, 0x0, 0x20
@@ -58,6 +73,21 @@ _reflectresource_load_rtype_outfit_list:
     ori %r7, %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R11ROutfitList@l
     lwz %r2, 0x4(%r7)
     bl ._Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R11ROutfitList
+    ld %r2, 0x28(%r1)
+
+    mr %r27, %r3
+    ba 0x0072735c
+
+.global _reflectresource_load_rtype_animated_texture
+_reflectresource_load_rtype_animated_texture:
+    rldicl %r3, %r3, 0x0, 0x20
+    rldicl %r4, %r4, 0x0, 0x20
+
+    std %r2, 0x28(%r1)
+    lis %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R16RAnimatedTexture@h      
+    ori %r7, %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R16RAnimatedTexture@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R16RAnimatedTexture
     ld %r2, 0x28(%r1)
 
     mr %r27, %r3
@@ -131,6 +161,9 @@ _get_serialisationtype_hook:
     beq %cr7, _SerialisationType_Binary
     cmpwi %cr7, %r3, RTYPE_OUTFIT_LIST
     beq %cr7, _SerialisationType_Binary
+    cmpwi %cr7, %r3, RTYPE_ANIMATED_TEXTURE
+    beq %cr7, _SerialisationType_Binary
+    
     b FallbackGetSerialisationType
 
 _SerialisationType_Binary:
@@ -141,3 +174,65 @@ FallbackGetSerialisationType:
     li %r0, 0x441
     ba 0x00087854
 
+.global _reflectextradata_load
+_reflectextradata_load:
+    bne %cr4, _SkipExtraSerialization
+
+    mr %r3, %r25
+    mr %r4, %r26
+
+    std %r2, 0x28(%r1)
+    lis %r7, _Z24ReflectExtraResourceDataI21CReflectionLoadVectorE13ReflectReturnP9CResourceRT_@h      
+    ori %r7, %r7, _Z24ReflectExtraResourceDataI21CReflectionLoadVectorE13ReflectReturnP9CResourceRT_@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z24ReflectExtraResourceDataI21CReflectionLoadVectorE13ReflectReturnP9CResourceRT_
+    ld %r2, 0x28(%r1)
+
+    mr %r31, %r3
+
+_SkipExtraSerialization:
+    cmpwi %cr4, %r31, 0x0
+    ba 0x003c7410
+
+.global _reflectextradata_save
+_reflectextradata_save:
+    mr %r3, %r20
+    mr %r4, %r30
+    
+    std %r2, 0x28(%r1)
+    lis %r7, _Z24ReflectExtraResourceDataI21CReflectionSaveVectorE13ReflectReturnP9CResourceRT_@h      
+    ori %r7, %r7, _Z24ReflectExtraResourceDataI21CReflectionSaveVectorE13ReflectReturnP9CResourceRT_@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z24ReflectExtraResourceDataI21CReflectionSaveVectorE13ReflectReturnP9CResourceRT_
+    ld %r2, 0x28(%r1)
+
+    li %r29, 0
+    ba 0x003c7ab0
+
+.global _initextradata_localprofile
+_initextradata_localprofile:
+    mr %r3, %r31
+
+    std %r2, 0x28(%r1)
+    lis %r7, _ZN13RLocalProfile19InitializeExtraDataEv@h      
+    ori %r7, %r7, _ZN13RLocalProfile19InitializeExtraDataEv@l
+    lwz %r2, 0x4(%r7)
+    bl ._ZN13RLocalProfile19InitializeExtraDataEv
+    ld %r2, 0x28(%r1)
+
+    mr %r9, %r17
+    ba 0x000ba1d0
+
+.global _initextradata_syncedprofile
+_initextradata_syncedprofile:
+    mr %r3, %r27
+
+    std %r2, 0x28(%r1)
+    lis %r7, _ZN14RSyncedProfile19InitializeExtraDataEv@h      
+    ori %r7, %r7, _ZN14RSyncedProfile19InitializeExtraDataEv@l
+    lwz %r2, 0x4(%r7)
+    bl ._ZN14RSyncedProfile19InitializeExtraDataEv
+    ld %r2, 0x28(%r1)
+
+    addi %r3, %r28, 0x50
+    ba 0x000af450

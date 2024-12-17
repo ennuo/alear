@@ -8,10 +8,14 @@
 
 extern bool gShowCameraHelper;
 extern bool gShowOutlines;
+extern bool gRenderOnlyPopit;
 
 void InitCameraHooks();
 void UpdateDebugCameraNotInUse();
 void UpdateDebugCamera();
+
+v4 GetCameraPosition();
+v4 GetCameraFocus();
 
 #ifdef __CINEMACHINE__
 

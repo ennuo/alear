@@ -18,6 +18,12 @@
 
 class CInventoryItemDetails : public CDependencyWalkable {
 public:
+    inline void SetLookupIndices(u32 loc_idx, u32 cat_idx)
+    {
+        CategoryIndex = cat_idx;
+        LocationIndex = loc_idx;
+    }
+public:
     CGUID HighlightSound;
     CSlotID LevelUnlockSlotID;
     u32 LocationIndex;
@@ -25,7 +31,11 @@ public:
     u32 PrimaryIndex;
     u32 LastUsed;
     u32 NumUses;
-    u32 Pad;
+    union
+    {
+        u32 Pad;
+        u32 CustomSortKey;
+    };
     /* CalendarTime */ u64 DateAdded;
     int FluffCost;
     c32 Colour;
@@ -55,7 +65,7 @@ private:
 
 class CInventoryItem {
 public:
-    CResourceDescriptorBase Plan;
+    CResourceDescriptor<RPlan> Plan;
     CInventoryItemDetails Details;
     u32 UID;
     /* ETutorialLevels */ u32 TutorialLevel;

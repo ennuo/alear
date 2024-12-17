@@ -60,7 +60,7 @@ public:
             transform.position[2] = pos.getZ();
             // transform.eulerRotation[2] = angle;
 
-            DebugLogChF(DC_SM64, "updating physobj: %d, pos: [%f, %f, %f], rot: %f\n", Id, (float)pos.getX(), (float)pos.getY(), (float)pos.getZ(), angle);
+            // DebugLogChF(DC_SM64, "updating physobj: %d, pos: [%f, %f, %f], rot: %f\n", Id, (float)pos.getX(), (float)pos.getY(), (float)pos.getZ(), angle);
 
             LastPosition[0] = posx;
             LastPosition[1] = posy;

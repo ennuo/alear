@@ -38,6 +38,24 @@ u64 CGooeyNodeManager::GetAnonymousUID()
     return CGooeyNodeManager_GetAnonymousUID(this);
 }
 
+MH_DefineFunc(CGooeyNodeManager_GetLastItemScreenRect, 0x002fc580, TOC0, CRect, CGooeyNodeManager*);
+CRect CGooeyNodeManager::GetLastItemScreenRect()
+{
+    return CGooeyNodeManager_GetLastItemScreenRect(this);
+}
+
+MH_DefineFunc(CGooeyNodeManager_EnsureNodeOrDescendantHasFocus, 0x00305900, TOC0, bool, CGooeyNodeManager*, u64);
+bool CGooeyNodeManager::EnsureNodeOrDescendantHasFocus(u64 uid)
+{
+    return CGooeyNodeManager_EnsureNodeOrDescendantHasFocus(this, uid);
+}
+
+MH_DefineFunc(CGooeyNodeManager_NodeOrDescendantHasFocus, 0x002f9a60, TOC0, bool, CGooeyNodeManager*, u64);
+bool CGooeyNodeManager::NodeOrDescendantHasFocus(u64 uid)
+{
+    return CGooeyNodeManager_NodeOrDescendantHasFocus(this, uid);
+}
+
 MH_DefineFunc(CGooeyNodeManager_SetFrameSizing, 0x002f8a28, TOC0, void, CGooeyNodeManager*, SizingBehaviour, SizingBehaviour);
 void CGooeyNodeManager::SetFrameSizing(SizingBehaviour behaviour_w, SizingBehaviour behaviour_h)
 {
@@ -84,16 +102,40 @@ u32 CGooeyNodeManager::DoInline(u64 uid, wchar_t* text, EGooeyTextStyle text_sty
     return DoFancyButtonNamed(uid, text, text_style, GBS_INLINE, button_state, accepted_input, icon);
 }
 
+MH_DefineFunc(CGooeyNodeManager_DoScrollingTextChangerNamed, 0x002ff514, TOC0, u32, CGooeyNodeManager*, u64, wchar_t*, EGooeyTextStyle, v2);
+u32 CGooeyNodeManager::DoScrollingTextChangerNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 size)
+{
+    return CGooeyNodeManager_DoScrollingTextChangerNamed(this, uid, text, text_style, size);
+}
+
+MH_DefineFunc(CGooeyNodeManager_DoRectangleNamed, 0x00300ae4, TOC0, u32, CGooeyNodeManager*, u64, v2, v4);
+u32 CGooeyNodeManager::DoRectangleNamed(u64 uid, v2 size, v4 colour)
+{
+    return CGooeyNodeManager_DoRectangleNamed(this, uid, size, colour);
+}
+
+MH_DefineFunc(CGooeyNodeManager_DoBreak_TexScale_Float, 0x00300d44, TOC0, void, CGooeyNodeManager*, EGooeyBreakStyle, v2, float);
+void CGooeyNodeManager::DoBreak(EGooeyBreakStyle style, v2 tex_scale, float f)
+{
+    CGooeyNodeManager_DoBreak_TexScale_Float(this, style, tex_scale, f);
+}
+
 MH_DefineFunc(CGooeyNodeManager_DoHorizontalBreak_TexScale, 0x00300dc8, TOC0, void, CGooeyNodeManager*, EGooeyBreakStyle, v2);
 void CGooeyNodeManager::DoHorizontalBreak(EGooeyBreakStyle style, v2 tex_scale)
 {
     CGooeyNodeManager_DoHorizontalBreak_TexScale(this, style, tex_scale);
 }
 
-MH_DefineFunc(CGooeyNodeManager_SetFrameBorders, 0x002f8a90, TOC0, void, CGooeyNodeManager*, float, float)
+MH_DefineFunc(CGooeyNodeManager_SetFrameBorders, 0x002f8a90, TOC0, void, CGooeyNodeManager*, float, float);
 void CGooeyNodeManager::SetFrameBorders(float x, float y)
 {
     CGooeyNodeManager_SetFrameBorders(this, x, y);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameBorders4, 0x002fa274, TOC0, void, CGooeyNodeManager*, float, float, float, float);
+void CGooeyNodeManager::SetFrameBorders(float x0, float y0, float x1, float y1)
+{
+    CGooeyNodeManager_SetFrameBorders4(this, x0, y0, x1, y1);
 }
 
 MH_DefineFunc(CGooeyNodeManager_SetFrameDefaultChildSpacing, 0x002fa20c, TOC0, void, CGooeyNodeManager*, float, float)
@@ -118,4 +160,34 @@ MH_DefineFunc(CGooeyNodeManager_AddFrameColumn, 0x002f9bb4, TOC0, void, CGooeyNo
 void CGooeyNodeManager::AddFrameColumn(SizingBehaviour behaviour, ELayoutMode layout)
 {
     CGooeyNodeManager_AddFrameColumn(this, behaviour, layout);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameHighlightStyle, 0x002f9f94, TOC0, void, CGooeyNodeManager*, EGooeyHighlightStyle);
+void CGooeyNodeManager::SetFrameHighlightStyle(EGooeyHighlightStyle highlight_style)
+{
+    CGooeyNodeManager_SetFrameHighlightStyle(this, highlight_style);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameScrollStyle, 0x002f9eb8, TOC0, void, CGooeyNodeManager*, EGooeyScrollStyle, EGooeyScrollStyle);
+void CGooeyNodeManager::SetFrameScrollStyle(EGooeyScrollStyle h_style, EGooeyScrollStyle v_style)
+{
+    CGooeyNodeManager_SetFrameScrollStyle(this, h_style, v_style);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameDrawScrollArrows, 0x002f9e40, TOC0, void, CGooeyNodeManager*, bool, bool, bool, bool);
+void CGooeyNodeManager::SetFrameDrawScrollArrows(bool d, bool highlight_left, bool highlight_right, bool push_out)
+{
+    CGooeyNodeManager_SetFrameDrawScrollArrows(this, d, highlight_left, highlight_right, push_out);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameWhollyVisibleWithChildren, 0x002fa1a0, TOC0, void, CGooeyNodeManager*);
+void CGooeyNodeManager::SetFrameWhollyVisibleWithChildren()
+{
+    CGooeyNodeManager_SetFrameWhollyVisibleWithChildren(this);
+}
+
+MH_DefineFunc(CGooeyNodeManager_SetFrameHighlightSizing, 0x002f9f28, TOC0, void, CGooeyNodeManager*, EGooeySizingType);
+void CGooeyNodeManager::SetFrameHighlightSizing(EGooeySizingType sizing)
+{
+    CGooeyNodeManager_SetFrameHighlightSizing(this, sizing);
 }

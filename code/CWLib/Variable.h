@@ -7,6 +7,8 @@
 #include <MMString.h>
 #include <map>
 
+#include "hack_thingptr.h"
+
 
 enum EGatherType {
     GATHER_TYPE_GATHER,
@@ -66,6 +68,13 @@ template<typename R>
 ReflectReturn Reflect(R& r, CEmoteBank& d);
 template<typename R>
 ReflectReturn Reflect(R& r, CEmoteSound& d);
+template<typename R>
+ReflectReturn Reflect(R& r, CAnimStyle& d);
+template<typename R>
+ReflectReturn Reflect(R& r, CStyleBank& d);
+template<typename R>
+ReflectReturn Reflect(R& r, CThingPtr& d);
+
 
 // variable.h: 147
 template<typename R, typename D>
@@ -105,7 +114,7 @@ ReflectReturn ReflectVector(R& r, D& d)
             d.try_resize(len);
         }
     }
-    else if (init)
+    else if (!r.GetSaving() && init)
     {
         if (size != 0)
         {
@@ -225,12 +234,20 @@ template <typename T> inline EVariableType GetVariableType() { return VARIABLE_T
 template <> inline EVariableType GetVariableType<MMString<char> >() { return VARIABLE_TYPE_STRING; }
 template <> inline EVariableType GetVariableType<MMString<wchar_t> >() { return VARIABLE_TYPE_WSTRING; }
 template <> inline EVariableType GetVariableType<MMString<tchar_t> >() { return VARIABLE_TYPE_WSTRING; }
+template <> inline EVariableType GetVariableType<s8>() { return VARIABLE_TYPE_U8; }
+template <> inline EVariableType GetVariableType<u8>() { return VARIABLE_TYPE_U8; }
+template <> inline EVariableType GetVariableType<s16>() { return VARIABLE_TYPE_U16; }
+template <> inline EVariableType GetVariableType<u16>() { return VARIABLE_TYPE_U16; }
+template <> inline EVariableType GetVariableType<s32>() { return VARIABLE_TYPE_U32; }
 template <> inline EVariableType GetVariableType<u32>() { return VARIABLE_TYPE_U32; }
 template <> inline EVariableType GetVariableType<f32>() { return VARIABLE_TYPE_FLOAT; }
 template <> inline EVariableType GetVariableType<bool>() { return VARIABLE_TYPE_BOOL; }
+template <> inline EVariableType GetVariableType<v4>() { return VARIABLE_TYPE_V4; }
 template <> inline EVariableType GetVariableType<CVector<CSlapMesh> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CVector<CEmote> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CVector<CEmoteSound> >() { return VARIABLE_TYPE_ARRAY; }
+template <> inline EVariableType GetVariableType<CVector<CAnimStyle> >() { return VARIABLE_TYPE_ARRAY; }
+template <> inline EVariableType GetVariableType<CThingPtr>() { return VARIABLE_TYPE_THINGPTR; }
 
 // variable.h: 288, all defined here
 template <typename D>

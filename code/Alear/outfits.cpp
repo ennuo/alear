@@ -76,12 +76,12 @@ void OnItemCollected(CPlayer& player, CP<RPlan> const& plan)
             CP<RPlan> outfit_plan = LoadResource<RPlan>(outfit->Outfit, STREAM_PRIORITY_DEFAULT, 0, false);
             outfit_plan->BlockUntilLoaded();
 
-            CreateOutfitCollectBubble(player_thing, outfit_plan);
+            SpawnCollectBubble(player_thing, outfit_plan);
         }
     }
 }
 
-void CreateOutfitCollectBubble(CThing* player, CP<RPlan> const& plan)
+void SpawnCollectBubble(CThing* player, CP<RPlan> const& plan)
 {
     if (player == NULL || !plan || !plan->IsLoaded()) return;
     PYellowHead* yellowhead = player->GetPYellowHead();

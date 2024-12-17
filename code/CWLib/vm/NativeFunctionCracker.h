@@ -84,8 +84,68 @@ namespace NVirtualMachine
         }
     };
 
+    template <typename Arg1, typename Arg2>
+    class CNativeFunction2V {
+    public:
+        template <void (&Fn)(Arg1, Arg2)>
+        static void Call(CScriptContext* context, void* ret, u8* arguments)
+        {
+            struct CallStruct
+            {
+                Arg1 a;
+                Arg2 b;
+            } 
+            call;
+            
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
+            SConvertScriptTypes<Arg2>::VMToNative(call.b, context, (typename SConvertScriptTypes<Arg2>::VMType&)((CallStruct*)arguments)->b);
+            Fn(call.a, call.b);
+        }
+    };
 
+    template <typename Arg1, typename Arg2, typename Arg3>
+    class CNativeFunction3V {
+    public:
+        template <void (&Fn)(Arg1, Arg2, Arg3)>
+        static void Call(CScriptContext* context, void* ret, u8* arguments)
+        {
+            struct CallStruct
+            {
+                Arg1 a;
+                Arg2 b;
+                Arg3 c;
+            } 
+            call;
+            
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
+            SConvertScriptTypes<Arg2>::VMToNative(call.b, context, (typename SConvertScriptTypes<Arg2>::VMType&)((CallStruct*)arguments)->b);
+            SConvertScriptTypes<Arg3>::VMToNative(call.c, context, (typename SConvertScriptTypes<Arg3>::VMType&)((CallStruct*)arguments)->c);
+            Fn(call.a, call.b, call.c);
+        }
+    };
 
+    template <typename ReturnType, typename Arg1, typename Arg2, typename Arg3>
+    class CNativeFunction3 {
+    public:
+        template <ReturnType (&Fn)(Arg1, Arg2, Arg3)>
+        static void Call(CScriptContext* context, void* ret, u8* arguments)
+        {
+            struct CallStruct
+            {
+                Arg1 a;
+                Arg2 b;
+                Arg3 c;
+            } 
+            call;
+
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
+            SConvertScriptTypes<Arg2>::VMToNative(call.b, context, (typename SConvertScriptTypes<Arg2>::VMType&)((CallStruct*)arguments)->b);
+            SConvertScriptTypes<Arg3>::VMToNative(call.c, context, (typename SConvertScriptTypes<Arg3>::VMType&)((CallStruct*)arguments)->c);
+            
+            ReturnType value = Fn(call.a, call.b, call.c);
+            ConvertReturnValue<ReturnType>(ret, context, value);
+        }
+    };
 }
 
 

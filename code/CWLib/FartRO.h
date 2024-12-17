@@ -3,6 +3,13 @@
 
 #include "Fart.h"
 
+const u32 FARC = 0x46415243;
+
+struct Footer {
+    u32 count;
+    u32 magic;
+};
+
 enum EFartROState {
     EFartROState_Disabled,
     EFartROState_Enabled,
@@ -12,6 +19,8 @@ enum EFartROState {
 class CFartRO : public CCache { // FartRO.h: 50
 public:
     class CFAT {
+    public:
+        bool operator<(CFAT const& rhs) const { return hash.Compare(rhs.hash) < 0; }
     public:
         CHash hash;
         u32 offset;

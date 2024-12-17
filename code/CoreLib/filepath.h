@@ -36,6 +36,11 @@ public:
     {
         Invalid = true;
     }
+
+    inline CFilePath(const char* filename)
+    {
+        Assign(filename);
+    }
     
     inline CFilePath(EFilePathRootDir root_dir, char* filename)
     {
@@ -88,6 +93,7 @@ void FileClose(FileHandle* h);
 bool FileOpen(CFilePath& fp, FileHandle* fd, EOpenMode mode);
 u64 FileRead(FileHandle h, void* out, u64 count);
 u64 FileWrite(FileHandle h, void* bin, u64 count);
+u64 FileSeek(FileHandle h, s64 newpos, u32 whence);
 
 typedef bool (*ParseFn)(TextRange<char>&);
 bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out);

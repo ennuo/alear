@@ -73,6 +73,13 @@ u64 FileWrite(FileHandle h, void* bin, u64 count)
 	return n;
 }
 
+u64 FileSeek(FileHandle h, s64 newpos, u32 whence)
+{
+	u64 p;
+	cellFsLseek(h, newpos, whence, &p);
+	return 0;
+}
+
 bool FileStat(FileHandle h, u64* modtime, u64* size) 
 {
 	*modtime = 0;

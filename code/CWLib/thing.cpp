@@ -33,6 +33,17 @@ void CThing::SetWorld(PWorld* world, u32 preferred_uid)
     CThing_SetWorld(this, world, preferred_uid);
 }
 
+void CThing::InitializeExtraData()
+{
+    CustomThingData = new CCustomThingData();
+}
+
+void CThing::DestroyExtraData()
+{
+    if (CustomThingData != NULL)
+        delete CustomThingData;
+}
+
 // not technically supposed to be here but i dont care
 void CThingPtr::Unset()
 {

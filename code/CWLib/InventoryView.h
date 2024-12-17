@@ -8,6 +8,7 @@
 #include "MMString.h"
 #include "ReflectionVisitable.h"
 
+class CInventoryItem;
 class CViewDescriptor {
 public:
     u32 Type;
@@ -15,7 +16,24 @@ public:
     MMString<tchar_t> Title;
 };
 
+
+class SSortTermBoundary {
+public:
+    inline SSortTermBoundary() : Index(), Name()
+    {
+
+    }
+public:
+    u32 Index;
+    MMString<wchar_t> Name;
+};
+
 class CInventoryView : public CBaseCounted, CReflectionVisitable {
+public:
+    struct SInventoryItemData {
+        CInventoryItem* Item;
+        u32 CurSortIndex;
+    };
 public:
     CViewDescriptor Descriptor;
     u32 CustomID;
@@ -24,10 +42,9 @@ public:
     u32 DesiredSortMode;
     bool ContentsOutOfDate;
     bool UIOutOfDate;
-
-    // CRawVector<SInventoryItemData> PageData
-    // Cvector<SSortTermBoundary> SortTermBoundaries
-    // CRawVector<u32> CategoryOrder
+    CRawVector<SInventoryItemData> PageData;
+    CVector<SSortTermBoundary> SortTermBoundaries;
+    CRawVector<u32> CategoryOrder;
 };
 
 #endif // INVENTORY_VIEW_H

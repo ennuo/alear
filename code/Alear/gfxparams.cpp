@@ -1,5 +1,6 @@
 #include <cell/gcm.h>
 
+#include <cell/DebugLog.h>
 
 #include "thing.h"
 

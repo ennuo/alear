@@ -1,30 +1,30 @@
 #include "customization/slapstyles.h"
 
 #include <cell/DebugLog.h>
+#include <refcount.h>
+#include <vector.h>
 
 #include <MMAudio.h>
 #include <PartCostume.h>
 #include <ResourceGFXMesh.h>
 #include <Variable.h>
+#include <ResourceFileOfBytes.h>
+#include <ResourceSystem.h>
 
 CVector<CSlapMesh> gSlapMeshes;
+StaticCP<RFileOfBytes> gSlapStyleData;
 
 bool LoadSlapStyles()
 {
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/slap_styles.txt");
-    if (!FileExists(fp))
-    {
-        DebugLog("Skipping load of slap styles, since no configuration file exists at %s\n", fp.c_str());
-        return true;
-    }
+    gSlapMeshes.clear();
 
-    ByteArray b; CHash hash;
-    if (!FileLoad(fp, b, hash))
-    {
-        DebugLog("An error occurred reading configuration file for slap styles!\n");
-        return false;
-    }
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_SLAP_STYLES_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RFileOfBytes>*)&gSlapStyleData) = file;
+    
+    file->BlockUntilLoaded();
+    if (!file->IsLoaded()) return false;
 
+    ByteArray& b = file->GetData();
     CGatherVariables variables;
     variables.Init<CSlapStyles>((CSlapStyles*)&gSlapMeshes);
     if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)

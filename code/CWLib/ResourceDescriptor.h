@@ -16,6 +16,8 @@ class RPins;
 class RGuidSubst;
 class RFileOfBytes;
 class ROutfitList;
+class RAnim;
+class RAnimatedTexture;
 
 enum EResourceType
 {
@@ -119,6 +121,14 @@ public:
         GUID = guid;
         Valid = true;
     }
+
+    inline CResourceDescriptorBase(EResourceType type, CHash& hash) :
+    CDependencyWalkable(), Hash(), GUID()
+    {
+        Type = type;
+        Hash = hash;
+        Valid = true;
+    }
 public:
     inline CGUID& GetGUID() { return GUID; }
 protected:
@@ -141,6 +151,8 @@ template <> inline EResourceType GetResourceType<RMaterial>() { return RTYPE_MAT
 template <> inline EResourceType GetResourceType<RGuidSubst>() { return RTYPE_GUID_SUBST; }
 template <> inline EResourceType GetResourceType<RFileOfBytes>() { return RTYPE_FILE_OF_BYTES; }
 template <> inline EResourceType GetResourceType<ROutfitList>() { return RTYPE_OUTFIT_LIST; }
+template <> inline EResourceType GetResourceType<RAnim>() { return RTYPE_ANIM; }
+template <> inline EResourceType GetResourceType<RAnimatedTexture>() { return RTYPE_ANIMATED_TEXTURE; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>
@@ -152,6 +164,7 @@ public:
     }
 
     inline CResourceDescriptor(CGUID guid) : CResourceDescriptorBase(GetResourceType<T>(), guid) {}
+    inline CResourceDescriptor(CHash& hash) : CResourceDescriptorBase(GetResourceType<T>(), hash) {}
 };
 
 #endif // RESOURCE_DESCRIPTOR_H

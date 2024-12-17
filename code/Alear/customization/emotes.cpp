@@ -1,14 +1,154 @@
 #include "customization/emotes.h"
 #include "customization/styles.h"
 
+#include <refcount.h>
 #include <cell/DebugLog.h>
 #include <MMAudio.h>
 #include <Variable.h>
 #include <SackBoyAnim.h>
 #include <Resource.h>
+#include <ResourceSystem.h>
+#include <ResourceSyncedProfile.h>
+#include <ResourceLocalProfile.h>
+#include <Poppet.h>
+#include <PoppetChild.h>
 
 CVector<CEmote> gEmotes;
 CVector<CAnimBank*> gAnimBanks;
+CStyleBank gStyleBank;
+
+extern bool gCachedAnimLoad;
+extern int gCachedAnimIndex;
+
+namespace ScriptyStuff {
+int LoadAnim(CAnimBank* ab, CGUID guid)
+{
+    if (gCachedAnimLoad) return gCachedAnimIndex++;
+
+    // the actual anim bank doesn't seem to get passed to this?
+    ab = gAnimBank;
+
+    if (ab->Subst) ab->Subst->Get(guid, guid);
+
+    int anim_index = ab->Anim.size();
+    CResourceDescriptor<RAnim> desc(guid);
+    CP<RAnim> anim = LoadResource<RAnim>(desc, STREAM_PRIORITY_DEFAULT, 0, false);
+    ab->Anim.push_back(anim);
+    return anim_index;
+}
+}
+
+CAnimStyle* GetAnimStyle(const char* id)
+{
+    if (id == NULL) return NULL;
+
+    for (int i = 0; i < gStyleBank.Styles.size(); ++i)
+    {
+        CAnimStyle& style = gStyleBank.Styles[i];
+        if (strcmp(id, style.ID.c_str()) == 0)
+            return &style;
+    }
+
+    return NULL;
+}
+
+CAnimStyle* GetAnimStyle(CThing* thing)
+{
+    if (thing == NULL) return NULL;
+    PScriptName* script_name = thing->GetPScriptName();
+    if (script_name == NULL) return NULL;
+
+    char* id = script_name->Name.c_str();
+    return GetAnimStyle(id);
+}
+
+bool CustomInitAnimsPostResource()
+{
+    for (int i = 0; i < gAnimBanks.size(); ++i)
+        gAnimBanks[i]->InitPostResource();
+
+    return true;
+}
+
+bool CustomInitAnims()
+{
+    if (gAnimBanks.size() != 0) return true;
+
+    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/animstyles.txt");
+    if (!FileExists(fp)) return false;
+
+    ByteArray b; CHash hash;
+    if (!FileLoad(fp, b, hash))
+    {
+        DebugLog("An error occurred reading configuration file for animation styles!!\n");
+        return false;
+    }
+
+    CGatherVariables variables;
+    variables.Init<CStyleBank>(&gStyleBank);
+    if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
+    {
+        DebugLog("An error occurred while loading data for animation styles!\n");
+        return false;
+    }
+
+    for (int i = 0; i < gStyleBank.Styles.size(); ++i)
+    {
+        CAnimStyle& style = gStyleBank.Styles[i];
+        style.Bank = new CAnimBank();
+
+        if (style.Gsub) style.Bank->Subst = LoadResourceByKey<RGuidSubst>(style.Gsub, 0, STREAM_PRIORITY_DEFAULT); 
+
+        gAnimBanks.push_back(style.Bank);
+    }
+
+    for (CAnimBank** it = gAnimBanks.begin(); it != gAnimBanks.end(); ++it)
+    {
+        gAnimBank = *it;
+
+        if (gAnimBank->Subst) gAnimBank->Subst->BlockUntilLoaded();
+        CSackBoyAnim sbanim;
+        sbanim.LoadAnims(gAnimBank, false);
+    }
+
+    // Restore the default animation bank
+    gAnimBank = gAnimBanks.front();
+
+    return true;
+}
+
+
+void SetInventoryAnimationStyle(CPoppetInventory* inventory, CThing* world, RPlan* plan)
+{
+    // I don't think this can even happen?
+    if (world == NULL) return;
+
+    CThing* player = ((CPoppetChild*)inventory)->GetPlayer();
+    PYellowHead* part = player->GetPYellowHead();
+    if (part == NULL) return;
+
+    CAnimStyle* style = GetAnimStyle(world);
+    if (style == NULL) style = gStyleBank.Styles.begin(); // The first style in the array is Sackboy
+    gAnimBank = style->Bank;
+
+    const CP<RSyncedProfile>& synced_profile = part->GetSyncedProfile();
+    const CP<RLocalProfile>& local_profile = part->GetLocalProfile();
+
+    // Sync our selected animation style to our profile
+    if (synced_profile)
+        synced_profile->AnimationStyle = style->ID;
+
+    // Update our last selected animation style descriptor
+    if (local_profile)
+    {
+        CResourceDescriptor<RPlan> desc(plan->GetGUID());
+        local_profile->SelectedAnimationStyle = desc;
+    }
+
+    // Detach the sackboy animation instance so it reloads the cached animations,
+    // it'll be re-added in the next update frame.
+    part->RenderYellowHead->RemoveSackBoyAnim();
+}
 
 bool LoadEmotes()
 {
@@ -106,9 +246,9 @@ void OnUpdateAnimationSounds(CSackBoyAnim& sb, int anim, int frame)
     }
 }
 
-namespace ScriptyStuff {
-    MH_DefineFunc(LoadAnim, 0x000e6894, TOC0, int, CAnimBank* ab, CGUID guid);
-}
+// namespace ScriptyStuff {
+//     MH_DefineFunc(LoadAnim, 0x000e6894, TOC0, int, CAnimBank* ab, CGUID guid);
+// }
 
 void OnInitializeSackboyAnims(CSackBoyAnim& sb)
 {
@@ -116,23 +256,20 @@ void OnInitializeSackboyAnims(CSackBoyAnim& sb)
     for (; it != gEmotes.end(); ++it)
     {
         CEmote& emote = *it;
+        emote.BankIndex = ScriptyStuff::LoadAnim(gAnimBank, emote.Anim);
+    }
 
-        // Check if the animation is already in the bank
-        int anim_index = -1;
-        // CVector<CP<RAnim> >& anim_list = gAnimBank->Anim;
-        // for (int i = 0; i < anim_list.size(); ++i)
-        // {
-        //     CP<RAnim>& anim = anim_list[i];
-        //     if (anim->GetGUID().guid == emote.Anim)
-        //     {
-        //         anim_index = i;
-        //         break;
-        //     }
-        // }
-
-        if (anim_index == -1)
-            anim_index = ScriptyStuff::LoadAnim(gAnimBank, emote.Anim);
-
-        emote.BankIndex = anim_index;
+    // if we're currently loading a cached anim set, we're probably being
+    // initialized from attach script, so just set the anim bank to whatever
+    // one is relevant.
+    if (gCachedAnimLoad)
+    {
+        CThing* thing = sb.Thing;
+        if (thing == NULL) return;
+        PYellowHead* part = thing->GetPYellowHead();
+        if (part == NULL) return;
+        const CP<RSyncedProfile>& prf = part->GetSyncedProfile();
+        if (prf)
+            gAnimBank = GetAnimStyle(prf->AnimationStyle.c_str())->Bank;
     }
 }

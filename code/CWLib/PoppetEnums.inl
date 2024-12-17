@@ -22,10 +22,12 @@ typedef enum EInventoryObjectSubType {
     E_SUBTYPE_MADE_BY_ME=536870912u,
     E_SUBTYPE_MADE_BY_OTHERS=1073741824u,
     E_SUBTYPE_FULL_COSTUME=2147483648u,
-
+    
     // these are custom subtypes
     E_SUBTYPE_POD_CONTROLLER=1,
-    E_SUBTYPE_POD_MESH=2
+    E_SUBTYPE_POD_MESH=2,
+    E_SUBTYPE_ANIMATION_STYLE=16384,
+    E_SUBTYPE_EMOTE=32768
 } EInventoryObjectSubType;
 
 typedef enum EInventoryObjectType {
@@ -74,7 +76,13 @@ typedef enum EInventorySortMode {
     SORT_CATEGORY=6,
     SORT_SIZE=7,
     SORT_COLOR=8,
-    SORT_NAME=9
+    SORT_NAME=9,
+
+    // custom
+    SORT_ARTIST = 10,
+    SORT_MEME = 11,
+    
+    NUM_SORT_MODES
 } EInventorySortMode;
 
 typedef enum EMainIcon {
@@ -196,6 +204,8 @@ typedef enum EPoppetSubMode {
     SUBMODE_PICK_DECORATIONS=29,
     SUBMODE_FLOOD_FILL=30,
     SUBMODE_GAS_TWEAK=31,
+
+    // custom
     SUBMODE_EMOTES
 
     // these only exist post deploy
@@ -256,7 +266,8 @@ typedef enum EToolType {
     TOOL_POD_SAVE=29,
 
     // custom tool type
-    TOOL_SHAPE_PLASMA=30
+    TOOL_SHAPE_PLASMA,
+
 } EToolType;
 
 #endif // POPPET_ENUMS_INL

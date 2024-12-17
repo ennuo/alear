@@ -91,6 +91,18 @@ public:
 		this->Data[this->Size++] = element;
 	}
 
+	inline T* erase(T* i) 
+	{
+		unsigned int return_index = i - this->Data;
+		unsigned int copy_index = return_index + 1;
+		
+		if (copy_index < this->Size)
+			memmove(this->Data + return_index, this->Data + copy_index, (this->Size - copy_index) * sizeof(T));
+		
+		this->Size--;
+		return this->Data + return_index;
+	}
+
 	inline void clear()
 	{	
 		Allocator::Free(gVectorBucket, this->Data);

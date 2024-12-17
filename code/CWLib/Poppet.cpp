@@ -7,6 +7,8 @@ MH_DefineFunc(CPoppet_GetMode, 0x0033efa8, TOC1, EPoppetMode, const CPoppet*);
 MH_DefineFunc(CPoppet_GetSubMode, 0x0033f22c, TOC1, EPoppetSubMode, const CPoppet*);
 MH_DefineFunc(CPoppet_IsDocked, 0x00343bd8, TOC1, bool, const CPoppet*);
 MH_DefineFunc(CPoppet_GetDockPos, 0x0033f03c, TOC1, v4hack, const CPoppet*);
+MH_DefineFunc(CPoppet_GetLocalProfile, 0x0033e9f0, TOC1, const CP<RLocalProfile>&, const CPoppet*);
+MH_DefineFunc(CPoppet_GetThingToIgnore, 0x00352f1c, TOC1, CThing*, CPoppet*);
 
 v2 CPoppet::GetBubbleSize()
 {
@@ -36,4 +38,14 @@ bool CPoppet::IsDocked() const
 v4 CPoppet::GetDockPos() const
 {
     return CPoppet_GetDockPos(this).V;
+}
+
+CThing* CPoppet::GetThingToIgnore()
+{
+    return CPoppet_GetThingToIgnore(this);
+}
+
+const CP<RLocalProfile>& CPoppet::GetLocalProfile() const
+{
+    return CPoppet_GetLocalProfile(this);
 }

@@ -66,6 +66,8 @@ public:
 public:
     inline u16 GetCustomVersion() { return AlearResourceRevision; }
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
+    inline u8 GetCompressionFlags() { return CompressionFlags; }
+    inline void SetCompressionFlags(u8 flags) { CompressionFlags = flags; }
     inline bool GetSaving() { return false; }
     inline bool GetLoading() { return true; }
     inline bool IsGatherVariables() { return false; }
@@ -99,10 +101,13 @@ public:
 public:
     inline u16 GetCustomVersion() { return ALEAR_LATEST_PLUS_ONE - 1; }
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
+    inline u8 GetCompressionFlags() { return CompressionFlags; }
+    inline void SetCompressionFlags(u8 flags) { CompressionFlags = flags; }
     inline bool GetSaving() { return true; }
     inline bool GetLoading() { return false; }
     inline bool IsGatherVariables() { return false; }
     inline u32 GetRevision() { return 0x272; }
+    inline bool RequestToAllocate(u64 size) { return true; }
 private:
     ByteArray* Vec;
     void* CurJob;
@@ -186,6 +191,18 @@ ReflectReturn Reflect(R& r, u32& h)
 }
 
 template <typename R>
+ReflectReturn Reflect(R& r, s32& h)
+{
+    if (r.GetCompressInts()) 
+    {
+        h = (u32)(h << 1) ^ (h >> 31);
+        ReflectReturn res = ReflectCompressedInt(r, h);
+        h = (s32)(h >> 1) ^ (u32)(-(s32)(h & 1));
+    }
+    else return r.ReadWrite((void*)&h, sizeof(u32));
+}
+
+template <typename R>
 ReflectReturn Reflect(R& r, float& f)
 {
     return r.ReadWrite((void*)&f, sizeof(float));
@@ -201,6 +218,19 @@ template <typename R>
 ReflectReturn Reflect(R& r, v4& v) // file.h: 1254
 {
     return r.ReadWrite((void*)&v, sizeof(v4));
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, MMString<char>& d)
+{
+    ReflectReturn res;
+    s32 size = d.size();
+    res = Reflect(r, size);
+    if (res != REFLECT_OK) return res;
+
+    // game technically calls begin which calls operator[0], but its the same as c_str
+    d.resize(size, '\0');
+    return r.ReadWrite((void*)d.begin(), size * sizeof(char));
 }
 
 template <typename D>
@@ -243,7 +273,12 @@ template <typename R>
 ReflectReturn ReflectDescriptor(R& r, CResourceDescriptorBase& d, bool cp, bool type);
 
 class CReflectionLoadVector;
+class CReflectionSaveVector;
+
 template <>
 ReflectReturn ReflectDescriptor(CReflectionLoadVector& r, CResourceDescriptorBase& d, bool cp, bool type);
+
+template <>
+ReflectReturn ReflectDescriptor(CReflectionSaveVector& r, CResourceDescriptorBase& d, bool cp, bool type);
 
 #endif // SERIALISE_H

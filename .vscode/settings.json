@@ -27,7 +27,9 @@
         "limits": "cpp",
         "memory": "cpp",
         "utility": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "typeinfo": "cpp",
+        "xlocale": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

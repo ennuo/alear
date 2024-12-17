@@ -19,28 +19,27 @@ public:
 	volatile int RefCount;
 };
 
+template <class T>
+class _NoAddRefRelease : public T {
+public:
+	int AddRef() const { return this->GetRefCount(); }
+	int Release() const { return this->GetRefCount(); }
+};
+
 /* refcount.h: 55 */
 template <typename T>
 class CP {
 public:
-	bool operator!() const { return !Ref; }
-	bool operator==(const T* rhs) const { return Ref == rhs.Ref; }
-	bool operator!=(const T* rhs) const { return Ref != rhs.Ref; }
-
-	const T& operator*() const { return *Ref; }
-	T* operator->() const { return Ref; }
+	T& operator*() const { return *Ref; }
+	_NoAddRefRelease<T>* operator->() const { return (_NoAddRefRelease<T>*)Ref; }
 	operator T*() const { return Ref; }
 	T* GetRef() const { return Ref; }
 public:
-	CP() { Ref = NULL; }
+	CP() : Ref(NULL) {}
 
 	CP(T* ptr) { this->CopyFrom(ptr); }
 
-	CP(const CP<T>& rhs)
-	{
-		Ref = rhs.Ref;
-		if (Ref) Ref->AddRef();
-	}
+	CP(const CP<T>& rhs) { this->CopyFrom(rhs.Ref); }
 
 	~CP() 
 	{
@@ -49,39 +48,42 @@ public:
 			delete Ref;
 	}
 public:
-	CP<T>& operator=(CP<T>& rhs) 
+	CP<T>& operator=(T const* rhs)
 	{
-		if (Ref) {
+		if (Ref) 
+		{
 			if ((Ref->Release() - 1) == 0)
 				delete Ref;
 		}
+
+		Ref = (T*)rhs;
+
+		if (Ref)
+			Ref->AddRef();
+	}
+
+	CP<T>& operator=(CP<T> const& rhs) 
+	{
+		if (Ref) 
+		{
+			if ((Ref->Release() - 1) == 0)
+				delete Ref;
+		}
+
 		Ref = rhs.Ref;
 
 		if (Ref)
 			Ref->AddRef();
 	}
-
-	CP<T>& operator=(T* rhs)
-	{
-		if (Ref) {
-			if ((Ref->Release() - 1) == 0)
-				delete Ref;
-		}
-
-		Ref = rhs;
-
-		if (Ref)
-			Ref->AddRef();
-	}
-
+public:
+	bool operator!() const { return !Ref; }
+	bool operator==(T* rhs) const { return Ref == rhs.Ref; }
+	bool operator!=(T* rhs) const { return Ref != rhs.Ref; }
 public:
 	void CopyFrom(T* ptr)
 	{
-		if (ptr) 
-		{
-			ptr->AddRef();
-			Ref = ptr;
-		}
+		Ref = ptr;
+		if (ptr != NULL) ptr->AddRef();
 	}
 protected:
     T* Ref;

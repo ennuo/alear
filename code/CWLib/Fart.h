@@ -9,7 +9,9 @@
 
 enum CacheType {
     CT_READONLY,
-    CT_ACCEL,
+    
+    CT_SYNC, // this is technically CT_ACCEL, but we use it for the r/w sync cache instead, since its unused in basically every game
+    
     CT_TEMP,
     CT_DOWNLOAD,
     CT_FSB,
@@ -27,15 +29,24 @@ public:
     virtual ~CCache() = 0;
     virtual bool IsSlow(const SResourceReader&) = 0;
     virtual bool GetReader(const CHash&, SResourceReader&) = 0;
-    virtual void CloseReader(SResourceReader&, bool) = 0;
+    virtual void CloseReader(SResourceReader* in, bool hashes_matched) = 0;
     virtual bool Unlink(const CHash&) = 0;
     virtual bool GetSize(const CHash&, u32&) = 0;
     virtual bool Put(CHash&, const void*, u32) = 0;
-protected:
+public:
     CCriticalSec Mutex;
 };
 
-struct SResourceReader { // fart.h: 37
+class SResourceReader { // fart.h: 37
+public:
+    SResourceReader() { memset(this, 0, sizeof(SResourceReader)); }
+
+    ~SResourceReader()
+    {
+        if (Owner != NULL)
+            Owner->CloseReader(this, true);
+    }
+public:
     CCache* Owner;
     FileHandle Handle;
     u32 Offset;
@@ -59,5 +70,10 @@ private:
 extern bool (*CloseCaches)();
 extern bool (*InitCaches)();
 extern CCache* gCaches[CT_COUNT];
+
+extern bool (*GetFileDataFromCaches)(CHash& hash, ByteArray& out);
+extern bool (*SaveFileDataToCache)(CacheType type, const void* data, u32 size, CHash& out);
+
+bool GetResourceReader(CHash& hash, SResourceReader& out);
 
 #endif // FART_H

@@ -16,16 +16,33 @@
 #include "PartGroup.h"
 #include "PartLevelSettings.h"
 #include "PartGameplayData.h"
+#include "PartScriptName.h"
+#include "PartScript.h"
+#include "PartSwitch.h"
 
-class CThingPtr;
+#include "hack_thingptr.h"
+
 class PJoint;
 class PBody : public CPart {};
 class PPos;
+
+class CCustomThingData {
+public:
+    inline CCustomThingData()
+    {
+        memset(this, 0, sizeof(CCustomThingData));
+    }
+public:
+    CThing* Microchip;
+};
 
 class CThing : public CReflectionVisitable {
 public:
     CThing();
     ~CThing();
+public:
+    void InitializeExtraData();
+    void DestroyExtraData();
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
@@ -43,6 +60,9 @@ public:
     inline PGroup* GetPGroup() { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
     inline PLevelSettings* GetPLevelSettings() { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
     inline PGameplayData* GetPGameplayData() { return static_cast<PGameplayData*>(Parts[PART_TYPE_GAMEPLAY_DATA]); }
+    inline PScriptName* GetPScriptName() { return static_cast<PScriptName*>(Parts[PART_TYPE_SCRIPT_NAME]); }
+    inline PSwitch* GetPSwitch() { return static_cast<PSwitch*>(Parts[PART_TYPE_SWITCH]); }
+    inline PScript* GetPScript() { return static_cast<PScript*>(Parts[PART_TYPE_SCRIPT]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];
@@ -60,6 +80,7 @@ public:
     u16 CreatedBy;
     u16 ChangedBy;
     bool Stamping;
+    CCustomThingData* CustomThingData;
 };
 
 extern float (*GetWorldAngle)(CThing* thing);

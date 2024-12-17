@@ -32,4 +32,6 @@ struct CSlapStyles {
 extern CVector<CSlapMesh> gSlapMeshes;
 void OnPlayerSlapped(CThing* victim, CThing* by, v2 force, v2 const* pos3d, bool side);
 
+#define E_SLAP_STYLES_KEY (2583038317u)
+
 #endif // CUSTOMIZATION_SLAP_STYLES_H

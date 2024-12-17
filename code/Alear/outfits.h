@@ -11,6 +11,6 @@
 bool LoadOutfits();
 void InitOutfitHooks();
 
-void CreateOutfitCollectBubble(CThing* player, CP<RPlan> const& plan);
+void SpawnCollectBubble(CThing* player, CP<RPlan> const& plan);
 
 #endif // OUTFITS_H

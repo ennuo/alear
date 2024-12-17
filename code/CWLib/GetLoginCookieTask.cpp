@@ -6,3 +6,5 @@ bool CAuthenticatedTask::PrepareTask()
 {
     return CAuthenticatedTask_PrepareTask(this);
 }
+
+MH_DefineFunc(GetNPTicket, 0x001596b4, TOC0, bool);

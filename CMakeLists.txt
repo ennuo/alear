@@ -78,7 +78,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd http_stub http_util_stub)
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd gcm_sys_stub http_stub http_util_stub net_stub)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR} 

@@ -55,20 +55,20 @@ void GeneratePatchYML()
 
     const char* header = 
     "PPU-b7d59e2bd332611fa249066dc6646983aad0a02d:\n"
-    "  \"Alear Hooks\":\n"
+    "  \"Alear Hooks (EBOOT)\":\n"
     "    Games:\n"
     "      \"LittleBigPlanet Debug\":\n"
-    "        LBP1DEBUG: [ ALL ]\n"
+    "        LBP1DEBUG: [ All ]\n"
     "    Author: \"ennuo\"\n"
     "    Patch Version: 1.0\n"
     "    Patch:\n";
 
     const char* prx_header = 
     "PRX-aaaaaaaaaaaaaaaaaaaaaaaaaaaa-0:\n"
-    "  \"Alear Hooks\":\n"
+    "  \"Alear Hooks (SPRX)\":\n"
     "    Games:\n"
     "      \"LittleBigPlanet Debug\":\n"
-    "        LBP1DEBUG: [ ALL ]\n"
+    "        LBP1DEBUG: [ All ]\n"
     "    Author: \"ennuo\"\n"
     "    Patch Version: 1.0\n"
     "    Patch:\n";

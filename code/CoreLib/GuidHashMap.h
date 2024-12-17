@@ -38,6 +38,7 @@ public:
 namespace FileDB
 {
     extern CFileDBRow* (*FindByGUID)(const CGUID& guid);
+    extern CFileDBRow* (*FindByPath)(const CFilePath& fp, bool create);
     extern CCriticalSec Mutex;
     extern CVector<CFileDB*> DBs;
 }

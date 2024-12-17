@@ -40,12 +40,12 @@ void RenderPortalCameras()
     CMemoryTexture& texture = CPortalManager::s_PortalTexture;
     CellGcmTexture& gcm = texture.Texture;
 
-    if (texture.Handle.Pool == NULL)
-    {
-        DebugLog("Allocating CPortalManager::s_PortalTexture...\n");
-        texture.Create(gMemPools[MEM_POOL_LOCAL], 0x1, 640, 360, 1, 1, 0, 1, 1); // glFormat=1, should be A8R8G8B8
-        g_TextureInitialized = true;
-    }
+    // if (texture.Handle.Pool == NULL)
+    // {
+    //     DebugLog("Allocating CPortalManager::s_PortalTexture...\n");
+    //     texture.Create(gMemPools[MEM_POOL_LOCAL], 0x1, 640, 360, 1, 1, 0, 1, 1); // glFormat=1, should be A8R8G8B8
+    //     g_TextureInitialized = true;
+    // }
 }
 
 extern "C" void _portal_hook_naked();

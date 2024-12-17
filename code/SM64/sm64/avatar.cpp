@@ -52,7 +52,7 @@ CMarioAvatar::CMarioAvatar(EPadIndex pad, float x, float y, float z)
 MH_DefineFunc(DeleteGroupAndChildrenAndJoints, 0x003f6eec, TOC1, void, CThing*);
 CMarioAvatar::~CMarioAvatar()
 {
-    // if (Thing != NULL) DeleteGroupAndChildrenAndJoints(Thing);
+    if (Thing != NULL) DeleteGroupAndChildrenAndJoints(Thing);
     
     if (IsValid()) sm64_mario_delete(Id);
 
@@ -95,11 +95,26 @@ bool CMarioAvatar::IsShapeNearby(CThing* thing)
     v4 bb_max = MarioSearchMax;
 
     if (thing == NULL) return false;
-    PShape* shape = thing->GetPShape();
-    if (shape == NULL) return false;
 
-    v4 thing_min = *((v4*)&shape->Game.Min);
-    v4 thing_max = *((v4*)&shape->Game.Max);
+    PPos* pos = thing->GetPPos();
+    PShape* shape = thing->GetPShape();
+    if (shape == NULL || pos == NULL) return false;
+
+    m44& wpos = pos->Game.WorldPosition;
+
+    v4 thing_min(INFINITY);
+    v4 thing_max(-INFINITY);
+
+    for (v4* it = (v4*)shape->Polygon.begin(); it != (v4*)shape->Polygon.end(); ++it)
+    {
+        v4 v = wpos * (*it);
+
+        thing_min = Vectormath::Aos::minPerElem(thing_min, v);
+        thing_max = Vectormath::Aos::maxPerElem(thing_max, v);
+    }
+
+    // v4 thing_min = *((v4*)&shape->Game.Min);
+    // v4 thing_max = *((v4*)&shape->Game.Max);
 
     return
         thing_min.getX() > bb_min.getX() &&
@@ -118,11 +133,10 @@ void CMarioAvatar::UpdateSimObjects()
     {
         if (it->ShouldDestroy() || !IsShapeNearby(it->Thing))
         {
-            // DebugLogChF(DC_SM64, "Removing object id %d from world since thing no longer exists in world\n", it->Id);
-            // sm64_surface_object_delete(it->Id);
-            // it = SimObjects.erase(it);
+            DebugLogChF(DC_SM64, "Removing object id %d from world since thing no longer exists in world\n", it->Id);
+            sm64_surface_object_delete(it->Id);
+            it = SimObjects.erase(it);
 
-            it++;
             continue;
         }
 
@@ -160,6 +174,9 @@ void CMarioAvatar::UpdateWorld()
         PBody* part_body = thing->GetPBody();
 
         if (part_pos == NULL || part_shape == NULL || thing->BodyRoot == NULL) continue;
+        
+        if (!IsShapeNearby(thing)) continue;
+
 
         CP<RMaterial>& material = part_shape->MMaterial;
         if (!material) continue;
@@ -349,11 +366,9 @@ void CMarioAvatar::Tick()
         MarioSearchMax = mario_pos + mario_radius;
     }
 
-
     UpdateInput();
     UpdateWorld();
 
-    sm64_set_mario_position(Id, 15.095087f, -420.0f, -381.0f);
     sm64_mario_tick(Id, &Inputs, &State, &Geometry);
 
     UpdateMesh();

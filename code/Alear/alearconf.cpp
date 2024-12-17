@@ -9,13 +9,14 @@
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
 
+#include <ResourceSystem.h>
+
 void OnSetRenderDistanceToggle();
 
 ConfigMap gConfigMap;
 CConfigBool gUsePopitGradients(L"Popit", L"Gradient", true);
 CConfigBool gUseDivergenceCheck(L"Game", L"Divergence Check", true);
-CConfigBool gExtendedRenderDistance(L"Render", L"Extended Render Distance", false, OnSetRenderDistanceToggle);
-// CConfigFloat gRenderDistance(L"Render", L"Render Distance", 20000.0f, 0.0f, NAN, 1000.0f);
+CConfigFloat gRenderDistance(L"Render", L"Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
 void CConfigOption::AddToRegistry()
 {
@@ -46,10 +47,14 @@ void AddLevelListToInventory(int guid)
     Debug_DoInventoryStuff(guid);
 }
 
+CP<CResource> LoadAnimatedTextureByFilename(CGUID guid)
+{
+    return (CP<CResource>)LoadResourceByKey<RAnimatedTexture>(guid.guid, 0, STREAM_PRIORITY_DEFAULT);
+}
+
 void OnSetRenderDistanceToggle()
 {
-    if (gExtendedRenderDistance) gFarDist = 35000.0f;
-    else gFarDist = 20000.0f;
+    gFarDist = gRenderDistance;
 }
 
 // CConfigBool gHideMSPF(L"Display", L"Hide MSPF Display", true);
@@ -73,4 +78,6 @@ void AlearInitConf()
     RegisterNativeFunction("Alear", "GetPopitGradientEnabled__", true, NVirtualMachine::CNativeFunction0<bool>::Call<GetPopitGradientEnabled>);
     RegisterNativeFunction("Alear", "GetDivergenceCheckEnabled__", true, NVirtualMachine::CNativeFunction0<bool>::Call<GetDivergenceCheckEnabled>);
     RegisterNativeFunction("Alear", "AddLevelListToInventory__i", true, NVirtualMachine::CNativeFunction1V<int>::Call<AddLevelListToInventory>);
+
+    RegisterNativeFunction("Resource", "LoadAnimatedTextureByFilename__g", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CGUID>::Call<LoadAnimatedTextureByFilename>);
 }

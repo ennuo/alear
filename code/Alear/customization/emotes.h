@@ -23,10 +23,31 @@ struct CEmoteBank {
     CVector<CEmote> Emotes;
 };
 
-extern CVector<CEmote> gEmotes;
-
 class CSackBoyAnim;
+class CAnimBank;
+
+extern CVector<CEmote> gEmotes;
+extern CVector<CAnimBank*> gAnimBanks;
+
+class CAnimStyle {
+public:
+    inline CAnimStyle() : ID(), Bank(NULL), Gsub(0) {}
+public:
+    MMString<char> ID;
+    CAnimBank* Bank;
+    u32 Gsub;
+};
+
+struct CStyleBank {
+    CVector<CAnimStyle> Styles;
+};
+
 void OnTriggerIdleAnim(CSackBoyAnim& sb);
 void OnInitializeSackboyAnims(CSackBoyAnim& sb);
+bool CustomInitAnims();
+bool CustomInitAnimsPostResource();
+namespace ScriptyStuff { int LoadAnim(CAnimBank* ab, CGUID guid); }
+
+extern CStyleBank gStyleBank;
 
 #endif // EMOTES_H

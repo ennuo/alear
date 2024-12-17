@@ -3,6 +3,8 @@
 
 #include "SackBoyAnim.h"
 class CRenderYellowHead {
+public:
+    void RemoveSackBoyAnim();
 private:
     char Pad[0x458];
 public:

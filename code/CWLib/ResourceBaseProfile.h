@@ -1,10 +1,13 @@
 #ifndef RESOURCE_BASE_PROFILE_H
 #define RESOURCE_BASE_PROFILE_H
 
+#include <vector.h>
+
 #include "Resource.h"
 #include "ResourceDescriptor.h"
 #include "ResourcePlan.h"
 #include "InventoryItem.h"
+#include "StringLookupTable.h"
 
 class CBaseProfile : public CResource {
 public:
@@ -20,6 +23,15 @@ public:
     virtual void ClearInventory();
     virtual void CopyProfile(CBaseProfile* profile);
     virtual void OnInventoryChanged();
+public:
+    u32 AddString(u32 key);
+public:
+    u8 Status;
+    u32 NextInventoryItemUID;
+    CStringLookupTable StringTable;
+    CVector<CInventoryItem> Inventory;
+    CRawVector<CInventoryItem*> SortedInventoryUID;
+    CRawVector<CInventoryItem*> SortedInventoryPlanDescriptor;
 };
 
 

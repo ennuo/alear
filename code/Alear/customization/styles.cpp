@@ -1,6 +1,7 @@
 #include "customization/styles.h"
 #include "customization/slapstyles.h"
 #include "customization/popitstyles.h"
+#include "customization/emotes.h"
 
 #include <hook.h>
 #include <ppcasm.h>
@@ -11,6 +12,7 @@ extern "C" void _sbanim_update_emote_sounds_hook();
 extern "C" void _emote_hook();
 extern "C" void _emote_select_hook();
 extern "C" void _popit_update_menu_shape_hook();
+extern "C" void _animstyles_hook();
 
 void InitEmoteHooks()
 {
@@ -18,6 +20,12 @@ void InitEmoteHooks()
     MH_Poke32(0x000ec724, B(&_sbanim_update_emote_sounds_hook, 0x000ec724));
     MH_Poke32(0x000fa94c, B(&_sbanim_emote_init_hook, 0x000fa94c));
     MH_Poke32(0x000f6130, B(&_emote_hook, 0x000f6130));
+
+    MH_InitHook((void*)0x000e6454, (void*)&CustomInitAnims);
+    MH_InitHook((void*)0x000e6894, (void*)&ScriptyStuff::LoadAnim);
+    MH_InitHook((void*)0x000e6858, (void*)&CustomInitAnimsPostResource);
+
+    MH_PokeBranch(0x0038ae78, &_animstyles_hook);
 }
 
 void InitSlapStyleHooks()

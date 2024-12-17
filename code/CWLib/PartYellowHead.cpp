@@ -19,3 +19,15 @@ void PYellowHead::CollectItem(CThing* egg_holding_thing, bool new_item)
 {
     return PYellowHead_CollectItem(this, egg_holding_thing, new_item);
 }
+
+MH_DefineFunc(PYellowHead_GetSyncedProfile, 0x00027cb8, TOC0, const CP<RSyncedProfile>&, const PYellowHead*);
+const CP<RSyncedProfile>& PYellowHead::GetSyncedProfile() const
+{
+    return PYellowHead_GetSyncedProfile(this);
+}
+
+MH_DefineFunc(PYellowHead_GetLocalProfile, 0x0002788c, TOC0, const CP<RLocalProfile>&, const PYellowHead*);
+const CP<RLocalProfile>& PYellowHead::GetLocalProfile() const
+{
+    return PYellowHead_GetLocalProfile(this);
+}

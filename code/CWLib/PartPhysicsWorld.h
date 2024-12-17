@@ -3,11 +3,18 @@
 
 #include "Part.h"
 #include "vector.h"
+#include "hack_thingptr.h"
 
 class PPos;
 class PRenderMesh;
 class PGeneratedMesh;
 class PYellowHead;
+class PSwitch;
+
+struct BroadcastMicrochip {
+    CThingPtr SourceMicrochip;
+    CThingPtr ClonedMicrochip;
+};
 
 class RLevel;
 class PWorld : public CPart {
@@ -30,6 +37,16 @@ public:
     CRawVector<void*> ListPAudioWorld;
     CRawVector<void*> ListPAnimation;
     CRawVector<PGeneratedMesh*> ListPGeneratedMesh;
+private:
+    char Pad5[0xb4];
+public:
+    CRawVector<PSwitch*> ListPSwitch;
+private:
+    char Pad6[0x1000];
+public:
+    CVector<BroadcastMicrochip> BroadcastMicrochips;
+    u32 GameMode;
+    float GameModeScore[4];
 };
 
 #endif // PART_PHYSICS_WORLD_H

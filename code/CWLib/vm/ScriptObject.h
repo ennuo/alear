@@ -3,6 +3,7 @@
 
 #include <map>
 
+#include <refcount.h>
 #include <ReflectionVisitable.h>
 #include <MMString.h>
 #include <vector.h>
@@ -57,6 +58,7 @@ class CScriptObjectManager {
     typedef std::map<CResource*, unsigned int> ResourceMap;
 public:
     ScriptObjectUID RegisterStringA(const char* string);
+    ScriptObjectUID RegisterResource(CResource* res);
     CScriptObjectInstance* LookupInstance(ScriptObjectUID object_uid);
 public:
     ObjectVec ScriptObjects;

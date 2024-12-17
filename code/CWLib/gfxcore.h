@@ -3,9 +3,13 @@
 
 #include <cell/gcm/gcm_enum.h>
 
+#include "GfxPool.h"
+
 extern u32 gResX;
 extern u32 gResY;
 extern u32 gGraphicsFrameNum;
+
+namespace NGfx { /* void FlushGPU(bool wait); */ extern void (*FlushGPU)(bool wait); }
 
 class CGCMTextureState {
 public:
@@ -65,5 +69,7 @@ public:
     };
 };
 
+extern CGfxHandle gBackBuffer[2];
+extern u32 gCurBackBuffer;
 
 #endif // GFX_CORE_H

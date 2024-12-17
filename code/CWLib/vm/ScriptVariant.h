@@ -5,6 +5,11 @@
 #include "vm/VMTypes.h"
 
 class CScriptVariant {
+public:
+    inline CScriptVariant() : MachineType(VMT_VOID) {}
+    inline CScriptVariant(bool value) : Bool(value), MachineType(VMT_BOOL) {}
+    inline CScriptVariant(s32 value) : S32(value), MachineType(VMT_S32) {}
+    inline CScriptVariant(float value) : F32(value), MachineType(VMT_F32) {}
 private:
     EMachineType MachineType;
     union

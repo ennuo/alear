@@ -5,6 +5,7 @@
 
 class CInventoryView;
 class CInventoryItem;
+class RLocalProfile;
 
 void OnUpdateLevel();
 void OnReleaseLevel();
@@ -16,6 +17,8 @@ bool CustomTryTranslate(u32 key, tchar_t const*& out);
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner);
 
 void InitSharedHooks();
+void InitLogicSystemHooks();
+bool IsItemSelected(RLocalProfile* profile, CInventoryItem* item);
 
 #define E_GSUB_RLST 3536200819u
 #define E_TRANSLATIONS_RLST 4014013721u
