@@ -52,7 +52,7 @@ inline u32 MH_Read32(u32 address)
 #define MH_Write(address, data, size) sys_dbg_write_process_memory((u64)(address), (void*)(data), (size));
 #define MH_Read(address, data, size) sys_dbg_read_process_memory((u64)(address), (void*)(data), (size));
 
-void MH_InitHook(void* address, void* hook, void* original_function);
+// void MH_InitHook(void* address, void* hook, void* original_function);
 void MH_InitHook(void* address, void* hook);
 
 #define MH_DefineFunc(name, address, toc, type, ...) \

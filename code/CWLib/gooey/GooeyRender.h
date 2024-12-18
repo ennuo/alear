@@ -7,6 +7,7 @@
 
 #include "network/NetworkUtilsNP.h"
 #include "ResourceGFXTexture.h"
+#include "ResourceGFXFont.h"
 
 class CSDFIconParams {
 public:
@@ -20,6 +21,10 @@ public:
     c32 col;
     NetworkOnlineID OnlineID;
 };
+
+namespace NHUD {
+    extern void (*PreloadGlyphs)(RFontFace* font, tchar_t* current, tchar_t* end);
+}
 
 
 #endif // GOOEY_RENDER_H

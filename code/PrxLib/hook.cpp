@@ -103,12 +103,12 @@ void MH_InitHook(void* address, void* hook)
     MH_Write(address, &branch, sizeof(u32));
 }
 
-void MH_InitHook(void* address, void* hook, void* original_function)
-{
-    u32 original = MH_Read32((u32)address);
-    MH_InitHook(address, hook);
-    if (original_function != NULL)
-    {
+// void MH_InitHook(void* address, void* hook, void* original_function)
+// {
+//     u32 original = MH_Read32((u32)address);
+//     MH_InitHook(address, hook);
+//     if (original_function != NULL)
+//     {
         
-    }
-}
+//     }
+// }

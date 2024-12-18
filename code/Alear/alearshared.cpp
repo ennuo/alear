@@ -324,6 +324,8 @@ void OnRunPipelinePostProcessing()
 
 void OnPredictionOrRenderUpdate()
 {
+    UpdateDownloadInfo();
+    
     if (!gView.DebugCameraActive)
         UpdateDebugCameraNotInUse();
     else

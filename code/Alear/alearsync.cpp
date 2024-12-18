@@ -934,14 +934,11 @@ bool AppendFileToCache(CFartRO* cache, char* data, size_t len, CHash& sha1)
 
 CGooeyNodeManager* gDownloadGooey;
 
-void UpdateDownloadUI(CGooeyNodeManager* manager)
+void UpdateDownloadUI(CGooeyNodeManager* manager, SDownloadInfo& info)
 {
-    // create copy woohoo
-    SDownloadInfo info = gDownloadInfo;
-
     manager->SetStylesheetScalingFactor(0.5f);
 
-    if (!manager->StartFrameNamed(1001)) return;
+    if (!manager->StartFrameNamed(0x444F574E4C4F4144ull)) return;
     
 
     manager->SetFrameSizing(gResX, gResY);
@@ -991,16 +988,25 @@ void UpdateDownloadUI(CGooeyNodeManager* manager)
     manager->EndFrame();
 }
 
-void RenderDownloadInfo()
+bool gRenderThisFrame = false;
+void UpdateDownloadInfo()
 {
     if (gDownloadGooey == NULL)
         gDownloadGooey = new CGooeyNodeManager(INPUT_NONE, E_GOOEY_MANAGER_NETWORK_NONE);
-    
-    bool active = StringLength(gDownloadInfo.Filename) > 0;
-    if (active) UpdateDownloadUI(gDownloadGooey);
-    gDownloadGooey->PerFrameUpdate(E_PLAYER_NUMBER_NONE, MODE_NORMAL, 0);
 
-    if (active) gDownloadGooey->RenderToTexture(gResX, gResY, gResX, gResY, false, false);
+    SDownloadInfo info = gDownloadInfo;
+    gRenderThisFrame = StringLength(info.Filename) > 0;
+    if (gRenderThisFrame)
+    {
+        UpdateDownloadUI(gDownloadGooey, info);
+        gDownloadGooey->PerFrameUpdate(E_PLAYER_NUMBER_NONE, MODE_NORMAL, -1);
+    }
+}
+
+void RenderDownloadInfo()
+{
+    if (gRenderThisFrame)
+        gDownloadGooey->RenderToTexture(gResX, gResY, gResX, gResY, false, false);
 }
 
 void CloseAlearSync()

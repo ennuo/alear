@@ -306,6 +306,8 @@ void AlearShutdown()
     
 }
 
+#include <gooey/GooeyRender.h>
+
 bool AlearCheckPatch()
 {
     if (!IsUsingLLVM()) return true;
@@ -315,6 +317,9 @@ bool AlearCheckPatch()
 
     MultiByteToTChar(state.title, "Alear", NULL);
     MultiByteToTChar(state.text, "Alear requires that you run RPCS3 with the PPU Decoder setting set to 'Interpreter' mode.", NULL);
+
+    NHUD::PreloadGlyphs(gFont[FONT_OMNES_BLACK], state.title.c_str(), NULL);
+    NHUD::PreloadGlyphs(gFont[FONT_HELVETICA], state.text.c_str(), NULL);
 
     void* handle = SetActiveLoadingScreen(&state, NULL, true);
     ThreadSleep(10000);

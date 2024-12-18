@@ -56,6 +56,7 @@ extern SDownloadInfo gDownloadInfo;
 extern SCommitData gCommitHistory[MAX_COMMIT_ENTRIES];
 extern char gCurrentSyncDownloadFilename[256];
 void RenderDownloadInfo();
+void UpdateDownloadInfo();
 
 
 #endif // ALEAR_SYNC_H
