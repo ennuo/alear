@@ -44,6 +44,7 @@ public:
     bool IsDocked() const;
     v4 GetDockPos() const;
     CThing* GetThingToIgnore();
+    void SendPoppetDangerMessage(ELethalType lethal_type);
 private:
     RaycastJobResult m_raycastJobResult;
     CRaycastResults m_raycastOnSwitchConnector;

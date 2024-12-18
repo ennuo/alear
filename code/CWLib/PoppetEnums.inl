@@ -265,8 +265,13 @@ typedef enum EToolType {
     TOOL_POD_RESET=28,
     TOOL_POD_SAVE=29,
 
-    // custom tool type
-    TOOL_SHAPE_PLASMA,
+    // custom tool types
+    TOOL_SHAPE_PLASMA = 30,
+    TOOL_STICKER_WASH = 32,
+    TOOL_UNPHYSICS = 34,
+    TOOL_WASH = 38,
+    
+    NUM_TOOL_TYPES
 
 } EToolType;
 

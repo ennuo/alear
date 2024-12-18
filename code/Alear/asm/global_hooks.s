@@ -85,3 +85,17 @@ UseStandardIcons:
     ba 0x0037f910
 UseLargeIcons:
     ba 0x0037fc38
+
+.global _custom_tool_type_hook
+_custom_tool_type_hook:
+    rldicl %r3, %r31, 0x0, 0x20
+    mr %r4, %r10
+
+    std %r2, 0x28(%r1)
+    lis %r5, _Z20HandleCustomToolTypeP7CPoppet9EToolType@h      
+    ori %r5, %r5, _Z20HandleCustomToolTypeP7CPoppet9EToolType@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z20HandleCustomToolTypeP7CPoppet9EToolType
+    ld %r2, 0x28(%r1)
+
+    ba 0x003466d4

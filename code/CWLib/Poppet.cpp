@@ -9,6 +9,7 @@ MH_DefineFunc(CPoppet_IsDocked, 0x00343bd8, TOC1, bool, const CPoppet*);
 MH_DefineFunc(CPoppet_GetDockPos, 0x0033f03c, TOC1, v4hack, const CPoppet*);
 MH_DefineFunc(CPoppet_GetLocalProfile, 0x0033e9f0, TOC1, const CP<RLocalProfile>&, const CPoppet*);
 MH_DefineFunc(CPoppet_GetThingToIgnore, 0x00352f1c, TOC1, CThing*, CPoppet*);
+MH_DefineFunc(CPoppet_SendPoppetDangerMessage, 0x0033fc1c, TOC1, void, CPoppet*, ELethalType);
 
 v2 CPoppet::GetBubbleSize()
 {
@@ -48,4 +49,9 @@ CThing* CPoppet::GetThingToIgnore()
 const CP<RLocalProfile>& CPoppet::GetLocalProfile() const
 {
     return CPoppet_GetLocalProfile(this);
+}
+
+void CPoppet::SendPoppetDangerMessage(ELethalType lethal_type)
+{
+    return CPoppet_SendPoppetDangerMessage(this, lethal_type);
 }

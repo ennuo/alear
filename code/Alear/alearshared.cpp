@@ -270,7 +270,7 @@ void OnUpdateLevel()
     // a local network.
     ReloadPendingDatabases();
     ProcessStartMenuNotifications();
-    
+
     // Check if there are any mesh export requests from a player in the world
     PWorld* world = gGame->Level->WorldThing->GetPWorld();
     PYellowHead** it = world->ListPYellowHead.begin();
@@ -444,6 +444,8 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_SHAPE_ICE:
         case TOOL_SHAPE_GAS:
         case TOOL_SHAPE_UNLETHAL:
+        case TOOL_SHAPE_PLASMA:
+        case TOOL_UNPHYSICS:
         case TOOL_SHAPE_VERTEX_EDIT:
         {
             return (type & E_TYPE_TOOL) != 0 && edit;
@@ -691,13 +693,7 @@ CInventoryItem* FindItemWithToolType(CBaseProfile* prf, EToolType type)
 
 void OnLocalProfileLoadFinished(RLocalProfile* prf)
 {
-    CInventoryItem* item = FindItemWithToolType(prf, TOOL_SHAPE_PLASMA);
-    if (item != NULL)
-    {
-        CInventoryItem item;
-
-    }
-
+    
 }
 
 struct BaseGroupBy {
@@ -762,8 +758,46 @@ void DoPreferenceSort(CInventoryView* view)
     view->SortTermBoundaries.push_back(boundary);
 }
 
+void HandleCustomToolType(CPoppet* poppet, EToolType tool)
+{
+    if (tool == TOOL_SHAPE_PLASMA)
+    {
+        poppet->SendPoppetDangerMessage(LETHAL_BULLET);
+        return;
+    }
+
+
+}
+
 extern "C" uintptr_t _global_artist_hook();
 extern "C" uintptr_t _global_pref_hook();
+extern "C" uintptr_t _custom_tool_type_hook();
+
+void AttachCustomToolTypes()
+{
+    MH_Poke32(0x003466cc, 0x2b8a0000 + (NUM_TOOL_TYPES - 1));
+
+    // Initialise the switch table with the offsets to the invalid resource type case
+    const int SWITCH_LABEL = 0x0034675c;
+    const int NOP_LABEL = 0x003466d4;
+    const int LABEL_COUNT = 0x1e;
+    static s32 TABLE[NUM_TOOL_TYPES];
+    for (int i = 0; i < NUM_TOOL_TYPES; ++i)
+        TABLE[i] = NOP_LABEL - (u32)TABLE;
+
+    // Copy the old switch case into our new table and replace the offsets.
+    MH_Read(SWITCH_LABEL, TABLE, LABEL_COUNT * sizeof(s32));
+    for (int i = 0; i < LABEL_COUNT; ++i)
+    {
+        s32 target = SWITCH_LABEL + TABLE[i] - (u32)TABLE;
+        TABLE[i] = target;
+    }
+
+    TABLE[TOOL_SHAPE_PLASMA] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+
+    // Switch out the pointer to the switch case in the TOC
+    MH_Poke32(0x0092ad18, (u32)TABLE);
+}
 
 void AttachCustomSortModes()
 {
@@ -1416,6 +1450,9 @@ void InitSharedHooks()
 
     // Add hooks for allowing custom sort modes
     AttachCustomSortModes();
+
+    // Add hooks for extra custom tool types
+    AttachCustomToolTypes();
 
     // Hooks for animated texture buttons
     // MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));
