@@ -55,6 +55,8 @@ extern void (*UnloadResource)(CP<CResource> resource);
 
 typedef CRawVector<CResource*> CWeakResourceArray;
 extern CWeakResourceArray gResourceArray;
-extern CCriticalSec gResourceCS;
+
+
+extern CCriticalSec* gResourceCS;
 
 #endif // RESOURCE_SYSTEM_H

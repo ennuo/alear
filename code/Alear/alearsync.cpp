@@ -291,7 +291,7 @@ void CloseSocket()
     // lest we get a fun deadlock.
     if (gResourceSystemLocked)
     {
-        gResourceCS.Leave();
+        gResourceCS->Leave();
         gResourceSystemLocked = false;
     }
 

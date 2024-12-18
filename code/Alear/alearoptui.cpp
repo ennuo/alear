@@ -304,7 +304,7 @@ void ReloadPublishDatabases()
 
 void ReloadReadonlyCaches()
 {
-    CCSLock _res_lock(&gResourceCS, __FILE__, __LINE__);
+    CCSLock _res_lock(gResourceCS, __FILE__, __LINE__);
     CFartManyRO* caches = (CFartManyRO*)gCaches[CT_READONLY];
     DebugLog("CFartManyRO is being relinked! Current statistics: FAT=[%d], FART=[%d]\n", caches->FAT.size(), caches->Farts.size());
     if (caches == NULL) return;
@@ -360,7 +360,7 @@ void ReloadModifiedResources(CFileDB* database, CFileDB* old_database)
     bool relink_scripts = false;
 
     {
-        CCSLock _the_lock(&gResourceCS, __FILE__, __LINE__);
+        CCSLock _the_lock(gResourceCS, __FILE__, __LINE__);
         for (int i = 0; i < gResourceArray.size(); ++i)
         {
             CResource* resource = gResourceArray[i];
@@ -446,7 +446,7 @@ void ReloadModifiedResources(CFileDB* database, CFileDB* old_database)
 
 void PrintLoadedResources()
 {
-    CCSLock _the_lock(&gResourceCS, __FILE__, __LINE__);
+    CCSLock _the_lock(gResourceCS, __FILE__, __LINE__);
     char hash[HASH_HEX_STRING_LENGTH];
 
     DebugLog("Printing resource list...\n");
