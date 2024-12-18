@@ -50,4 +50,7 @@ namespace ScriptyStuff { int LoadAnim(CAnimBank* ab, CGUID guid); }
 
 extern CStyleBank gStyleBank;
 
+#define E_EMOTES_KEY (3109897709)
+#define E_ANIM_STYLES_KEY (3149445767)
+
 #endif // EMOTES_H

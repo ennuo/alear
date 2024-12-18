@@ -249,7 +249,7 @@ void AlearSetupDatabase()
 
 void AlearStartup()
 {
-    DebugLog("Alear version %d.%d build date: " __DATE__ " time: " __TIME__ "\n", ALEAR_MAJOR_VERSION, ALEAR_MINOR_VERSION);
+    DebugLog("Alear version %d.%2d build date: " __DATE__ " time: " __TIME__ "\n", ALEAR_MAJOR_VERSION, ALEAR_MINOR_VERSION);
 
     DebugLog("Injecting init steps into startup...\n");
     DebugLog("First CInitStep: %s\n", gInitSteps[0].DebugText);

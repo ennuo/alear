@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(alear VERSION 1.0.0 LANGUAGES CXX ASM)
+project(alear VERSION 1.5.5 LANGUAGES CXX ASM)
 
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)

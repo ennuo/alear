@@ -12,6 +12,7 @@
 #include <ResourceLocalProfile.h>
 #include <Poppet.h>
 #include <PoppetChild.h>
+#include <ResourceFileOfBytes.h>
 
 CVector<CEmote> gEmotes;
 CVector<CAnimBank*> gAnimBanks;
@@ -74,19 +75,13 @@ bool CustomInitAnims()
 {
     if (gAnimBanks.size() != 0) return true;
 
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/animstyles.txt");
-    if (!FileExists(fp)) return false;
-
-    ByteArray b; CHash hash;
-    if (!FileLoad(fp, b, hash))
-    {
-        DebugLog("An error occurred reading configuration file for animation styles!!\n");
-        return false;
-    }
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_ANIM_STYLES_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    file->BlockUntilLoaded();
+    if (!file->IsLoaded()) return false;
 
     CGatherVariables variables;
     variables.Init<CStyleBank>(&gStyleBank);
-    if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
+    if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
     {
         DebugLog("An error occurred while loading data for animation styles!\n");
         return false;
@@ -152,23 +147,13 @@ void SetInventoryAnimationStyle(CPoppetInventory* inventory, CThing* world, RPla
 
 bool LoadEmotes()
 {
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/emotes.txt");
-    if (!FileExists(fp))
-    {
-        DebugLog("Skipping load of emotes, since no configuration file exists at %s\n", fp.c_str());
-        return true;
-    }
-
-    ByteArray b; CHash hash;
-    if (!FileLoad(fp, b, hash))
-    {
-        DebugLog("An error occurred reading configuration file for emotes!!\n");
-        return false;
-    }
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_EMOTES_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    file->BlockUntilLoaded();
+    if (!file->IsLoaded()) return false;
 
     CGatherVariables variables;
     variables.Init<CEmoteBank>((CEmoteBank*)&gEmotes);
-    if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
+    if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
     {
         DebugLog("An error occurred while loading data for emotes!\n");
         return false;
