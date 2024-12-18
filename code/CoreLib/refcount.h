@@ -24,6 +24,8 @@ class _NoAddRefRelease : public T {
 public:
 	int AddRef() const { return this->GetRefCount(); }
 	int Release() const { return this->GetRefCount(); }
+	int AddWeakRef() const { return this->GetRefCount(); }
+	int ReleaseWeakRef() const { return this->GetRefCount(); }
 };
 
 /* refcount.h: 55 */

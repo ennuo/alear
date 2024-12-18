@@ -29,7 +29,22 @@
         "utility": "cpp",
         "xutility": "cpp",
         "typeinfo": "cpp",
-        "xlocale": "cpp"
+        "xlocale": "cpp",
+        "algorithm": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "ctime": "cpp",
+        "hash_map": "cpp",
+        "ios": "cpp",
+        "iostream": "cpp",
+        "istream": "cpp",
+        "list": "cpp",
+        "ostream": "cpp",
+        "streambuf": "cpp",
+        "xhash": "cpp",
+        "xiosbase": "cpp",
+        "xlocinfo": "cpp",
+        "xlocnum": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

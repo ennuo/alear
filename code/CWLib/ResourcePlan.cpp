@@ -6,3 +6,9 @@ CThing* RPlan::MakeClone(RPlan* plan, PWorld* world, NetworkPlayerID& default_cr
 {
     return RPlan_MakeClone(plan, world, default_creator, remap_uids);
 }
+
+void CPlanDetails::SetIcon(RTexture* icon)
+{
+    CInventoryItemDetails::SetIcon(icon);
+    PinnedIcon = icon;
+}

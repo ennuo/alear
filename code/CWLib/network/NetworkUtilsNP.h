@@ -6,4 +6,6 @@
 typedef SceNpId NetworkPlayerID;
 typedef SceNpOnlineId NetworkOnlineID;
 
+extern NetworkPlayerID INVALID_PLAYER_ID;
+
 #endif // NETWORK_NETWORKUTILS_NP_H

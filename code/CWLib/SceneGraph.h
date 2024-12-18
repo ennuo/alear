@@ -1,12 +1,31 @@
 #ifndef SCENE_GRAPH_H
 #define SCENE_GRAPH_H
 
+#include <refcount.h>
 
 #include "frustcull.h"
+#include "ResourceGFXTexture.h"
+#include "GuidHash.h"
 
 
 class CThing;
 
+class CDecal {
+public:
+    CP<RTexture> texture;
+    CGUID PlanGUID;
+    float u, v;
+    float xvecu, xvecv, yvecu, yvecv;
+    u32 PlayModeFrame;
+    u16 meta_data_idx;
+    u16 num_meta_data;
+    u16 placed_by;
+private:
+    u16 packed_col;
+    u8 type;
+    bool ScorchMark;
+    bool IsDead;
+};
 
 class __attribute__((aligned(0x80))) CMeshInstance {
 public:

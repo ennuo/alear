@@ -58,14 +58,15 @@ public:
 	inline void* GetBuf() { return (void*)&Bytes; }
 
 	inline int Compare(CHash const& b) const { return memcmp(Bytes, b.Bytes, HASH_BUF_LENGTH); }
-
+	inline bool operator<(CHash const& rhs) const { return Compare(rhs) < 0; }
+	inline bool operator>(CHash const& rhs) const { return Compare(rhs) > 0; }
 	inline bool operator !() const { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) == 0; }
-	inline bool operator==(CHash& rhs) { return Compare(rhs) == 0; }
-	inline bool operator!=(CHash& rhs) { return Compare(rhs) != 0; }
+	inline bool operator==(CHash const& rhs) const { return Compare(rhs) == 0; }
+	inline bool operator!=(CHash const& rhs) const { return Compare(rhs) != 0; }
 
 	void ConvertToHex(char(&)[HASH_HEX_STRING_LENGTH]) const;
 	
-	inline bool IsSet() { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) != 0; }
+	inline bool IsSet() const { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) != 0; }
 };
 
 

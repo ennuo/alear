@@ -5,6 +5,8 @@
 
 class c32 {
 public:
+    static c32 White;
+public:
     inline c32()
     {
         Bits = 0;

@@ -11,6 +11,8 @@ class CThing;
 
 class CPlanDetails : public CInventoryItemDetails {
 public:
+    void SetIcon(RTexture* icon);
+public:
     u32 Location;
     u32 Category;
     CP<RTexture> PinnedIcon;

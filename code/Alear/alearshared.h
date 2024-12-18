@@ -15,6 +15,7 @@ void OnWorldRenderUpdate();
 void OnUpdateHttpTasks();
 bool CustomTryTranslate(u32 key, tchar_t const*& out);
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner);
+void GatherUsedPlanDescriptors();
 
 void InitSharedHooks();
 void InitLogicSystemHooks();

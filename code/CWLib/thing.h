@@ -10,6 +10,7 @@
 #include "PartCostume.h"
 #include "PartRenderMesh.h"
 #include "PartPhysicsWorld.h"
+#include "PartStickers.h"
 #include "PartRenderPosition.h"
 #include "PartShape.h"
 #include "PartGeneratedMesh.h"
@@ -19,6 +20,8 @@
 #include "PartScriptName.h"
 #include "PartScript.h"
 #include "PartSwitch.h"
+#include "PartRef.h"
+#include "PartDecoration.h"
 
 #include "hack_thingptr.h"
 
@@ -63,6 +66,9 @@ public:
     inline PScriptName* GetPScriptName() { return static_cast<PScriptName*>(Parts[PART_TYPE_SCRIPT_NAME]); }
     inline PSwitch* GetPSwitch() { return static_cast<PSwitch*>(Parts[PART_TYPE_SWITCH]); }
     inline PScript* GetPScript() { return static_cast<PScript*>(Parts[PART_TYPE_SCRIPT]); }
+    inline PRef* GetPRef() { return static_cast<PRef*>(Parts[PART_TYPE_REF]); }
+    inline PStickers* GetPStickers() { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
+    inline PDecorations* GetPDecorations() { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

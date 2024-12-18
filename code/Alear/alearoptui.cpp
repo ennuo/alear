@@ -1,5 +1,6 @@
 #include "alearoptui.h"
 #include "alearsync.h"
+#include "alearshared.h"
 #include "alearconf.h"
 #include "serverswitcher.h"
 #include "customization/styles.h"
@@ -1109,6 +1110,10 @@ void OnDatabaseFileChanged(CFilePath& fp)
 
 namespace AlearOptNativeFunctions
 {
+    void RefreshUsedItems(CScriptObjectPoppet* so_poppet)
+    {
+        GatherUsedPlanDescriptors();
+    }
 
     void ReloadInventoryItem(CScriptObjectPoppet* so_poppet, u32 uid)
     {
@@ -1192,6 +1197,7 @@ namespace AlearOptNativeFunctions
         RegisterNativeFunction("Alear", "GetSyncServerPermissions__", true, NVirtualMachine::CNativeFunction0<ESyncPermissions>::Call<GetSyncServerPermissions>);
 
         RegisterNativeFunction("Poppet", "ReloadFromInventory__i", false, NVirtualMachine::CNativeFunction2V<CScriptObjectPoppet*, u32>::Call<ReloadInventoryItem>);
+        RegisterNativeFunction("Poppet", "RefreshUsedItems__", false, NVirtualMachine::CNativeFunction1V<CScriptObjectPoppet*>::Call<RefreshUsedItems>);
     }
 }
 

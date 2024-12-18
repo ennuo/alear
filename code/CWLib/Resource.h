@@ -48,7 +48,8 @@ protected:
     u32 CachedSizeInMemory;
 public:
     inline u32 GetRefCount() { return RefCount; }
-    
+    inline u32 GetWeakRefCount() { return WeakCount; }
+
     inline u32 AddRef() 
     {
         Flags |= FLAG_REF_COUNT_DIRTY;
@@ -62,6 +63,18 @@ public:
         LazyGCTime = gLazyGCTime;
 		return cellAtomicDecr32((uint32_t*) &this->RefCount);
 	}
+
+    inline u32 AddWeakRef()
+    {
+        cellAtomicIncr32((uint32_t*) &this->WeakCount);
+        return AddRef();
+    }
+
+    inline u32 ReleaseWeakRef()
+    {
+        cellAtomicDecr32((uint32_t*) &this->WeakCount);
+        return Release();
+    }
 
     inline bool IsLoaded()
     {

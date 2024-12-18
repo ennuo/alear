@@ -130,7 +130,31 @@ public:
         Valid = true;
     }
 public:
+    inline bool operator==(CResourceDescriptorBase const& r) const
+    {
+        return Type == r.Type && GUID == r.GUID && Hash == r.Hash;
+    }
+
+    inline bool operator!=(CResourceDescriptorBase const& r) const
+    {
+        return Type != r.Type || GUID != r.GUID || Hash != r.Hash;
+    }
+
+    inline bool operator<(CResourceDescriptorBase const& r) const
+    {
+        if (Type != r.Type) return Type < r.Type;
+
+        if (GUID == r.GUID)
+            return Hash < r.Hash;
+
+        return GUID < r.GUID;
+    }
+public:
+    inline bool IsValid() const { return Valid; }
+    inline bool HasGUID() const { return (bool)GUID; }
     inline CGUID& GetGUID() { return GUID; }
+    inline CHash& GetHash() { return Hash; }
+    inline EResourceType GetType() const { return (EResourceType)Type; }
 protected:
     CGUID GUID;
     CHash Hash;

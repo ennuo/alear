@@ -18,11 +18,19 @@
 
 class CInventoryItemDetails : public CDependencyWalkable {
 public:
+    CInventoryItemDetails();
+    CInventoryItemDetails(CInventoryItemDetails& rhs);
+    CInventoryItemDetails& operator=(CInventoryItemDetails const& rhs);
+public:
     inline void SetLookupIndices(u32 loc_idx, u32 cat_idx)
     {
         CategoryIndex = cat_idx;
         LocationIndex = loc_idx;
     }
+public:
+    bool IsCreatedBy(NetworkPlayerID* pid);
+public:
+    virtual void SetIcon(RTexture* icon);
 public:
     CGUID HighlightSound;
     CSlotID LevelUnlockSlotID;
@@ -56,14 +64,11 @@ public:
     // dont need these structs right now
     void* PhotoData;
     void* EyetoyData;
-public:
-    bool IsCreatedBy(NetworkPlayerID* pid);
-private:
-    // meant to be SetIcon, just here to force the vtable to be generated
-    virtual void Dummy() {}
 };
 
 class CInventoryItem {
+public:
+    inline CInventoryItem() : Plan(), Details(), UID(), TutorialLevel(), TutorialVideo(), Flags() {}
 public:
     CResourceDescriptor<RPlan> Plan;
     CInventoryItemDetails Details;

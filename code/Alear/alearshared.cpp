@@ -34,6 +34,7 @@
 #include <LoadingScreen.h>
 #include <InventoryView.h>
 #include <InventoryItem.h>
+#include <InventoryCollection.h>
 #include <PoppetEnums.inl>
 
 #include <PartPhysicsWorld.h>
@@ -269,7 +270,7 @@ void OnUpdateLevel()
     // a local network.
     ReloadPendingDatabases();
     ProcessStartMenuNotifications();
-
+    
     // Check if there are any mesh export requests from a player in the world
     PWorld* world = gGame->Level->WorldThing->GetPWorld();
     PYellowHead** it = world->ListPYellowHead.begin();
@@ -433,6 +434,11 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
             return (type & E_TYPE_USER_OBJECT) != 0 && (subtype & E_SUBTYPE_MADE_BY_OTHERS) != 0;
         }
 
+        case TOOL_DECORATION_IMPORT_PHOTO:
+        {
+            return (type & E_TYPE_USER_STICKER) != 0;
+        }
+
         case TOOL_SHAPE_ELECTRIFY:
         case TOOL_SHAPE_BURNINATE:
         case TOOL_SHAPE_ICE:
@@ -452,8 +458,124 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
     }
 }
 
+typedef std::set<CResourceDescriptor<RPlan>, std::less<CResourceDescriptor<RPlan> >, STLBucketAlloc<CResourceDescriptor<RPlan> > > PlanDescriptorSet;
+PlanDescriptorSet gUsedPlanDescriptors;
+
+void GatherUsedPlanDescriptors()
+{
+    DebugLog("gathering used plan descriptors in level...\n");
+
+    gUsedPlanDescriptors.clear();
+
+    PWorld* world = gGame->GetWorld();
+    if (world == NULL) return;
+
+    for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    {
+        CThing* thing = *it;
+        if (thing == NULL) continue;
+
+        if (thing->PlanGUID)
+        {
+            CResourceDescriptor<RPlan> desc(thing->PlanGUID);
+            gUsedPlanDescriptors.insert(desc);
+        }
+
+        PGroup* group = thing->GetPGroup();
+        if (group != NULL && group->PlanDescriptor.IsValid())
+            gUsedPlanDescriptors.insert(group->PlanDescriptor);
+
+        PRef* ref = thing->GetPRef();
+        if (ref != NULL && ref->Plan.IsValid())
+            gUsedPlanDescriptors.insert(ref->Plan);
+
+        // PCostume* costume = thing->GetPCostume();
+        // if (costume != NULL)
+        // {
+        //     if (costume->MatPlan.IsValid()) gUsedPlanDescriptors.insert(costume->MatPlan);
+        //     for (int i = 0; i < COSTUMEPART_COUNT; ++i)
+        //     {
+        //         CCostumePiece& piece = costume->CostumePieceVec[i];
+        //         if (piece.OriginalPlan.IsValid())
+        //             gUsedPlanDescriptors.insert(piece.OriginalPlan);
+        //     }
+        // }
+
+        PStickers* stickers = thing->GetPStickers();
+        if (stickers != NULL)
+        {
+            for (CDecal* decal = stickers->Decals.begin(); decal != stickers->Decals.end(); ++decal)
+            {
+                if (decal->PlanGUID)
+                {
+                    CResourceDescriptor<RPlan> desc(decal->PlanGUID);
+                    gUsedPlanDescriptors.insert(desc);
+                }
+            }
+
+            for (int i = 0; i < COSTUMEPART_COUNT; ++i)
+            {
+                CVector<CDecal>& decals = stickers->CostumeDecals[i];
+                for (CDecal* decal = decals.begin(); decal != decals.end(); ++decal)
+                {
+                    if (decal->PlanGUID)
+                    {
+                        CResourceDescriptor<RPlan> desc(decal->PlanGUID);
+                        gUsedPlanDescriptors.insert(desc);
+                    }
+                }
+            }
+        }
+
+        PDecorations* decorations = thing->GetPDecorations();
+        if (decorations != NULL)
+        {
+            for (CDecoration* decor = decorations->Decorations.begin(); decor != decorations->Decorations.end(); ++decor)
+            {
+                if (decor->PlanGUID)
+                {
+                    CResourceDescriptor<RPlan> desc(decor->PlanGUID);
+                    gUsedPlanDescriptors.insert(desc);
+                }
+            }
+        }
+
+        PGeneratedMesh* generated_mesh = thing->GetPGeneratedMesh();
+        if (generated_mesh != NULL && generated_mesh->PlanGUID)
+        {
+            CResourceDescriptor<RPlan> desc(generated_mesh->PlanGUID);
+            gUsedPlanDescriptors.insert(desc);
+        }
+    }
+
+    // Refresh all poppets
+    for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
+    {
+        PYellowHead* yellowhead = *it;
+        CPoppet* poppet = yellowhead->Poppet;
+        if (poppet == NULL) continue;
+        const CP<RLocalProfile>& prf = poppet->GetLocalProfile();
+        if (prf) prf->SetUsedItemViewDirty();
+    }
+
+    DebugLog("there are %d used descriptors in the level...\n", gUsedPlanDescriptors.size());
+}
+
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner)
 {
+    if (view->Descriptor.Type == gUsedItemsCustomId)
+    {
+        u32 tool = item->Details.ToolType;
+
+        if (tool != TOOL_NOT_A_TOOL)
+        {
+            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS) return false;
+            return true;
+        }
+
+        return gUsedPlanDescriptors.find(item->Plan) != gUsedPlanDescriptors.end();
+    }
+
     CGUID item_guid = item->Plan.GetGUID();
 
     u32 item_type = item->Details.Type;
@@ -554,6 +676,28 @@ bool IsItemSelected(RLocalProfile* profile, CInventoryItem* item)
     if (item->Details.SubType == E_SUBTYPE_ANIMATION_STYLE)
         return profile->SelectedAnimationStyle.GetGUID() == item->Plan.GetGUID();
     return profile->IsWearingCostumeUID(item->UID);
+}
+
+CInventoryItem* FindItemWithToolType(CBaseProfile* prf, EToolType type)
+{
+    for (CInventoryItem* it = prf->Inventory.begin(); it != prf->Inventory.end(); ++it)
+    {
+        if (it->Details.ToolType == type)
+            return it;
+    }
+
+    return NULL;
+}
+
+void OnLocalProfileLoadFinished(RLocalProfile* prf)
+{
+    CInventoryItem* item = FindItemWithToolType(prf, TOOL_SHAPE_PLASMA);
+    if (item != NULL)
+    {
+        CInventoryItem item;
+
+    }
+
 }
 
 struct BaseGroupBy {
@@ -659,16 +803,6 @@ struct SectionSettings {
     u32 NumLocalPlayers;
     EGooeySizingType HighlightSizing;
     bool IsFirstSection;
-};
-
-class CInventoryCollection : public CBaseCounted, public CReflectionVisitable {
-public:
-    CVector<CP<CInventoryView> > InventoryViews;
-    NetworkPlayerID PlayerID;
-    u32 CurrentPageNumber;
-    u32 CollectionID;
-    u32 ActionOnItemSelect;
-    bool MenuFunctionalityLimited;
 };
 
 u64 GetSectionUID(u64 page_uid, u32 section_id)
