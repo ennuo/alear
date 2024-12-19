@@ -99,3 +99,68 @@ _custom_tool_type_hook:
     ld %r2, 0x28(%r1)
 
     ba 0x003466d4
+
+.global _custom_poppet_message_hook
+_custom_poppet_message_hook:
+    mr %r3, %r28
+    mr %r4, %r29
+
+    std %r2, 0x28(%r1)
+    lis %r5, _Z25HandleCustomPoppetMessageP7CPoppet18EPoppetMessageType@h      
+    ori %r5, %r5, _Z25HandleCustomPoppetMessageP7CPoppet18EPoppetMessageType@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z25HandleCustomPoppetMessageP7CPoppet18EPoppetMessageType
+    ld %r2, 0x28(%r1)
+
+    ba 0x0034fa40
+
+.global _custom_pick_object_action_hook
+_custom_pick_object_action_hook:
+    cmpwi %cr7, %r3, 0x30
+    bne %cr7, NotACustomSubMode
+
+    mr %r3, %r26
+    mr %r4, %r27
+
+    std %r2, 0x28(%r1)
+    lis %r5, _Z12SetUnphysicsP7CPoppetP6CThing@h      
+    ori %r5, %r5, _Z12SetUnphysicsP7CPoppetP6CThing@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z12SetUnphysicsP7CPoppetP6CThing
+    ld %r2, 0x28(%r1)
+
+    li %r9, 0x0
+    ba 0x00351738
+
+NotACustomSubMode:
+    cmpwi %cr7, %r3, 0x1c
+    ba 0x003516e4
+
+.global _fixup_custom_pick_object_select_hook
+_fixup_custom_pick_object_select_hook:
+    cmpwi %cr7, %r27, 0x30
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x1c
+    ba 0x00352104
+
+EarlyReturn:
+    ba 0x00352028
+
+.global _fady_thing_hook
+_fady_thing_hook:
+    stw %r3, 0x28(%r1)
+
+    lwz %r3, 0x178(%r27)
+
+    stw %r2, 0x2c(%r1)
+    lis %r2, _Z11IsThingFadyP6CThing@h      
+    ori %r2, %r2, _Z11IsThingFadyP6CThing@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z11IsThingFadyP6CThing
+    lwz %r2, 0x2c(%r1)
+
+    neg %r3, %r3
+    rldicl %r11, %r3, 0x1, 0x3f
+    
+    lwz %r3,0x28(%r1)
+    ba 0x001f0b5c

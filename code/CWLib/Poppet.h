@@ -45,6 +45,8 @@ public:
     v4 GetDockPos() const;
     CThing* GetThingToIgnore();
     void SendPoppetDangerMessage(ELethalType lethal_type);
+    void PushMode(EPoppetMode mode, EPoppetSubMode submode);
+    void SendPoppetMessage(EPoppetMessageType message);
 private:
     RaycastJobResult m_raycastJobResult;
     CRaycastResults m_raycastOnSwitchConnector;

@@ -4,6 +4,7 @@
 #include <refcount.h>
 
 #include "ResourceMaterial.h"
+#include "GameEnums.inl"
 #include "Part.h"
 
 class PShape : public CPart {
@@ -14,6 +15,9 @@ struct Forked {
     CVector<void*> Convexes; // technically CVector<CCompactConvex, CAllocatorMMAligned128>, but need a dummy type
     v2* SharedVertices;
 };
+public:
+    void SetCollidableGame(bool collidable);
+    void SetCollidablePoppet(bool collidable);
 public:
     float Moment;
     v4 EditorColourTint;

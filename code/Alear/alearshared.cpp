@@ -693,7 +693,7 @@ CInventoryItem* FindItemWithToolType(CBaseProfile* prf, EToolType type)
 
 void OnLocalProfileLoadFinished(RLocalProfile* prf)
 {
-    
+
 }
 
 struct BaseGroupBy {
@@ -758,20 +758,106 @@ void DoPreferenceSort(CInventoryView* view)
     view->SortTermBoundaries.push_back(boundary);
 }
 
-void HandleCustomToolType(CPoppet* poppet, EToolType tool)
+void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
 {
-    if (tool == TOOL_SHAPE_PLASMA)
+    switch (msg)
     {
-        poppet->SendPoppetDangerMessage(LETHAL_BULLET);
-        return;
+        case E_POPPET_UNPHYSICS_MESSAGE:
+        {
+            DebugLog("RECV: E_POPPET_UNPHYSICS_MESSAGE\n");
+            poppet->PushMode(MODE_CURSOR, SUBMODE_UNPHYSICS);
+            return;
+        }
     }
-
-
 }
 
-extern "C" uintptr_t _global_artist_hook();
-extern "C" uintptr_t _global_pref_hook();
-extern "C" uintptr_t _custom_tool_type_hook();
+bool IsThingFady(CThing* thing)
+{
+    PWorld* world = gGame->GetWorld();
+    if (thing == NULL || world == NULL) return false;
+    if (thing->Stamping) return true;
+
+    PShape* shape = thing->GetPShape();
+    if (shape == NULL || thing->GetPBody() == NULL) return false;
+    if ((shape->InteractEditMode & 2) == 0) return false;
+
+
+    if (!shape->CollidableGame)
+    {
+        for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
+        {
+            PYellowHead* yellowhead = *it;
+            CPoppet* poppet = yellowhead->Poppet;
+            if (poppet == NULL) continue;
+            if (poppet->GetSubMode() == SUBMODE_UNPHYSICS)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+bool SetUnphysics(CPoppet* poppet, CThing* thing)
+{
+    if (thing == NULL) return false;
+    PShape* shape = thing->GetPShape();
+    if (shape == NULL) return false;
+
+    shape->SetCollidableGame(!shape->CollidableGame);
+    shape->SetCollidablePoppet(true);
+    
+    return true;
+}
+
+void HandleCustomToolType(CPoppet* poppet, EToolType tool)
+{
+    switch (tool)
+    {
+        case TOOL_SHAPE_PLASMA:
+        {
+            poppet->SendPoppetDangerMessage(LETHAL_BULLET);
+            break;
+        }
+        case TOOL_UNPHYSICS:
+        {
+            DebugLog("SEND: E_POPPET_UNPHYSICS_MESSAGE\n");
+            poppet->SendPoppetMessage(E_POPPET_UNPHYSICS_MESSAGE);
+            break;
+        }
+    }
+}
+
+extern "C" uintptr_t _global_artist_hook;
+extern "C" uintptr_t _global_pref_hook;
+extern "C" uintptr_t _custom_tool_type_hook;
+extern "C" uintptr_t _custom_poppet_message_hook;
+extern "C" uintptr_t _custom_pick_object_action_hook;
+
+void AttachCustomPoppetMessages()
+{
+    MH_Poke32(0x0034f978, 0x2b9d0000 + (E_POPPET_MESSAGE_TYPE_COUNT - 1));
+
+    // Initialise the switch table with the offsets to the invalid resource type case
+    const int SWITCH_LABEL = 0x0034f99c;
+    const int NOP_LABEL = 0x0034fa40;
+    const int LABEL_COUNT = 0x25;
+    static s32 TABLE[E_POPPET_MESSAGE_TYPE_COUNT];
+    for (int i = 0; i < E_POPPET_MESSAGE_TYPE_COUNT; ++i)
+        TABLE[i] = NOP_LABEL - (u32)TABLE;
+
+    // Copy the old switch case into our new table and replace the offsets.
+    MH_Read(SWITCH_LABEL, TABLE, LABEL_COUNT * sizeof(s32));
+    for (int i = 0; i < LABEL_COUNT; ++i)
+    {
+        s32 target = SWITCH_LABEL + TABLE[i] - (u32)TABLE;
+        TABLE[i] = target;
+    }
+
+    TABLE[E_POPPET_UNPHYSICS_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+
+    // Switch out the pointer to the switch case in the TOC
+    MH_Poke32(0x0092afb4, (u32)TABLE);
+}
 
 void AttachCustomToolTypes()
 {
@@ -793,6 +879,7 @@ void AttachCustomToolTypes()
         TABLE[i] = target;
     }
 
+    TABLE[TOOL_UNPHYSICS] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_PLASMA] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
@@ -1427,6 +1514,9 @@ extern "C" uintptr_t _gooey_image_ctor_animated_hook;
 extern "C" uintptr_t _sdf_button_animated_hook;
 extern "C" uintptr_t _gooey_image_update_hook;
 
+extern "C" uintptr_t _fady_thing_hook;
+extern "C" uintptr_t _fixup_custom_pick_object_select_hook;
+
 void InitSharedHooks()
 {
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
@@ -1453,6 +1543,10 @@ void InitSharedHooks()
 
     // Add hooks for extra custom tool types
     AttachCustomToolTypes();
+    AttachCustomPoppetMessages();
+    MH_PokeBranch(0x003516e0, &_custom_pick_object_action_hook);
+    MH_PokeBranch(0x001f0b3c, &_fady_thing_hook);
+    MH_PokeBranch(0x00352100, &_fixup_custom_pick_object_select_hook);
 
     // Hooks for animated texture buttons
     // MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));

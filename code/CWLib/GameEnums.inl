@@ -1,3 +1,6 @@
+#ifndef GAME_ENUMS_INL
+#define GAME_ENUMS_INL
+
 enum ELethalType {
     LETHAL_NOT,
     LETHAL_FIRE,
@@ -17,3 +20,5 @@ enum ELethalType {
     
     LETHAL_TYPE_COUNT
 };
+
+#endif // GAME_ENUMS_INL
