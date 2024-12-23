@@ -219,8 +219,9 @@ typedef enum EPoppetSubMode {
     // custom
     SUBMODE_EMOTES,
 
+    SUBMODE_STICKER_CUTTER = 44,
     SUBMODE_UNPHYSICS = 48,
-
+    
     NUM_SUBMODES
 
 } EPoppetSubMode;
@@ -278,6 +279,10 @@ typedef enum EToolType {
     TOOL_STICKER_WASH = 32,
     TOOL_UNPHYSICS = 34,
     TOOL_WASH = 38,
+
+    TOOL_POPIT_GRADIENT = 47,
+    TOOL_MESH_CAPTURE,
+    
     
     NUM_TOOL_TYPES
 

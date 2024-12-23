@@ -1,3 +1,13 @@
+.global _gooey_frame_clip_hook
+_gooey_frame_clip_hook:
+    lbz %r8, 166(%r29)
+    or %r5, %r5, %r8
+    lbz %r8, 167(%r29)
+    or %r6, %r6, %r8
+
+    bla 0x002f08f0
+    ba 0x002f1d1c
+
 .global _gooey_image_ctor_animated_hook
 _gooey_image_ctor_animated_hook:
     mr %r3, %r25

@@ -2,6 +2,7 @@
 #include <hook.h>
 
 const u32 gUsedItemsCustomId = 0x55534544;
+const u32 gEmotesCustomId = 0x454D4F54;
 
 bool RLocalProfile::IsWearingCostumeUID(u32 uid) const
 {

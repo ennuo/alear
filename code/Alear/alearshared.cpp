@@ -5,6 +5,9 @@
 #include "pins.h"
 #include "outfits.h"
 
+#include "customization/slapstyles.h"
+#include "customization/emotes.h"
+
 #include <map>
 
 #include <cell/fs/cell_fs_file_api.h>
@@ -387,6 +390,15 @@ bool CustomTryTranslate(u32 key, tchar_t const*& out)
 const u32 gUserObjectMask = 0x40100480;
 const u32 gPodMask = E_TYPE_USER_POD | E_TYPE_POD_TOOL;
 
+bool IsPlayerCustomizationTool(u32 tool_type)
+{
+    return 
+        tool_type == TOOL_COSTUME_RESET ||
+        tool_type == TOOL_COSTUME_RANDOM ||
+        tool_type == TOOL_COSTUME_SAVE ||
+        tool_type == TOOL_COSTUME_WASH;
+}
+
 bool IsToolMatch(CInventoryView* view, u32 tool_type)
 {
     bool edit = gGame->EditMode;
@@ -565,6 +577,11 @@ void GatherUsedPlanDescriptors()
 
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner)
 {
+    if (view->Descriptor.Type == gEmotesCustomId)
+    {
+        return IsEmoteItem(item->Plan.GetGUID()) || IsPlayerCustomizationTool(item->Details.ToolType);
+    }
+    
     if (view->Descriptor.Type == gUsedItemsCustomId)
     {
         u32 tool = item->Details.ToolType;
@@ -579,6 +596,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     }
 
     CGUID item_guid = item->Plan.GetGUID();
+    if (IsEmoteItem(item_guid)) return false;
 
     u32 item_type = item->Details.Type;
     u32 view_type = view->Descriptor.Type;
@@ -694,6 +712,64 @@ CInventoryItem* FindItemWithToolType(CBaseProfile* prf, EToolType type)
 void OnLocalProfileLoadFinished(RLocalProfile* prf)
 {
 
+}
+
+u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* item, v4 col, bool wide_icons, bool roundy_bg)
+{
+    CGooeyNodeManager* manager = *(CGooeyNodeManager**)((char*)gooey + 0x250);
+    u32 res = 0;
+
+    manager->DoBreak();
+    if (manager->StartFrame())
+    {
+        manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_START);
+        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+        manager->SetFrameHighlightStyle(GHS_ROUNDED_RECT);
+        manager->SetFrameHighlightSizing((EGooeySizingType)648);
+        if (manager->StartFrameNamed(uid))
+        {
+            manager->SetFrameLayoutMode(LM_CENTERED, LM_CENTERED);
+            manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+            manager->SetFrameDefaultChildSpacing(64.0f, 0.0f);
+            manager->SetFrameCornerRadius(64.0f);
+            // manager->SetFrameOutlineWidth(48.0f);
+            if (manager->StartFrame())
+            {
+                manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_START);
+                manager->SetFrameSizing(0.0f, 0.0f);
+
+                /* 0xa140200 does a loading indicator, not sure which bit */
+                
+                CP<RTexture> icon = item->Details.Icon.GetRef();
+                manager->DoImageButtonNamed(manager->GetAnonymousUID(), icon, v2(128.0f), v4(1.0f), 0x0);
+
+                manager->EndFrame();
+            }
+
+            if (manager->StartFrame())
+            {
+                manager->SetFrameSizing(SizingBehaviour::Contents(), SizingBehaviour::Contents());
+                manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_CENTERED);
+                manager->SetFrameBorders(8.0f, 8.0f);
+                manager->SetFrameApplyClip(true, false);
+
+                const tchar_t* text;
+                if (!CustomTryTranslate(item->Details.NameTranslationTag, text))
+                    text = (const tchar_t*)L"";
+                manager->DoTitle((wchar_t*)text, GTS_B1, v2(-1.0f, 0.0f));
+                
+                manager->EndFrame();
+            }
+
+            res = manager->EndFrame(256);
+        }
+
+        manager->EndFrame();
+    }
+
+    manager->DoBreak();
+
+    return res;
 }
 
 struct BaseGroupBy {
@@ -822,6 +898,11 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
         {
             DebugLog("SEND: E_POPPET_UNPHYSICS_MESSAGE\n");
             poppet->SendPoppetMessage(E_POPPET_UNPHYSICS_MESSAGE);
+            break;
+        }
+        case TOOL_POPIT_GRADIENT:
+        {
+            // poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE)
             break;
         }
     }
@@ -1020,8 +1101,9 @@ void CustomDoPoppetSection(
     }
     
     bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
+    bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
 
-    if (!settings.IsPlayerColourPage && !backgrounds)
+    if (!settings.IsPlayerColourPage && !backgrounds && !sound_objects)
     // if (!hide_section_titles)
     {
         // float height = is_hidden ? 2.0f : 24.0f;
@@ -1517,6 +1599,9 @@ extern "C" uintptr_t _gooey_image_update_hook;
 extern "C" uintptr_t _fady_thing_hook;
 extern "C" uintptr_t _fixup_custom_pick_object_select_hook;
 
+extern "C" uintptr_t _gooey_frame_clip_hook;
+extern "C" uintptr_t _custom_item_grid_hook;
+
 void InitSharedHooks()
 {
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
@@ -1547,6 +1632,17 @@ void InitSharedHooks()
     MH_PokeBranch(0x003516e0, &_custom_pick_object_action_hook);
     MH_PokeBranch(0x001f0b3c, &_fady_thing_hook);
     MH_PokeBranch(0x00352100, &_fixup_custom_pick_object_select_hook);
+
+    // Swap order of instructions in CGooeyNodeContainer constructor
+    // so we can make sure our custom fields are always zero initialized
+    MH_Poke32(0x002f3014, 0x917c00a4 /* stw %r11, 0xa4(%r28) */); // sneakily replace stb with stw
+    MH_Poke32(0x002f3020, 0x993c00a5 /* stb %r9, 0xa5(%r28) */);
+
+    // Allow overriding whether or not a frame will get clipped
+    MH_PokeBranch(0x002f1d18, &_gooey_frame_clip_hook);
+
+    // Draw custom buttons for sound objects
+    MH_PokeBranch(0x0038019c, &_custom_item_grid_hook);
 
     // Hooks for animated texture buttons
     // MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));

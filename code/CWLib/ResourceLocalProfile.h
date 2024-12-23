@@ -12,6 +12,7 @@
 #define MAX_USER_EMOTES (4)
 
 extern const u32 gUsedItemsCustomId;
+extern const u32 gEmotesCustomId;
 
 // 0x3b8
 class RLocalProfile : public CBaseProfile {

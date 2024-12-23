@@ -164,3 +164,25 @@ _fady_thing_hook:
     
     lwz %r3,0x28(%r1)
     ba 0x001f0b5c
+
+.global _custom_item_grid_hook
+_custom_item_grid_hook:
+.set EXIT_ITEM_GRID_HOOK, 0x003801a0
+.set CPoppetGooey_DoInventoryGridButton, 0x0037f838
+    lwz %r0, 0x40(%r24)
+    rlwinm %r0, %r0, 0x0, 0x9, 0x9
+    cmpwi %cr7, %r0, 0
+    beq %cr7, UseDefaultItemGridButton
+
+    stw %r2, 0x2c(%r1)
+    lis %r2, _Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb@h      
+    ori %r2, %r2, _Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb
+    lwz %r2, 0x2c(%r1)
+
+    ba EXIT_ITEM_GRID_HOOK
+UseDefaultItemGridButton:
+    bla CPoppetGooey_DoInventoryGridButton
+ExitItemGridHook:
+    ba EXIT_ITEM_GRID_HOOK

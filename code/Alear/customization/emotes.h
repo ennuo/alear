@@ -47,6 +47,7 @@ void OnInitializeSackboyAnims(CSackBoyAnim& sb);
 bool CustomInitAnims();
 bool CustomInitAnimsPostResource();
 namespace ScriptyStuff { int LoadAnim(CAnimBank* ab, CGUID guid); }
+bool IsEmoteItem(CGUID guid);
 
 extern CStyleBank gStyleBank;
 

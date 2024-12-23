@@ -68,6 +68,12 @@ void CGooeyNodeManager::SetFrameLayoutMode(ELayoutMode layout_w, ELayoutMode lay
     CGooeyNodeManager_SetFrameLayoutMode(this, layout_w, layout_h);
 }
 
+MH_DefineFunc(CGooeyNodeManager_SetFrameCornerRadius, 0x002fa068, TOC0, void, CGooeyNodeManager*, float);
+void CGooeyNodeManager::SetFrameCornerRadius(float radius)
+{
+    CGooeyNodeManager_SetFrameCornerRadius(this, radius);
+}
+
 MH_DefineFunc(CGooeyNodeManager_RenderToTexture, 0x00303c58, TOC0, void, CGooeyNodeManager*, u32, u32, int, int, bool, bool);
 void CGooeyNodeManager::RenderToTexture(u32 screen_width, u32 screen_height, int texture_width, int texture_height, bool stencil_clip, bool respect_fade)
 {
@@ -84,6 +90,12 @@ MH_DefineFunc(CGooeyNodeManager_DoTextNamed, 0x002ffb48, TOC0, u32, CGooeyNodeMa
 u32 CGooeyNodeManager::DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour)
 {
     return CGooeyNodeManager_DoTextNamed(this, uid, text, text_style, text_colour);
+}
+
+MH_DefineFunc(CGooeyNodeManager_DoTitleNamed, 0x002ff608, TOC0, u32, CGooeyNodeManager*, u64, wchar_t*, EGooeyTextStyle, v2);
+u32 CGooeyNodeManager::DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 size)
+{
+    return CGooeyNodeManager_DoTitleNamed(this, uid, text, text_style, size);
 }
 
 MH_DefineFunc(CGooeyNodeManager_DoFancyButtonNamed, 0x002ffd10, TOC0, u32, CGooeyNodeManager*, u64, wchar_t*, EGooeyTextStyle, EGooeyButtonStyle, EGooeyButtonState, u32, CSDFIconParams*);

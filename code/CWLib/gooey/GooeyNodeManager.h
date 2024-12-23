@@ -50,7 +50,7 @@ public:
     u32 DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, v2 size, v4 colour, u32 accepted_input);
     u32 DoFancyButtonNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonStyle button_style, EGooeyButtonState button_state, u32 accepted_input, CSDFIconParams* icon);
     u32 DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour);
-    // u32 DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 border);
+    u32 DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 size);
 
     u32 DoButton(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
     u32 DoInline(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
@@ -71,7 +71,22 @@ public:
     bool EnsureNodeOrDescendantHasFocus(u64 uid);
     bool NodeOrDescendantHasFocus(u64 uid);
 
+    void SetLastItemSunburst(bool sunburst);
+    void SetLastItemRoundyBG(bool bg);
+
+    void SetFrameCornerRadius(float radius);
+
+
 public:
+    inline void SetFrameApplyClip(bool apply_clip_x, bool apply_clip_y)
+    {
+        if (NodeStack.empty()) return;
+        
+        CGooeyNodeContainer* frame = NodeStack.back();
+        frame->ClipX = apply_clip_x;
+        frame->ClipY = apply_clip_y;
+    }
+
     inline void DoSpacer()
     {
         CP<RTexture> texture;
@@ -81,6 +96,11 @@ public:
     inline u32 DoImage(CP<RTexture> const& texture, v2 size, v4 colour)
     {
         return DoImageButtonNamed(GetAnonymousUID(), texture, size, colour, 0);
+    }
+
+    inline u32 DoTitle(wchar_t* text, EGooeyTextStyle text_style, v2 size)
+    {
+        return DoTitleNamed(GetAnonymousUID(), text, text_style, size);
     }
 
     inline u32 DoInline(wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input)
@@ -137,7 +157,10 @@ public:
         return 0ull;
     }
 public:
-    char Pad0[0x28];
+    EGooeyNodeManagerNetworkID NetworkID;
+    NodeVec RootNodes;
+    NodeVec Nodes;
+    ContainerVec NodeStack;
     CGooeyNode* CurrentHighlightNode;
     CGooeyNode* LastNode;
     char Pad1[0x1e0];
