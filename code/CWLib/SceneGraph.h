@@ -39,4 +39,13 @@ private:
     char Pad2[0x84];
 };
 
+struct InstanceList {
+    u32 Size;
+    u32* Key;
+    CMeshInstance** MeshInstance;
+};
+
+extern InstanceList gFilteredBucketForRaycast;
+extern InstanceList gRenderBucket;
+
 #endif // SCENE_GRAPH_H

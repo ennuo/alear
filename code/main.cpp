@@ -1,6 +1,6 @@
 #include <sys/prx.h>
 
-#include "alear.h"
+#include "Alear.h"
 
 SYS_MODULE_INFO(Alear, 0, ALEAR_MAJOR_VERSION, ALEAR_MINOR_VERSION);
 SYS_MODULE_START(_start);

@@ -20,6 +20,18 @@ bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
     return PSwitch_RaycastConnector(this, start, dir, t, hit);
 }
 
+void CPoppet::InitializeExtraData()
+{
+    DebugLog("\n\n\n\n\n\n\nALEAR MARKER !!! POOPY FARTY !!! INITING HIDDEN LIST\n\n\n\n");
+    
+    new (&HiddenList) CVector<CThingPtr>();
+}
+
+void CPoppet::DestroyExtraData()
+{
+    HiddenList.~CVector();
+}
+
 void CustomRaycastAgainstSwitches(CPoppet* poppet)
 {
     poppet->m_bestTFromPSwitches = 1.0e+20f;
@@ -93,7 +105,7 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
                 DebugLog("hitting input port %d on AND gate!!!\n", i);
 
                 raycast.SwitchConnector = false;
-                raycast.HitThing = NULL;
+                raycast.HitThing = thing;
                 raycast.RefThing = thing;
                 
                 poppet->m_bestTFromPSwitches = t;
@@ -168,17 +180,28 @@ ReflectReturn GatherPoppetRaycastVariables(CGatherVariables& r, CRaycastResults&
     return Reflect(r, d);
 }
 
-bool gAdvancedLogicSystemEnabled = false;
+extern "C" uintptr_t _raycast_hook;
+extern "C" uintptr_t _popit_destroy_extra_data_hook;
+extern "C" uintptr_t _popit_init_extra_data_hook;
 
 void InitLogicSystemHooks()
-{
-    if (!gAdvancedLogicSystemEnabled) return;
-    
-    MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
-    MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
+{    
+    // MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
+    // MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
 
     // replace stb with stw for collating raycast so it copies additional fields
     MH_Poke32(0x00356aa0, 0x815f004c /* lwz %r10, 0x4c(%r31) */);
     MH_Poke32(0x00356acc, 0x915e18fc /* stw %r10, 0x18fc(%r30) */);
 
+    // raycast hack for local players
+    MH_PokeBranch(0x0011067c, &_raycast_hook);
+
+    // Increase the allocation size for the poppet class instance
+    MH_Poke32(0x0073b5dc, LI(4, sizeof(CPoppet)));
+    MH_Poke32(0x00231bdc, LI(4, sizeof(CPoppet)));
+    MH_Poke32(0x000316bc, LI(4, sizeof(CPoppet)));
+
+    // Add hooks for our custom data construction/destruction
+    MH_PokeBranch(0x0034f264, &_popit_init_extra_data_hook);
+    MH_PokeBranch(0x0034b4f4, &_popit_destroy_extra_data_hook);
 }

@@ -349,6 +349,9 @@ namespace FMOD
         virtual FMOD_RESULT F_API getVersion         (unsigned int *version) = 0;
         virtual FMOD_RESULT F_API getInfo            (EVENT_SYSTEMINFO *info) = 0;
         virtual FMOD_RESULT F_API getSystemObject    (System **system) = 0;
+        
+        virtual FMOD_RESULT F_API getMusicSystem     () = 0; // in a later version or something?
+
 
         virtual FMOD_RESULT F_API load               (const char *filename, const char *encryptionkey, EventProject **project) = 0;
         virtual FMOD_RESULT F_API unload             () = 0;
@@ -359,14 +362,18 @@ namespace FMOD
         virtual FMOD_RESULT F_API getCategory        (const char *name, EventCategory **category) = 0;
         virtual FMOD_RESULT F_API getCategoryByIndex (int index,        EventCategory **category) = 0;
         virtual FMOD_RESULT F_API getNumCategories   (int *numcategories) = 0;
-        virtual FMOD_RESULT F_API getReverb          (const char *name, EventReverb **reverb) = 0;
-        virtual FMOD_RESULT F_API getReverbByIndex   (const int index,  EventReverb **reverb) = 0;
-        virtual FMOD_RESULT F_API getNumReverbs      (int *numreverbs) = 0;
+        // virtual FMOD_RESULT F_API getReverb          (const char *name, EventReverb **reverb) = 0;
+        // virtual FMOD_RESULT F_API getReverbByIndex   (const int index,  EventReverb **reverb) = 0;
+        // virtual FMOD_RESULT F_API getNumReverbs      (int *numreverbs) = 0;
 
         virtual FMOD_RESULT F_API getGroup           (const char *name, bool cacheevents, EventGroup **group) = 0;
         virtual FMOD_RESULT F_API getEvent           (const char *name, EVENT_MODE mode, Event **event) = 0;
         virtual FMOD_RESULT F_API getEventBySystemID (unsigned int systemid, EVENT_MODE mode, Event **event) = 0;
         virtual FMOD_RESULT F_API getNumEvents       (int *numevents) = 0;
+
+        // virtual FMOD_RESULT F_API getReverb          (const char *name, EventReverb **reverb) = 0;
+        // virtual FMOD_RESULT F_API getReverbByIndex   (const int index,  EventReverb **reverb) = 0;
+        // virtual FMOD_RESULT F_API getNumReverbs      (int *numreverbs) = 0;
 
         virtual FMOD_RESULT F_API set3DNumListeners  (int numlisteners) = 0;
         virtual FMOD_RESULT F_API get3DNumListeners  (int *numlisteners) = 0;

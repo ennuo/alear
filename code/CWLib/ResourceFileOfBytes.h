@@ -3,6 +3,15 @@
 
 #include <vector.h>
 #include <Resource.h>
+#include <filepath.h>
+
+class RFilename : public CResource {
+public:
+    const CFilePath& GetPath() const { return Path; }
+protected:
+    CFilePath Path;
+    CFilePath SysCachePath;
+};
 
 class RFileOfBytes : public CResource {
 public:

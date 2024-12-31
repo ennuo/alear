@@ -1,8 +1,5 @@
 #include <surface_terrains.h>
 
-#include <fmod.hpp>
-#include <fmod_event.h>
-
 #include "sm64/init.h"
 #include "sm64/level.h"
 
@@ -18,10 +15,7 @@
 
 #include <cell/thread.h>
 
-namespace CAudio {
-    extern FMOD::System* System;
-    extern FMOD::EventSystem* EventSystem;
-};
+
 
 
 struct DualSample16 { s16 L; s16 R; };

@@ -28,6 +28,7 @@ public:
         LocationIndex = loc_idx;
     }
 public:
+    const tchar_t* TranslateName();
     bool IsCreatedBy(NetworkPlayerID* pid);
 public:
     virtual void SetIcon(RTexture* icon);

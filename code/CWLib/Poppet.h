@@ -9,6 +9,9 @@
 #include "ReflectionVisitable.h"
 #include "PoppetEnums.inl"
 #include "RaycastResults.h"
+#include "PoppetChild.h"
+#include "PoppetEditState.h"
+#include "PoppetInventory.h"
 
 enum EPoppetStage {
     E_STAGE_LOCKSTEP = 0x4,
@@ -18,23 +21,12 @@ enum EPoppetStage {
 
 class RLocalProfile;
 
-// 0x14b4
-class CPoppetEditState {
-private:
-    char Pad[0x3f8];
-public:
-    CThingPtr LastHoverThing;
-};
-
-class CPoppetInventory {
-private:
-    char Pad[0x80];
-public:
-    v2 SelectBoxBounds;
-};
-
 class CPoppet : public CReflectionVisitable {
 friend void CustomRaycastAgainstSwitches(CPoppet* poppet);
+public:
+    void ClearHiddenList();
+    void InitializeExtraData();
+    void DestroyExtraData();
 public:
     const CP<RLocalProfile>& GetLocalProfile() const;
     void RenderHoverObject(CThing* thing, float outline);
@@ -63,14 +55,17 @@ private:
     char Pad[0x463];
 public:
     CPoppetEditState Edit; // 0x580
-private:
-    char Pad1[0x2c];
-public:
     CPoppetInventory Inventory; // 0x9b0
 private:
-    char Pad2[0xec0];
+    char Pad2[0xe20];
 public:
+    CRaycastResults Raycast;
+    CRaycastResults RaycastForNetwork;
     CThingPtr PlayerThing; // 0x1900
+private:
+    char Pad3[0x1f4];
+public:
+    CVector<CThingPtr> HiddenList;
 };
 
 

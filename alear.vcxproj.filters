@@ -285,58 +285,58 @@
     <ClInclude Include="D:\projects\alear\code\Alear\AlearSR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alear.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\Alear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearcam.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearDebugCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearconf.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\projects\alear\code\Alear\alearlauncher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearoptui.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearStartMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearshared.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearShared.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearsync.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearSync.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\alearvm.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\AlearVM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\customization\emotes.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\customization\Emotes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\customization\popitstyles.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\customization\PoppetStyles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\customization\slapstyles.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\customization\SlapStyles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\projects\alear\code\Alear\customization\styles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\fwatch.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\FileWatcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\outfits.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\OutfitSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\pins.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\PinSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\podstyles.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\PodStyles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\portal.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\Portal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\powerup.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\Powerup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\projects\alear\code\Alear\resources\ResourceAnimatedTexture.h">
@@ -351,10 +351,10 @@
     <ClInclude Include="D:\projects\alear\code\Alear\resources\ResourcePins.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\rpcs3.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\RPCS3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\projects\alear\code\Alear\serverswitcher.h">
+    <ClInclude Include="D:\projects\alear\code\Alear\ServerSwitcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\projects\alear\code\Alear\shotgun.h">

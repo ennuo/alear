@@ -59,6 +59,11 @@ void CThingPtr::Unset()
     Prev = NULL;
 }
 
+bool CThingPtr::operator<(CThingPtr const& r) const
+{
+    return Thing->UID < r->UID;
+}
+
 void CThingPtr::Set(CThing* thing)
 {
     Thing = thing;

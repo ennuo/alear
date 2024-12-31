@@ -1,4 +1,4 @@
-#include "portal.h"
+#include "Portal.h"
 #include "cwlib.h"
 #include "ppcasm.h"
 #include "vector.h"

@@ -60,6 +60,12 @@ bool CInventoryItemDetails::IsCreatedBy(NetworkPlayerID* pid)
     return CInventoryItemDetails_IsCreatedBy(this, pid);
 }
 
+MH_DefineFunc(CInventoryItemDetails_TranslateName, 0x002ed5b8, TOC0, const tchar_t*, CInventoryItemDetails*);
+const tchar_t* CInventoryItemDetails::TranslateName()
+{
+    return CInventoryItemDetails_TranslateName(this);
+}
+
 void CInventoryItemDetails::SetIcon(RTexture* icon)
 {
     Icon = icon;

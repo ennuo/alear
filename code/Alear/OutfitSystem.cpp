@@ -1,4 +1,4 @@
-#include "outfits.h"
+#include "OutfitSystem.h"
 
 #include <hook.h>
 

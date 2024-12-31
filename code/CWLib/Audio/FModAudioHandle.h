@@ -29,7 +29,7 @@ namespace CAudio
             if (FModEventInstanceTrackerIndex != 0)
                 gFModEventInstanceList[FModEventInstanceTrackerIndex - 1].RefCount -= 1;
         }
-    private:
+    public:
         u32 FModEventInstanceTrackerIndex;
         u32 Frame;
     };

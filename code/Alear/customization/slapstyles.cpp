@@ -1,4 +1,4 @@
-#include "customization/slapstyles.h"
+#include "customization/SlapStyles.h"
 
 #include <cell/DebugLog.h>
 #include <refcount.h>

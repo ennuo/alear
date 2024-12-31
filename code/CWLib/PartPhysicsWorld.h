@@ -47,6 +47,7 @@ public:
     CVector<BroadcastMicrochip> BroadcastMicrochips;
     u32 GameMode;
     float GameModeScore[4];
+    bool UseAdvancedLogicSystem;
 };
 
 #endif // PART_PHYSICS_WORLD_H

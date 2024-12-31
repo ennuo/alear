@@ -1,5 +1,5 @@
-#include "customization/popitstyles.h"
-#include "alearconf.h"
+#include "customization/PoppetStyles.h"
+#include "AlearConfig.h"
 
 #include <hook.h>
 

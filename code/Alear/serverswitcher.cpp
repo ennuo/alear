@@ -1,4 +1,4 @@
-#include "serverswitcher.h"
+#include "ServerSwitcher.h"
 
 #include "json.h"
 

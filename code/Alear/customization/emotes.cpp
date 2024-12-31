@@ -1,5 +1,5 @@
-#include "customization/emotes.h"
-#include "customization/styles.h"
+#include "customization/Emotes.h"
+#include "customization/Styles.h"
 
 #include <refcount.h>
 #include <cell/DebugLog.h>

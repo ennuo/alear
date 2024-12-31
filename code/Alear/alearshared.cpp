@@ -1,12 +1,14 @@
-#include "alearshared.h"
-#include "alearoptui.h"
-#include "alearcam.h"
-#include "alearconf.h"
-#include "pins.h"
-#include "outfits.h"
+#include "AlearHooks.h"
+#include "InventoryItemRequest.h"
+#include "AlearShared.h"
+#include "AlearStartMenu.h"
+#include "AlearDebugCamera.h"
+#include "AlearConfig.h"
+#include "PinSystem.h"
+#include "OutfitSystem.h"
 
-#include "customization/slapstyles.h"
-#include "customization/emotes.h"
+#include "customization/SlapStyles.h"
+#include "customization/Emotes.h"
 
 #include <map>
 
@@ -34,6 +36,7 @@
 #include <View.h>
 #include <GuidHashMap.h>
 #include <GFXApi.h>
+#include <Explode.h>
 #include <LoadingScreen.h>
 #include <InventoryView.h>
 #include <InventoryItem.h>
@@ -58,6 +61,7 @@
 #include <gooey/GooeyImage.h>
 #include <network/NetworkManager.h>
 #include <poppet/ScriptObjectPoppet.h>
+#include <MMAudio.h>
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -153,111 +157,17 @@ void OnReleaseLevel()
     #endif
 }
 
-enum EItemRequestResult {
-    E_ITEM_IDLE,
-    E_ITEM_PENDING,
+#include "AlearSync.h"
 
-    E_ITEM_NOT_FOUND,
-    E_ITEM_NO_PLAYER,
-    E_ITEM_ADDED,
-    E_ITEM_ALREADY_EXISTS,
-    E_ITEM_FAILED_LOAD,
-    E_ITEM_NO_DATA_SOURCE,
-    E_ITEM_ALREADY_IN_PROGRESS
-};
-
-class CItemRequest {
-public:
-    EItemRequestResult Request(const void* data, u32 len)
-    {
-        if (HasRequest()) return E_ITEM_ALREADY_IN_PROGRESS;
-        if (len == 0) return E_ITEM_NO_DATA_SOURCE;
-
-        CHash hash;
-        if (!SaveFileDataToCache(CT_TEMP, data, len,  hash)) return E_ITEM_NO_DATA_SOURCE;
-
-        CResourceDescriptor<RPlan> desc(hash);
-        Plan = LoadResource<RPlan>(desc, 0, STREAM_PRIORITY_DEFAULT, false);
-
-        Result = E_ITEM_PENDING;
-        while (Result == E_ITEM_PENDING) ThreadSleep(10);
-
-        EItemRequestResult result = Result;
-        Destroy();
-        return result;
-    }
-
-    EItemRequestResult Request(const char* filename)
-    {
-        if (HasRequest()) return E_ITEM_ALREADY_IN_PROGRESS;
-
-        CFileDBRow* row = FileDB::FindByPath(filename, false);
-        if (row == NULL) return E_ITEM_NOT_FOUND;
-
-        Plan = LoadResourceByKey<RPlan>(row->FileGuid.guid, 0, STREAM_PRIORITY_DEFAULT);
-
-        Result = E_ITEM_PENDING;
-
-        while (Result == E_ITEM_PENDING) ThreadSleep(10);
-
-        EItemRequestResult result = Result;
-        Destroy();
-        return result;
-    }
-
-    inline const CP<RPlan>& GetPlan() const { return Plan; }
-    inline bool HasRequest() const { return Result == E_ITEM_PENDING; }
-
-    inline void SetResult(EItemRequestResult result)
-    {
-        Result = result;
-    }
-private:
-    inline void Destroy()
-    {
-        Plan = NULL;
-        Result = E_ITEM_IDLE;
-    }
-private:
-    CP<RPlan> Plan;
-    volatile EItemRequestResult Result;
-};
-
-CItemRequest gItemRequest;
-
-void UpdateItemRequest()
+void OnResetPoppetModeStack(CPoppet* poppet)
 {
-    if (!gItemRequest.HasRequest()) return;
-
-    const CP<RPlan>& plan = gItemRequest.GetPlan();
-
-    CThing* player_thing = gGame->GetYellowheadFromPlayerNumber(gNetworkManager.InputManager.GetLocalLeadersPlayerNumber());
-    if (player_thing == NULL)
-    {
-        gItemRequest.SetResult(E_ITEM_NO_PLAYER);
-        return;
-    }
-
-    plan->BlockUntilLoaded();
-    if (plan->IsError())
-    {
-        gItemRequest.SetResult(E_ITEM_FAILED_LOAD);
-        return;
-    }
-
-    PYellowHead* yellowhead = player_thing->GetPYellowHead();
-
-    if (yellowhead->GetLocalProfile()->AddInventoryItem(plan, 0, 0, false, false, NULL))
-    {
-        SpawnCollectBubble(player_thing, plan);
-        gItemRequest.SetResult(E_ITEM_ADDED);
-        return;
-    }
-
-    gItemRequest.SetResult(E_ITEM_ALREADY_EXISTS);
+    poppet->ClearHiddenList();
 }
 
-#include "alearsync.h"
+void CPoppet::ClearHiddenList()
+{
+    HiddenList.clear();
+}
 
 void OnUpdateLevel()
 {
@@ -283,7 +193,44 @@ void OnUpdateLevel()
         CPoppet* poppet = yellowhead->Poppet;
         if (poppet == NULL) continue;
 
+        CInput* input = yellowhead->GetInput();
+        if (input == NULL) continue;
+
+        CThing* player = yellowhead->GetThing();
+        if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
+        {
+            ExplosionInfo info;
+            GetExplosionInfo(player, info);
+            info.Center = info.Center + v2(0.0f, -50.0f, 0.0f, 0.0f);
+            info.IgnoreYellowHead = true;
+
+            info.OuterRadius = 250.0f;
+            info.InnerRadius = 250.0f;
+            info.MaxVel = 100.0f;
+            info.MaxForce = 1500.0f;
+            info.MaxAngVel = 1.0f;
+
+            ApplyRadialForce(info);
+        }
+
+
+
         CThing* hover = poppet->Edit.LastHoverThing;
+
+        if (poppet->GetMode() == MODE_CURSOR && poppet->GetSubMode() == SUBMODE_NONE)
+        {
+
+            if (hover != NULL)
+            {
+                PShape* shape = hover->GetPShape();
+                if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, L"HIDE"))
+                    poppet->HiddenList.push_back(hover);
+            }
+
+            if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, L"SHOW"))
+                poppet->ClearHiddenList();
+        }
+
         if (hover != NULL && 
             poppet->GetMode() == MODE_CURSOR && 
             poppet->GetSubMode() == SUBMODE_NONE && 
@@ -296,15 +243,11 @@ void OnUpdateLevel()
 
     UpdateItemRequest();
 
-
-    // if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
-    // {
-    //     CP<RPlan> plan = LoadResourceByKey<RPlan>(31704, 0, STREAM_PRIORITY_DEFAULT);
-    //     plan->BlockUntilLoaded();
-    //     PYellowHead* yellowhead = world->ListPYellowHead[0];
-    //     CThing* player_thing = yellowhead->GetThing();
-    //     SpawnCollectBubble(player_thing, plan);
-    // }
+    if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+    {
+        PYellowHead* yellowhead = world->ListPYellowHead[0];
+        CThing* player_thing = yellowhead->GetThing();
+    }
 
 
 
@@ -714,6 +657,30 @@ void OnLocalProfileLoadFinished(RLocalProfile* prf)
 
 }
 
+FMOD_RESULT LoadAllEventProjects()
+{
+    for (int i = 0; i < CAudio::gFMODFileSize; ++i)
+    {
+        CAudio::FMODFile& file = CAudio::gFMODFiles[i];
+        CFileDBRow* row = FileDB::FindByGUID(file.Key);
+        if (row == NULL) continue;
+
+        DebugLog("audiophile: %s\n", row->FilePathX);
+
+        if (strstr(row->FilePathX, ".fev") == NULL) continue;
+        CFilePath fp(FPR_GAMEDATA, row->FilePathX);
+
+        FMOD::EventProject* project;
+        FMOD_RESULT result = CAudio::EventSystem->load(fp.c_str(), NULL, &project);
+        DebugLog("loaded fev at %s, errno=%08x\n", row->FilePathX, result);
+
+        if (result != FMOD_OK) 
+            return result;
+    }
+
+    return FMOD_OK;
+}
+
 u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* item, v4 col, bool wide_icons, bool roundy_bg)
 {
     CGooeyNodeManager* manager = *(CGooeyNodeManager**)((char*)gooey + 0x250);
@@ -739,7 +706,7 @@ u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* i
                 manager->SetFrameSizing(0.0f, 0.0f);
 
                 /* 0xa140200 does a loading indicator, not sure which bit */
-                
+
                 CP<RTexture> icon = item->Details.Icon.GetRef();
                 manager->DoImageButtonNamed(manager->GetAnonymousUID(), icon, v2(128.0f), v4(1.0f), 0x0);
 
@@ -753,9 +720,9 @@ u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* i
                 manager->SetFrameBorders(8.0f, 8.0f);
                 manager->SetFrameApplyClip(true, false);
 
-                const tchar_t* text;
-                if (!CustomTryTranslate(item->Details.NameTranslationTag, text))
-                    text = (const tchar_t*)L"";
+                const tchar_t* text = item->Details.TranslateName();
+                // if (!CustomTryTranslate(item->Details.NameTranslationTag, text))
+                //     text = (const tchar_t*)L"";
                 manager->DoTitle((wchar_t*)text, GTS_B1, v2(-1.0f, 0.0f));
                 
                 manager->EndFrame();
@@ -778,6 +745,20 @@ struct BaseGroupBy {
 };
 
 #include <algorithm>
+
+struct SortByName
+{
+    bool operator()(CInventoryView::SInventoryItemData& a, CInventoryView::SInventoryItemData& z) const
+    {
+        const tchar_t* name_a = a.Item->Details.TranslateName();
+        const tchar_t* name_b = z.Item->Details.TranslateName();
+
+        int cmp = wcscmp((const wchar_t*)name_a, (const wchar_t*)name_b);
+        if (cmp == 0) return a.Item->UID < z.Item->UID;
+
+        return cmp < 0;
+    }
+};
 
 struct SortByArtist
 {
@@ -834,6 +815,22 @@ void DoPreferenceSort(CInventoryView* view)
     view->SortTermBoundaries.push_back(boundary);
 }
 
+void SortBoundariesAlphabetically(CInventoryView* view)
+{
+    if (view->Descriptor.Type != E_TYPE_MUSIC) return;
+
+    for (int i = 0; i < view->SortTermBoundaries.size(); ++i)
+    {
+        SSortTermBoundary& boundary = view->SortTermBoundaries[i];
+
+        int end = view->PageData.size();
+        if (i + 1 < view->SortTermBoundaries.size())
+            end = view->SortTermBoundaries[i + 1].Index;
+
+        std::sort(view->PageData.begin() + boundary.Index, view->PageData.begin() + end, SortByName());
+    }
+}
+
 void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
 {
     switch (msg)
@@ -852,6 +849,18 @@ bool IsThingFady(CThing* thing)
     PWorld* world = gGame->GetWorld();
     if (thing == NULL || world == NULL) return false;
     if (thing->Stamping) return true;
+
+    for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
+    {
+        PYellowHead* yellowhead = *it;
+        CPoppet* poppet = yellowhead->Poppet;
+        if (poppet == NULL || poppet->HiddenList.size() == 0) continue;
+        for (CThingPtr* ptr = poppet->HiddenList.begin(); ptr != poppet->HiddenList.end(); ++ptr)
+        {
+            CThing* hidden = ptr->GetThing();
+            if (hidden == thing) return true;
+        }
+    }
 
     PShape* shape = thing->GetPShape();
     if (shape == NULL || thing->GetPBody() == NULL) return false;
@@ -1167,6 +1176,23 @@ void CustomDoPoppetSection(
     manager->EndFrame();
 }
 
+void CustomPreRaycastPrepare(PWorld* world)
+{
+    gFilteredBucketForRaycast.Size = 0;
+    if (world == NULL) return;
+
+    for (int i = 0; i < gRenderBucket.Size; ++i)
+    {
+        CMeshInstance* instance = gRenderBucket.MeshInstance[i];
+        CThing* thing = instance->MyThing;
+        if (thing == NULL) continue;
+        if (thing->Parts[PART_TYPE_JOINT] != NULL) continue;
+        if (thing->GetPRenderMesh() == NULL) continue;
+
+        gFilteredBucketForRaycast.MeshInstance[gFilteredBucketForRaycast.Size++] = instance;
+    }
+}
+
 FileHandle gRecordingFileHandle = -1;
 char fileData[1280 * 720 * 4];
 bool gDoRecording;
@@ -1207,365 +1233,6 @@ void OnSwapBuffers()
     FileWrite(gRecordingFileHandle, pixel_data, 1280 * 720 * 4);
 }
 
-
-class MMOTextStreamA {
-public:
-    struct AsHex {
-        AsHex(u32 value) { Value = value; }
-        u32 Value;
-    };
-
-    struct FmtInt {
-        FmtInt(const char* format, u32 value) { Format = format; Value = value; }
-        const char* Format;
-        u32 Value;
-    };
-public:
-    virtual ~MMOTextStreamA() = 0;
-public:
-    inline MMOTextStreamA& operator<<(int v)
-    {
-        char fmt[64];
-        FormatString<64>(fmt, "%d", v);
-        return *this << fmt;
-    }
-
-    inline MMOTextStreamA& operator<<(v4 v)
-    {
-        char fmt[256];
-        FormatString<256>(fmt, "[%f, %f, %f]", v.getX().getAsFloat(), v.getY().getAsFloat(), v.getZ().getAsFloat());
-        return *this << fmt;
-    }
-
-    inline MMOTextStreamA& operator<<(char const* s)
-    {
-        OutputString(s);
-        return *this;
-    }
-
-    inline MMOTextStreamA& operator<<(MMString<char>& s)
-    {
-        OutputString(s.c_str());
-        return *this;
-    }
-public:
-    virtual void OutputData(const void* data, u32 len) = 0;
-private:
-    virtual void OutputString(const char* s) = 0;
-    virtual void OutputString(const wchar_t* s) = 0;
-    virtual void OutputString(const tchar_t* s) = 0;
-};
-
-struct SCompareIgnoreCase {
-	bool operator()(const MMString<char>& a, const MMString<char>& b) const
-	{
-		return StringICompare(a.c_str(), b.c_str());
-	}
-};
-
-typedef std::map<MMString<char>, MMString<char>, SCompareIgnoreCase, STLBucketAlloc<MMString<char> > > ParameterMap;
-
-class CRoute;
-class CWebternate {
-public:
-    virtual ~CWebternate() = 0;
-public:
-    virtual void AddRoute(CRoute* page) = 0;
-    virtual void Unknown_1() = 0;
-    virtual int GetPageCount() const = 0;
-    virtual CRoute* GetPage(int i) const;
-};
-class CRoute {
-public:
-    inline CRoute(CWebternate* owner) : Webternate(owner) {}
-    virtual ~CRoute() {}
-public:
-    virtual MMString<char> GetFileName(ParameterMap& parameters) 
-    {
-        return "\0";
-    };
-    
-    virtual const char* GetHref() { return NULL; }
-    virtual const char* GetContentType() 
-    { 
-        return "text/html; charset=UTF-8"; 
-    }
-    virtual int GetContentLength() { return -1; }
-    virtual void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body) {};
-    virtual bool IsPage() { return true; }
-    virtual bool Unknown_8() { return true; }
-    virtual const char* GetTitle() { return NULL; }
-    virtual int GetRefreshInterval() { return -1; }
-
-    virtual void DoNavigation(MMOTextStreamA& stream) 
-    {
-        // stream << "<ul>";
-        // for (int i = 0; i < Webternate->GetPageCount(); ++i)
-        // {
-        //     CRoute* page = Webternate->GetPage(i);
-        //     if (!page->IsPage() || !page->Unknown_8()) continue;
-        //     stream << "<li><a href=\"" << page->GetHref() << "\">";
-        //     stream << page->GetTitle();
-        //     stream << "</a></li>";
-        // }
-        // stream << "</ul>";
-
-        stream << "<table><tr>";
-        for (int i = 0; i < Webternate->GetPageCount(); ++i)
-        {
-            CRoute* page = Webternate->GetPage(i);
-            if (!page->IsPage() || !page->Unknown_8()) continue;
-            stream << "<td><a href=\"" << page->GetHref() << "\">";
-            stream << page->GetTitle();
-            stream << "</a></td>";
-        }
-        stream << "</tr></table><br>";
-    }
-
-    virtual void DoHeader(MMOTextStreamA& stream) 
-    {
-        stream << "<!DOCTYPE html><html lang=\"en-US\"><head>";
-        if (GetRefreshInterval() != -1)
-        {
-            stream << "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"";
-            stream << GetRefreshInterval();
-            stream << ";URL=";
-            stream << GetHref();
-            stream << "\">";
-        }
-
-        stream << "<meta charset=\"utf-8\" />";
-        stream << "<title>" << GetTitle() << "</title>";
-        stream << "<link href=\"/r?path=gamedata/alear/web/base.css\" rel=\"stylesheet\" type=\"text/css\">";
-
-        stream << "<body>";
-        DoNavigation(stream);
-    }
-
-    virtual void Unknown_13() {}
-
-    virtual void DoFooter(MMOTextStreamA& stream) 
-    {
-        stream << "<p><a href=\"/\">Index</a></body></html>\n";
-    }
-protected:
-    void DoFileContents(MMOTextStreamA& stream, const char* path)
-    {
-        CFilePath fp(path);
-        CFileDBRow* row = FileDB::FindByPath(fp, false);
-        if (row == NULL) return;
-
-        ByteArray b;
-        if (!GetFileDataFromCaches(row->FileHash, b))
-        {
-            CHash hash;
-            fp.Assign(FPR_GAMEDATA, row->FilePathX);
-            FileLoad(fp, b, hash);
-        }
-
-        if (b.empty()) return;
-        stream.OutputData((const void*)b.begin(), b.size());
-    }
-private:
-    CWebternate* Webternate;
-};
-
-class CFaviconEndpoint : public CRoute {
-public:
-    inline CFaviconEndpoint(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "favicon.ico"; }
-    const char* GetContentType() { return "image/x-icon"; }
-    bool IsPage() { return false; }
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        DoFileContents(stream, "gamedata/alear/web/favicon.ico");
-    }
-};
-
-class CLookupResourceEndpoint : public CRoute {
-public:
-    inline CLookupResourceEndpoint(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "r"; }
-
-    MMString<char> GetFileName(ParameterMap& parameters) 
-    {
-        // webternate is single threaded, so its fine to do this
-        CachedContentType = "application/octet-stream";
-
-        typename ParameterMap::iterator it = parameters.find("path");
-        if (it != parameters.end())
-        {
-            const char* path = it->second.c_str();
-
-            if (strstr(path, ".css") != NULL) CachedContentType = "text/css";
-            else if (strstr(path, ".json") != NULL) CachedContentType = "application/json";
-            else if (strstr(path, ".js") != NULL) CachedContentType = "text/javascript";
-            else if (strstr(path, ".html") != NULL) CachedContentType = "text/html; charset=UTF-8";
-            // only really need to return the filename if we're using binary content, i think?
-            else return path;
-        }
-
-        return "\0";
-    };
-
-    const char* GetContentType() { return CachedContentType; }
-    bool IsPage() { return false; }
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        typename ParameterMap::iterator it = parameters.find("path");
-        if (it != parameters.end())
-            DoFileContents(stream, it->second.c_str());
-    }
-private:
-    const char* CachedContentType;
-};
-
-class CInventoryEndpoint : public CRoute {
-public:
-    inline CInventoryEndpoint(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "api/inventory"; }
-    const char* GetContentType() { return "application/json"; }
-    bool IsPage() { return false; }
-
-    const char* GetItemResultCode(EItemRequestResult result)
-    {
-        switch (result)
-        {
-            case E_ITEM_NOT_FOUND: 
-                return "itemNotFound";
-            case E_ITEM_NO_PLAYER: 
-                return "yellowheadNotFound";
-            case E_ITEM_ADDED: 
-                return "itemAdded"; 
-            case E_ITEM_ALREADY_EXISTS: 
-                return "itemAlreadyExists"; 
-            case E_ITEM_FAILED_LOAD: 
-                return "itemLoadFail"; 
-            case E_ITEM_ALREADY_IN_PROGRESS:
-                return "itemRequestPending"; 
-            case E_ITEM_NO_DATA_SOURCE:
-                return "noDataSource"; 
-            default: 
-                return "invalidState"; 
-        }
-    }
-
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
-        if (method == E_HTTP_GET) 
-        {
-            stream << "{\"result\":\"invalidMethod\"}";
-            return;
-        }
-
-        char json[256];
-        EItemRequestResult result;
-
-        typename ParameterMap::iterator it = parameters.find("path");
-        if (it != parameters.end())
-        {
-            result = gItemRequest.Request(it->second.c_str());
-        }
-        else
-        {
-            result = gItemRequest.Request((const void*)body.Begin, body.Length());
-        }
-
-        const char* code = GetItemResultCode(result);
-        FormatString<256>(json, "{\"result\":\"%s\"}", code);
-        stream << json;
-    }
-};
-
-class CCinemachineEndpoint : public CRoute {
-public:
-    inline CCinemachineEndpoint(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "api/cinemachine"; }
-    const char* GetContentType() { return "application/json"; }
-    bool IsPage() { return false; }
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
-        
-        if (method == E_HTTP_GET)
-        {
-            stream << "{";
-                stream << "\"pos\":" << GetCameraPosition() << ",";
-                stream << "\"foc\":" << GetCameraFocus();
-            stream << "}";
-
-            return;
-        }
-    }
-};
-
-class CAurienPage : public CRoute {
-public:
-    inline CAurienPage(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "aurien"; }
-    const char* GetTitle() { return "Old Man Requests"; }
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
-        if (method == E_HTTP_POST)
-        {
-            typename ParameterMap::iterator it = parameters.find("action");
-            if (it != parameters.end())
-            {
-                const char* action = it->second.c_str();
-                if (StringICompare(action, "record") == 0)
-                {
-                    if (gRecordingFileHandle != -1)
-                        FileClose(&gRecordingFileHandle);
-                    gDoRecording = !gDoRecording;
-                }
-            }
-
-            return;
-        }
-
-        DoHeader(stream);
-        DoFileContents(stream, "gamedata/alear/web/aurien.html");
-        DoFooter(stream);
-
-        return;
-    }
-};
-
-class CInventoryPage : public CRoute {
-public:
-    inline CInventoryPage(CWebternate* owner) : CRoute(owner) {}
-public:
-    const char* GetHref() { return "inventory"; }
-    const char* GetTitle() { return "Inventory"; }
-    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
-    {
-        // dumb hack, the range will always be set if we're in a POST request
-        EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
-        if (method == E_HTTP_POST) return;
-
-        DoHeader(stream);
-        DoFileContents(stream, "gamedata/alear/web/inventory.html");
-        DoFooter(stream);
-    }
-};
-
-void OnWebternateSetup(CWebternate* webternate)
-{
-    webternate->AddRoute(new CInventoryPage(webternate));
-    webternate->AddRoute(new CAurienPage(webternate));
-    webternate->AddRoute(new CLookupResourceEndpoint(webternate));
-    webternate->AddRoute(new CCinemachineEndpoint(webternate));
-    webternate->AddRoute(new CInventoryEndpoint(webternate));
-    webternate->AddRoute(new CFaviconEndpoint(webternate));
-}
-
 CP<CResource> TextureFromResource(CP<CResource>& res)
 {
     if (!res) return NULL;
@@ -1574,36 +1241,27 @@ CP<CResource> TextureFromResource(CP<CResource>& res)
     return NULL;
 }
 
-extern "C" uintptr_t _gsub_rlst_hook;
-extern "C" uintptr_t _popit_isitemselected_hook;
-extern "C" uintptr_t _popit_dopoppetsection_hook;
-extern "C" uintptr_t _global_onswapbuffers_hook;
-extern "C" uintptr_t _initextradata_cthing_hook;
-extern "C" uintptr_t _destroyextradata_cthing_hook;
-extern "C" uintptr_t _global_webternate_hook;
 
-extern "C" uintptr_t _create_boundary_artist_hook;
-extern "C" uintptr_t _create_boundary_primary_index_artist_hook;
+bool CustomIsStickerPlaceable(void* edit, CRaycastResults const& results)
+{
+    if (results.SwitchConnector) return false;
+    CThing* thing = results.HitThing;
+    if (thing == NULL) return false;
 
-extern "C" uintptr_t _create_first_boundary_artist_hook;
-
-extern "C" uintptr_t _apply_boundaries_sort_index_first;
-extern "C" uintptr_t _apply_boundaries_sort_index_loop;
-
-extern "C" uintptr_t _global_icon_size_hook;
-
-extern "C" uintptr_t _gooey_image_ctor_animated_hook;
-extern "C" uintptr_t _sdf_button_animated_hook;
-extern "C" uintptr_t _gooey_image_update_hook;
-
-extern "C" uintptr_t _fady_thing_hook;
-extern "C" uintptr_t _fixup_custom_pick_object_select_hook;
-
-extern "C" uintptr_t _gooey_frame_clip_hook;
-extern "C" uintptr_t _custom_item_grid_hook;
+    if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
+    return true;
+}
 
 void InitSharedHooks()
 {
+    // MH_Poke32(0x001c7b84, 0x4e800020);
+
+    // MH_Poke32(0x00211730, 0x60000000);
+    // MH_Poke32(0x00211700, 0x60000000);
+
+    // MH_InitHook((void*)0x001ddb60, (void*)&CustomPreRaycastPrepare);
+    // MH_InitHook((void*)0x0035d1a8, (void*)&CustomIsStickerPlaceable);
+
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
     MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);
     MH_InitHook((void*)0x0009c52c, (void*)&CustomDoGUIDSubstitution);
@@ -1644,10 +1302,22 @@ void InitSharedHooks()
     // Draw custom buttons for sound objects
     MH_PokeBranch(0x0038019c, &_custom_item_grid_hook);
 
+    // Allow fevs in audiophiles rlst
+    MH_PokeBranch(0x001a4a98, &_custom_event_projects_hook);
+
+    // woohoo weehee
+    MH_PokeBranch(0x0034df5c, &_popit_close_hook);
+
     // Hooks for animated texture buttons
     // MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));
     // MH_PokeBranch(0x003227d8, &_gooey_image_ctor_animated_hook);
     // MH_PokeBranch(0x00300268, &_sdf_button_animated_hook);
     // MH_PokeBranch(0x00322f94, &_gooey_image_update_hook);
     // MH_InitHook((void*)0x0043be2c, (void*)&TextureFromResource);
+
+    // float v = -63600.0f;
+    // MH_Poke32(0x008137c4, *((u32*)&v)); // SCREEN_MIN_Y
+    // MH_Poke32(0x0091e430, *((u32*)&v)); // min thing pos y
+
+    MH_PokeBranch(0xc2cf8, &_popit_alphabetical_hook);
 }

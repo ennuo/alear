@@ -1,4 +1,4 @@
-#include "rpcs3.h"
+#include "RPCS3.h"
 
 #include <sys/syscall.h>
 #include <sys/process.h>

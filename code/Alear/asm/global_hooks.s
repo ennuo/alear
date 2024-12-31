@@ -186,3 +186,15 @@ UseDefaultItemGridButton:
     bla CPoppetGooey_DoInventoryGridButton
 ExitItemGridHook:
     ba EXIT_ITEM_GRID_HOOK
+
+.global _custom_event_projects_hook
+_custom_event_projects_hook:
+    stw %r2, 0x2c(%r1)
+    lis %r2, _Z20LoadAllEventProjectsv@h      
+    ori %r2, %r2, _Z20LoadAllEventProjectsv@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z20LoadAllEventProjectsv
+    lwz %r2, 0x2c(%r1)
+
+    ba 0x001a4acc
+

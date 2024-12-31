@@ -1,7 +1,7 @@
-#include "customization/styles.h"
-#include "customization/slapstyles.h"
-#include "customization/popitstyles.h"
-#include "customization/emotes.h"
+#include "customization/Styles.h"
+#include "customization/SlapStyles.h"
+#include "customization/PoppetStyles.h"
+#include "customization/Emotes.h"
 
 #include <hook.h>
 #include <ppcasm.h>

@@ -1,7 +1,11 @@
 #ifndef ALEAR_UNITY_H
 #define ALEAR_UNITY_H
 
+#include <filepath.h>
 #include <network/NetworkUtilsNP.h>
+
+extern FileHandle gRecordingFileHandle;
+extern bool gDoRecording;
 
 class CInventoryView;
 class CInventoryItem;

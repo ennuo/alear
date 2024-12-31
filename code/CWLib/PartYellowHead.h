@@ -6,11 +6,13 @@
 #include "RenderYellowHead.h"
 #include "PlayerColours.h"
 #include "Part.h"
+#include "Input.h"
 
 class RSyncedProfile;
 class RLocalProfile;
 
 class CPoppet;
+
 class PYellowHead : public CPart {
 public:
     v4 GetActivePosition() const;
@@ -18,6 +20,7 @@ public:
     void CollectItem(CThing* egg_holding_item, bool new_item);
     const CP<RSyncedProfile>& GetSyncedProfile() const;
     const CP<RLocalProfile>& GetLocalProfile() const;
+    CInput* GetInput() const;
 private:
     char Pad[0x30];
 public:

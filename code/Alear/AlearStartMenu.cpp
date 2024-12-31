@@ -1,11 +1,11 @@
-#include "alearoptui.h"
-#include "alearsync.h"
-#include "alearshared.h"
-#include "alearconf.h"
-#include "serverswitcher.h"
-#include "customization/styles.h"
-#include "customization/slapstyles.h"
-#include "fwatch.h"
+#include "AlearStartMenu.h"
+#include "AlearSync.h"
+#include "AlearShared.h"
+#include "AlearConfig.h"
+#include "ServerSwitcher.h"
+#include "customization/Styles.h"
+#include "customization/SlapStyles.h"
+#include "FileWatcher.h"
 
 #include <printf.h>
 #include <hook.h>
@@ -537,6 +537,17 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
     manager->DoBreak();
     if (manager->DoInline(L"print loaded resources", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
         PrintLoadedResources();
+    manager->DoBreak();
+
+
+    bool* pod_level = ((bool*)gGame) + 0x161;
+
+    if (manager->DoInline(L"edit mode hack", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+        gGame->EditMode = !gGame->EditMode;
+
+    if (manager->DoInline(L"pod mode hack", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+        *pod_level = !*pod_level;
+    
 }
 
 void DoConfigSubmenu(CGooeyNodeManager* manager)

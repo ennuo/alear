@@ -53,8 +53,8 @@ typedef ReflectReturn (*ReflectFunctionPtr)(CGatherVariables&, void*);
 
 
 // TEMP SHIT UNTIL I FIGURE OUT THE REFLECTION NONSENSE
-#include "customization/slapstyles.h"
-#include "customization/emotes.h"
+#include "customization/SlapStyles.h"
+#include "customization/Emotes.h"
 #include <cell/DebugLog.h>
 
 // these ones are defined all over the place

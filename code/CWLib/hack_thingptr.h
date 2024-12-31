@@ -12,6 +12,11 @@ public:
     {
 
     }
+
+    inline CThingPtr(CThing* thing) : Thing(NULL), Next(NULL), Prev(NULL)
+    {
+        Set(thing);
+    }
     
     void Unset();
     void Set(CThing* thing);
@@ -34,6 +39,8 @@ public:
         Set(rhs);
         return *this;
     }
+
+    bool operator<(CThingPtr const& r) const;
 
     inline operator CThing*() const { return Thing; }
     inline CThing* operator->() const { return Thing; }

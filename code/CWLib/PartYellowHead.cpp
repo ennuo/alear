@@ -31,3 +31,9 @@ const CP<RLocalProfile>& PYellowHead::GetLocalProfile() const
 {
     return PYellowHead_GetLocalProfile(this);
 }
+
+MH_DefineFunc(PYellowHead_GetInput, 0x000277b0, TOC0, CInput*, const PYellowHead*);
+CInput* PYellowHead::GetInput() const
+{
+    return PYellowHead_GetInput(this);
+}

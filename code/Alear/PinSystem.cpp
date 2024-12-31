@@ -1,4 +1,4 @@
-#include "pins.h"
+#include "PinSystem.h"
 #include "resources/ResourcePins.h"
 
 #include <PlayerMetaData.h>

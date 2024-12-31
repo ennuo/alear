@@ -27,7 +27,8 @@ typedef enum EInventoryObjectSubType {
     E_SUBTYPE_POD_CONTROLLER=1,
     E_SUBTYPE_POD_MESH=2,
     E_SUBTYPE_ANIMATION_STYLE=16384,
-    E_SUBTYPE_EMOTE=32768
+    E_SUBTYPE_EMOTE=32768,
+    E_SUBTYPE_LEVEL=65536,
 } EInventoryObjectSubType;
 
 typedef enum EInventoryObjectType {
@@ -282,6 +283,11 @@ typedef enum EToolType {
 
     TOOL_POPIT_GRADIENT = 47,
     TOOL_MESH_CAPTURE,
+    TOOL_EXPLOSION,
+    TOOL_GENEALOGY,
+    TOOL_METADATA,
+    
+    TOOL_EYEDROPPER,
     
     
     NUM_TOOL_TYPES

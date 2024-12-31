@@ -42,3 +42,54 @@ _popit_dopoppetsection_hook:
 
     mtlr %r0
     blr
+
+.global _popit_init_extra_data_hook
+_popit_init_extra_data_hook:
+    mr %r3, %r31
+
+    lis %r2, _ZN7CPoppet19InitializeExtraDataEv@h      
+    ori %r2, %r2, _ZN7CPoppet19InitializeExtraDataEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN7CPoppet19InitializeExtraDataEv
+    ld %r2, 0x28(%r1)
+
+    ld %r0, 0x210(%r1)
+    ba 0x0034f268
+
+.global _popit_destroy_extra_data_hook
+_popit_destroy_extra_data_hook:
+    mr %r3, %r31
+
+    lis %r2, _ZN7CPoppet16DestroyExtraDataEv@h      
+    ori %r2, %r2, _ZN7CPoppet16DestroyExtraDataEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN7CPoppet16DestroyExtraDataEv
+    ld %r2, 0x28(%r1)
+
+    ba 0x0034b4f8
+
+.global _popit_close_hook
+_popit_close_hook:
+    mr %r3, %r30
+
+    lis %r2, _Z22OnResetPoppetModeStackP7CPoppet@h      
+    ori %r2, %r2, _Z22OnResetPoppetModeStackP7CPoppet@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z22OnResetPoppetModeStackP7CPoppet
+    ld %r2, 0x28(%r1)
+
+    ba 0x0034df60
+
+.global _popit_alphabetical_hook
+_popit_alphabetical_hook:
+    mr %r3, %r27
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z28SortBoundariesAlphabeticallyP14CInventoryView@h      
+    ori %r2, %r2, _Z28SortBoundariesAlphabeticallyP14CInventoryView@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z28SortBoundariesAlphabeticallyP14CInventoryView
+    ld %r2, 0x28(%r1)
+
+    ld %r0, 0xf0(%r1)
+    ba 0x000c2cfc

@@ -1,4 +1,4 @@
-#include "powerup.h"
+#include "Powerup.h"
 #include "hook.h"
 #include "ppcasm.h"
 

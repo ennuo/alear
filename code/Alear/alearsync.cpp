@@ -1,5 +1,5 @@
-#include "alearsync.h"
-#include "alearoptui.h"
+#include "AlearSync.h"
+#include "AlearStartMenu.h"
 
 #include <algorithm>
 #include <set>

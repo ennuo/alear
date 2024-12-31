@@ -2,7 +2,7 @@
 #include "resources/ResourcePins.h"
 #include "resources/ResourceOutfitList.h"
 #include "resources/ResourceAnimatedTexture.h"
-#include "customization/popitstyles.h"
+#include "customization/PoppetStyles.h"
 
 #include "AlearSR.h"
 

@@ -17,7 +17,7 @@ enum EInputMode {
     INPUT_SAVE_AS=2048,
     INPUT_PLANETS=2080,
     INPUT_DIRECT_CONTROL=4096,
-    INPUT_ALL=0x1eff
+    INPUT_ALL=0x3eff
 };
 
 #endif // INPUT_MODE_H

@@ -79,7 +79,7 @@ public:
     inline bool operator==(CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) == 0; }
     inline bool operator!=(CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) != 0; }
     
-    inline const char* c_str() { return Filepath; }
+    inline const char* c_str() const { return Filepath; }
 private:
     char Filepath[255];
     bool Invalid;
