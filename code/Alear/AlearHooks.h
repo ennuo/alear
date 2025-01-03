@@ -40,4 +40,6 @@ extern "C" uintptr_t _custom_tool_type_hook;
 extern "C" uintptr_t _custom_poppet_message_hook;
 extern "C" uintptr_t _custom_pick_object_action_hook;
 
+extern "C" uintptr_t _popit_draw_cursor_hook;
+
 #endif // ALEAR_HOOKS_H

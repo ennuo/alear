@@ -219,9 +219,12 @@ typedef enum EPoppetSubMode {
 
     // custom
     SUBMODE_EMOTES,
-
+    SUBMODE_EYEDROPPER,
+    
     SUBMODE_STICKER_CUTTER = 44,
     SUBMODE_UNPHYSICS = 48,
+
+
     
     NUM_SUBMODES
 

@@ -2,6 +2,7 @@
 #define RESOURCE_PLAN_H
 
 #include "Resource.h"
+#include "ResourceDescriptor.h"
 #include "ResourceGFXTexture.h"
 #include "InventoryItem.h"
 #include "vector.h"
@@ -20,6 +21,8 @@ public:
 
 class RPlan : public CResource {
 public:
+    void InitializeExtraData();
+public:
     static CThing* MakeClone(RPlan* plan, PWorld* world, NetworkPlayerID& default_creator, bool remap_uids);
 public:
     CThing* AssignedThing;
@@ -28,6 +31,8 @@ public:
     u8 CompressionFlags;
     ByteArray ThingData;
     CPlanDetails InventoryData;
+public:
+    CResourceDescriptor<RLevel> TemplateLevel;
 };
 
 #endif // RESOURCE_PLAN_H

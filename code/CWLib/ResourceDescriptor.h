@@ -14,6 +14,7 @@ class RTexture;
 class RMaterial;
 class RPins;
 class RGuidSubst;
+class RLevel;
 class RFileOfBytes;
 class ROutfitList;
 class RAnim;
@@ -177,6 +178,7 @@ template <> inline EResourceType GetResourceType<RFileOfBytes>() { return RTYPE_
 template <> inline EResourceType GetResourceType<ROutfitList>() { return RTYPE_OUTFIT_LIST; }
 template <> inline EResourceType GetResourceType<RAnim>() { return RTYPE_ANIM; }
 template <> inline EResourceType GetResourceType<RAnimatedTexture>() { return RTYPE_ANIMATED_TEXTURE; }
+template <> inline EResourceType GetResourceType<RLevel>() { return RTYPE_LEVEL; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

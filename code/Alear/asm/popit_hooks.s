@@ -93,3 +93,15 @@ _popit_alphabetical_hook:
 
     ld %r0, 0xf0(%r1)
     ba 0x000c2cfc
+
+.global _popit_draw_cursor_hook
+_popit_draw_cursor_hook:
+    mr %r3, %r30
+
+    lis %r2, _Z21FixupCursorSpriteRectP7CPoppet@h      
+    ori %r2, %r2, _Z21FixupCursorSpriteRectP7CPoppet@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z21FixupCursorSpriteRectP7CPoppet
+
+    ld %r2, 0x28(%r1)
+    ba 0x003428d8

@@ -167,25 +167,31 @@ _fady_thing_hook:
 
 .global _custom_item_grid_hook
 _custom_item_grid_hook:
-.set EXIT_ITEM_GRID_HOOK, 0x003801a0
-.set CPoppetGooey_DoInventoryGridButton, 0x0037f838
-    lwz %r0, 0x40(%r24)
-    rlwinm %r0, %r0, 0x0, 0x9, 0x9
-    cmpwi %cr7, %r0, 0
+    rldicl %r31, %r31, 0x0, 0x20
+    
+    lwz %r4, 0x68(%r31)
+    rlwinm %r4, %r4, 0x0, 0x9, 0x9
+    cmpwi %cr7, %r4, 0
+    
+    vsldoi %v2, %v31, %v31, 0x0
+    rldicl %r10, %r3, 0x0, 0x38
+    lbz %r9, 0x16(%r28)
+    mr %r3, %r26
+    mr %r4, %r22
+    mr %r5, %r31
+    
     beq %cr7, UseDefaultItemGridButton
-
-    stw %r2, 0x2c(%r1)
+    
+    std %r2, 0x28(%r1)
     lis %r2, _Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb@h      
     ori %r2, %r2, _Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb@l
     lwz %r2, 0x4(%r2)
     bl ._Z28DoInventorySoundObjectButtonP12CPoppetChildyP14CInventoryItemN10Vectormath3Aos7Vector4Ebb
-    lwz %r2, 0x2c(%r1)
+    ld %r2, 0x28(%r1)
 
-    ba EXIT_ITEM_GRID_HOOK
+    ba 0x003801a0
 UseDefaultItemGridButton:
-    bla CPoppetGooey_DoInventoryGridButton
-ExitItemGridHook:
-    ba EXIT_ITEM_GRID_HOOK
+    ba 0x0038019c
 
 .global _custom_event_projects_hook
 _custom_event_projects_hook:

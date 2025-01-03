@@ -101,7 +101,7 @@ u32 CGooeyNodeManager::DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text
 MH_DefineFunc(CGooeyNodeManager_DoFancyButtonNamed, 0x002ffd10, TOC0, u32, CGooeyNodeManager*, u64, wchar_t*, EGooeyTextStyle, EGooeyButtonStyle, EGooeyButtonState, u32, CSDFIconParams*);
 u32 CGooeyNodeManager::DoFancyButtonNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonStyle button_style, EGooeyButtonState button_state, u32 accepted_input, CSDFIconParams* icon)
 {
-    CGooeyNodeManager_DoFancyButtonNamed(this, uid, text, text_style, button_style, button_state, accepted_input, icon);
+    return CGooeyNodeManager_DoFancyButtonNamed(this, uid, text, text_style, button_style, button_state, accepted_input, icon);
 }
 
 u32 CGooeyNodeManager::DoButton(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input)

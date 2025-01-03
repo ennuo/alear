@@ -2,14 +2,172 @@
 #include "AlearShared.h"
 
 #include <cell/DebugLog.h>
+#include <refcount.h>
 
 #include <PoppetEnums.inl>
 #include <PartPhysicsWorld.h>
 #include <PartYellowHead.h>
 #include <ResourceGame.h>
+#include <ResourceGFXTexture.h>
+#include <ResourceSystem.h>
 #include <Poppet.h>
 
 #include <thing.h>
+#include <GFXApi.h>
+
+enum ECursorSprite {
+    CURSOR_ELECTRIC,
+    CURSOR_FIRE,
+    CURSOR_GAS,
+    CURSOR_PLASMA,
+    CURSOR_UNLETHAL,
+    CURSOR_MARQUEE_CORNER,
+    CURSOR_PHOTO,
+    CURSOR_GOODIES,
+    CURSOR_STANDARD_LBP2,
+    CURSOR_SLICE_N_DICE,
+    CURSOR_FLOOD_FILL,
+    CURSOR_STICKER_PICK,
+    CURSOR_UNPHYSICS,
+    CURSOR_GLUE,
+    CURSOR_STICKER_CUTTER,
+    _CURSOR_REMOVED_0,
+    CURSOR_STANDARD,
+    CURSOR_MARQUEE,
+    _CURSOR_REMOVED_1,
+    CURSOR_ERASER,
+    _CURSOR_REMOVED_2,
+    _CURSOR_REMOVED_3,
+    CURSOR_EYEDROPPER,
+    CURSOR_PAINTBRUSH
+};
+
+ECursorSprite GetCursorSprite(CPoppet* poppet)
+{
+    EPoppetMode mode = poppet->GetMode();
+    EPoppetSubMode submode = poppet->GetSubMode();
+
+    if (mode != MODE_CURSOR) return CURSOR_STANDARD;
+
+    switch (submode)
+    {
+        case SUBMODE_GRAB_PLAN:
+        case SUBMODE_GRAB_PHOTO:
+            return CURSOR_MARQUEE;
+
+        case SUBMODE_FLOOD_FILL:
+            return CURSOR_FLOOD_FILL;
+
+        case SUBMODE_UNPHYSICS:
+            return CURSOR_ERASER;
+
+        case SUBMODE_EYEDROPPER:
+            return CURSOR_EYEDROPPER;
+        
+        case SUBMODE_DANGER:
+        {
+            switch (poppet->DangerMode)
+            {
+                case LETHAL_FIRE: return CURSOR_FIRE;
+                case LETHAL_ELECTRIC: return CURSOR_ELECTRIC;
+
+                case LETHAL_POISON_GAS:
+                case LETHAL_POISON_GAS2: 
+                case LETHAL_POISON_GAS3:
+                case LETHAL_POISON_GAS4:
+                case LETHAL_POISON_GAS5:
+                case LETHAL_POISON_GAS6:
+                    return CURSOR_GAS;
+
+                case LETHAL_BULLET: return CURSOR_PLASMA;
+                default: return CURSOR_UNLETHAL;
+            }
+        }
+
+        default:
+            return CURSOR_STANDARD;
+    }
+
+}
+
+std::set<CPoppet*, std::less<CPoppet*>, STLBucketAlloc<CPoppet*> > gPoppetBloomHack;
+void FixupCursorSpriteRect(CPoppet* poppet)
+{
+    bool bloom = gPoppetBloomHack.find(poppet) != gPoppetBloomHack.end();
+    gPoppetBloomHack.insert(poppet);
+
+    const u32 num_columns = 4;
+    const u32 num_rows = 8;
+    
+    u32 icon_index = GetCursorSprite(poppet);
+    f32 x = (f32)(icon_index % num_columns);
+    f32 y = (f32)(icon_index / num_columns);
+
+    v4 uv(            
+        x / ((f32) num_columns),
+        y / ((f32) num_rows),
+        (x + 1.0f) / ((f32) num_columns),
+        (y + 1.0f) / ((f32) num_rows)
+    );
+
+    v4 tl = v4(uv.getX(), uv.getY(), 0.0f, 0.0f);
+    v4 tr = v4(uv.getZ(), uv.getY(), 0.0f, 0.0f);
+    v4 br = v4(uv.getZ(), uv.getW(), 0.0f, 0.0f);
+    v4 bl = v4(uv.getX(), uv.getW(), 0.0f, 0.0f);
+
+    CTGVertex* vtx = NGfx::tgVtxCur - 4;
+
+    *((v4*)vtx[0].tc0) = tl;
+    *((v4*)vtx[1].tc0) = tr;
+    *((v4*)vtx[2].tc0) = br;
+    *((v4*)vtx[3].tc0) = bl;
+
+
+    c32 color = poppet->PlayerThing->GetPYellowHead()->GetColour(PLAYER_COLOUR_PRIMARY);
+    
+    color = c32::White;
+    if (bloom && icon_index != CURSOR_STANDARD)
+    {
+        color = HalfBright(color);
+    }
+
+    color = ReplaceA(color, 136);
+
+    u32 bits = color.AsGPUCol();
+
+    vtx[0].col = bits;
+    vtx[1].col = bits;
+    vtx[2].col = bits;
+    vtx[3].col = bits;
+
+    const v4 LETHAL_CURSOR_OFFSET(0.0f, 22.5f, 0.0f, 0.0f);
+    const v4 FLOOD_FILL_CURSOR_OFFSET(12.9f, 18.5f, 0.0f, 0.0f);
+
+    if (icon_index == CURSOR_FLOOD_FILL)
+    {
+        vtx[0].pos += FLOOD_FILL_CURSOR_OFFSET;
+        vtx[1].pos += FLOOD_FILL_CURSOR_OFFSET;
+        vtx[2].pos += FLOOD_FILL_CURSOR_OFFSET;
+        vtx[3].pos += FLOOD_FILL_CURSOR_OFFSET;
+    }
+    else if (icon_index != CURSOR_STANDARD && icon_index != CURSOR_MARQUEE)
+    {
+        vtx[0].pos += LETHAL_CURSOR_OFFSET;
+        vtx[1].pos += LETHAL_CURSOR_OFFSET;
+        vtx[2].pos += LETHAL_CURSOR_OFFSET;
+        vtx[3].pos += LETHAL_CURSOR_OFFSET;
+    }
+}
+
+void CPoppet::EyedropperPick(CThing* thing)
+{
+
+}
+
+void CPoppet::EyedropperDrop(CThing* thing)
+{
+
+}
 
 bool IsThingFady(CThing* thing)
 {
@@ -95,6 +253,11 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             break;
         }
     }
+}
+
+void LoadCursorSprites()
+{
+
 }
 
 void AttachCustomPoppetMessages()

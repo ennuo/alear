@@ -197,39 +197,36 @@ void OnUpdateLevel()
         if (input == NULL) continue;
 
         CThing* player = yellowhead->GetThing();
-        if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
-        {
-            ExplosionInfo info;
-            GetExplosionInfo(player, info);
-            info.Center = info.Center + v2(0.0f, -50.0f, 0.0f, 0.0f);
-            info.IgnoreYellowHead = true;
+        // if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
+        // {
+        //     ExplosionInfo info;
+        //     GetExplosionInfo(player, info);
+        //     info.Center = info.Center + v2(0.0f, -50.0f, 0.0f, 0.0f);
+        //     info.IgnoreYellowHead = true;
 
-            info.OuterRadius = 250.0f;
-            info.InnerRadius = 250.0f;
-            info.MaxVel = 100.0f;
-            info.MaxForce = 1500.0f;
-            info.MaxAngVel = 1.0f;
+        //     info.OuterRadius = 250.0f;
+        //     info.InnerRadius = 250.0f;
+        //     info.MaxVel = 100.0f;
+        //     info.MaxForce = 1500.0f;
+        //     info.MaxAngVel = 1.0f;
 
-            ApplyRadialForce(info);
-        }
-
-
+        //     ApplyRadialForce(info);
+        // }
 
         CThing* hover = poppet->Edit.LastHoverThing;
 
-        if (poppet->GetMode() == MODE_CURSOR && poppet->GetSubMode() == SUBMODE_NONE)
-        {
+        // if (poppet->GetMode() == MODE_CURSOR && poppet->GetSubMode() == SUBMODE_NONE)
+        // {
+        //     if (hover != NULL)
+        //     {
+        //         PShape* shape = hover->GetPShape();
+        //         if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, L"HIDE"))
+        //             poppet->HiddenList.push_back(hover);
+        //     }
 
-            if (hover != NULL)
-            {
-                PShape* shape = hover->GetPShape();
-                if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, L"HIDE"))
-                    poppet->HiddenList.push_back(hover);
-            }
-
-            if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, L"SHOW"))
-                poppet->ClearHiddenList();
-        }
+        //     if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, L"SHOW"))
+        //         poppet->ClearHiddenList();
+        // }
 
         if (hover != NULL && 
             poppet->GetMode() == MODE_CURSOR && 
@@ -243,11 +240,11 @@ void OnUpdateLevel()
 
     UpdateItemRequest();
 
-    if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
-    {
-        PYellowHead* yellowhead = world->ListPYellowHead[0];
-        CThing* player_thing = yellowhead->GetThing();
-    }
+    // if ((gPadData->ButtonsDown & PAD_BUTTON_TRIANGLE) != 0)
+    // {
+    //     PYellowHead* yellowhead = world->ListPYellowHead[0];
+    //     CThing* player_thing = yellowhead->GetThing();
+    // }
 
 
 
@@ -256,6 +253,8 @@ void OnUpdateLevel()
 
 void OnRunPipelinePostProcessing()
 {
+    gPoppetBloomHack.clear();
+    
     #if __SM64__
     UpdateMarioDebugRender();
     #endif 
@@ -652,10 +651,10 @@ void InitSharedHooks()
     MH_PokeBranch(0x002f1d18, &_gooey_frame_clip_hook);
 
     // Draw custom buttons for sound objects
-    MH_PokeBranch(0x0038019c, &_custom_item_grid_hook);
+    MH_PokeBranch(0x00380180, &_custom_item_grid_hook);
 
     // Allow fevs in audiophiles rlst
-    MH_PokeBranch(0x001a4a98, &_custom_event_projects_hook);
+    // MH_PokeBranch(0x001a4a98, &_custom_event_projects_hook);
 
     // woohoo weehee
     MH_PokeBranch(0x0034df5c, &_popit_close_hook);
@@ -672,4 +671,15 @@ void InitSharedHooks()
     // MH_Poke32(0x0091e430, *((u32*)&v)); // min thing pos y
 
     MH_PokeBranch(0xc2cf8, &_popit_alphabetical_hook);
+
+    MH_PokeBranch(0x003428d4, &_popit_draw_cursor_hook);
+    // MH_Poke32(0x0034c850, 0x60000000); // disable draw for bloom
+    // MH_Poke32(0x0028ecb0, 0x42800008); // disable fat lines test
+
+    // increase size of popit cursor sprite
+    MH_Poke32(0x0092ac34, 0x420c0000);
+    MH_Poke32(0x0092ac38, 0xc20c0000);
+
 }
+
+// Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

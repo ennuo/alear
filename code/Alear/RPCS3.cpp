@@ -22,7 +22,7 @@ bool IsRPCS3()
     return g_IsRPCS3;
 }
 
-bool IsUsingLLVM()
+bool __attribute__ ((noinline)) IsUsingLLVM()
 {
     static bool checked = false;
     if (!checked)

@@ -48,6 +48,8 @@ bool AlearEpilogue()
             DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
         }
     }
+
+    LoadCursorSprites();
     
     return true;
 }

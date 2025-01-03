@@ -59,3 +59,5 @@ _ZN6CAudio22gFModEventInstanceListE: 0x009caa70
 _ZN13RLocalProfile5EMPTYE: 0x00946f18
 _ZN6CAudio13gFMODFileSizeE: 0x009cc880
 _ZN6CAudio10gFMODFilesE: 0x009cc87c
+_ZN4NGfx8tgVtxCurE: 0x009cdf90
+_ZN4NGfx13gTgUseNormalsE: 0x009cdfb0

@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_C_STANDARD 99)
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin> CACHE INTERNAL "")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
@@ -64,7 +64,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     $<$<COMPILE_LANGUAGE:C,CXX>:
         #-Wall
         #-Wextra
-        -Os
+        -O3
         -fno-exceptions
         -fno-strict-aliasing
         -ffunction-sections

@@ -36,8 +36,12 @@ bool IsItemSelected(RLocalProfile* profile, CInventoryItem* item);
 void AttachCustomPoppetMessages();
 void AttachCustomToolTypes();
 void AttachCustomSortModes();
+void LoadCursorSprites();
 
 #define E_GSUB_RLST 3536200819u
 #define E_TRANSLATIONS_RLST 4014013721u
+
+class CPoppet;
+extern std::set<CPoppet*, std::less<CPoppet*>, STLBucketAlloc<CPoppet*> > gPoppetBloomHack;
 
 #endif // ALEAR_UNITY_H

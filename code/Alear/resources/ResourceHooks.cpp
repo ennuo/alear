@@ -13,6 +13,7 @@
 #include <ResourceDescriptor.h>
 #include <ResourceSyncedProfile.h>
 #include <ResourceLocalProfile.h>
+#include <ResourceGfxMaterial.h>
 #include <hook.h>
 #include <ppcasm.h>
 
@@ -36,12 +37,31 @@ extern "C" uintptr_t _initextradata_syncedprofile;
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
 #define ADD_ARRAY_ELEMENT(name, index) ret = Add(r, d.name[index], #name "_" #index); if (ret != REFLECT_OK) return ret;
 
+
+void RPlan::InitializeExtraData()
+{
+    new (&TemplateLevel) CResourceDescriptor<RLevel>();
+}
+
+void RGfxMaterial::InitializeExtraData()
+{
+    new (&ParameterAnimations) CVector<CMaterialParameterAnimation>();
+    new (&BoxAttributes) CVector<CMaterialBoxAttributes>();
+    AlphaMode = 0;
+}
+
+void RGfxMaterial::DestroyExtraData()
+{
+    ParameterAnimations.~CVector();
+}
+
 void RLocalProfile::InitializeExtraData()
 {
     new (&HiddenCategories) CVector<u32>();
     for (int i = 0; i < MAX_USER_EMOTES; ++i)
         new (&Emotes[i]) CResourceDescriptor<RPlan>();
     new (&SelectedAnimationStyle) CResourceDescriptor<RPlan>(CGUID(2507392567u));
+    new (&LevelTemplates) CVector<CInventoryTemplateLevel>();
 }
 
 void RSyncedProfile::InitializeExtraData()
@@ -67,6 +87,66 @@ ReflectReturn OnSerializeExtraData(R& r, RSyncedProfile& d)
     if (r.GetCustomVersion() >= ALEAR_ANIMATION_STYLES)
     {
         ADD(AnimationStyle);
+    }
+
+    return ret;
+}
+
+template <typename R>
+ReflectReturn OnSerializeExtraData(R& r, RGfxMaterial& d)
+{
+    // We shouldn't ever be saving graphics materials from in-game anyway.
+    if (!r.GetLoading()) return REFLECT_NOT_IMPLEMENTED;
+    d.InitializeExtraData();
+
+    if (r.GetCustomVersion() < ALEAR_PARAMETER_ANIMATIONS) return REFLECT_OK;
+
+    ReflectReturn ret;
+
+    if ((ret = Reflect(r, d.AlphaMode)) != REFLECT_OK) return ret;
+
+    u32 count;
+    if ((ret = Reflect(r, count)) != REFLECT_OK) return ret;
+    if (!r.RequestToAllocate(count * sizeof(CMaterialParameterAnimation))) return REFLECT_EXCESSIVE_ALLOCATIONS;
+
+    DebugLog("serializing %d parameter animations\n", count);
+
+    d.ParameterAnimations.try_resize(count);
+    for (int i = 0; i < count; ++i)
+    {
+        CMaterialParameterAnimation& anim = d.ParameterAnimations[i];
+
+        if ((ret = Reflect(r, anim.BaseValue)) != REFLECT_OK) return ret;
+
+        u32 num_keys;
+        if ((ret = Reflect(r, num_keys)) != REFLECT_OK) return ret;
+        if (!r.RequestToAllocate(num_keys * sizeof(float))) return REFLECT_EXCESSIVE_ALLOCATIONS;
+
+        anim.Keys.try_resize(num_keys);
+        if ((ret = r.ReadWrite((void*)anim.Keys.begin(), num_keys * sizeof(float))) != REFLECT_OK) return ret;
+
+
+        // because of some dumb nonsense these get prefixed with array lengths,
+        // despite being fixed size, should always be 3 though.
+        u32 name_len;
+        if ((ret = Reflect(r, name_len)) != REFLECT_OK) return ret;
+        if (name_len != 3) return REFLECT_INVALID;
+        if ((ret = r.ReadWrite((void*)anim.Name, 3)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, anim.ComponentsAnimated)) != REFLECT_OK) return ret;
+    }
+
+    if ((ret = Reflect(r, count)) != REFLECT_OK) return ret;
+    if (!r.RequestToAllocate(count * sizeof(CMaterialBoxAttributes))) return REFLECT_EXCESSIVE_ALLOCATIONS;
+    d.BoxAttributes.try_reserve(count);
+    for (int i = 0; i < count; ++i)
+    {
+        CMaterialBoxAttributes& attr = d.BoxAttributes[i];
+
+        if ((ret = Reflect(r, attr.SubType)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, attr.AnimIndex)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, attr.SecondaryAnimIndex)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, attr.ExtraParams[0])) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, attr.ExtraParams[1])) != REFLECT_OK) return ret;
     }
 
     return ret;
@@ -101,33 +181,72 @@ ReflectReturn OnSerializeExtraData(R& r, RLocalProfile& d)
 
 #undef ADD
 
+bool ResourceHasCustomData(EResourceType type)
+{
+    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL;
+}
+
 template <typename R>
 ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
 {
-    // Realistically this is always no compression flags, but just in case
-    u8 backup_compression_flags = r.GetCompressionFlags();
+    if (!ResourceHasCustomData(resource->GetResourceType())) return REFLECT_OK;
 
+    if (r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES) r.Align(0x10);
+    
+    ReflectReturn ret = REFLECT_OK;
     if (r.GetCustomVersion() >= ALEAR_TEST_MARKER)
     {
         u32 test_marker = 0x414c5352;
-        Reflect(r, test_marker);
+        if ((ret = Reflect(r, test_marker)) != REFLECT_OK) return ret;
+
+        if (test_marker != 0x414c5352) return REFLECT_NOT_IMPLEMENTED;
     }
 
-    if (r.GetCustomVersion() >= ALEAR_COMPRESSION_FLAGS)
+    bool is_compressed = r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES;
+    if (r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES)
+    {
+        u16 version = r.GetCustomVersion();
+        u8 compression_flags = COMPRESS_INTS | COMPRESS_MATRICES;
+        u32 branch_id = 0;
+        u32 branch_version = 0;
+
+        if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, is_compressed)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, branch_id)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, branch_version)) != REFLECT_OK) return ret;
+
+        if (is_compressed)
+        {
+            if (r.GetLoading()) ret = r.LoadCompressionData(NULL);
+            else if (r.GetSaving()) ret = r.StartCompressing();
+
+            if (ret != REFLECT_OK) return ret;
+        }
+
+        r.SetCompressionFlags(compression_flags);
+    }
+    else if (r.GetCustomVersion() >= ALEAR_COMPRESSION_FLAGS)
     {
         u32 compression_flags = COMPRESS_INTS | COMPRESS_MATRICES;
-        Reflect(r, compression_flags);
+        if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
         r.SetCompressionFlags((u8)compression_flags);
     }
 
     switch (resource->GetResourceType())
     {
-        case RTYPE_SYNCED_PROFILE: return OnSerializeExtraData(r, *((RSyncedProfile*)resource));
-        case RTYPE_LOCAL_PROFILE: return OnSerializeExtraData(r, *((RLocalProfile*)resource));
+        case RTYPE_SYNCED_PROFILE: ret = OnSerializeExtraData(r, *((RSyncedProfile*)resource)); break;
+        case RTYPE_LOCAL_PROFILE: ret = OnSerializeExtraData(r, *((RLocalProfile*)resource)); break;
+        case RTYPE_GFXMATERIAL: ret = OnSerializeExtraData(r, *((RGfxMaterial*)resource)); break;
+    }
+    
+    if (is_compressed)
+    {
+        if (r.GetLoading()) r.CleanupDecompression();
+        else if (r.GetSaving()) r.FinishCompressing();
     }
 
-    r.SetCompressionFlags(backup_compression_flags);
-    return REFLECT_OK;
+    return ret;
 }
 
 template ReflectReturn OnSerializeExtraData<CReflectionLoadVector>(CReflectionLoadVector& r, RSyncedProfile& d);
@@ -297,6 +416,7 @@ void AttachCustomRevisionHooks()
     // Increase the size of certain resources to account for modifications
     MH_Poke32(0x00089260, LI(4, sizeof(RSyncedProfile)));
     MH_Poke32(0x00089590, LI(4, sizeof(RLocalProfile)));
+    MH_Poke32(0x00088e44, LI(4, sizeof(RGfxMaterial)));
 
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);

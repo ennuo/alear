@@ -63,6 +63,8 @@ public:
     CReflectionLoadVector(CBaseVector<char>* vec);
 public:
     ReflectReturn ReadWrite(void* d, int size);
+    ReflectReturn LoadCompressionData(u32* totalsize);
+    ReflectReturn CleanupDecompression();
 public:
     inline u16 GetCustomVersion() { return AlearResourceRevision; }
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
@@ -72,10 +74,19 @@ public:
     inline bool GetLoading() { return true; }
     inline bool IsGatherVariables() { return false; }
     inline u32 GetRevision() { return Revision.Revision; }
+    inline u32 GetVecLeft() { return Vec->size() - LoadPos; }
     inline bool RequestToAllocate(u64 size)
     {
         Allocated += size;
         return Allocated < 9999999; // ~10mbs
+    }
+
+    inline ReflectReturn StartCompressing() { return REFLECT_NOT_IMPLEMENTED; }
+    inline ReflectReturn FinishCompressing() { return REFLECT_NOT_IMPLEMENTED; }
+
+    inline void Align(int a)
+    {
+        LoadPos = (a + LoadPos) -1 & -a;
     }
 
 protected:
@@ -98,6 +109,8 @@ private:
 class CReflectionSaveVector : public CReflectionBase, public CReflectionVisitSave { // file.h: 259
 public:
     ReflectReturn ReadWrite(void* d, int size);
+    ReflectReturn StartCompressing();
+    ReflectReturn FinishCompressing();
 public:
     inline u16 GetCustomVersion() { return ALEAR_LATEST_PLUS_ONE - 1; }
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
@@ -108,6 +121,17 @@ public:
     inline bool IsGatherVariables() { return false; }
     inline u32 GetRevision() { return 0x272; }
     inline bool RequestToAllocate(u64 size) { return true; }
+    inline ReflectReturn CleanupDecompression() { return REFLECT_NOT_IMPLEMENTED; }
+    inline ReflectReturn LoadCompressionData(u32* totalsize) { return REFLECT_NOT_IMPLEMENTED; }
+    inline u32 GetVecLeft() { return 0; }
+    
+    inline void Align(int a)
+    {
+        u32 offset = Vec->size();
+        Vec->try_resize((a + Vec->size()) -1 & -a);
+        memset(Vec->begin() + offset, 0, Vec->size() - offset);
+    }
+
 private:
     ByteArray* Vec;
     void* CurJob;

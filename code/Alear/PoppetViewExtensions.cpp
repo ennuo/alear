@@ -83,7 +83,7 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_SHAPE_GAS:
         case TOOL_SHAPE_UNLETHAL:
         case TOOL_SHAPE_PLASMA:
-        case TOOL_UNPHYSICS:
+        // case TOOL_UNPHYSICS:
         case TOOL_SHAPE_VERTEX_EDIT:
         {
             return (type & E_TYPE_TOOL) != 0 && edit;
@@ -111,7 +111,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
 
         if (tool != TOOL_NOT_A_TOOL)
         {
-            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS) return false;
+            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS || tool = TOOL_UNPHYSICS) return false;
             return true;
         }
 
@@ -119,7 +119,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     }
 
     CGUID item_guid = item->Plan.GetGUID();
-    if (IsEmoteItem(item_guid)) return false;
+    // if (IsEmoteItem(item_guid)) return false;
 
     u32 item_type = item->Details.Type;
     u32 view_type = view->Descriptor.Type;
@@ -240,7 +240,7 @@ void DoPreferenceSort(CInventoryView* view)
 
 void SortBoundariesAlphabetically(CInventoryView* view)
 {
-    if (view->Descriptor.Type != E_TYPE_MUSIC) return;
+    if (view->Descriptor.Type != E_TYPE_MUSIC && view->Descriptor.Type != E_TYPE_SOUND) return;
 
     for (int i = 0; i < view->SortTermBoundaries.size(); ++i)
     {

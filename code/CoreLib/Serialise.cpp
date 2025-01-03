@@ -15,11 +15,40 @@ Sem(), SPUDecompressAvailable()
 
 
 MH_DefineFunc(CReflectionLoadVector_ReadWrite, 0x0058cf14, TOC1, ReflectReturn, CReflectionLoadVector*, void*, int);
+MH_DefineFunc(CReflectionLoadVector_CleanupDecompression, 0x0058d3d4, TOC1, ReflectReturn, CReflectionLoadVector*);
+MH_DefineFunc(CReflectionLoadVector_LoadCompressionData, 0x0058d588, TOC1, ReflectReturn, CReflectionLoadVector*, u32*);
+
+
+MH_DefineFunc(CReflectionSaveVector_StartCompressing, 0x0058bf7c, TOC1, ReflectReturn, CReflectionSaveVector*);
+MH_DefineFunc(CReflectionSaveVector_FinishCompressing, 0x0058c86c, TOC1, ReflectReturn, CReflectionSaveVector*);
+
+
 MH_DefineFunc(CReflectionSaveVector_ReadWrite, 0x0058c044, TOC1, ReflectReturn, CReflectionSaveVector*, void*, int);
+
+
+ReflectReturn CReflectionSaveVector::StartCompressing()
+{
+    return CReflectionSaveVector_StartCompressing(this);
+}
+
+ReflectReturn CReflectionSaveVector::FinishCompressing()
+{
+    return CReflectionSaveVector_FinishCompressing(this);
+}
 
 ReflectReturn CReflectionSaveVector::ReadWrite(void* d, int size)
 {
     return CReflectionSaveVector_ReadWrite(this, d, size);
+}
+
+ReflectReturn CReflectionLoadVector::CleanupDecompression()
+{
+    return CReflectionLoadVector_CleanupDecompression(this);
+}
+
+ReflectReturn CReflectionLoadVector::LoadCompressionData(u32* totalsize)
+{
+    return CReflectionLoadVector_LoadCompressionData(this, totalsize);
 }
 
 ReflectReturn CReflectionLoadVector::ReadWrite(void* d, int size) // file.h: 263

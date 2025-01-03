@@ -24,6 +24,9 @@ class RLocalProfile;
 class CPoppet : public CReflectionVisitable {
 friend void CustomRaycastAgainstSwitches(CPoppet* poppet);
 public:
+    void EyedropperPick(CThing* thing);
+    void EyedropperDrop(CThing* thing);
+
     void ClearHiddenList();
     void InitializeExtraData();
     void DestroyExtraData();
@@ -57,13 +60,23 @@ public:
     CPoppetEditState Edit; // 0x580
     CPoppetInventory Inventory; // 0x9b0
 private:
-    char Pad2[0xe20];
+    char Pad2[0xda4];
+public:
+    u32 DangerMode;
+    CP<RGfxMaterial> FloodFillGfxMaterial;
+    CP<RBevel> FloodFillBevel;
+    CP<RMaterial> FloodFillPhysicsMaterial;
+    u32 FloodFillSoundEnumOverride;
+    float FloodFillBevelSize;
+    CResourceDescriptor<RPlan> FloodFillMaterialPlan;
+private:
+    char Pad3[0x3c];
 public:
     CRaycastResults Raycast;
     CRaycastResults RaycastForNetwork;
     CThingPtr PlayerThing; // 0x1900
 private:
-    char Pad3[0x1f4];
+    char Pad4[0x1f4];
 public:
     CVector<CThingPtr> HiddenList;
 };

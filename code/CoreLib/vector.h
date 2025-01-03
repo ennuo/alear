@@ -132,6 +132,24 @@ public:
 		this->try_reserve(capacity);
 	}
 
+	inline CVector(CVector<T, Allocator> const& vec) : CBaseVectorPolicy<T, Allocator>()
+	{
+		*this = vec;
+	}
+
+	inline CVector<T, Allocator>& operator=(CVector<T, Allocator> const& vec)
+	{
+		if (vec.Data != NULL)
+		{
+			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
+			memcpy(this->Data, vec.Data, vec.Size * sizeof(T));
+			this->Size = vec.Size;
+			this->MaxSize = vec.Size;
+		}
+
+		return *this;
+	}
+
 	inline ~CVector() 
 	{
 		if (this->Size != 0)

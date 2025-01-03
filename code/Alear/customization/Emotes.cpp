@@ -149,6 +149,7 @@ bool LoadEmotes()
 {
     CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_EMOTES_KEY, 0, STREAM_PRIORITY_DEFAULT);
     file->BlockUntilLoaded();
+    if (file->LoadState == LOAD_STATE_ERROR_NO_DATA_SOURCE || file->LoadState == LOAD_STATE_ERROR_FAILED_LOAD_BLURAY || file->LoadState == LOAD_STATE_ERROR_FILENOTFOUND) return true;
     if (!file->IsLoaded()) return false;
 
     CGatherVariables variables;
