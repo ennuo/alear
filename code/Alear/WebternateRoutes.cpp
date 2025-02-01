@@ -326,9 +326,8 @@ public:
                 const char* action = it->second.c_str();
                 if (StringICompare(action, "record") == 0)
                 {
-                    if (gRecordingFileHandle != -1)
-                        FileClose(&gRecordingFileHandle);
-                    gDoRecording = !gDoRecording;
+                    gBloomRecording.ToggleRecording("output/poppet_bloom.avi");
+                    gPoppetRecording.ToggleRecording("output/poppet.avi");
                 }
             }
 

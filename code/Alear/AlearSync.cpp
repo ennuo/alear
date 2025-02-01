@@ -73,7 +73,8 @@ enum EPacketType {
     MLD_HANDSHAKE,
     MLD_ACK,
     MLD_NETCODE,
-    MLD_GAMEDATA
+    MLD_GAMEDATA,
+    MLD_RELIABLE
 };
 
 enum EGamedataFlags {
@@ -94,6 +95,55 @@ enum ENetcodeMessage {
     MLD_REQUEST_RESOURCES,
     MLD_DELETE_RESOURCES,
     MLD_PUBLISH_HISTORY,
+};
+
+// Standard matchmaking procedures
+// List all matches currently in progress, if none exist, just create one
+// Broadcast session info that player has joined to everybody already in the session (our status is JOINING)
+// Upload client owned sync objects, in this case just RSyncedProfile resources (allow crossgame?)
+// Send all player data in the session to the person joining
+// Send all sync object data in the session to the person joining
+    // The RLevel resource is a sync object owned by the "host" that gets updated ONLY when a player joins
+    // so they have a sync point to connect to.
+// Once we've received all data and uploaded our own data, set our status to PLAYING
+
+// This may make it difficult to handle any cheating, although realistically not an issue for small playerbase,
+// but in asynchronous mode, input is synced, but player's will have authority over their own position.
+// Lerped position + predictive fork for transform based on client input.
+
+
+enum EGameRoomState {
+    GAMEROOM_NONE,
+    GAMEROOM_WAITING_MIN_PLAYERS,
+    GAMEROOM_READY,
+    GAMEROOM_DOWNLOADING,
+    GAMEROOM_COUNTING_DOWN,
+    GAMEROOM_COUNTING_DOWN_PAUSED,
+    GAMEROOM_GAME_IN_PROGRESS
+};
+
+enum EGamedataMessage {
+    MLD_SYNC_OBJECT_CREATE,
+    MLD_SYNC_OBJECT_REMOVE,
+    MLD_SYNC_OBJECT_UPDATE,
+    
+    MLD_PLAYER_INFO,
+    MLD_PLAYER_STATE,
+    MLD_PLAYER_JOIN,
+    MLD_PLAYER_LEAVE,
+
+    MLD_WORLD_OBJECT_CREATE,
+    MLD_WORLD_OBJECT_STATE,
+
+    MLD_SEED,
+
+    MLD_ROOM_SETTINGS,
+    MLD_CHANGE_HOST,
+    MLD_KICK_PLAYER,
+
+    MLD_GAMEPLAY,
+    MLD_TEXT_CHAT_MESSAGE,
+    MLD_VOIP_PACKET,
 };
 
 enum EConnectFlags {
@@ -118,6 +168,12 @@ struct NetPacket {
             u32 Flags;
             u32 Permissions;
         } Handshake;
+        struct {
+            u32 Message;
+            u32 SequenceNumber;
+            u16 GroupNumber;
+            u16 GroupSize;
+        } Reliable;
         struct {
             u32 GroupIndex;
             u32 GroupSize;

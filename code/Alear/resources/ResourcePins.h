@@ -32,6 +32,43 @@ public:
     CVector<CPin> Pins;
 };
 
+class CPinAward {
+public:
+    inline CPinAward() : PinID(), AwardCount()
+    {}
+public:
+    u32 PinID;
+    u32 AwardCount;
+};
+
+class CPinProgress {
+public:
+    inline CPinProgress() : ProgressType(), ProgressCount()
+    {}
+public:
+    u32 ProgressType;
+    u32 ProgressCount;
+};
+
+class CPinsAwarded {
+public:
+    inline CPinsAwarded() : 
+    PinAwards(), PinProgress(), 
+    RecentlyAwardedPinIDs(), ProfileDisplayPinIDs(), PinsFlags()
+    {
+
+    }
+public:
+    CVector<CPinAward> PinAwards;
+    CVector<CPinProgress> PinProgress;
+
+    // these should technically be raw vectors, don't care too much though!
+    CVector<unsigned int> RecentlyAwardedPinIDs;
+    CVector<unsigned int> ProfileDisplayPinIDs;
+
+    u8 PinsFlags;
+};
+
 extern StaticCP<RPins> gPins;
 
 #include "Serialise.h"
@@ -40,5 +77,11 @@ template <typename R>
 ReflectReturn Reflect(R& r, CPin& d);
 template <typename R>
 ReflectReturn Reflect(R& r, RPins& d);
+template <typename R>
+ReflectReturn Reflect(R& r, CPinsAwarded& d);
+template <typename R>
+ReflectReturn Reflect(R& r, CPinAward& d);
+template <typename R>
+ReflectReturn Reflect(R& r, CPinProgress& d);
 
 #endif // RESOURCE_PINS_H

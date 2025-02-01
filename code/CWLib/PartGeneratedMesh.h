@@ -12,6 +12,12 @@
 
 class PGeneratedMesh : public CPart {
 public:
+    void InitializeExtraData();
+    inline bool HasCustomData()
+    {
+        return TextureAnimationSpeed != 1.0f || TextureAnimationSpeedOff != 0.0f;
+    }
+public:
     u32 BaseMeshVertCount;
     v4 BoundingBoxMin;
     v4 BoundingBoxMax;
@@ -28,6 +34,11 @@ public:
     bool AsyncJobWaiting;
     bool Visible;
     bool WasJustVisible;
+private:
+    char Pad[89];
+public:
+    float TextureAnimationSpeed;
+    float TextureAnimationSpeedOff;
 };
 
 #endif // PART_GENERATED_MESH_H

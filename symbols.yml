@@ -41,6 +41,7 @@ gBackBuffer: 0x009daf08
 gCookieSec: 0x009bfe90
 gNPTicket: 0x009bfeb8
 gGameShell: 0x009454bc
+gMainGameUpdateStage: 0x009402e8
 gFilteredBucketForRaycast: 0x009d0b80
 gRenderBucket: 0x009d0a00
 _ZN4NGfx5countE: 0x009edd00
@@ -61,3 +62,5 @@ _ZN6CAudio13gFMODFileSizeE: 0x009cc880
 _ZN6CAudio10gFMODFilesE: 0x009cc87c
 _ZN4NGfx8tgVtxCurE: 0x009cdf90
 _ZN4NGfx13gTgUseNormalsE: 0x009cdfb0
+_ZN13CRenderTarget13gLinear_ClampE: 0x009cf690
+gPipelineBindings: 0x009cfec8

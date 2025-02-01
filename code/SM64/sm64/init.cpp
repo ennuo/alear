@@ -7,6 +7,7 @@
 #include <padinput.h>
 #include <cell/DebugLog.h>
 #include <CritSec.h>
+#include <MMAudio.h>
 
 #include <ResourceGame.h>
 #include <ResourceLevel.h>

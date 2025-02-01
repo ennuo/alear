@@ -36,7 +36,7 @@ bool LoadOutfits()
     return true;
 }
 
-bool DoOutfitCheck(CP<RLocalProfile>& profile, COutfit& outfit)
+bool DoOutfitCheck(CP<RLocalProfile> const& profile, COutfit& outfit)
 {
     for (int i = 0; i < outfit.Components.size(); ++i)
     {
@@ -51,6 +51,30 @@ bool DoOutfitCheck(CP<RLocalProfile>& profile, COutfit& outfit)
     return profile->AddInventoryItem(plan, 0, 0, false, false, NULL);
 }
 
+void DoOutfitCheck(CThing* player, CGUID guid)
+{
+    if (player == NULL || !guid) return;
+    PYellowHead* yellowhead = player->GetPYellowHead();
+    if (yellowhead == NULL) return;
+
+    const CP<RLocalProfile>& profile = yellowhead->GetLocalProfile();
+
+    for (int i = 0; i < gOutfitLists.size(); ++i)
+    {
+        CP<ROutfitList>& outfit_list = gOutfitLists[i];
+        if (!outfit_list || !outfit_list->IsLoaded()) continue;
+        COutfit* outfit = outfit_list->GetOutfitFromComponent(guid);
+        if (outfit == NULL) continue;
+        if (DoOutfitCheck(profile, *outfit))
+        {
+            CP<RPlan> outfit_plan = LoadResource<RPlan>(outfit->Outfit, STREAM_PRIORITY_DEFAULT, 0, false);
+            outfit_plan->BlockUntilLoaded();
+
+            SpawnCollectBubble(player, outfit_plan);
+        }
+    }
+}
+
 void OnItemCollected(CPlayer& player, CP<RPlan> const& plan)
 {
     CP<RLocalProfile>& profile = player.LocalProfile;
@@ -63,22 +87,8 @@ void OnItemCollected(CPlayer& player, CP<RPlan> const& plan)
     CGUID& guid = plan->GetGUID();
     if (!guid) return;
 
-    for (int i = 0; i < gOutfitLists.size(); ++i)
-    {
-        CP<ROutfitList>& outfit_list = gOutfitLists[i];
-        if (!outfit_list || !outfit_list->IsLoaded()) continue;
-        COutfit* outfit = outfit_list->GetOutfitFromComponent(guid);
-        if (outfit == NULL) continue;
-        if (DoOutfitCheck(profile, *outfit))
-        {
-            CThing* player_thing = gGame->GetYellowheadFromPlayerNumber(player.PlayerNumber);
-
-            CP<RPlan> outfit_plan = LoadResource<RPlan>(outfit->Outfit, STREAM_PRIORITY_DEFAULT, 0, false);
-            outfit_plan->BlockUntilLoaded();
-
-            SpawnCollectBubble(player_thing, outfit_plan);
-        }
-    }
+    CThing* player_thing = gGame->GetYellowheadFromPlayerNumber(player.PlayerNumber);
+    DoOutfitCheck(player_thing, guid);
 }
 
 void SpawnCollectBubble(CThing* player, CP<RPlan> const& plan)

@@ -16,50 +16,68 @@
 #include <GFXApi.h>
 
 enum ECursorSprite {
+    CURSOR_UNLETHAL,
     CURSOR_ELECTRIC,
     CURSOR_FIRE,
     CURSOR_GAS,
+    CURSOR_ICE,
     CURSOR_PLASMA,
-    CURSOR_UNLETHAL,
-    CURSOR_MARQUEE_CORNER,
-    CURSOR_PHOTO,
-    CURSOR_GOODIES,
-    CURSOR_STANDARD_LBP2,
-    CURSOR_SLICE_N_DICE,
-    CURSOR_FLOOD_FILL,
+    CURSOR_SPIKE,
+    CURSOR_DROWNED,
+    CURSOR_SMALL,
+    CURSOR_VERTEX_EDIT,
+    CURSOR_DOT_TO_DOT,
     CURSOR_STICKER_PICK,
-    CURSOR_UNPHYSICS,
+    CURSOR_FLOOD_FILL,
+    CURSOR_UV_EDIT,
     CURSOR_GLUE,
     CURSOR_STICKER_CUTTER,
-    _CURSOR_REMOVED_0,
+    CURSOR_UNPHYSICS,
+    CURSOR_EYEDROPPER,
+    CURSOR_PAINTBRUSH,
+    CURSOR_SPRAYCAN,
     CURSOR_STANDARD,
     CURSOR_MARQUEE,
-    _CURSOR_REMOVED_1,
-    CURSOR_ERASER,
-    _CURSOR_REMOVED_2,
-    _CURSOR_REMOVED_3,
-    CURSOR_EYEDROPPER,
-    CURSOR_PAINTBRUSH
+    CURSOR_PHOTO_MARQUEE,
+    CURSOR_CAPTURE_MARQUEE
 };
+
+bool IsLethalCursor(u32 sprite)
+{
+    return 
+        sprite == CURSOR_UNLETHAL ||
+        sprite == CURSOR_ELECTRIC || 
+        sprite == CURSOR_FIRE ||
+        sprite == CURSOR_GAS ||
+        sprite == CURSOR_ICE ||
+        sprite == CURSOR_PLASMA ||
+        sprite == CURSOR_SPIKE || 
+        sprite == CURSOR_DROWNED;
+}
 
 ECursorSprite GetCursorSprite(CPoppet* poppet)
 {
     EPoppetMode mode = poppet->GetMode();
     EPoppetSubMode submode = poppet->GetSubMode();
 
+    if (submode == SUBMODE_GAS_TWEAK) return CURSOR_GAS;
     if (mode != MODE_CURSOR) return CURSOR_STANDARD;
 
     switch (submode)
     {
-        case SUBMODE_GRAB_PLAN:
-        case SUBMODE_GRAB_PHOTO:
-            return CURSOR_MARQUEE;
+        case SUBMODE_GRAB_PLAN: return CURSOR_CAPTURE_MARQUEE;
+        case SUBMODE_GRAB_PHOTO: return CURSOR_PHOTO_MARQUEE;
+
+        case SUBMODE_EDIT_VERTS: return CURSOR_VERTEX_EDIT;
+
+        case SUBMODE_PICK_DECORATIONS: return CURSOR_STICKER_PICK;
+
 
         case SUBMODE_FLOOD_FILL:
             return CURSOR_FLOOD_FILL;
 
         case SUBMODE_UNPHYSICS:
-            return CURSOR_ERASER;
+            return CURSOR_UNPHYSICS;
 
         case SUBMODE_EYEDROPPER:
             return CURSOR_EYEDROPPER;
@@ -70,6 +88,8 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
             {
                 case LETHAL_FIRE: return CURSOR_FIRE;
                 case LETHAL_ELECTRIC: return CURSOR_ELECTRIC;
+                case LETHAL_ICE: return CURSOR_ICE;
+                case LETHAL_SPIKE: return CURSOR_SPIKE;
 
                 case LETHAL_POISON_GAS:
                 case LETHAL_POISON_GAS2: 
@@ -80,6 +100,8 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
                     return CURSOR_GAS;
 
                 case LETHAL_BULLET: return CURSOR_PLASMA;
+                case LETHAL_DROWNED: return CURSOR_DROWNED;
+
                 default: return CURSOR_UNLETHAL;
             }
         }
@@ -141,7 +163,7 @@ void FixupCursorSpriteRect(CPoppet* poppet)
     vtx[3].col = bits;
 
     const v4 LETHAL_CURSOR_OFFSET(0.0f, 22.5f, 0.0f, 0.0f);
-    const v4 FLOOD_FILL_CURSOR_OFFSET(12.9f, 18.5f, 0.0f, 0.0f);
+    const v4 FLOOD_FILL_CURSOR_OFFSET(15.0f, 17.5f, 0.0f, 0.0f);
 
     if (icon_index == CURSOR_FLOOD_FILL)
     {
@@ -150,7 +172,7 @@ void FixupCursorSpriteRect(CPoppet* poppet)
         vtx[2].pos += FLOOD_FILL_CURSOR_OFFSET;
         vtx[3].pos += FLOOD_FILL_CURSOR_OFFSET;
     }
-    else if (icon_index != CURSOR_STANDARD && icon_index != CURSOR_MARQUEE)
+    else if (IsLethalCursor(icon_index))
     {
         vtx[0].pos += LETHAL_CURSOR_OFFSET;
         vtx[1].pos += LETHAL_CURSOR_OFFSET;
@@ -236,6 +258,26 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
 {
     switch (tool)
     {
+        case TOOL_SHAPE_ICE:
+        {
+            poppet->SendPoppetDangerMessage(LETHAL_ICE);
+            break;
+        }
+        case TOOL_SHAPE_DROWNED:
+        {
+            poppet->SendPoppetDangerMessage(LETHAL_DROWNED);
+            break;
+        }
+        case TOOL_SHAPE_SPIKE:
+        {
+            poppet->SendPoppetDangerMessage(LETHAL_SPIKE);
+            break;
+        }
+        case TOOL_SHAPE_CRUSH:
+        {
+            poppet->SendPoppetDangerMessage(LETHAL_CRUSH);
+            break;
+        }
         case TOOL_SHAPE_PLASMA:
         {
             poppet->SendPoppetDangerMessage(LETHAL_BULLET);
@@ -308,6 +350,10 @@ void AttachCustomToolTypes()
 
     TABLE[TOOL_UNPHYSICS] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_PLASMA] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_DROWNED] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_SPIKE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_ICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);

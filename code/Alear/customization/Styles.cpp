@@ -13,6 +13,7 @@ extern "C" void _emote_hook();
 extern "C" void _emote_select_hook();
 extern "C" void _popit_update_menu_shape_hook();
 extern "C" void _animstyles_hook();
+extern "C" void _get_slap_force_hook();
 
 void InitEmoteHooks()
 {
@@ -31,6 +32,7 @@ void InitEmoteHooks()
 void InitSlapStyleHooks()
 {
     MH_Poke32(0x000e6d88, B(&_beslapped_hook, 0x000e6d88));
+    MH_PokeBranch(0x000738c4, &_get_slap_force_hook);
 }
 
 void InitPopitStyleHooks()

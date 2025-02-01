@@ -14,8 +14,17 @@ struct Forked {
     CRawVector<v2, CAllocatorMMAligned128> GlobalPolygon; // 0x20
     CVector<void*> Convexes; // technically CVector<CCompactConvex, CAllocatorMMAligned128>, but need a dummy type
     v2* SharedVertices;
+    // float BrightnessHack;
 };
 public:
+    // inline float& GetBrightness() { return Game.BrightnessHack; }
+    // inline float& GetBrightnessOff() { return Rend.BrightnessHack; }
+    // inline bool HasCustomData()
+    // {
+    //     return false;
+    //     // return GetBrightness() != 1.0f || GetBrightness() != 0.0f;
+    // }
+
     void SetCollidableGame(bool collidable);
     void SetCollidablePoppet(bool collidable);
 public:
@@ -43,6 +52,7 @@ public:
 private:
     char Pad2[0x2c];
 public:
+    // theres padding here, so i can just sneak it in
     Forked Game; // 0xf0
     Forked Rend;
     Forked* Fork;

@@ -94,6 +94,7 @@ bool FileOpen(CFilePath& fp, FileHandle* fd, EOpenMode mode);
 u64 FileRead(FileHandle h, void* out, u64 count);
 u64 FileWrite(FileHandle h, void* bin, u64 count);
 u64 FileSeek(FileHandle h, s64 newpos, u32 whence);
+bool FileResize(FileHandle h, u32 newsize);
 
 typedef bool (*ParseFn)(TextRange<char>&);
 bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out);

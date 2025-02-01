@@ -15,3 +15,17 @@ _beslapped_hook:
     ld %r2, 0x28(%r1)
 
     ba 0x000e6e5c
+
+.global _get_slap_force_hook
+_get_slap_force_hook:
+    vsel %v2, %v2, %v0, %v13
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z12GetSlapForceN10Vectormath3Aos7Vector4E@h      
+    ori %r2, %r2, _Z12GetSlapForceN10Vectormath3Aos7Vector4E@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z12GetSlapForceN10Vectormath3Aos7Vector4E
+    ld %r2, 0x28(%r1)
+
+    vsldoi %v31, %v2, %v2, 0x0
+    ba 0x000738c8

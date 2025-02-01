@@ -60,5 +60,6 @@ static shkOpd _##name = { (void*)(address), (void*)(toc) }; \
 type(*name)(__VA_ARGS__) = (type (*)(__VA_ARGS__))&_##name;
 
 #define MH_PokeBranch(address, target) MH_Poke32(address, B(target, address))
+#define MH_PokeHook(address, function) MH_InitHook((void*)address, (void*)&function)
 
 #endif // HOOK_H

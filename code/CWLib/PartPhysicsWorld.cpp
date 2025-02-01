@@ -2,6 +2,18 @@
 
 #include "hook.h"
 
+MH_DefineFunc(PWorld_ClearGlobalSettingUID, 0x00026084, TOC0, void, PWorld*, EGlobalSettingsType);
+void PWorld::ClearGlobalSettingUID(EGlobalSettingsType type)
+{
+    PWorld_ClearGlobalSettingUID(this, type);
+}
+
+MH_DefineFunc(PWorld_ResetToDefaultGlobalSettings, 0x00035c48, TOC0, void, PWorld*, EGlobalSettingsType);
+void PWorld::ResetToDefaultGlobalSettings(EGlobalSettingsType type)
+{
+    PWorld_ResetToDefaultGlobalSettings(this, type);
+}
+
 MH_DefineFunc(PWorld_GetThingByUID, 0x0002524c, TOC0, CThing*, PWorld*, u32);
 CThing* PWorld::GetThingByUID(u32 uid)
 {

@@ -1,7 +1,7 @@
 #ifndef GFX_CORE_H
 #define GFX_CORE_H
 
-#include <cell/gcm/gcm_enum.h>
+#include <cell/gcm.h>
 
 #include "GfxPool.h"
 
@@ -71,5 +71,11 @@ public:
 
 extern CGfxHandle gBackBuffer[2];
 extern u32 gCurBackBuffer;
+
+// extern void (*SetRenderTarget)(u32 xres, u32 yres, u32* rtarget_offset, u32* rtarget_location, u32* rtarget_pitch, u32 num_rt, u32 format);
+extern void (*SetRenderTarget)(CellGcmSurface& surf);
+
+extern void (*SetRenderTargetBackBuffer)(u32 index);
+extern void (*SetNiceState)();
 
 #endif // GFX_CORE_H

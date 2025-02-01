@@ -11,9 +11,6 @@
 typedef std::set<CResourceDescriptor<RPlan>, std::less<CResourceDescriptor<RPlan> >, STLBucketAlloc<CResourceDescriptor<RPlan> > > PlanDescriptorSet;
 extern PlanDescriptorSet gUsedPlanDescriptors;
 
-extern FileHandle gRecordingFileHandle;
-extern bool gDoRecording;
-
 class CInventoryView;
 class CInventoryItem;
 class RLocalProfile;
@@ -37,11 +34,33 @@ void AttachCustomPoppetMessages();
 void AttachCustomToolTypes();
 void AttachCustomSortModes();
 void LoadCursorSprites();
+void LoadRecordingShaders();
 
 #define E_GSUB_RLST 3536200819u
 #define E_TRANSLATIONS_RLST 4014013721u
 
 class CPoppet;
 extern std::set<CPoppet*, std::less<CPoppet*>, STLBucketAlloc<CPoppet*> > gPoppetBloomHack;
+
+class CVideoRecording {
+public:
+    inline CVideoRecording() : Filepath(), Handle(-1), NumFrames(0)
+    {
+
+    }
+public:
+    void StartRecording(char* path);
+    void StopRecording();
+    void ToggleRecording(char* path);
+    bool IsRecording();
+    void AppendVideoFrame();
+public:
+    CFilePath Filepath;
+    FileHandle Handle;
+    u32 NumFrames;    
+};
+
+extern CVideoRecording gBloomRecording;
+extern CVideoRecording gPoppetRecording;
 
 #endif // ALEAR_UNITY_H

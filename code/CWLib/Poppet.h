@@ -19,6 +19,14 @@ enum EPoppetStage {
     E_STAGE_OTHER = 0x20
 };
 
+enum EStampMode {
+    STAMP_DEFAULT,
+    STAMP_SECONDARY,
+    STAMP_SNAP,
+    
+    NUM_STAMP_MODES
+};
+
 class RLocalProfile;
 
 class CPoppet : public CReflectionVisitable {
@@ -33,6 +41,7 @@ public:
 public:
     const CP<RLocalProfile>& GetLocalProfile() const;
     void RenderHoverObject(CThing* thing, float outline);
+    void RenderUI();
     v2 GetBubbleSize();
     EPoppetMode GetMode() const;
     EPoppetSubMode GetSubMode() const;
@@ -42,6 +51,7 @@ public:
     void SendPoppetDangerMessage(ELethalType lethal_type);
     void PushMode(EPoppetMode mode, EPoppetSubMode submode);
     void SendPoppetMessage(EPoppetMessageType message);
+    void SetDangerType(CThing* thing);
 private:
     RaycastJobResult m_raycastJobResult;
     CRaycastResults m_raycastOnSwitchConnector;
@@ -79,6 +89,11 @@ private:
     char Pad4[0x1f4];
 public:
     CVector<CThingPtr> HiddenList;
+    EStampMode StampMode;
+    v2 CustomPoppetSize;
+    v2 CustomPoppetOffset;
+    bool HidePoppetGooey;
+    bool ShowTether;
 };
 
 

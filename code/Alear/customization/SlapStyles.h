@@ -11,7 +11,7 @@
 class CSlapMesh {
 public:
     inline CSlapMesh() : 
-    Sound(), GUID(0), Strength(1.0f), 
+    Sound(), GUID(0), HorizontalForce(23.0f), VerticalForce(0.0f),
     LeftHand(false), RightHand(true), Kill(false)
     {
 
@@ -19,7 +19,8 @@ public:
 public:
     MMString<char> Sound;
     u32 GUID;
-    float Strength;
+    float HorizontalForce;
+    float VerticalForce;
     bool LeftHand;
     bool RightHand;
     bool Kill;

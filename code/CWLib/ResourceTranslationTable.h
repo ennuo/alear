@@ -23,4 +23,8 @@ private:
 extern StaticCP<RTranslationTable> gPatchTrans;
 extern StaticCP<RTranslationTable> gTranslationTable;
 
+
+extern u32 (*MakeLamsKeyID)(const char* prefix, const char* suffix);
+
+
 #endif // RESOURCE_TRANSLATION_TABLE_H

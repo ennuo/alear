@@ -5,7 +5,7 @@
 
 class CScriptArguments {
 public:
-    inline CScriptArguments() : NumArguments(0) {}
+    inline CScriptArguments() : Arguments(), NumArguments(0) {}
 public:
     CScriptVariant& GetArgument(u32 index) { return Arguments[index]; }
     void AppendArg(CScriptVariant& arg) { Arguments[NumArguments++] = arg; }

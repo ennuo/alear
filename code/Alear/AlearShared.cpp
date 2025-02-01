@@ -55,6 +55,7 @@
 #include <ResourceSyncedProfile.h>
 #include <ResourceTranslationTable.h>
 #include <ResourceFileOfBytes.h>
+#include <ResourceGFXShader.h>
 #include <ResourceSystem.h>
 
 #include <gooey/GooeyNodeManager.h>
@@ -196,7 +197,7 @@ void OnUpdateLevel()
         CInput* input = yellowhead->GetInput();
         if (input == NULL) continue;
 
-        CThing* player = yellowhead->GetThing();
+        // CThing* player = yellowhead->GetThing();
         // if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
         // {
         //     ExplosionInfo info;
@@ -215,18 +216,27 @@ void OnUpdateLevel()
 
         CThing* hover = poppet->Edit.LastHoverThing;
 
-        // if (poppet->GetMode() == MODE_CURSOR && poppet->GetSubMode() == SUBMODE_NONE)
+        EPoppetMode mode = poppet->GetMode();
+        EPoppetSubMode submode = poppet->GetSubMode();
+
+        // if (poppet->GetMode() == MODE_CURSOR && submode == SUBMODE_NONE || submode == SUBMODE_SWITCH_CONNECTOR || submode == SUBMODE_DANGER)
         // {
         //     if (hover != NULL)
         //     {
         //         PShape* shape = hover->GetPShape();
-        //         if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, L"HIDE"))
+        //         if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, (const wchar_t*)NULL))
         //             poppet->HiddenList.push_back(hover);
         //     }
 
-        //     if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, L"SHOW"))
+        //     if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, (const wchar_t*)NULL))
         //         poppet->ClearHiddenList();
         // }
+        
+        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI, L"BP_HIDE_TETHER"))
+            poppet->ShowTether = !poppet->ShowTether;
+
+        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI, L"BP_HIDE_POPPET_UI"))
+            poppet->HidePoppetGooey = !poppet->HidePoppetGooey;
 
         if (hover != NULL && 
             poppet->GetMode() == MODE_CURSOR && 
@@ -271,6 +281,7 @@ void OnRunPipelinePostProcessing()
 void OnPredictionOrRenderUpdate()
 {
     UpdateDownloadInfo();
+    UpdatePinOverlay();
     
     if (!gView.DebugCameraActive)
         UpdateDebugCameraNotInUse();
@@ -288,12 +299,24 @@ void OnWorldRenderUpdate()
 
 void OnUpdateHttpTasks()
 {
-    gPinsTask.Update();
+    // gPinsTask.Update();
 }
 
 CVector<CP<RTranslationTable> > gTranslations;
 bool CustomTryTranslate(u32 key, tchar_t const*& out)
 {
+    if (key == MakeLamsKeyID("BP_", "HIDE_TETHER"))
+    {
+        out = (tchar_t*)L"Hide Tether";
+        return true;
+    }
+
+    if (key == MakeLamsKeyID("BP_", "HIDE_POPPET_UI"))
+    {
+        out = (tchar_t*)L"Hide Poppet UI";
+        return true;
+    }
+
     static tchar_t EMPTY_STRING[] = { 0x20 };
 
     if (gTranslations.size() == 0)
@@ -498,9 +521,74 @@ CInventoryItem* FindItemWithToolType(CBaseProfile* prf, EToolType type)
     return NULL;
 }
 
+void AddToolToInventory(RLocalProfile* prf, const char* name, EToolType type, u32 icon_key)
+{
+    const u32 E_FUNCTIONS_KEY = 1648289136;
+    const u32 E_KEY_IMPORT_TOOL = 65717;
+
+    CP<RTexture> icon = LoadResourceByKey<RTexture>(icon_key, 0, STREAM_PRIORITY_DEFAULT);
+
+    CInventoryItem item;
+    item.UID = prf->NextInventoryItemUID++;
+    item.Plan = CResourceDescriptor<RPlan>(E_KEY_IMPORT_TOOL);
+
+    CInventoryItemDetails& details = item.Details;
+    details.Type = E_TYPE_TOOL;
+    details.ToolType = type;
+    strcpy(details.Creator.handle.data, "MM_Studio");
+    details.NameTranslationTag = MakeLamsKeyID(name, "_NAME");
+    details.DescTranslationTag = MakeLamsKeyID(name, "_DESC");
+    details.SetIcon(icon);
+    details.LocationIndex = prf->AddString(E_FUNCTIONS_KEY);
+    details.CategoryIndex = prf->AddString(E_FUNCTIONS_KEY);
+    details.NumUses = 1;
+
+    CRawVector<CInventoryItem>& items = *((CRawVector<CInventoryItem>*)&prf->Inventory);
+    items.push_back(item);
+}
+
+
 void OnLocalProfileLoadFinished(RLocalProfile* prf)
 {
 
+
+
+    AddToolToInventory(prf, "POPPET_TOOL_PLAN_TAKE", TOOL_SHAPE_TAKE_PLAN, 42929u);
+    AddToolToInventory(prf, "POPPET_TOOL_VERTEX_EDIT", TOOL_SHAPE_VERTEX_EDIT, 42407u);
+    // Slice n Dice
+    // Dot to Dot
+    // Eyedropper
+    AddToolToInventory(prf, "POPPET_TOOL_FLOOD_FILL", TOOL_SHAPE_FLOOD_FILL, 42406u);
+    // uv edit
+    // advanced glue
+    AddToolToInventory(prf, "POPPET_TOOL_UNPHYSICS", TOOL_UNPHYSICS, 3430870302u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_UNLETHAL", TOOL_SHAPE_UNLETHAL, 42936u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_FIRE", TOOL_SHAPE_BURNINATE, 42933u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_ELECTRIC", TOOL_SHAPE_ELECTRIFY, 42932u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_ICE", TOOL_SHAPE_ICE, 42934u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_POISONGAS", TOOL_SHAPE_GAS, 42935u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_PLASMA", TOOL_SHAPE_PLASMA, 3461868587u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_SPIKE", TOOL_SHAPE_SPIKE, 3136424487u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_CRUSH", TOOL_SHAPE_CRUSH, 3664313855u);
+    AddToolToInventory(prf, "POPPET_TOOL_DANGER_DROWN", TOOL_SHAPE_DROWNED, 3664313855u);
+    AddToolToInventory(prf, "POPPET_TOOL_STICKER_PICK", TOOL_STICKER_PICK, 42408u);
+}
+
+
+void OnBaseProfileLoadFinished(CBaseProfile* prf)
+{
+    return;
+
+    // Delete all tools from the inventory, we're going to re-add them in sorted order.
+    // CRawVector<CInventoryItem>& items = *((CRawVector<CInventoryItem>*)&prf->Inventory);
+    // for (CInventoryItem* item = items.begin(); item != items.end(); ++item)
+    // {
+    //     if (item->Details.ToolType != TOOL_NOT_A_TOOL)
+    //         item = items.erase(item) - 1;
+    // }
+
+    // if (prf->GetResourceType() == RTYPE_LOCAL_PROFILE)
+    //     OnLocalProfileLoadFinished((RLocalProfile*)prf);
 }
 
 FMOD_RESULT LoadAllEventProjects()
@@ -527,61 +615,181 @@ FMOD_RESULT LoadAllEventProjects()
     return FMOD_OK;
 }
 
+
+namespace NPoppetUtils {
+    MH_DefineFunc(UseSphereRaycast, 0x0038edb8, TOC1, bool, CThing const* thing);
+}
+
+extern bool IsThingFady(CThing* thing);
 void CustomPreRaycastPrepare(PWorld* world)
 {
     gFilteredBucketForRaycast.Size = 0;
     if (world == NULL) return;
 
+    CThing* backdrop = world->Backdrop;
+    CThing* backdrop_new = world->BackdropNew;
+
     for (int i = 0; i < gRenderBucket.Size; ++i)
     {
         CMeshInstance* instance = gRenderBucket.MeshInstance[i];
         CThing* thing = instance->MyThing;
+
         if (thing == NULL) continue;
-        if (thing->Parts[PART_TYPE_JOINT] != NULL) continue;
-        if (thing->GetPRenderMesh() == NULL) continue;
+        if (NPoppetUtils::UseSphereRaycast(thing)) continue;
+        if (backdrop != NULL && thing->Parent == backdrop) continue;
+        if (backdrop_new != NULL && thing->Parent == backdrop_new) continue;
+        if (thing->World != world) continue;
+        if (IsThingFady(thing)) continue;
 
         gFilteredBucketForRaycast.MeshInstance[gFilteredBucketForRaycast.Size++] = instance;
     }
 }
+StaticCP<RPixelShader> gCopyGlowShader;
+StaticCP<RPixelShader> gRenderPoppetShader;
+StaticCP<RVertexShader> gFullscreenShader;
+ByteArray gVideoHeader;
 
-FileHandle gRecordingFileHandle = -1;
-char fileData[1280 * 720 * 4];
-bool gDoRecording;
+void LoadRecordingShaders()
+{
+    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/avi.raw");
+    CHash hash;
+    FileLoad(fp, gVideoHeader, hash);
+
+    *((CP<RPixelShader>*)&gCopyGlowShader) = LoadResourceByKey<RPixelShader>(3306909899u, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RPixelShader>*)&gRenderPoppetShader) = LoadResourceByKey<RPixelShader>(3364422394u, 0, STREAM_PRIORITY_DEFAULT);
+     *((CP<RVertexShader>*)&gFullscreenShader) = LoadResourceByKey<RVertexShader>(19194, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+void CVideoRecording::StartRecording(char* path)
+{
+    if (IsRecording()) StopRecording();
+    NumFrames = 0;
+    Filepath.Assign(FPR_GAMEDATA, path);
+    if (FileOpen(Filepath, &Handle, OPEN_RDWR))
+    {
+        FileResize(Handle, gVideoHeader.size());
+        FileSeek(Handle, gVideoHeader.size(), CELL_FS_SEEK_SET);
+    }
+}
+
+void CVideoRecording::StopRecording()
+{
+    if (!IsRecording()) return;
+
+    u32 data_len = (gResX * gResY * sizeof(s32)) * NumFrames + (0xc * NumFrames);
+    u32 file_len = gVideoHeader.size() + data_len;
+    u32 riff_size = file_len - 0x8;
+    u32 mov_size = data_len + 0xc;
+    
+    *(u32*)(gVideoHeader.begin() + 0x004) = (riff_size >> 24) | ((riff_size << 8) & 0x00FF0000) | ((riff_size >> 8) & 0x0000FF00) | (riff_size << 24);
+    *(u32*)(gVideoHeader.begin() + 0x030) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader.begin() + 0x08c) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader.begin() + 0x5c8) = (mov_size >> 24) | ((mov_size << 8) & 0x00FF0000) | ((mov_size >> 8) & 0x0000FF00) | (mov_size << 24);
+    
+    FileSeek(Handle, 0, CELL_FS_SEEK_SET);
+    FileWrite(Handle, (void*)gVideoHeader.begin(), gVideoHeader.size());
+    FileClose(&Handle);
+}
+
+bool CVideoRecording::IsRecording()
+{
+    return Handle != -1;
+}
+
+void CVideoRecording::ToggleRecording(char* path)
+{
+    if (IsRecording())
+    {
+        StopRecording();
+        return;
+    }
+
+    StartRecording(path);
+}
+
+void CVideoRecording::AppendVideoFrame()
+{
+    CRenderTarget& target = gPipelineRTs[PRT_TEMP_BACKBUFFER];
+    NGfx::FlushGPU(true);
+
+    char chunk[] = { '0', '0', 'd', 'b', '\0', '\0', '\0', '\0' };
+    u32 frame_size = (gResX * gResY * sizeof(s32));
+    *(u32*)(chunk + 4) = (frame_size >> 24) | ((frame_size << 8) & 0x00FF0000) | ((frame_size >> 8) & 0x0000FF00) | (frame_size << 24);
+    FileWrite(Handle, (void*)chunk, 0x8);
+
+    for (int i = 0; i < gResX * gResY; ++i)
+    {
+        u32& col = *((u32*)target.Address + i);
+        col = (col >> 24) | ((col << 8) & 0x00FF0000) | ((col >> 8) & 0x0000FF00) | (col << 24);
+    }
+
+    FileWrite(Handle, target.Address, gResX * gResY * sizeof(u32));
+    NumFrames++;
+}
+
+CVideoRecording gBloomRecording;
+CVideoRecording gPoppetRecording;
+
 
 MH_DefineFunc(Screenshot, 0x003e37b0, TOC1, char*, bool save_level_too, void* stream, char* prefix, u32 src, bool half_res, u32 override_index, u32 crop_width, u32 crop_height);
+MH_DefineFunc(GenericPNGWrite, 0x001ce450, TOC0, bool, void* fp, ByteArray& buffer, void* stream, void* image_data, u32 width, u32 height, u32 pitch);
 void OnSwapBuffers()
 {
-    if (!gDoRecording) return;
-    
-    if (gRecordingFileHandle == -1)
+    CRenderTarget& target = gPipelineRTs[PRT_TEMP_BACKBUFFER];
+    CRenderTarget& cbuf = gPipelineRTs[PRT_C_BUFFER_MSAA];
+
+    NGfx::gTgUseNormals = false;
+
+    if (gBloomRecording.IsRecording())
     {
-        CFilePath fp(FPR_GAMEDATA, "output/rec.bin");
-        FileOpen(fp, &gRecordingFileHandle, OPEN_WRITE);
+        SetRenderTarget(gPipelineBindings[PRT_TEMP_BACKBUFFER]);
+
+        cellGcmSetClearColor(gCellGcmCurrentContext, 0x00000000);
+        cellGcmSetClearSurface(gCellGcmCurrentContext, CELL_GCM_CLEAR_R | CELL_GCM_CLEAR_G | CELL_GCM_CLEAR_B | CELL_GCM_CLEAR_A);
+
+        gPipelineRTs[PRT_BLOOM_BUFFER_64P].BindAsTexture(0, &CRenderTarget::gLinear_Clamp);
+        NGfx::BindShader(gCopyGlowShader, true);
+        NGfx::BindShader(gFullscreenShader, true);
+        RenderFullscreenQuad(0xFFFFFFFF, false, false, 0.5f);
+
+        gBloomRecording.AppendVideoFrame();
     }
 
-    NGfx::FlushGPU(true);
-
-    char* pixel_data = NULL;
-    int pixel_data_local;
-    for (int i = 0; i < SMEM_POOL_LAST; ++i)
+    if (gPoppetRecording.IsRecording())
     {
-        void* data = gSMemPools[i].Alloc(gResX * gResY * sizeof(u32), 16, 0);
-        if (data != NULL)
+        SetRenderTarget(gPipelineBindings[PRT_C_BUFFER_MSAA]);
+        cellGcmSetClearColor(gCellGcmCurrentContext, 0x00000000);
+        cellGcmSetClearSurface(gCellGcmCurrentContext, CELL_GCM_CLEAR_R | CELL_GCM_CLEAR_G | CELL_GCM_CLEAR_B | CELL_GCM_CLEAR_A);
+
+        PWorld* world = gGame->GetWorld();
+        if (world != NULL)
         {
-            pixel_data = (char*)data;
-            pixel_data_local = gSMemPools[i].GetOffset(pixel_data);
-            break;
+            for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
+            {
+                PYellowHead* yellowhead = *it;
+                if (yellowhead == NULL) continue;
+
+                CPoppet* poppet = yellowhead->Poppet;
+                if (poppet == NULL) continue;
+
+                poppet->RenderUI();
+            }
         }
+
+        SetRenderTarget(gPipelineBindings[PRT_TEMP_BACKBUFFER]);
+
+        cellGcmSetClearColor(gCellGcmCurrentContext, 0x00000000);
+        cellGcmSetClearSurface(gCellGcmCurrentContext, CELL_GCM_CLEAR_R | CELL_GCM_CLEAR_G | CELL_GCM_CLEAR_B | CELL_GCM_CLEAR_A);
+
+        gPipelineRTs[PRT_C_BUFFER_MSAA].BindAsTexture(0, &CRenderTarget::gLinear_Clamp);
+        NGfx::BindShader(gFullscreenShader, true);
+        NGfx::BindShader(gRenderPoppetShader, true);
+        RenderFullscreenQuad(0xFFFFFFFF, false, false, 0.5f);
+        gPoppetRecording.AppendVideoFrame();
     }
 
-    if (pixel_data == NULL) pixel_data = (char*)gPipelineRTs[PRT_TEMP_BACKBUFFER].Address;
-    if (pixel_data == NULL) return;
-
-
-    cellGcmSetTransferData(gCellGcmCurrentContext, CELL_GCM_TRANSFER_LOCAL_TO_MAIN, pixel_data_local, 1280 * 4, gBackBuffer[gCurBackBuffer].GetOffset(), 1280 * 4, 1280 * 4, 720);
-    NGfx::FlushGPU(true);
-
-    FileWrite(gRecordingFileHandle, pixel_data, 1280 * 720 * 4);
+    SetNiceState();
+    SetRenderTargetBackBuffer(gCurBackBuffer);
 }
 
 CP<CResource> TextureFromResource(CP<CResource>& res)
@@ -603,8 +811,15 @@ bool CustomIsStickerPlaceable(void* edit, CRaycastResults const& results)
     return true;
 }
 
+extern bool CanTweakThing(CPoppet* poppet, CThing* thing);
+
+
+extern void AttachPoppetInterfaceExtensionHooks();
+
 void InitSharedHooks()
 {
+    AttachPoppetInterfaceExtensionHooks();
+    
     // MH_Poke32(0x001c7b84, 0x4e800020);
 
     // MH_Poke32(0x00211730, 0x60000000);
@@ -680,6 +895,20 @@ void InitSharedHooks()
     MH_Poke32(0x0092ac34, 0x420c0000);
     MH_Poke32(0x0092ac38, 0xc20c0000);
 
+    MH_PokeBranch(0x000b2690, &_base_profile_load_hook);
+    
+    // allow disabling rendering popit tether
+    // DrawForBloom
+    MH_Poke32(0x0034c870, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
+    MH_Poke32(0x0034c604, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
+    // RenderUI
+    MH_Poke32(0x00345d84, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
+    MH_Poke32(0x00345dc0, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
+
+    MH_PokeBranch(0x00345a9c, &_popit_render_ui_debug_hook);
+
+    MH_PokeBranch(0x0034fcd8, &_popit_attempt_tweak_hook);
+    MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
 }
 
 // Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

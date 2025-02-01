@@ -6,3 +6,9 @@ bool PScript::InvokeSync(CSignature const& signature, CScriptArguments const& ar
 {
     return PScript_InvokeSync(this, signature, args);
 }
+
+MH_DefineFunc(PScript_SetScript, 0x0002d198, TOC0, void, PScript*, CP<RScript> const& script);
+void PScript::SetScript(CP<RScript> const& script)
+{
+    return PScript_SetScript(this, script);
+}

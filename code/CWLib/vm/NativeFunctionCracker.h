@@ -12,7 +12,7 @@ namespace NVirtualMachine
 {
     template<typename ReturnType>
     void ConvertReturnValue(void*& vm_addr, CScriptContext* context, ReturnType& native)
-{
+    {
         SConvertScriptTypes<ReturnType>::NativeToVM
         (
             *((typename SConvertScriptTypes<ReturnType>::VMType*&) vm_addr), 
@@ -46,6 +46,26 @@ namespace NVirtualMachine
             
             SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
             ReturnType value = Fn(call.a);
+            ConvertReturnValue<ReturnType>(ret, context, value);
+        }
+    };
+
+    template <typename ReturnType, typename Arg1, typename Arg2>
+    class CNativeFunction2 {
+    public:
+        template <ReturnType (&Fn)(Arg1, Arg2)>
+        static void Call(CScriptContext* context, void* ret, u8* arguments)
+        {
+            struct CallStruct
+            {
+                Arg1 a;
+                Arg2 b;
+            } 
+            call;
+            
+            SConvertScriptTypes<Arg1>::VMToNative(call.a, context, (typename SConvertScriptTypes<Arg1>::VMType&)((CallStruct*)arguments)->a);
+            SConvertScriptTypes<Arg2>::VMToNative(call.b, context, (typename SConvertScriptTypes<Arg2>::VMType&)((CallStruct*)arguments)->b);
+            ReturnType value = Fn(call.a, call.b);
             ConvertReturnValue<ReturnType>(ret, context, value);
         }
     };

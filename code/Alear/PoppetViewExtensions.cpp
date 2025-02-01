@@ -83,6 +83,9 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_SHAPE_GAS:
         case TOOL_SHAPE_UNLETHAL:
         case TOOL_SHAPE_PLASMA:
+        case TOOL_SHAPE_CRUSH:
+        case TOOL_SHAPE_DROWNED:
+        case TOOL_SHAPE_SPIKE:
         // case TOOL_UNPHYSICS:
         case TOOL_SHAPE_VERTEX_EDIT:
         {
@@ -111,7 +114,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
 
         if (tool != TOOL_NOT_A_TOOL)
         {
-            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS || tool = TOOL_UNPHYSICS) return false;
+            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS || tool == TOOL_UNPHYSICS) return false;
             return true;
         }
 

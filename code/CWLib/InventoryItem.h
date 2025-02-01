@@ -19,8 +19,8 @@
 class CInventoryItemDetails : public CDependencyWalkable {
 public:
     CInventoryItemDetails();
-    CInventoryItemDetails(CInventoryItemDetails& rhs);
-    CInventoryItemDetails& operator=(CInventoryItemDetails const& rhs);
+    // CInventoryItemDetails(CInventoryItemDetails& rhs);
+    // CInventoryItemDetails& operator=(CInventoryItemDetails const& rhs);
 public:
     inline void SetLookupIndices(u32 loc_idx, u32 cat_idx)
     {

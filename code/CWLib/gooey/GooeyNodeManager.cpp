@@ -56,6 +56,12 @@ bool CGooeyNodeManager::NodeOrDescendantHasFocus(u64 uid)
     return CGooeyNodeManager_NodeOrDescendantHasFocus(this, uid);
 }
 
+MH_DefineFunc(CGooeyNodeManager_SetFrameConstrainFocus, 0x002f8b98, TOC0, void, CGooeyNodeManager*, bool);
+void CGooeyNodeManager::SetFrameConstrainFocus(bool constrain)
+{
+    return CGooeyNodeManager_SetFrameConstrainFocus(this, constrain);
+}
+
 MH_DefineFunc(CGooeyNodeManager_SetFrameSizing, 0x002f8a28, TOC0, void, CGooeyNodeManager*, SizingBehaviour, SizingBehaviour);
 void CGooeyNodeManager::SetFrameSizing(SizingBehaviour behaviour_w, SizingBehaviour behaviour_h)
 {

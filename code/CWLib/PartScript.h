@@ -1,15 +1,20 @@
 #ifndef PART_SCRIPT_H
 #define PART_SCRIPT_H
 
+#include <refcount.h>
+
 #include "Part.h"
 #include "vm/ScriptInstance.h"
 #include "vm/ScriptFunction.h"
 #include "vm/ScriptArguments.h"
 
+class RScript;
+
 class PScript : public CPart {
 public:
     bool InvokeSync(CSignature const& signature, CScriptArguments const& args);
-protected:
+    void SetScript(CP<RScript> const& script);
+public:
     CScriptInstance ScriptInstance;
     u64 TimeInUpdate;
     u64 TimeInRender;

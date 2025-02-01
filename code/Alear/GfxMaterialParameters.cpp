@@ -12,6 +12,8 @@
 #include "Clock.h"
 #include "Colour.h"
 
+#include <mmalex.h>
+
 void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset, CMeshInstance* instance)
 {
     CGparameter parameter;
@@ -59,11 +61,28 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset
         }
     }
 
+
+
+    const float DELTA_TIME = 1.0f / 30.0f;
+    float time = GetClockSeconds();
+
     parameter = cellGcmCgGetNamedParameter(program, "iTime");
     if (parameter != NULL)
     {
-        float time = GetClockSeconds();
         cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, &time, ucode_offset);
+    }
+
+
+    bool lerp = false;
+    float anim_speed = 1.0f;
+    if (instance != NULL && instance->MyThing != NULL)
+    {
+        PGeneratedMesh* mesh = instance->MyThing->GetPGeneratedMesh();
+        if (mesh != NULL)
+        {
+            lerp = true;
+            anim_speed = mesh->TextureAnimationSpeed;
+        }
     }
 
     for (int i = 0; i < gmat->ParameterAnimations.size(); ++i)
@@ -80,26 +99,58 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset
 
         if (param == NULL || anim.Keys.size() == 0) continue;
 
-        float key[4];
-        Vectormath::Aos::storeXYZW(anim.BaseValue, key);
+        v4 last_key = anim.BaseValue;
+        v4 next_key = anim.BaseValue;
+
+        // float last_key[4];
+        // float next_key[4];
+        // float key[4];
+
+        // Vectormath::Aos::storeXYZW(anim.BaseValue, last_key);
+        // Vectormath::Aos::storeXYZW(anim.BaseValue, next_key);
 
         int num_components = __builtin_popcount(anim.ComponentsAnimated);
         int stride = anim.Keys.size() / num_components;
-        int frame = gGraphicsFrameNum % stride;
 
+        float factor;
+        int frame, next_frame;
+
+        if (lerp)
+        {
+            int num_keys = anim.Keys.size() - 1;
+            float duration = DELTA_TIME * num_keys;
+
+            float pos = mmalex::fmod(time * anim_speed, duration);
+            float pct = pos / duration;
+
+            frame = (int)(pct * num_keys);
+            next_frame = frame + 1;
+            
+            float last_pos = frame * DELTA_TIME;
+            float next_pos = (frame + 1) * DELTA_TIME;
+
+            factor = (pos - last_pos) / (next_pos - last_pos);
+        }
+        else
+        {
+            frame = gGraphicsFrameNum % stride;
+            next_frame = (frame + 1) % stride;
+            factor = 0.0f;
+        }
+        
         int offset = 0;
-        v4 value = anim.BaseValue;
         for (int j = 0; j < 4; ++j)
         {
             if ((anim.ComponentsAnimated & (1 << j)) == 0) continue;
-            // value = value.setElem(j, anim.Keys[offset + frame]);
 
-            key[j] = anim.Keys[offset + frame];
+            last_key.setElem(j, anim.Keys[offset + frame]);
+            next_key.setElem(j, anim.Keys[offset + next_frame]);
 
             offset += stride;
         }
 
-        // DebugLog("<%f, %f, %f, %f> : (%d/%d)\n", key[0], key[1], key[2], key[3], frame, stride);
-        cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, param, key, ucode_offset);
+        v4 key = Vectormath::Aos::lerp(factor, last_key, next_key);
+        
+        cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, param, (float*)&key, ucode_offset);
     }
 }

@@ -69,6 +69,18 @@ public:
 	}
 };
 
+template <typename T, typename Allocator = CAllocatorMM>
+class CParasiticVector : public CBaseVectorPolicy<T, Allocator> {
+public:
+	inline CParasiticVector() : CBaseVectorPolicy<T, Allocator>() {}
+	inline CParasiticVector(T* data, u32 size, u32 max_size)
+	{
+		this->Data = data;
+		this->Size = size;
+		this->MaxSize = max_size;
+	}
+};
+
 /* vector.h: 189 */
 template <typename T, typename Allocator = CAllocatorMM>
 class CRawVector : public CBaseVectorPolicy<T, Allocator> {
@@ -84,6 +96,15 @@ public:
 		Allocator::Free(gVectorBucket, this->Data);
 	}
 
+	inline void push_front(T const& element)
+	{
+		if (this->Size == this->MaxSize)
+			this->try_reserve(this->Size + 1);
+		memmove((void*)(this->Data + 1), (void*)this->Data, this->Size * sizeof(T));
+		this->Data[0] = element;
+		this->Size++;
+	}
+	
 	inline void push_back(T const& element) 
 	{
 		if (this->Size == this->MaxSize)

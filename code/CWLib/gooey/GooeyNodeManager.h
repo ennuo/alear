@@ -43,6 +43,8 @@ public:
     void SetFrameDrawScrollArrows(bool d, bool highlight_left, bool highlight_right, bool push_out);
     void SetFrameWhollyVisibleWithChildren();
     void SetFrameHighlightSizing(EGooeySizingType sizing);
+    void SetFrameConstrainFocus(bool constrain);
+
     
     void EndFrame();
     u32 EndFrame(u32 accepted_input);

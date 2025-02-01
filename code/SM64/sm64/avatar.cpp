@@ -444,9 +444,9 @@ void CMarioAvatar::UpdateMesh()
 
     int indices_used = Geometry.numTrianglesUsed * 3;
 
-    char* posbuf = (char*)mesh.SourceGeometry.CachedAddress + mesh.SourceStreamOffsets[0];
-    char* skinbuf = (char*)mesh.SourceGeometry.CachedAddress + mesh.SourceStreamOffsets[1];
-    char* attrbuf = (char*)mesh.AttributeData.CachedAddress;
+    char* posbuf = (char*)mesh.SourceGeometry.GetCachedAddress() + mesh.SourceStreamOffsets[0];
+    char* skinbuf = (char*)mesh.SourceGeometry.GetCachedAddress() + mesh.SourceStreamOffsets[1];
+    char* attrbuf = (char*)mesh.AttributeData.GetCachedAddress();
 
     float* vertices = (float*)posbuf;
     float* uvs = (float*)attrbuf;

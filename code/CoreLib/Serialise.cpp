@@ -13,6 +13,13 @@ Sem(), SPUDecompressAvailable()
 
 }
 
+CReflectionSaveVector::CReflectionSaveVector(ByteArray* vec, u32 compression_level) :
+CReflectionBase(), Vec(vec), CurJob(NULL), PendingCleanup(NULL), Sem(0, 0),
+CompressionFlags(DEFAULT_COMPRESS_FLAGS), EncryptedBlockStart(-1), CompressionLevel(compression_level), JobsTag(0),
+SPUCompressAvailable(false)
+{
+    
+}
 
 MH_DefineFunc(CReflectionLoadVector_ReadWrite, 0x0058cf14, TOC1, ReflectReturn, CReflectionLoadVector*, void*, int);
 MH_DefineFunc(CReflectionLoadVector_CleanupDecompression, 0x0058d3d4, TOC1, ReflectReturn, CReflectionLoadVector*);

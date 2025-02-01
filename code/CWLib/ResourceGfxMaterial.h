@@ -3,8 +3,24 @@
 
 #include <Cg/NV/cg_types.h>
 
-
 #include "Resource.h"
+
+class CMaterialBox {
+public:
+    u32 Type;
+    u32 Params[6];
+    float x, y, w, h;
+};
+
+class CMaterialWire {
+public:
+    int BoxFrom;
+    int BoxTo;
+    u8 PortFrom;
+    u8 PortTo;
+    char Swizzle[5];
+    bool error;
+};
 
 class CMaterialParameterAnimation {
 public:
@@ -42,7 +58,6 @@ enum {
     SHADER_LAST
 };
 public:
-    void SetupParameterCache();
     void InitializeExtraData();
     void DestroyExtraData();
 public:
@@ -50,8 +65,24 @@ public:
     CGprogram Shaders[SHADER_LAST];
     u32 ShaderBinaryOffsets[SHADER_LAST];
     u8 TextureUsage[SHADER_LAST];
+    CP<RTexture> Textures[8];
+    u8 WrapS[8];
+    u8 WrapT[8];
+    ByteArray PS3BinaryCode;
+    CGfxHandle pshadercode;
+    float AlphaTestLevel;
+    float BumpLevel;
+    float FresnelLevel;
+    float ReflectionBlur;
+    float RimSoftening;
+    u32 SoundEnum;
+    u32 LightSettingsHash[4];
+    u8 AlphaLayer;
+    u8 ShadowCastMode;
+    /* sneaking this in the padding */
+    bool UsesPlayerDefinedColour;
 private:
-    char Pad[120];
+    char Pad[0x6];
 public:
     CVector<CMaterialParameterAnimation> ParameterAnimations;
     CVector<CMaterialBoxAttributes> BoxAttributes;

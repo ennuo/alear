@@ -31,7 +31,45 @@ ReflectReturn Reflect(R& r, RPins& d)
     return ret;
 }
 
+template <typename R>
+ReflectReturn Reflect(R& r, CPinsAwarded& d)
+{
+    ReflectReturn ret;
+    ADD(PinAwards);
+    ADD(PinProgress);
+    ADD(RecentlyAwardedPinIDs);
+    ADD(ProfileDisplayPinIDs);
+    ADD(PinsFlags);
+    return ret;
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, CPinAward& d)
+{
+    ReflectReturn ret;
+    ADD(PinID);
+    ADD(AwardCount);
+    return ret;
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, CPinProgress& d)
+{
+    ReflectReturn ret;
+    ADD(ProgressType);
+    ADD(ProgressCount);
+    return ret;
+}
+
 template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CPin& d);
 template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, RPins& d);
+
+template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CPinsAwarded& d);
+template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CPinProgress& d);
+template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CPinAward& d);
+
+template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinsAwarded& d);
+template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinProgress& d);
+template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinAward& d);
 
 #undef ADD

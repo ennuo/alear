@@ -22,6 +22,7 @@
 #include "PartSwitch.h"
 #include "PartRef.h"
 #include "PartDecoration.h"
+#include "PartEffector.h"
 
 #include "hack_thingptr.h"
 
@@ -46,6 +47,13 @@ public:
 public:
     void InitializeExtraData();
     void DestroyExtraData();
+
+    bool HasCustomPartData();
+    
+    void OnStartSave();
+    void OnFinishSave();
+        
+    ReflectReturn OnLoad();
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
@@ -69,6 +77,7 @@ public:
     inline PRef* GetPRef() { return static_cast<PRef*>(Parts[PART_TYPE_REF]); }
     inline PStickers* GetPStickers() { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
     inline PDecorations* GetPDecorations() { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
+    inline PEffector* GetPEffector() { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

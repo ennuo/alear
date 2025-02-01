@@ -461,7 +461,7 @@ void PrintLoadedResources()
 
         if (row == NULL) continue;
         row->FileHash.ConvertToHex(hash);
-        DebugLog("\tg0x%08x (h%s) -> %s\n", row->FileGuid.guid, hash, row->FilePathX);
+        DebugLog("\tg0x%08x (h%s) -> %s (0x%08x)\n", row->FileGuid.guid, hash, row->FilePathX, resource);
     }
 }
 
@@ -1119,6 +1119,7 @@ void OnDatabaseFileChanged(CFilePath& fp)
     gReloadMap.push_back(fp);
 }
 
+extern void OnStopTweaking(CThing* thing);
 namespace AlearOptNativeFunctions
 {
     void RefreshUsedItems(CScriptObjectPoppet* so_poppet)
@@ -1209,13 +1210,16 @@ namespace AlearOptNativeFunctions
 
         RegisterNativeFunction("Poppet", "ReloadFromInventory__i", false, NVirtualMachine::CNativeFunction2V<CScriptObjectPoppet*, u32>::Call<ReloadInventoryItem>);
         RegisterNativeFunction("Poppet", "RefreshUsedItems__", false, NVirtualMachine::CNativeFunction1V<CScriptObjectPoppet*>::Call<RefreshUsedItems>);
+        RegisterNativeFunction("Poppet", "InvalidateTweakThing__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<OnStopTweaking>);
     }
 }
 
 #include <Hash.h>
+#include "TweakShape.h"
 extern "C" void _alear_levelupdate_hook();
 void InitAlearOptUiHooks()
 {
     AlearOptNativeFunctions::Register();
+    TweakShapeNativeFunctions::Register();
     MH_Poke32(0x00015874, B(&_alear_levelupdate_hook, 0x00015874));
 }

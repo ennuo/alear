@@ -3,6 +3,7 @@
 
 #include "vm/ScriptContext.h"
 #include "vm/ScriptObject.h"
+#include "scriptobjects/ScriptObjectResource.h"
 
 template <typename Type>
 struct SConvertScriptTypes
@@ -59,6 +60,23 @@ struct SConvertScriptTypes<CThing*>
 };
 
 template <>
+struct SConvertScriptTypes<CScriptObjectInstance*>
+{
+    typedef CScriptObjectInstance* NativeType;
+    typedef ScriptObjectUID VMType;
+
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
+    {
+        out = (CScriptObjectInstance*)gScriptObjectManager->LookupObject(in.UID);
+    }
+
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
+    {
+        out.UID = in->GetUID();
+    }
+};
+
+template <>
 struct SConvertScriptTypes<CP<CResource> >
 {
     typedef CP<CResource> NativeType;
@@ -66,15 +84,19 @@ struct SConvertScriptTypes<CP<CResource> >
 
     static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
     {
-        // todo: add this method later
+        CScriptObject* obj = gScriptObjectManager->LookupObject(in.UID);
+        if (obj != NULL && obj->GetType() == SO_RESOURCE)
+        {
+            out = ((CScriptObjectResource*)obj)->GetResource();
+            return;
+        }
+
         out = NULL;
     }
 
     static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
     {
-        DebugLog("attempting to convert 0x%08x to vm object\n", in.GetRef());
         out.UID = gScriptObjectManager->RegisterResource(in).UID;
-        DebugLog("uid is %d\n", out.UID);
     }
 };
 

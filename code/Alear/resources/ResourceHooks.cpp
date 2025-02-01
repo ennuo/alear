@@ -5,6 +5,7 @@
 #include "customization/PoppetStyles.h"
 
 #include "AlearSR.h"
+#include "AlearHooks.h"
 
 #include <Serialise.h>
 #include <Variable.h>
@@ -13,7 +14,16 @@
 #include <ResourceDescriptor.h>
 #include <ResourceSyncedProfile.h>
 #include <ResourceLocalProfile.h>
+#include <ResourceBigProfile.h>
+#include <ResourceMaterial.h>
+#include <ResourceSystem.h>
 #include <ResourceGfxMaterial.h>
+#include <ResourceGFXTexture.h>
+#include <PartScriptName.h>
+#include <PartPhysicsWorld.h>
+#include <PartGeneratedMesh.h>
+#include <ResourceGame.h>
+#include <ResourceLevel.h>
 #include <hook.h>
 #include <ppcasm.h>
 
@@ -34,9 +44,28 @@ extern "C" uintptr_t _reflectresource_extra_fdepend_rtype_synced_profile;
 extern "C" uintptr_t _initextradata_localprofile;
 extern "C" uintptr_t _initextradata_syncedprofile;
 
+extern "C" uintptr_t _radial_explosion_hook;
+extern "C" uintptr_t _explosion_particle_and_sound_hook;
+
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
 #define ADD_ARRAY_ELEMENT(name, index) ret = Add(r, d.name[index], #name "_" #index); if (ret != REFLECT_OK) return ret;
 
+void RMaterial::InitializeExtraData()
+{
+    ExplosionIgnoresPlayer = false;
+    DisableExplosionCSG = false;
+    DisableExplosionParticles = false;
+    new (&ScorchMarkTexture) CP<RTexture>();
+
+    // remember to deallocate this at some point
+    new (&ExplosionSound) MMString<char>();
+}
+
+void RMaterial::DestroyExtraData()
+{
+    ScorchMarkTexture.~CP();
+    ExplosionSound.~MMString();
+}
 
 void RPlan::InitializeExtraData()
 {
@@ -61,7 +90,7 @@ void RLocalProfile::InitializeExtraData()
     for (int i = 0; i < MAX_USER_EMOTES; ++i)
         new (&Emotes[i]) CResourceDescriptor<RPlan>();
     new (&SelectedAnimationStyle) CResourceDescriptor<RPlan>(CGUID(2507392567u));
-    new (&LevelTemplates) CVector<CInventoryTemplateLevel>();
+    new (&PinsAwarded) CPinsAwarded();
 }
 
 void RSyncedProfile::InitializeExtraData()
@@ -70,6 +99,24 @@ void RSyncedProfile::InitializeExtraData()
     StyleID = STYLEID_DEFAULT;
     new (&AnimationStyle) MMString<char>();
     AnimationStyle = "sackboy";
+}
+
+template <typename R>
+ReflectReturn OnSerializeExtraData(R& r, RMaterial& d)
+{
+    ReflectReturn ret = REFLECT_OK;
+
+    if (r.GetSaving()) return REFLECT_NOT_IMPLEMENTED;
+    if (r.GetCustomVersion() >= ALEAR_EXPLOSIVES)
+    {
+        ADD(ExplosionIgnoresPlayer);
+        ADD(DisableExplosionCSG);
+        ADD(DisableExplosionParticles);
+        ADD(ScorchMarkTexture);
+        ADD(ExplosionSound);
+    }
+
+    return ret;
 }
 
 template <typename R>
@@ -175,6 +222,11 @@ ReflectReturn OnSerializeExtraData(R& r, RLocalProfile& d)
     {
         ADD(SelectedAnimationStyle);
     }
+
+    if (r.GetCustomVersion() >= ALEAR_PINS)
+    {
+        ADD(PinsAwarded);
+    }
     
     return ret;
 }
@@ -183,7 +235,7 @@ ReflectReturn OnSerializeExtraData(R& r, RLocalProfile& d)
 
 bool ResourceHasCustomData(EResourceType type)
 {
-    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL;
+    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL || type == RTYPE_MATERIAL;
 }
 
 template <typename R>
@@ -191,53 +243,72 @@ ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
 {
     if (!ResourceHasCustomData(resource->GetResourceType())) return REFLECT_OK;
 
-    if (r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES) r.Align(0x10);
-    
-    ReflectReturn ret = REFLECT_OK;
-    if (r.GetCustomVersion() >= ALEAR_TEST_MARKER)
+    if (r.GetLoading())
     {
-        u32 test_marker = 0x414c5352;
-        if ((ret = Reflect(r, test_marker)) != REFLECT_OK) return ret;
-
-        if (test_marker != 0x414c5352) return REFLECT_NOT_IMPLEMENTED;
-    }
-
-    bool is_compressed = r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES;
-    if (r.GetCustomVersion() >= ALEAR_COMPRESSED_RESOURCES)
-    {
-        u16 version = r.GetCustomVersion();
-        u8 compression_flags = COMPRESS_INTS | COMPRESS_MATRICES;
-        u32 branch_id = 0;
-        u32 branch_version = 0;
-
-        if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
-        if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
-        if ((ret = Reflect(r, is_compressed)) != REFLECT_OK) return ret;
-        if ((ret = Reflect(r, branch_id)) != REFLECT_OK) return ret;
-        if ((ret = Reflect(r, branch_version)) != REFLECT_OK) return ret;
-
-        if (is_compressed)
+        switch (resource->GetResourceType())
         {
-            if (r.GetLoading()) ret = r.LoadCompressionData(NULL);
-            else if (r.GetSaving()) ret = r.StartCompressing();
-
-            if (ret != REFLECT_OK) return ret;
+            case RTYPE_GFXMATERIAL:
+            {
+                ((RGfxMaterial*)resource)->InitializeExtraData();
+                break;
+            }
+            case RTYPE_MATERIAL:
+            {
+                ((RMaterial*)resource)->InitializeExtraData();
+                break;
+            }
         }
+    }
 
-        r.SetCompressionFlags(compression_flags);
-    }
-    else if (r.GetCustomVersion() >= ALEAR_COMPRESSION_FLAGS)
+    // if there's nothing left to serialize, obviously doesn't have custom data
+    if (r.GetLoading() && r.GetVecLeft() == 0) return REFLECT_OK;
+
+    ReflectReturn ret;
+    if ((ret = r.Align(0x10)) != REFLECT_OK) return ret;
+
+    u32 test_marker = 0x414c5352;
+    if ((ret = Reflect(r, test_marker)) != REFLECT_OK) return ret;
+
+    if (test_marker != 0x414c5352) return REFLECT_NOT_IMPLEMENTED;
+
+    bool is_compressed = true;
+    u16 version = r.GetResourceVersion();
+    u8 compression_flags = COMPRESS_INTS | COMPRESS_MATRICES;
+    u32 branch_id = 0x4c425031;
+    u32 branch_version = r.GetCustomVersion();
+
+    if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
+    if (version >= ALEAR_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+
+    r.SetResourceVersion(version);
+
+    if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, is_compressed)) != REFLECT_OK) return ret;
+
+    if ((ret = Reflect(r, branch_id)) != REFLECT_OK) return ret;
+    if (branch_id != 0x4c425031) return REFLECT_FORMAT_TOO_NEW;
+
+    if ((ret = Reflect(r, branch_version)) != REFLECT_OK) return ret;
+    if (branch_version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+    
+    r.SetCustomVersion(branch_version);
+
+    if (is_compressed)
     {
-        u32 compression_flags = COMPRESS_INTS | COMPRESS_MATRICES;
-        if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
-        r.SetCompressionFlags((u8)compression_flags);
+        if (r.GetLoading()) ret = r.LoadCompressionData(NULL);
+        else if (r.GetSaving()) ret = r.StartCompressing();
+
+        if (ret != REFLECT_OK) return ret;
     }
+
+    r.SetCompressionFlags(compression_flags);
 
     switch (resource->GetResourceType())
     {
         case RTYPE_SYNCED_PROFILE: ret = OnSerializeExtraData(r, *((RSyncedProfile*)resource)); break;
         case RTYPE_LOCAL_PROFILE: ret = OnSerializeExtraData(r, *((RLocalProfile*)resource)); break;
         case RTYPE_GFXMATERIAL: ret = OnSerializeExtraData(r, *((RGfxMaterial*)resource)); break;
+        case RTYPE_MATERIAL: ret = OnSerializeExtraData(r, *((RMaterial*)resource));
     }
     
     if (is_compressed)
@@ -411,19 +482,20 @@ void AttachCustomRevisionHooks()
 {
     // Store compression version in custom revision field of CReflectionLoadVector,
     // rather than just discarding it.
-    MH_Poke32(0x0058d5c8, ADDI(4, 23, 68));
+    // MH_Poke32(0x0058d5c8, ADDI(4, 23, 68));
 
     // Increase the size of certain resources to account for modifications
     MH_Poke32(0x00089260, LI(4, sizeof(RSyncedProfile)));
     MH_Poke32(0x00089590, LI(4, sizeof(RLocalProfile)));
     MH_Poke32(0x00088e44, LI(4, sizeof(RGfxMaterial)));
+    MH_Poke32(0x00089000, LI(4, sizeof(RMaterial)));
 
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);
     MH_PokeBranch(0x000af44c, &_initextradata_syncedprofile);
 
     // Make sure to write our latest custom revision
-    MH_Poke32(0x0058ca18, LI(0, ALEAR_LATEST_PLUS_ONE - 1));
+    // MH_Poke32(0x0058ca18, LI(0, ALEAR_LATEST_PLUS_ONE - 1));
 }
 
 ESerialisationType GetPreferredSerialisationType(EResourceType type)
@@ -457,6 +529,255 @@ ESerialisationType GetPreferredSerialisationType(EResourceType type)
     }
 }
 
+class CScopedPart {
+public:
+    inline CScopedPart(EPartType part) : Thing(NULL), Part(part) {}
+    inline ~CScopedPart()
+    {
+        if (Thing != NULL)
+            Thing->RemovePart(Part);
+    }
+    inline void SetThing(CThing* thing) { Thing = thing; }
+private:
+    CThing* Thing;
+    EPartType Part;
+};
+
+#include <cell/DebugLog.h>
+
+
+// have to include the thing as an argument since the fucking
+// part hasnt been initialized
+ReflectReturn PScriptName::LoadAlearData(CThing* thing)
+{
+    ReflectReturn ret = REFLECT_OK;
+    CScopedPart _scoped_part(PART_TYPE_SCRIPT);
+
+    const char* s = Name.c_str();
+    int name_len = StringLength(s);
+    int buf_len = Name.size();
+
+    // Only delete the part on exit of this function if the
+    // script doesn't actually have a name.
+    if (name_len == 0) _scoped_part.SetThing(thing);
+
+    // Custom data is stored after the null terminator,
+    // if the length of the string is the same length
+    // as the allocated buffer, there's nothing saved.
+    if (name_len == buf_len) return ret;
+
+    // Pre-emptively re-size the string buffer to remove
+    // the extra data, this doesn't actually re-allocate the string,
+    // so it's fine to do this before we process anything.
+    Name.resize(name_len, '\0');
+
+    // If there's not enough data for the header, just assume
+    // it's some script with a malformed name.
+    // 17 is the length of the header + the null byte of the script name
+    if (name_len + 17 >= buf_len) return ret;
+
+    int data_len = buf_len - name_len;
+    CParasiticVector<char> vec((char*)(s + name_len + 1), data_len, data_len);
+    CReflectionLoadVector r(&vec);
+
+    DebugLog("addr: %08x, len: %08x\n", vec.begin(), vec.size());
+
+    u32 magic, branch, version, flags;
+    if ((ret = Reflect(r, magic)) != REFLECT_OK) return ret;
+    if (magic != 0x414c5344 /* ALSD */) return REFLECT_INVALID;
+
+    if ((ret = Reflect(r, branch)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, flags)) != REFLECT_OK) return ret;
+
+    r.SetCompressionFlags(flags & 7);
+
+    if (version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+
+    while (r.GetVecLeft() > 0)
+    {
+        u32 chunk;
+        if ((ret = r.ReadWrite(&chunk, sizeof(u32))) != REFLECT_OK) return ret;
+
+        DebugLog("processing chunk %08x\n", chunk);
+
+        switch (chunk)
+        {
+            case 0x4746584D: /* GFXM */
+            {
+                PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+                if (mesh == NULL) return REFLECT_UNINITIALISED;
+
+                if (version >= ALEAR_PARAMETER_ANIMATIONS)
+                {
+                    if ((ret = Reflect(r, mesh->TextureAnimationSpeed)) != REFLECT_OK) return ret;
+                    if ((ret = Reflect(r, mesh->TextureAnimationSpeedOff)) != REFLECT_OK) return ret;
+                }
+
+                DebugLog("gfxm: <%f, %f>\n", mesh->TextureAnimationSpeed, mesh->TextureAnimationSpeedOff);
+                break;
+            }
+            // case 0x4c414e44: /* LAND */
+            // {
+            //     PShape* shape = thing->GetPShape();
+            //     if (shape == NULL) return REFLECT_UNINITIALISED;
+
+            //     if (version >= ALEAR_SHAPE_BRIGHTNESS)
+            //     {
+            //         if ((ret = Reflect(r, shape->GetBrightness())) != REFLECT_OK) return ret;
+            //         if ((ret = Reflect(r, shape->GetBrightnessOff())) != REFLECT_OK) return ret;
+
+            //         v4 cached_original_color = shape->EditorColour;
+            //         if ((ret = Reflect(r, cached_original_color)) != REFLECT_OK) return ret;
+            //     }
+
+            //     DebugLog("land: <%f, %f>\n", shape->GetBrightness(), shape->GetBrightnessOff());
+            //     break;
+            // }
+            default:
+            {
+                return REFLECT_NOT_IMPLEMENTED;
+            }
+        }
+
+        DebugLog("parsing next chunk... %d bytes remain\n", r.GetVecLeft());
+    }
+
+    return REFLECT_OK;
+}
+
+ReflectReturn PScriptName::WriteAlearData()
+{
+    ReflectReturn ret;
+    ByteArray vec;
+    CReflectionSaveVector r(&vec, 7);
+    CThing* thing = GetThing();
+
+
+    u32 magic = 0x414C5344, branch = 0x4c425031, version = ALEAR_BR1_LATEST_PLUS_ONE - 1, flags = COMPRESS_INTS;
+    
+    if ((ret = Reflect(r, magic)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, branch)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
+    if ((ret = Reflect(r, flags)) != REFLECT_OK) return ret;
+
+    r.SetCompressionFlags(flags & 7);
+
+    PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+    if (mesh != NULL && mesh->HasCustomData())
+    {
+        u32 magic = 0x4746584D;
+
+        // dont want to use compression for this
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+        if ((ret = Reflect(r, mesh->TextureAnimationSpeed)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, mesh->TextureAnimationSpeedOff)) != REFLECT_OK) return ret;
+    }
+
+    // PShape* shape = thing->GetPShape();
+    // if (shape != NULL && shape->HasCustomData())
+    // {
+    //     u32 magic = 0x4c414e44;
+
+    //     if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+    //     if ((ret = Reflect(r, shape->GetBrightness())) != REFLECT_OK) return ret;
+    //     if ((ret = Reflect(r, shape->GetBrightnessOff())) != REFLECT_OK) return ret;
+
+    //     v4 cached_original_color = shape->EditorColour;
+    //     if ((ret = Reflect(r, cached_original_color)) != REFLECT_OK) return ret;
+    // }
+
+    int name_len = StringLength(Name.c_str());
+
+    // remove any extra data from the string if it exists
+    if (name_len != Name.size()) Name.resize(name_len, '\0');
+
+    // Append our own data after the null terminator of the script name.
+    Name.resize(name_len + vec.size(), '\0');
+    memcpy(Name.begin() + name_len + 1, vec.begin(), vec.size());
+
+    return REFLECT_OK;
+}
+
+bool CThing::HasCustomPartData()
+{
+    PGeneratedMesh* mesh = GetPGeneratedMesh();
+    if (mesh != NULL && mesh->HasCustomData()) return true;
+    // PShape* shape = GetPShape();
+    // if (shape != NULL && shape->HasCustomData()) return true;
+
+    return false;
+}
+
+void CThing::OnStartSave()
+{
+    // PWorld* world = GetPWorld();
+    // if (world != NULL)
+    // {
+    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    //     {
+    //         CThing* thing = *it;
+    //         if (thing == this || thing == NULL) continue;
+    //         thing->OnStartSave();
+    //     }
+    // }
+
+    if (!HasCustomPartData()) return;
+    AddPart(PART_TYPE_SCRIPT_NAME);
+    GetPScriptName()->WriteAlearData();
+}
+
+void CThing::OnFinishSave()
+{
+    // PWorld* world = GetPWorld();
+    // if (world != NULL)
+    // {
+    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    //     {
+    //         CThing* thing = *it;
+    //         if (thing == this || thing == NULL) continue;
+    //         thing->OnFinishSave();
+    //     }
+    // }
+
+    PScriptName* part = GetPScriptName();
+    if (part != NULL)
+    {
+        const char* name = part->Name.c_str();
+        int len = StringLength(name);
+
+        if (len == 0) RemovePart(PART_TYPE_SCRIPT_NAME);
+        else if (len != part->Name.size())
+            part->Name.resize(len, '\0');
+    }
+}
+
+ReflectReturn CThing::OnLoad()
+{
+    // temp temp remove this!!!
+    // PShape* shape = GetPShape();
+    // if (shape != NULL)
+    // {
+    //     float& brightness = shape->GetBrightness();
+    //     float& brightness_off = shape->GetBrightnessOff();
+
+    //     brightness = 1.0f;
+    //     brightness_off = 0.0f;
+    // }
+
+    PScriptName* part = GetPScriptName();
+    if (part != NULL) return part->LoadAlearData(this);
+    return REFLECT_OK;
+}
+
+void PGeneratedMesh::InitializeExtraData()
+{
+    TextureAnimationSpeed = 1.0f;
+    TextureAnimationSpeedOff = 0.0f;
+}
+
 void InitResourceHooks()
 {
     AttachResourceAllocationHooks();
@@ -469,6 +790,20 @@ void InitResourceHooks()
     MH_PokeBranch(0x003c76bc, &_reflectextradata_load);
     MH_PokeBranch(0x003c7aac, &_reflectextradata_save);
 
+    MH_PokeBranch(0x00211730, &_radial_explosion_hook);
+    MH_PokeBranch(0x00211760, &_explosion_particle_and_sound_hook);
+
     MH_InitHook((void*)0x00087850, (void*)&GetPreferredSerialisationType);
     // MH_PokeBranch(0x00087850, &_get_serialisationtype_hook);
+
+    // Switch the initialization of some fields in RGfxMaterial so our
+    // booleans in the padded space get zero-initialized.
+    MH_Poke32(0x000b4cd8, 0x93fd00e8 /* stw %r31, 0xe8(%r29) */);
+    MH_Poke32(0x000b4cf4, 0x981d00e9 /* stb %r0, 0xe9(%r29) */);
+
+    MH_PokeBranch(0x00717070, &_gmat_player_colour_hook);
+    MH_PokeBranch(0x00770954, &_on_reflect_load_thing_hook);
+    MH_PokeBranch(0x0076cf28, &_on_reflect_start_save_thing_hook);
+    MH_PokeBranch(0x0076cf34, &_on_reflect_finish_save_thing_hook);
+    MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
 }

@@ -4,6 +4,7 @@
 #include "vm/ScriptVariant.h"
 #include "vm/VMTypes.h"
 #include "vm/ScriptArguments.h"
+#include "vm/ScriptObject.h"
 #include "thing.h"
 
 namespace NVirtualMachine 

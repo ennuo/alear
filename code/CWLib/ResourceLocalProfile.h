@@ -5,6 +5,7 @@
 
 #include "ResourceDescriptor.h"
 #include "ResourceBaseProfile.h"
+#include "resources/ResourcePins.h"
 #include "SlotID.h"
 #include "InventoryView.h"
 #include "InventoryCollection.h"
@@ -14,18 +15,6 @@
 
 extern const u32 gUsedItemsCustomId;
 extern const u32 gEmotesCustomId;
-
-class CInventoryTemplateLevel {
-public:
-    inline CInventoryTemplateLevel() : Level(), DateAdded(), NameTranslationTag(), UserCreatedName(), Creator(INVALID_PLAYER_ID)
-    {}
-public:
-    CResourceDescriptor<RLevel> Level;
-    u64 DateAdded;
-    u32 NameTranslationTag;
-    MMString<tchar_t> UserCreatedName;
-    NetworkPlayerID Creator;
-};
 
 // 0x3b8
 class RLocalProfile : public CBaseProfile {
@@ -53,7 +42,7 @@ public:
     CVector<u32> HiddenCategories;
     CResourceDescriptor<RPlan> Emotes[MAX_USER_EMOTES];
     CResourceDescriptor<RPlan> SelectedAnimationStyle;
-    CVector<CInventoryTemplateLevel> LevelTemplates;
+    CPinsAwarded PinsAwarded;
 };
 
 

@@ -12,6 +12,10 @@
 #include "vm/ScriptInstance.h"
 #include "vm/InstanceLayout.h"
 
+#include <vm/ScriptArguments.h>
+
+class RScript;
+
 enum EScriptObjectType 
 {
     SO_NULL,
@@ -58,8 +62,11 @@ class CScriptObjectManager {
     typedef std::map<CResource*, unsigned int> ResourceMap;
 public:
     ScriptObjectUID RegisterStringA(const char* string);
+    ScriptObjectUID RegisterStringW(const wchar_t* string);
     ScriptObjectUID RegisterResource(CResource* res);
     CScriptObjectInstance* LookupInstance(ScriptObjectUID object_uid);
+    CScriptObject* LookupObject(u32 object_uid);
+    void AddRoot(CScriptObject* object);
 public:
     ObjectVec ScriptObjects;
     u32 NextScriptObjectID;
@@ -74,6 +81,8 @@ public:
 };
 
 class CScriptObject : public CReflectionVisitable {
+public:
+    inline CScriptObject() : CReflectionVisitable(), ObjectID(-1) {}
 public:
     virtual ~CScriptObject() {};
     virtual bool IsInstance() { return false; }
@@ -119,11 +128,29 @@ private:
 
 class CScriptObjectInstance : public CScriptObject {
 public:
+    CScriptObjectInstance(CP<RScript>& script);
+public:
     inline bool IsInstance() { return true; }
     inline EScriptObjectType GetType() { return SO_INSTANCE; }
     inline void Stream() {};
+public:
+    static CScriptObjectInstance* Create(CP<RScript>& script, PWorld* pworld, bool default_construct);
+public:
+    bool InvokeSync(PWorld* pworld, CSignature const& signature, CScriptArguments const& arguments, CScriptVariant* return_value);
+public:
+    inline CScriptInstance& GetScriptInstance() { return ScriptInstance; }
 protected:
     CScriptInstance ScriptInstance;
+};
+
+class CScriptObjectArray : public CScriptObject {
+    
+};
+
+template <typename T>
+class CScriptObjectArrayT : public CScriptObjectArray {
+private:
+    CRawVector<T> Data;
 };
 
 extern CScriptObjectManager* gScriptObjectManager;

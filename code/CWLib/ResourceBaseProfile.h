@@ -1,13 +1,32 @@
 #ifndef RESOURCE_BASE_PROFILE_H
 #define RESOURCE_BASE_PROFILE_H
 
+#include <printf.h>
+#include <map>
+#include <mem_stl_buckets.h>
+
 #include <vector.h>
 
+#include "Slot.h"
 #include "Resource.h"
 #include "ResourceDescriptor.h"
 #include "ResourcePlan.h"
 #include "InventoryItem.h"
 #include "StringLookupTable.h"
+
+class CInventoryTemplateLevel {
+public:
+    inline CInventoryTemplateLevel() : Level(), DateAdded(), NameTranslationTag(), UserCreatedName(), Creator(INVALID_PLAYER_ID)
+    {}
+public:
+    CResourceDescriptor<RLevel> Level;
+    u64 DateAdded;
+    u32 NameTranslationTag;
+    MMString<tchar_t> UserCreatedName;
+    NetworkPlayerID Creator;
+};
+
+typedef std::map<CSlotID,CSlot,std::less<CSlotID>,STLBucketAlloc<std::pair<CSlotID, CSlot> > > SlotMap;
 
 class CBaseProfile : public CResource {
 public:

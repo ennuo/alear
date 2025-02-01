@@ -22,9 +22,12 @@ bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
 
 void CPoppet::InitializeExtraData()
 {
-    DebugLog("\n\n\n\n\n\n\nALEAR MARKER !!! POOPY FARTY !!! INITING HIDDEN LIST\n\n\n\n");
-    
     new (&HiddenList) CVector<CThingPtr>();
+    StampMode = STAMP_DEFAULT;
+    CustomPoppetOffset = v2(0.0f);
+    CustomPoppetSize = v2(512.0f, 544.0f);
+    ShowTether = true;
+    HidePoppetGooey = false;
 }
 
 void CPoppet::DestroyExtraData()

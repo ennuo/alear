@@ -204,3 +204,121 @@ _custom_event_projects_hook:
 
     ba 0x001a4acc
 
+.global _run_frame_hook
+_run_frame_hook:
+    stw %r2, 0x2c(%r1)
+    lis %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@h      
+    ori %r2, %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb
+    lwz %r2, 0x2c(%r1)
+
+    cmpwi %cr7, %r3, 0x0
+    beq %cr7, ExitFrameHook
+    
+    # continue executing frame
+    ba 0x000b1328
+
+ExitFrameHook:
+    # branch to function epilogue
+    li %r0, 0xe0
+    ba 0x000b1990
+
+.global _base_profile_load_hook
+_base_profile_load_hook:
+    std %r2, 0x28(%r1)
+    lis %r2, _Z25OnBaseProfileLoadFinishedP12CBaseProfile@h      
+    ori %r2, %r2, _Z25OnBaseProfileLoadFinishedP12CBaseProfile@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z25OnBaseProfileLoadFinishedP12CBaseProfile
+    ld %r2, 0x28(%r1)
+
+    mr %r3, %r31
+    addi %r8, %r3, 0x74
+    lwz %r0, 0x4(%r8)
+    ba 0x000b2694
+
+.global _gmat_player_colour_hook
+_gmat_player_colour_hook:
+    lwz %r0, 0x0(%r29)
+    cmpwi %cr7, %r0, 2
+    bne %cr7, NoUserDefinedColour
+
+    li %r0, 1
+    stb %r0, 0xea(%r28)
+NoUserDefinedColour:
+    addi %r29, %r29, 0x2c
+    ba 0x00717074
+
+
+.global _on_reflect_load_thing_hook
+_on_reflect_load_thing_hook:
+    mr %r3, %r26
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN6CThing6OnLoadEv@h      
+    ori %r2, %r2, _ZN6CThing6OnLoadEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN6CThing6OnLoadEv
+    ld %r2, 0x28(%r1)
+
+    ba 0x00770958
+
+.global _on_reflect_start_save_thing_hook
+_on_reflect_start_save_thing_hook:
+    mr %r3, %r28
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN6CThing11OnStartSaveEv@h      
+    ori %r2, %r2, _ZN6CThing11OnStartSaveEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN6CThing11OnStartSaveEv
+    ld %r2, 0x28(%r1)
+
+    mr %r3, %r31
+    addi %r4, %r28, 0xc
+    rldicl %r4, %r4, 0x0, 0x20
+    lwz %r31, 0x14(%r27)
+    ba 0x0076cf30
+
+.global _on_reflect_finish_save_thing_hook
+_on_reflect_finish_save_thing_hook:
+    mr %r26, %r3
+    mr %r3, %r28
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN6CThing12OnFinishSaveEv@h      
+    ori %r2, %r2, _ZN6CThing12OnFinishSaveEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN6CThing12OnFinishSaveEv
+    ld %r2, 0x28(%r1)
+
+    mr %r3, %r26
+    ba 0x0076cf38
+
+.global _initextradata_part_generatedmesh
+_initextradata_part_generatedmesh:
+    mr %r3, %r28
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN14PGeneratedMesh19InitializeExtraDataEv@h      
+    ori %r2, %r2, _ZN14PGeneratedMesh19InitializeExtraDataEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN14PGeneratedMesh19InitializeExtraDataEv
+    ld %r2, 0x28(%r1)
+
+    ld %r0, 0xb0(%r1)
+    ba 0x00031f10
+
+.global _custom_gooey_network_action_hook
+_custom_gooey_network_action_hook:
+    mr %r3, %r31
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z23DoNetworkActionResponseR19CMessageGooeyAction@h      
+    ori %r2, %r2, _Z23DoNetworkActionResponseR19CMessageGooeyAction@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z23DoNetworkActionResponseR19CMessageGooeyAction
+    ld %r2, 0x28(%r1)
+
+    ba 0x004372a8

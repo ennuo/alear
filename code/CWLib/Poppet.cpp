@@ -12,6 +12,18 @@ MH_DefineFunc(CPoppet_GetThingToIgnore, 0x00352f1c, TOC1, CThing*, CPoppet*);
 MH_DefineFunc(CPoppet_SendPoppetDangerMessage, 0x0033fc1c, TOC1, void, CPoppet*, ELethalType);
 MH_DefineFunc(CPoppet_PushMode, 0x0034dd08, TOC1, void, CPoppet*, EPoppetMode, EPoppetSubMode);
 MH_DefineFunc(CPoppet_SendPoppetMessage, 0x0033fee0, TOC1, void, CPoppet*, EPoppetMessageType);
+MH_DefineFunc(CPoppet_RenderUI, 0x0034584c, TOC1, void, CPoppet*);
+MH_DefineFunc(CPoppet_SetDangerType, 0x003482e0, TOC1, void, CPoppet*, CThing*);
+
+void CPoppet::SetDangerType(CThing* thing)
+{
+    CPoppet_SetDangerType(this, thing);
+}
+
+void CPoppet::RenderUI()
+{
+    CPoppet_RenderUI(this);
+}
 
 v2 CPoppet::GetBubbleSize()
 {
@@ -66,4 +78,10 @@ void CPoppet::PushMode(EPoppetMode mode, EPoppetSubMode submode)
 void CPoppet::SendPoppetMessage(EPoppetMessageType message)
 {
     return CPoppet_SendPoppetMessage(this, message);
+}
+
+MH_DefineFunc(CPoppetInventory_TakePlan, 0x0038c590, TOC1, void, CPoppetInventory*, CVector<CThingPtr> const&);
+void CPoppetInventory::TakePlan(CVector<CThingPtr> const& things)
+{
+    CPoppetInventory_TakePlan(this, things);
 }

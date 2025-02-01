@@ -64,8 +64,11 @@ static EButtonPrompts gButtonPrompts[] =
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_SCUBA_GEAR
     BP_R1, // BUTTON_CONFIG_FORCE_BLAST
     BP_LAST, // BUTTON_CONFIG_POPPET_TOGGLE_VISIBILITY
-    BP_L2, // BUTTON_CONFIG_POPPET_HIDE,
-    BP_L1 // BUTTON_CONFIG_POPPET_SHOW
+    BP_LAST, // BUTTON_CONFIG_POPPET_HIDE,
+    BP_LAST, // BUTTON_CONFIG_POPPET_SHOW
+    BP_L3, // BUTTON_CONFIG_POPPET_SWITCH_STAMP_MODE,
+    BP_R3, // BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI
+    BP_L3, // BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI
 };
 
 bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
@@ -79,6 +82,12 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
             return (buttons & PAD_BUTTON_L1) != 0;
         case BUTTON_CONFIG_FORCE_BLAST:
             return (buttons & PAD_BUTTON_R1) != 0;
+        case BUTTON_CONFIG_POPPET_SWITCH_STAMP_MODE:
+            return (buttons & PAD_BUTTON_L3) != 0;
+        case BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI:
+            return (buttons & PAD_BUTTON_R3) != 0;
+        case BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI:
+            return (buttons & PAD_BUTTON_L3) != 0;
         default: return false;
     }
 }
@@ -133,6 +142,7 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_POPPET_TWEAK:
         case BUTTON_CONFIG_POPPET_CAMERA_TWEAK_ZOOM_IN:
         case BUTTON_CONFIG_POPPET_CAMERA_TWEAK_ZOOM_OUT:
+        case BUTTON_CONFIG_POPPET_SWITCH_STAMP_MODE:
             return INPUT_POPPET;
 
         case BUTTON_CONFIG_PAUSE_ENTER:
@@ -147,6 +157,8 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_POPPET_TWEAK_UI:
         case BUTTON_CONFIG_POPPET_DELETE_UI:
         case BUTTON_CONFIG_POPPET_OPEN_UI:
+        case BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI:
+        case BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI:
             return INPUT_POPPET_UI;
 
         case BUTTON_CONFIG_POPPET_UNDO:

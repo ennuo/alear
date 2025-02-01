@@ -12,7 +12,7 @@ const u8 COMPRESS_INTS = 0x1; // file.h: 10
 const u8 COMPRESS_VECTORS = 0x2; // file.h: 11
 const u8 COMPRESS_MATRICES = 0x4; // file.h: 12
 
-const u8 DEFAULT_COMPRESS_FLAGS = 0x7; // file.h: 18
+const u8 DEFAULT_COMPRESS_FLAGS = 0x0; // file.h: 18
 
 class PWorld;
 
@@ -66,7 +66,12 @@ public:
     ReflectReturn LoadCompressionData(u32* totalsize);
     ReflectReturn CleanupDecompression();
 public:
-    inline u16 GetCustomVersion() { return AlearResourceRevision; }
+    inline u16 GetResourceVersion() { return AlearResourceVersion; }
+    inline u32 GetCustomVersion() { return AlearCustomVersion; }
+
+    inline void SetResourceVersion(u16 version) { AlearResourceVersion = version; }
+    inline void SetCustomVersion(u32 version) { AlearCustomVersion = version; }
+    
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
     inline u8 GetCompressionFlags() { return CompressionFlags; }
     inline void SetCompressionFlags(u8 flags) { CompressionFlags = flags; }
@@ -84,14 +89,17 @@ public:
     inline ReflectReturn StartCompressing() { return REFLECT_NOT_IMPLEMENTED; }
     inline ReflectReturn FinishCompressing() { return REFLECT_NOT_IMPLEMENTED; }
 
-    inline void Align(int a)
+    inline ReflectReturn Align(int a)
     {
-        LoadPos = (a + LoadPos) -1 & -a;
+        u32 new_pos = (a + LoadPos) - 1 & -a;
+        if (new_pos >= Vec->size()) return REFLECT_EXCESSIVE_DATA;
+        LoadPos = new_pos;
+        return REFLECT_OK;
     }
 
 protected:
     CBaseVector<char>* Vec;
-    u16 AlearResourceRevision; // padding lets me just slip this in, gets pulled from the CompressionVersion field
+    u32 AlearCustomVersion; // padding lets me just slip this in, gets pulled from the CompressionVersion field
     u64 Allocated;
     CRawVector<char> DecryptedVec;
     SRevision Revision;
@@ -104,15 +112,23 @@ private:
     u32 JobsTag;
     bool SPUDecompressAvailable;
     u8 CompressionFlags;
+    u16 AlearResourceVersion;
 };
 
 class CReflectionSaveVector : public CReflectionBase, public CReflectionVisitSave { // file.h: 259
+public:
+    CReflectionSaveVector(ByteArray* vec, u32 compression_level);
 public:
     ReflectReturn ReadWrite(void* d, int size);
     ReflectReturn StartCompressing();
     ReflectReturn FinishCompressing();
 public:
-    inline u16 GetCustomVersion() { return ALEAR_LATEST_PLUS_ONE - 1; }
+    inline u16 GetResourceVersion() { return ALEAR_LATEST_PLUS_ONE - 1;}
+    inline u32 GetCustomVersion() { return ALEAR_BR1_LATEST_PLUS_ONE - 1; }
+
+    inline void SetResourceVersion(u16 version) {}
+    inline void SetCustomVersion(u32 version) {}
+
     inline bool GetCompressInts() { return (CompressionFlags & COMPRESS_INTS) != 0; }
     inline u8 GetCompressionFlags() { return CompressionFlags; }
     inline void SetCompressionFlags(u8 flags) { CompressionFlags = flags; }
@@ -125,11 +141,12 @@ public:
     inline ReflectReturn LoadCompressionData(u32* totalsize) { return REFLECT_NOT_IMPLEMENTED; }
     inline u32 GetVecLeft() { return 0; }
     
-    inline void Align(int a)
+    inline ReflectReturn Align(int a)
     {
         u32 offset = Vec->size();
         Vec->try_resize((a + Vec->size()) -1 & -a);
         memset(Vec->begin() + offset, 0, Vec->size() - offset);
+        return REFLECT_OK;
     }
 
 private:

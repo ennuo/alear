@@ -13,6 +13,7 @@
 #include "AlearStartMenu.h"
 #include "AlearShared.h"
 #include "AlearSync.h"
+#include "AlearNetworking.h"
 #include "FileWatcher.h"
 #include "PinSystem.h"
 #include "OutfitSystem.h"
@@ -25,6 +26,7 @@
 #include "cell/thread.h"
 #include "LoadingScreen.h"
 #include <Serialise.h>
+#include <Explode.h>
 
 #include "RPCS3.h"
 #include "ppcasm.h"
@@ -35,6 +37,8 @@
 
 
 extern "C" void _gfxbind_hook_naked();
+extern void InitGooeyNetworkHooks();
+extern bool InitTweakSettings();
 
 bool AlearCheckPatch();
 bool AlearEpilogue()
@@ -50,6 +54,7 @@ bool AlearEpilogue()
     }
 
     LoadCursorSprites();
+    LoadRecordingShaders();
     
     return true;
 }
@@ -67,6 +72,7 @@ CInitStep gAlearInitSteps[] =
     { "Alear File Watcher", NULL, InitFileWatcher, CloseFileWatcher, NULL, false, NULL },
     { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
     { "Outfit Lists", NULL, LoadOutfits, NULL, NULL, false, NULL },
+    { "Alear Gooey Network Extensions", NULL, InitTweakSettings, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     #ifdef __SM64__
     { "Super Mario 64", NULL, NULL, CloseMarioLib, InitMarioLib, false, NULL },
@@ -265,11 +271,13 @@ void AlearStartup()
     InitSharedHooks();
     InitLogicSystemHooks();
     MH_InitHook((void*)0x0057d548, (void*)&AlearSetupDatabase);
+    MH_InitHook((void*)0x00211510, (void*)&GetExplosionInfo);
     MH_Poke32(0x000997c8, B(&_gfxbind_hook_naked, 0x000997c8));
     AlearInitVMHook();
     AlearInitPortalHook();
     InitStyleHooks();
     InitResourceHooks();
+    InitGooeyNetworkHooks();
     AlearInitCreatureHook();
     AlearInitConf();
     InitPodStyles();
@@ -278,7 +286,8 @@ void AlearStartup()
     InitOutfitHooks();
     InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
-
+    AttachNetworkingHooks();
+    
     MH_Poke32(0x0001da24, 0x39200001);
     
 

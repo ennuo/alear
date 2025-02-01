@@ -7,7 +7,7 @@ typedef enum ECameraType {
     E_SPEECH_BUBBLE=2
 } ECameraType;
 
-typedef enum EGlobalSettingsType {
+enum EGlobalSettingsType {
     GLOBAL_WATER_SETTINGS=0,
     GLOBAL_GRAVITY_SETTINGS=1,
     GLOBAL_WATER_WAVE_MAGNITUDE_SETTINGS=2,
@@ -16,7 +16,7 @@ typedef enum EGlobalSettingsType {
     GLOBAL_LIGHT_SETTINGS=5,
     GLOBAL_WATER_BITS=6,
     GLOBAL_SETTINGS_COUNT=7
-} EGlobalSettingsType;
+};
 
 typedef enum EInventoryObjectSubType {
     E_SUBTYPE_MADE_BY_ME=536870912u,
@@ -220,6 +220,7 @@ typedef enum EPoppetSubMode {
     // custom
     SUBMODE_EMOTES,
     SUBMODE_EYEDROPPER,
+    SUBMODE_CANVAS,
     
     SUBMODE_STICKER_CUTTER = 44,
     SUBMODE_UNPHYSICS = 48,
@@ -289,9 +290,15 @@ typedef enum EToolType {
     TOOL_EXPLOSION,
     TOOL_GENEALOGY,
     TOOL_METADATA,
-    
     TOOL_EYEDROPPER,
-    
+
+    TOOL_SHAPE_SPIKE,
+    TOOL_SHAPE_DROWNED,
+    TOOL_SHAPE_CRUSH,
+
+    TOOL_DOT_TO_DOT,
+    TOOL_UV_EDIT,
+    TOOL_GLUE,
     
     NUM_TOOL_TYPES
 

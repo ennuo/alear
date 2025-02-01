@@ -41,5 +41,27 @@ extern "C" uintptr_t _custom_poppet_message_hook;
 extern "C" uintptr_t _custom_pick_object_action_hook;
 
 extern "C" uintptr_t _popit_draw_cursor_hook;
+extern "C" uintptr_t _run_frame_hook;
+
+extern "C" uintptr_t _base_profile_load_hook;
+
+extern "C" uintptr_t _popit_render_ui_debug_hook;
+
+extern "C" uintptr_t _popit_attempt_tweak_hook;
+extern "C" uintptr_t _popit_stop_tweak_hook;
+
+extern "C" uintptr_t _gmat_player_colour_hook;
+
+extern "C" uintptr_t _on_reflect_load_thing_hook;
+extern "C" uintptr_t _on_reflect_start_save_thing_hook;
+extern "C" uintptr_t _on_reflect_finish_save_thing_hook;
+
+extern "C" uintptr_t _initextradata_part_generatedmesh;
+
+extern "C" uintptr_t _custom_gooey_network_action_hook;
+
+#define PORT_ALLOWED_TO_APPLY_SYNCED_UPDATES (0x000138f4)
+#define PORT_RGAME_RUN_FRAME (0x000b12a4)
+#define PORT_RGAME_SORT_PAD_INPUTS_INTO_YELLOW_HEADS (0x000a1204)
 
 #endif // ALEAR_HOOKS_H

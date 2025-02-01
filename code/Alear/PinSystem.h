@@ -15,6 +15,9 @@ private:
     bool Valid;
 };
 
+void UpdatePinOverlay();
+void RenderPinOverlay();
+
 void InitPinHooks();
 extern CGetPinsTask gPinsTask;
 

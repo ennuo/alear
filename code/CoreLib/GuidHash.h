@@ -28,6 +28,7 @@ public:
 	inline bool operator>(CGUID const& rhs) const { return guid > rhs.guid; }
 	inline bool operator>=(CGUID const& rhs) const { return guid >= rhs.guid; }
 
+	inline bool operator==(u32 rhs) const { return guid == rhs; }
 	inline bool operator==(int rhs) const { return guid == rhs; }
 };
 

@@ -96,9 +96,11 @@ void UpdateItemRequest()
     {
         SpawnCollectBubble(player_thing, plan);
         gItemRequest.SetResult(E_ITEM_ADDED);
+        DoOutfitCheck(player_thing, plan->GetGUID());
         return;
     }
 
+    DoOutfitCheck(player_thing, plan->GetGUID());
     gItemRequest.SetResult(E_ITEM_ALREADY_EXISTS);
 }
 

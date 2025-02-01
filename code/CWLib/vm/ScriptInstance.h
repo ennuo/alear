@@ -8,7 +8,10 @@
 #include "ResourceScript.h"
 
 class CScriptInstance {
-private:
+public:
+    inline CScriptInstance() : Script(), InstanceLayout(), MemberVariables() {}
+    inline CScriptInstance(CP<RScript>& script) : Script(script), InstanceLayout(), MemberVariables() {}
+public:
     CP<RScript> Script;
     CP<CInstanceLayout> InstanceLayout;
     CRawVector<unsigned char> MemberVariables;

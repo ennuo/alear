@@ -15,6 +15,74 @@
 
 #include <ResourceGFXTexture.h>
 #include <ResourceLocalProfile.h>
+#include <ResourceGame.h>
+
+#include <vm/VirtualMachine.h>
+
+u64 GetSectionUID(u64 page_uid, u32 section_id)
+{
+    return (u64)section_id * 10000ULL + page_uid;
+}
+
+u64 GetItemUID(u64 frame_id, u32 i)
+{
+    return (u64)i + frame_id + 1 | 0xbeefface00000000ull;
+}
+
+u64 GooeyIDFromScriptInt(int v)
+{
+    return (u64)v | 0xbeefface00000000ull;
+}
+
+u64 GetPageUID(u32 cache_id, u32 page_id)
+{
+    return GooeyIDFromScriptInt(page_id * 1000000ul + cache_id * 100000000ul + 201000000ul);
+}
+
+MH_DefineFunc(CPoppetGooey_DoTitleBox, 0x00380e00, TOC1, void, CPoppetChild*, tchar_t* title);
+u32 DoCustomInventoryPage(CPoppetChild* gooey, CInventoryCollection* current_cache, CInventoryView* page, v2 page_size, u32 page_number, u32 input_flags)
+{
+    CGooeyNodeManager* manager = *(CGooeyNodeManager**)((char*)gooey + 0x250);
+    CScriptObject* so_gooey = *(CScriptObject**)((char*)gooey + 0x24c);
+    CScriptObjectInstance* so_poppet = *(CScriptObjectInstance**)((char*)gooey + 0x238);
+
+    u32 res = 0;
+
+    if (!manager->StartFrame()) return res;
+
+    manager->SetFrameLayoutMode(LM_CENTERED, LM_JUSTIFY_START);
+    manager->SetFrameConstrainFocus(true);
+    manager->SetFrameBorders(16.0f, 24.0f, 16.0f, 24.0f);
+    manager->SetFrameSizing((float)page_size.getX(), (float)page_size.getY());
+    manager->SetFrameWhollyVisibleWithChildren();
+
+    CPoppetGooey_DoTitleBox(gooey, page->Descriptor.Title.c_str());
+
+    if (manager->StartFrameNamed(GetPageUID(current_cache->CollectionID, page_number)))
+    {
+        manager->SetFrameLayoutMode(LM_CENTERED, LM_JUSTIFY_START);
+        manager->SetFrameDefaultChildSpacing(16.0f, 16.0f);
+        manager->SetFrameHighlightStyle((EGooeyHighlightStyle)(GHS_ROUNDED_RECT | GHS_DROP_SHADOW));
+        manager->SetFrameBorders(16.0f, 8.0f, 16.0f, 8.0f);
+        manager->SetFrameConstrainFocus(true);
+
+        CSignature signature("UpdateGlobalUI__Q5Gooeyi");
+        PWorld* world = gGame->GetWorld();
+        CScriptArguments args;
+
+        CScriptVariant arg1(so_gooey);
+        CScriptVariant arg2(page->CustomID);
+
+        args.AppendArg(arg1);
+        args.AppendArg(arg2);
+        
+        so_poppet->InvokeSync(world, signature, args, NULL);
+
+        manager->EndFrame();
+    }
+
+    return manager->EndFrame(input_flags);
+}
 
 u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* item, v4 col, bool wide_icons, bool roundy_bg)
 {
@@ -85,21 +153,6 @@ struct SectionSettings {
     EGooeySizingType HighlightSizing;
     bool IsFirstSection;
 };
-
-u64 GetSectionUID(u64 page_uid, u32 section_id)
-{
-    return (u64)section_id * 10000ULL + page_uid;
-}
-
-u64 GetItemUID(u64 frame_id, u32 i)
-{
-    return (u64)i + frame_id + 1 | 0xbeefface00000000ull;
-}
-
-u64 GooeyIDFromScriptInt(int v)
-{
-    return (u64)v | 0xbeefface00000000ull;
-}
 
 struct EPoppetItemArgs {
     v2 size;
@@ -244,4 +297,9 @@ void CustomDoPoppetSection(
     }
 
     manager->EndFrame();
+}
+
+void AttachPoppetInterfaceExtensionHooks()
+{
+    MH_PokeHook(0x00382818, DoCustomInventoryPage);
 }

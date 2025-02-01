@@ -2,6 +2,7 @@
 #define RENDER_TARGET_H
 
 #include <cell/gcm.h>
+#include "gfxcore.h"
 
 class CRenderTarget {
 enum {
@@ -10,6 +11,12 @@ enum {
     FMT_ZBUF,
     FMT_B8
 };
+public:
+    static CGCMTextureState gLinear_Clamp;
+public:
+    u32 GetWidth();
+    u32 GetHeight();
+    void BindAsTexture(int texunit, CGCMTextureState* settings);
 public:
     CellGcmTexture Texture;
     u32 TileReg;
@@ -53,5 +60,6 @@ enum EPipelineRenderTargets {
 };
 
 extern CRenderTarget gPipelineRTs[PRT_LAST];
+extern CellGcmSurface gPipelineBindings[PRT_LAST];
 
 #endif // RENDER_TARGET_H

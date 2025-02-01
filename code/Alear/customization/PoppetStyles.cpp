@@ -109,7 +109,10 @@ v2 CustomGetBubbleSize(CPoppet* poppet)
 {
     EPoppetMode mode = poppet->GetMode();
     EPoppetSubMode submode = poppet->GetSubMode();
-
+    
+    if (submode == SUBMODE_CANVAS)
+        return poppet->CustomPoppetSize;
+    
     if (poppet->IsDocked())
     {
         float width = POPPET_DEFAULT_WIDTH;

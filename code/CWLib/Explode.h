@@ -10,10 +10,10 @@ public:
     inline ExplosionInfo()
     {
         memset(this, 0, sizeof(ExplosionInfo));
-        PlayerTriggerer = E_PLAYER_NUMBER_NONE;
+        ExplosionSound = "gameplay/explosives/explode";
     }
 public:
-    v2 Center;
+    v4 Center;
     float InnerRadius;
     float OuterRadius;
     float MinZ;
@@ -21,14 +21,20 @@ public:
     float MaxForce;
     float MaxVel;
     float MaxAngVel;
+
     bool IgnoreYellowHead;
-    EPlayerNumber PlayerTriggerer;
+    bool DisableExplosionCSG;
+    bool DisableExplosionParticles;
+    
+    const char* ExplosionSound;
 };
 
 // the actual function definition is really simple, but
 // dont feel like filling out the RMaterial structure right now,
 // so we're just going to use the function pointer.
-extern void (*GetExplosionInfo)(CThing* thing, ExplosionInfo& info);
+void GetExplosionInfo(CThing* thing, ExplosionInfo& info);
+const char* GetExplosionSound(CThing* thing);
+
 extern void (*ApplyRadialForce)(ExplosionInfo const& info);
 
 #endif // EXPLODE_H

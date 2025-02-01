@@ -117,6 +117,11 @@ bool FileExists(CFilePath& fp)
     return FileStat(fp, &modtime, &size);
 }
 
+bool FileResize(FileHandle h, u32 newsize)
+{
+	return cellFsFtruncate(h, newsize) == CELL_FS_OK;
+}
+
 char* FileLoadText(CFilePath& fp)
 {
 	FileHandle fd;

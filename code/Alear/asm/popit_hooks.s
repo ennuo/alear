@@ -105,3 +105,34 @@ _popit_draw_cursor_hook:
 
     ld %r2, 0x28(%r1)
     ba 0x003428d8
+
+.global _popit_render_ui_debug_hook
+_popit_render_ui_debug_hook:
+    lbz %r3, 0x1b30(%r30)
+    cmpwi %cr7, %r3, 0x0
+    beq %cr7, RenderPoppetUI
+    ba 0x00345aa8
+
+RenderPoppetUI:
+    mr %r3, %r31
+    ba 0x00345aa0
+
+.global _popit_attempt_tweak_hook
+_popit_attempt_tweak_hook:
+    mr %r3, %r4
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z15OnStartTweakingP6CThing@h      
+    ori %r2, %r2, _Z15OnStartTweakingP6CThing@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z15OnStartTweakingP6CThing
+    ld %r2, 0x28(%r1)
+
+    mr %r3, %r25
+    mr %r4, %r28
+    mr %r5, %r26
+
+    li %r30, 0x0
+    cmpwi %cr7, %r4, 0x0
+
+    ba 0x0034fcdc

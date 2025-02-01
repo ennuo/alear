@@ -9,7 +9,8 @@ ReflectReturn Reflect(R& r, CSlapMesh& d)
     ReflectReturn ret;
     ADD(Sound);
     ADD(GUID);
-    ADD(Strength);
+    ADD(HorizontalForce);
+    ADD(VerticalForce);
     ADD(LeftHand);
     ADD(RightHand);
     ADD(Kill);

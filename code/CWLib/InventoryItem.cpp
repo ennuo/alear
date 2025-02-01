@@ -10,49 +10,49 @@ UserCreatedName(), UserCreatedDescription(), EditorList(), EyetoyData(), Icon(),
 {
 }
 
-CInventoryItemDetails::CInventoryItemDetails(CInventoryItemDetails& rhs) : CDependencyWalkable(), HighlightSound(),
-LevelUnlockSlotID(), Colour(c32::White), UserCreatedName(), UserCreatedDescription(),
-EditorList(), EyetoyData(), Icon(), PhotoData()
-{
-    *this = rhs;
-}
+// CInventoryItemDetails::CInventoryItemDetails(CInventoryItemDetails& rhs) : CDependencyWalkable(), HighlightSound(),
+// LevelUnlockSlotID(), Colour(c32::White), UserCreatedName(), UserCreatedDescription(),
+// EditorList(), EyetoyData(), Icon(), PhotoData()
+// {
+//     *this = rhs;
+// }
 
-CInventoryItemDetails& CInventoryItemDetails::operator=(CInventoryItemDetails const& rhs)
-{
-    if (this == &rhs) return *this;
+// CInventoryItemDetails& CInventoryItemDetails::operator=(CInventoryItemDetails const& rhs)
+// {
+//     if (this == &rhs) return *this;
 
-    ToolType = rhs.ToolType;
-    SubType = rhs.SubType;
-    NameTranslationTag = rhs.NameTranslationTag;
-    DescTranslationTag = rhs.DescTranslationTag;
-    HighlightSound = rhs.HighlightSound;
-    LocationIndex = rhs.LocationIndex;
-    CategoryIndex = rhs.CategoryIndex;
-    PrimaryIndex = rhs.PrimaryIndex;
-    LastUsed = rhs.LastUsed;
-    NumUses = rhs.NumUses;
-    FluffCost = rhs.FluffCost;
-    Type = rhs.Type;
-    AllowEmit = rhs.AllowEmit;
-    Colour = rhs.Colour;
-    Icon = rhs.Icon;
-    Creator = rhs.Creator;
-    LevelUnlockSlotID = rhs.LevelUnlockSlotID;
-    Copyright = rhs.Copyright;
-    Shareable = rhs.Shareable;
+//     ToolType = rhs.ToolType;
+//     SubType = rhs.SubType;
+//     NameTranslationTag = rhs.NameTranslationTag;
+//     DescTranslationTag = rhs.DescTranslationTag;
+//     HighlightSound = rhs.HighlightSound;
+//     LocationIndex = rhs.LocationIndex;
+//     CategoryIndex = rhs.CategoryIndex;
+//     PrimaryIndex = rhs.PrimaryIndex;
+//     LastUsed = rhs.LastUsed;
+//     NumUses = rhs.NumUses;
+//     FluffCost = rhs.FluffCost;
+//     Type = rhs.Type;
+//     AllowEmit = rhs.AllowEmit;
+//     Colour = rhs.Colour;
+//     Icon = rhs.Icon;
+//     Creator = rhs.Creator;
+//     LevelUnlockSlotID = rhs.LevelUnlockSlotID;
+//     Copyright = rhs.Copyright;
+//     Shareable = rhs.Shareable;
 
-    // EditorList = rhs.EditorList;
-    UserCreatedDescription = rhs.UserCreatedDescription;
-    UserCreatedName = rhs.UserCreatedName;
-    DateAdded = rhs.DateAdded;
+//     // EditorList = rhs.EditorList;
+//     UserCreatedDescription = rhs.UserCreatedDescription;
+//     UserCreatedName = rhs.UserCreatedName;
+//     DateAdded = rhs.DateAdded;
 
-    // if (rhs.EyetoyData != NULL)
-    //     SetEyetoyData(rhs.EyetoyData);
-    // if (rhs.PhotoData != NULL)
-    //     SetPhotoData(rhs.PhotoData);
+//     // if (rhs.EyetoyData != NULL)
+//     //     SetEyetoyData(rhs.EyetoyData);
+//     // if (rhs.PhotoData != NULL)
+//     //     SetPhotoData(rhs.PhotoData);
 
-    return *this;
-}
+//     return *this;
+// }
 
 MH_DefineFunc(CInventoryItemDetails_IsCreatedBy, 0x002ecef8, TOC0, bool, CInventoryItemDetails*, NetworkPlayerID*);
 bool CInventoryItemDetails::IsCreatedBy(NetworkPlayerID* pid)

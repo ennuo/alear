@@ -13,12 +13,16 @@ class RFontFace;
 class RTexture;
 class RMaterial;
 class RPins;
+class RLocalProfile;
 class RGuidSubst;
 class RLevel;
 class RFileOfBytes;
 class ROutfitList;
 class RAnim;
 class RAnimatedTexture;
+class RPixelShader;
+class RVertexShader;
+class RSyncedProfile;
 
 enum EResourceType
 {
@@ -179,6 +183,10 @@ template <> inline EResourceType GetResourceType<ROutfitList>() { return RTYPE_O
 template <> inline EResourceType GetResourceType<RAnim>() { return RTYPE_ANIM; }
 template <> inline EResourceType GetResourceType<RAnimatedTexture>() { return RTYPE_ANIMATED_TEXTURE; }
 template <> inline EResourceType GetResourceType<RLevel>() { return RTYPE_LEVEL; }
+template <> inline EResourceType GetResourceType<RVertexShader>() { return RTYPE_VERTEX_SHADER; }
+template <> inline EResourceType GetResourceType<RPixelShader>() { return RTYPE_PIXEL_SHADER; }
+template <> inline EResourceType GetResourceType<RSyncedProfile>() { return RTYPE_SYNCED_PROFILE; }
+template <> inline EResourceType GetResourceType<RLocalProfile>() { return RTYPE_LOCAL_PROFILE; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>
