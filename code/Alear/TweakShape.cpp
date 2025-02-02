@@ -13,8 +13,129 @@
 #include <poppet/ScriptObjectPoppet.h>
 
 const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
+const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 
 StaticCP<RScript> gTweakShapeScript;
+StaticCP<RScript> gTweakCheckpointScript;
+
+enum ECheckpointType {
+    CHKP_ENTRANCE,
+    CHKP_STANDARD,
+    CHKP_DOUBLE,
+    CHKP_INFINITE,
+
+    NUM_CHECKPOINT_TYPES
+};
+
+enum ECheckpointStyle {
+    CHECKPOINT_STYLE_CARDBOARD,
+    CHECKPOINT_STYLE_WOOD,
+    CHECKPOINT_STYLE_PLASTIC,
+    CHECKPOINT_STYLE_CHROME,
+
+    NUM_CHECKPOINT_STYLES
+};
+
+struct SCheckpointStyle {
+    CGUID Mesh[NUM_CHECKPOINT_TYPES];
+    CGUID Material;
+};
+
+SCheckpointStyle gCheckpointStyles[] =
+{
+    // Cardboard
+    {
+        { 122175, 122175, 122175, 122175 },
+        10724
+    },
+
+    // Wood
+    {
+        { 31238, 31238, 31238, 31238 },
+        10717
+    },
+
+    // Plastic
+    {
+        { 119228, 119228, 119228, 119228 },
+        10718
+    },
+
+    // Chrome
+    {
+        { 119221, 119221, 119221, 119221 },
+        10716
+    }
+};
+
+CGUID GetMeshGUID(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PRenderMesh* part = thing->GetPRenderMesh();
+    if (part == NULL) return 0;
+    CP<RMesh>& mesh = part->Mesh;
+    if (!mesh) return 0;
+    return mesh->GetGUID();
+}
+
+void SetCheckpointStyleIndex(CThing* thing, s32 index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    SCheckpointStyle& style = gCheckpointStyles[index];
+    
+    u32 mesh_key = style.Mesh[CHKP_STANDARD];
+    u32 mat_key = style.Material;
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+        shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+s32 GetCheckpointStyleIndex(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gCheckpointStyles); ++i)
+    for (int j = 0; j < NUM_CHECKPOINT_TYPES; ++j)
+    {
+        if (gCheckpointStyles[i].Mesh[j] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+bool IsCheckpointMesh(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return false;
+
+    for (int i = 0; i < ARRAY_LENGTH(gCheckpointStyles); ++i)
+    for (int j = 0; j < NUM_CHECKPOINT_TYPES; ++j)
+    {
+        if (gCheckpointStyles[i].Mesh[j] == guid)
+            return true;
+    }
+
+    return false;
+}
+
+bool IsTweakCheckpointScriptAvailable()
+{
+    if (gTweakCheckpointScript.GetRef() == NULL)
+    {
+        *((CP<RScript>*)&gTweakCheckpointScript) = LoadResourceByKey<RScript>(E_TWEAK_CHECKPOINT_SCRIPT, 0, STREAM_PRIORITY_DEFAULT);
+        gTweakCheckpointScript->BlockUntilLoaded();
+    }
+    
+    return gTweakCheckpointScript->IsLoaded();
+}
+
 
 bool IsTweakShapeScriptAvailable()
 {
@@ -46,6 +167,8 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
     CPoppetChild* gooey = (CPoppetChild*)((char*)poppet + 0xa60);
     if (CPoppetGooey_CanTweak(gooey, thing)) return true;
 
+    if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
+
     if (thing->GetPRenderMesh() != NULL) return false;
     if (thing->GetPGeneratedMesh() == NULL) return false;
 
@@ -58,13 +181,16 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
 void OnStartTweaking(CThing* thing)
 {
-    if (!ShouldAttachShapeTweak(thing)) return;
+    bool is_shape_tweak = ShouldAttachShapeTweak(thing);
+    bool is_checkpoint_tweak = IsCheckpointMesh(thing);
+
+    if (!is_shape_tweak && !is_checkpoint_tweak) return;
 
     if (thing->GetPScript() == NULL)
         thing->AddPart(PART_TYPE_SCRIPT);
     
     PScript* script = thing->GetPScript();
-    script->SetScript(gTweakShapeScript);
+    script->SetScript(is_shape_tweak ? gTweakShapeScript : gTweakCheckpointScript);
 }
 
 void OnStopTweaking(CThing* thing)
@@ -74,7 +200,7 @@ void OnStopTweaking(CThing* thing)
     if (part == NULL) return;
     CP<RScript>& script = part->ScriptInstance.Script;
     if (script.GetRef() == NULL || !script->IsLoaded()) return;
-    if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT)
+    if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT || script->GetGUID() == E_TWEAK_CHECKPOINT_SCRIPT)
         thing->RemovePart(PART_TYPE_SCRIPT);
 }
 

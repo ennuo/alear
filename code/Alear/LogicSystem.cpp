@@ -35,6 +35,18 @@ void CPoppet::DestroyExtraData()
     HiddenList.~CVector();
 }
 
+void PSwitch::InitializeExtraData()
+{
+    new (&Outputs) CVector<CSwitchOutput>();
+    Behaviour = 0;
+    UpdateFrame = 0;
+}
+
+void PSwitch::DestroyExtraData()
+{
+    Outputs.~CVector();
+}
+
 void CustomRaycastAgainstSwitches(CPoppet* poppet)
 {
     poppet->m_bestTFromPSwitches = 1.0e+20f;

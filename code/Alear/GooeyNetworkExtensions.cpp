@@ -20,6 +20,8 @@
 #include <scriptobjects/ScriptObjectResource.h>
 #include <GameUpdateStage.h>
 #include <gooey/GooeyScriptInterface.h>
+#include <gooey/GooeyNodeManager.h>
+#include <gooey/GooeyCarousel.h>
 
 const u32 E_KEY_TWEAK_SETTINGS_SCRIPT = 3311245350ul;
 const u32 E_KEY_GLOBAL_SETTINGS_SDF = 3930801866ul;
@@ -36,6 +38,9 @@ enum ETweakWidget {
     TWEAK_WIDGET_STARTPOINT
 };
 
+extern void SetCheckpointStyleIndex(CThing* thing, s32 index);
+extern s32 GetCheckpointStyleIndex(CThing* thing);
+
 class CIconConfig {
 public:
     CIconConfig(u32 key, u32 num_rows, u32 num_columns) : Texture(), NumRows(num_rows), NumColumns(num_columns)
@@ -45,6 +50,18 @@ public:
 
     CIconConfig(CP<RTexture>& texture, u32 num_rows, u32 num_columns) : Texture(texture), NumRows(num_rows), NumColumns(num_columns)
     {
+    }
+
+    v4 GetUV(u32 index)
+    {
+        f32 x = (f32)(index % NumColumns);
+        f32 y = (f32)(index / NumColumns);
+        return v4(
+            x / ((f32) NumColumns),
+            y / ((f32) NumRows),
+            (x + 1.0f) / ((f32) NumColumns),
+            (y + 1.0f) / ((f32) NumRows)
+        );
     }
 public:
     CP<RTexture> Texture;
@@ -85,6 +102,12 @@ public:
         Icon = icon;
         return *this;
     }
+    
+    CTweakSetting& SetWidget(s32 widget)
+    {
+        Widget = widget;
+        return *this;
+    }
 
     CTweakSetting& SetToolTip(const char* lams_key)
     {
@@ -117,7 +140,7 @@ public:
     CTweakSetting& SetupDistance()
     {
         Widget = TWEAK_WIDGET_MEASURER;
-        Icon = 17;
+        Icon = LESSMORE_BIG;
         Conversion = 1.0 / 21.0;
         StepSize = 0.1f;
         StepSizeDPad = 1.0f;
@@ -186,19 +209,19 @@ public:
 
     CTweakSetting& SetupSlider()
     {
-        return SetupSlider(2);
+        return SetupSlider(SLIDER_H);
     }
 
     CTweakSetting& SetupLighting()
     {
-        SetupSlider(2);
+        SetupSlider(SLIDER_H);
         SkipText = true;
         return *this;
     }
 
     CTweakSetting& SetupLighting(s32 num_steps)
     {
-        SetupSlider(2);
+        SetupSlider(SLIDER_H);
         Conversion = (f32)((num_steps - 1) * 10);
         StepSize = 1.0f;
         StepSizeDPad = 10.0f;
@@ -385,6 +408,7 @@ namespace TweakSettingNativeFunctions
 
         switch (network_action)
         {
+            case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyleIndex(thing);
             case E_GOOEY_NETWORK_ACTION_LIGHTING:
                 return setting.GameToFixed(world->LightingFactor);
             case E_GOOEY_NETWORK_ACTION_DARKNESS:
@@ -470,7 +494,7 @@ bool InitTweakSettings()
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LIGHTING)
         .SetupLighting()
-        .SetIcon(7)
+        .SetIcon(SLIDER_LIGHTING)
         .SetIcon(global_settings_texture, 0)
         .SetToolTip("LIGHTING");
 
@@ -563,6 +587,22 @@ bool InitTweakSettings()
         .SetMinMax(0.0f, 200.0f)
         .SetDebugToolTip(L"Animation Speed");
 
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_MESH_STYLE)
+        .SetDebugToolTip(L"Visual Style");
+
+    // visual style
+        // Entrance
+        // Infinite-Life Checkpoint
+        // Double-Life Checkpoint
+        // Checkpoint
+        // Visual Style : Plastic
+        //              : Chrome
+        //              : Cardboard
+        //              : Wood
+
+
 
     return true;
 }
@@ -576,6 +616,14 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
     switch (action.Action)
     {
+        case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE:
+        {
+            DebugLog("checkpoint style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetCheckpointStyleIndex(thing, action.Value);
+            break;
+        }
         case E_GOOEY_NETWORK_ACTION_LIGHTING:
         {
             world->ClearGlobalSettingUID(GLOBAL_LIGHT_SETTINGS);
@@ -699,6 +747,52 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
     }
 }
 
+void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
+{
+    switch (type)
+    {
+        case CAROUSEL_MESH_STYLE:
+        {
+            CIconConfig icon(2321600356ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Cardboard", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Wood", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Plastic", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Chrome", v4(1.0)));
+
+            break;
+        }
+    }
+}
+
+void AttachCarouselHooks()
+{
+    // We need to update the switch case that controls which
+    // response is used for the message.
+    MH_Poke32(0x0031ea4c, 0x2b9b0000 + (NUM_CAROUSEL_TYPES - 1));
+
+    // Initialise the switch table with the offsets to the default case
+    const int SWITCH_LABEL = 0x0031ea70;
+    const int NOP_LABEL = 0x0031eaf0;
+    const int LABEL_COUNT = 0x11;
+    static s32 TABLE[NUM_CAROUSEL_TYPES];
+    for (int i = 0; i < NUM_CAROUSEL_TYPES; ++i)
+        TABLE[i] = NOP_LABEL - (u32)TABLE;
+
+    // Copy the old switch case into our new table and replace the offsets.
+    MH_Read(SWITCH_LABEL, TABLE, LABEL_COUNT * sizeof(s32));
+    for (int i = 0; i < LABEL_COUNT; ++i)
+    {
+        s32 target = SWITCH_LABEL + TABLE[i] - (u32)TABLE;
+        TABLE[i] = target;
+    }
+
+    TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+
+    // Switch out the pointer to the switch case in the TOC
+    MH_Poke32(0x00929f10, (u32)TABLE);
+}
+
 void AttachGooeyNetworkHooks()
 {
     // We need to update the switch case that controls which
@@ -723,8 +817,13 @@ void AttachGooeyNetworkHooks()
 
     TABLE[E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED_OFF] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
+    TABLE[E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
     TABLE[E_GOOEY_NETWORK_ACTION_WIND_DIRECTION] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WIND_VELOCITY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
+
     TABLE[E_GOOEY_NETWORK_ACTION_GRAVITY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LIGHTING] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_DARKNESS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
@@ -745,11 +844,17 @@ void AttachGooeyNetworkHooks()
 void InitGooeyNetworkHooks()
 {
     AttachGooeyNetworkHooks();
+    AttachCarouselHooks();
     TweakSettingNativeFunctions::Register();
 
     // Replace custom page draw functions with >3000
     MH_Poke32(0x00384444, 0x409c01bc);
     MH_Poke32(0x00383d30, 0x409c0910);
     MH_Poke32(0x0037db30, 0x4198ffd4);
+
+    MH_PokeBranch(0x0031f63c, &_gooey_carousel_sdf_hack_hook);
+    // MH_Poke32(0x0031f670, LIS(4, 0xa14));
+    MH_Poke32(0x0031f67c, 0x80810028 /* lwz %r4, 0x28(%r1)*/ );
+
 
 }

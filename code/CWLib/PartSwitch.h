@@ -44,6 +44,9 @@ public:
 
 class PSwitch : public CPart {
 public:
+    void InitializeExtraData();
+    void DestroyExtraData();
+public:
     bool RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit);
 public:
     CVector<CThingPtr> TargetList;
@@ -62,7 +65,6 @@ private:
 public:
     int UpdateFrame;
     int Behaviour;
-    CVector<CThingPtr> InputList;
     CVector<CSwitchOutput> Outputs;
 };
 

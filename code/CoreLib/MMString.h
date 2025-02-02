@@ -55,9 +55,9 @@ public:
         Construct(s, l);
     }
 
-    MMString(MMString<T>* s)
+    MMString(const MMString<T>& s)
     {
-        Construct(s->c_str(), s->size());
+        Construct(s.c_str(), s.size());
     }
 
     ~MMString()
@@ -228,13 +228,13 @@ public:
         return size() == 0;
     }
 
-    MMString<T>& assign(MMString<T>* s)
+    MMString<T>& assign(const MMString<T>& s)
     {
         if (this != s)
         {
             if (!IsUsingLocalData())
                 delete HeapData.Buffer;
-            Construct(s->c_str(), s->size());
+            Construct(s.c_str(), s.size());
         }
 
         return *this;

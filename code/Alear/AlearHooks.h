@@ -59,6 +59,8 @@ extern "C" uintptr_t _on_reflect_finish_save_thing_hook;
 extern "C" uintptr_t _initextradata_part_generatedmesh;
 
 extern "C" uintptr_t _custom_gooey_network_action_hook;
+extern "C" uintptr_t _gooey_carousel_type_hook;
+extern "C" uintptr_t _gooey_carousel_sdf_hack_hook;
 
 #define PORT_ALLOWED_TO_APPLY_SYNCED_UPDATES (0x000138f4)
 #define PORT_RGAME_RUN_FRAME (0x000b12a4)
