@@ -117,7 +117,11 @@ public:
     CThingPtr Backdrop; // 1132 
     CThingPtr BackdropNew; // 1144
 private:
-    char Pad7[0xcf8];
+    char Pad9[0xa5];
+public:
+    bool IsTutorialLevel;
+private:
+    char Pad10[0xc52];
 public:
     CVector<BroadcastMicrochip> BroadcastMicrochips;
     u32 GameMode;

@@ -409,6 +409,7 @@ namespace TweakSettingNativeFunctions
         switch (network_action)
         {
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyleIndex(thing);
+            case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE: return (s32)world->IsTutorialLevel;
             case E_GOOEY_NETWORK_ACTION_LIGHTING:
                 return setting.GameToFixed(world->LightingFactor);
             case E_GOOEY_NETWORK_ACTION_DARKNESS:
@@ -580,6 +581,7 @@ bool InitTweakSettings()
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE)
         .SetupYesNo()
+        .SetIcon(global_settings_texture, 15)
         .SetDebugToolTip(L"Is Tutorial");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED)
@@ -745,6 +747,12 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
             break;
         }
+
+        case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE:
+        {
+            world->IsTutorialLevel = (bool)action.Value;
+            break;
+        }
     }
 }
 
@@ -820,6 +828,9 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED_OFF] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     TABLE[E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
+    TABLE[E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
 
     TABLE[E_GOOEY_NETWORK_ACTION_WIND_DIRECTION] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WIND_VELOCITY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
