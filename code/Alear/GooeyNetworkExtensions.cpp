@@ -515,9 +515,10 @@ bool InitTweakSettings()
         .SetToolTip("FOG_TINT_FACTOR");
     
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_COLCORRECT)
-        .SetupLighting(14)
+        .SetupLighting()
         .SetIcon(global_settings_texture, 4)
-        .SetConversion(80.0f)
+        .SetMinMax(0.0f, 700.0f)
+        .SetSteps(10.0f, 100.0f)
         .SetToolTip("COLOR_CORRECTION");
         
 
