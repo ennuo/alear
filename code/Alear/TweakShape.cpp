@@ -3,7 +3,9 @@
 #include <Poppet.h>
 #include <ResourceSystem.h>
 #include <ResourceScript.h>
+#include <ResourceGFXMesh.h>
 #include <PartGeneratedMesh.h>
+#include <PartRenderMesh.h>
 #include <PartScript.h>
 
 #include <vm/NativeFunctionCracker.h>
@@ -151,9 +153,8 @@ bool IsTweakShapeScriptAvailable()
 bool ShouldAttachShapeTweak(CThing* thing)
 {
     if (thing == NULL || 
-        thing->GetPRenderMesh() != NULL || 
-        thing->GetPScript() != NULL || 
-        thing->GetPGeneratedMesh() == NULL) return false;
+        (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) ||
+        thing->GetPScript() != NULL) return false;
     
     PShape* shape = thing->GetPShape();
     return shape != NULL; // && (shape->LethalType < LETHAL_POISON_GAS || shape->LethalType > LETHAL_POISON_GAS6);
@@ -169,10 +170,11 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
     if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
 
-    if (thing->GetPRenderMesh() != NULL) return false;
-    if (thing->GetPGeneratedMesh() == NULL) return false;
+    if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
     PShape* shape = thing->GetPShape();
+    if (shape == NULL) return false;
+
     if (shape->LethalType >= LETHAL_POISON_GAS && shape->LethalType <= LETHAL_POISON_GAS6)
         return true;
 
@@ -190,7 +192,7 @@ void OnStartTweaking(CThing* thing)
         thing->AddPart(PART_TYPE_SCRIPT);
     
     PScript* script = thing->GetPScript();
-    script->SetScript(is_shape_tweak ? gTweakShapeScript : gTweakCheckpointScript);
+    script->SetScript(is_checkpoint_tweak ? gTweakCheckpointScript : gTweakShapeScript);
 }
 
 void OnStopTweaking(CThing* thing)
@@ -215,9 +217,24 @@ namespace TweakShapeNativeFunctions
     CP<CResource> GetPlan(CThing* thing)
     {
         if (thing == NULL) return NULL;
+
+        CGUID guid = thing->PlanGUID;
+
         PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
-        if (mesh == NULL || !mesh->PlanGUID) return NULL;
-        return (CP<CResource>)LoadResourceByKey<RPlan>(mesh->PlanGUID.guid, 0, STREAM_PRIORITY_DEFAULT);
+        if (mesh != NULL) guid = mesh->PlanGUID;
+        else if (!guid)
+        {
+            PGroup* group = thing->GetPGroup();
+            if (group == NULL && thing->GroupHead != NULL) 
+                group = thing->GroupHead->GetPGroup();
+
+            if (group != NULL)
+                guid = group->PlanDescriptor.GetGUID();
+        }
+
+        if (!guid) return NULL;
+
+        return (CP<CResource>)LoadResourceByKey<RPlan>(guid.guid, 0, STREAM_PRIORITY_DEFAULT);
     }
 
     bool UsesParameterAnimations(CThing* thing)
@@ -238,11 +255,32 @@ namespace TweakShapeNativeFunctions
         if (shape != NULL && shape->LethalType == LETHAL_BULLET)
             return true;
 
-        PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
-        if (mesh == NULL) return false;
-        CP<RGfxMaterial>& gmat = mesh->GfxMaterial;
-        if (!gmat || !gmat->IsLoaded()) return false;
-        return gmat->UsesPlayerDefinedColour;
+        PGeneratedMesh* generated_mesh = thing->GetPGeneratedMesh();
+        if (generated_mesh != NULL)
+        {
+            CP<RGfxMaterial>& gmat = generated_mesh->GfxMaterial;
+            if (!gmat || !gmat->IsLoaded()) return false;
+            return gmat->UsesPlayerDefinedColour;
+        }
+
+        PRenderMesh* render_mesh = thing->GetPRenderMesh();
+        if (render_mesh != NULL)
+        {
+            CP<RMesh>& mesh = render_mesh->Mesh;
+            if (!mesh || !mesh->IsLoaded()) return false;
+            CVector<CPrimitive>& primitives = mesh->mesh.Primitives;
+            for (CPrimitive* it = primitives.begin(); it != primitives.end(); ++it)
+            {
+                CPrimitive& primitive = *it;
+                CP<RGfxMaterial>& gmat = primitive.Material;
+                if (!gmat || !gmat->IsLoaded()) continue;
+                if (gmat->UsesPlayerDefinedColour) return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
     void PerformToolAction(CThing* thing, CScriptObjectPoppet* so_poppet, EToolType tool)
