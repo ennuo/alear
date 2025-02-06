@@ -170,6 +170,8 @@ enum ECarouselType {
 	CAROUSEL_PRIVACY = 16,
     CAROUSEL_MESH_STYLE = 54,
     
+    CAROUSEL_CHECKPOINT = 84,
+    
     NUM_CAROUSEL_TYPES
 };
 

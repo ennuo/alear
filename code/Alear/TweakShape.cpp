@@ -14,29 +14,15 @@
 
 #include <poppet/ScriptObjectPoppet.h>
 
+#include "CheckpointStyles.h"
+
 const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 
 StaticCP<RScript> gTweakShapeScript;
 StaticCP<RScript> gTweakCheckpointScript;
 
-enum ECheckpointType {
-    CHKP_ENTRANCE,
-    CHKP_STANDARD,
-    CHKP_DOUBLE,
-    CHKP_INFINITE,
 
-    NUM_CHECKPOINT_TYPES
-};
-
-enum ECheckpointStyle {
-    CHECKPOINT_STYLE_CARDBOARD,
-    CHECKPOINT_STYLE_WOOD,
-    CHECKPOINT_STYLE_PLASTIC,
-    CHECKPOINT_STYLE_CHROME,
-
-    NUM_CHECKPOINT_STYLES
-};
 
 struct SCheckpointStyle {
     CGUID Mesh[NUM_CHECKPOINT_TYPES];
@@ -47,25 +33,25 @@ SCheckpointStyle gCheckpointStyles[] =
 {
     // Cardboard
     {
-        { 122175, 122175, 122175, 122175 },
+        { 122175, 120921, 120915, 120935 },
         10724
     },
 
     // Wood
     {
-        { 31238, 31238, 31238, 31238 },
+        { 31238, 11668, 55455, 68386 },
         10717
     },
 
     // Plastic
     {
-        { 119228, 119228, 119228, 119228 },
+        { 119228, 119230, 119227, 120939 },
         10718
     },
 
     // Chrome
     {
-        { 119221, 119221, 119221, 119221 },
+        { 119221, 119217, 119220, 120941 },
         10716
     }
 };
@@ -80,13 +66,46 @@ CGUID GetMeshGUID(CThing* thing)
     return mesh->GetGUID();
 }
 
-void SetCheckpointStyleIndex(CThing* thing, s32 index)
+s32 GetCheckpointType(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gCheckpointStyles); ++i)
+    for (int j = 0; j < NUM_CHECKPOINT_TYPES; ++j)
+    {
+        if (gCheckpointStyles[i].Mesh[j] == guid)
+            return j;
+    }
+
+    return CHECKPOINT_SINGLE;
+}
+
+PCheckpoint* FindPartCheckpoint(CThing* thing)
+{
+    if (thing == NULL) return NULL;
+    PCheckpoint* checkpoint = thing->GetPCheckpoint();
+    if (checkpoint != NULL) return checkpoint;
+
+    thing = thing->FirstChild;
+    while (thing != NULL)
+    {
+        checkpoint = thing->GetPCheckpoint();
+        if (checkpoint != NULL)
+            return checkpoint;
+        thing = thing->NextSibling;
+    }
+
+    return NULL;
+}
+
+void SetCheckpointStyle(CThing* thing, s32 type_index, s32 style_index)
 {
     if (thing == NULL) return;
     PRenderMesh* mesh = thing->GetPRenderMesh();
-    SCheckpointStyle& style = gCheckpointStyles[index];
     
-    u32 mesh_key = style.Mesh[CHKP_STANDARD];
+    SCheckpointStyle& style = gCheckpointStyles[style_index];
+    u32 mesh_key = style.Mesh[type_index];
     u32 mat_key = style.Material;
 
     if (mesh != NULL)
@@ -95,9 +114,29 @@ void SetCheckpointStyleIndex(CThing* thing, s32 index)
     PShape* shape = thing->GetPShape();
     if (shape != NULL)
         shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
+
+    PCheckpoint* checkpoint = FindPartCheckpoint(thing);
+    if (checkpoint == NULL) return;
+
+    switch (type_index)
+    {
+        case CHECKPOINT_ENTRANCE:
+        case CHECKPOINT_SINGLE:
+            checkpoint->InstanceInfiniteSpawns = false;
+            checkpoint->LifeMultiplier = 1;
+            break;
+        case CHECKPOINT_DOUBLE:
+            checkpoint->LifeMultiplier = 2;
+            checkpoint->InstanceInfiniteSpawns = false;
+            break;
+        case CHECKPOINT_INFINITE:
+            checkpoint->LifeMultiplier = 1;
+            checkpoint->InstanceInfiniteSpawns = true;
+            break;
+    }
 }
 
-s32 GetCheckpointStyleIndex(CThing* thing)
+s32 GetCheckpointStyle(CThing* thing)
 {
     CGUID guid = GetMeshGUID(thing);
     if (!guid) return 0;

@@ -23,6 +23,7 @@
 #include "PartRef.h"
 #include "PartDecoration.h"
 #include "PartEffector.h"
+#include "PartCheckpoint.h"
 
 #include "hack_thingptr.h"
 
@@ -78,6 +79,7 @@ public:
     inline PStickers* GetPStickers() { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
     inline PDecorations* GetPDecorations() { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
     inline PEffector* GetPEffector() { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
+    inline PCheckpoint* GetPCheckpoint() { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

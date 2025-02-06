@@ -1,4 +1,5 @@
 #include "AlearHooks.h"
+#include "CheckpointStyles.h"
 
 #include <GooeyNetworkAction.h>
 #include <PlayerNumber.inl>
@@ -37,9 +38,6 @@ enum ETweakWidget {
     TWEAK_WIDGET_BUTTON,
     TWEAK_WIDGET_STARTPOINT
 };
-
-extern void SetCheckpointStyleIndex(CThing* thing, s32 index);
-extern s32 GetCheckpointStyleIndex(CThing* thing);
 
 class CIconConfig {
 public:
@@ -408,7 +406,16 @@ namespace TweakSettingNativeFunctions
 
         switch (network_action)
         {
-            case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyleIndex(thing);
+            case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE: return GetCheckpointType(thing);
+            case E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY:
+            {
+                u32 delay = 0;
+                PCheckpoint* checkpoint = FindPartCheckpoint(thing);
+                if (checkpoint != NULL) delay = checkpoint->SpawnDelay;
+                return setting.GameToFixed(delay);
+            }
+            
             case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE: return (s32)world->IsTutorialLevel;
             case E_GOOEY_NETWORK_ACTION_LIGHTING:
                 return setting.GameToFixed(world->LightingFactor);
@@ -567,12 +574,14 @@ bool InitTweakSettings()
         .SetupSlider()
         .SetIcon(global_settings_texture, 12)
         .SetToolTip("WIND_VELOCITY")
-        .SetConversion(1.0 / 100)
+        .SetConversion(1.0 / 50)
+        // .SetConversion(1.0 / 100)
         .SetDebugSuffix(L"%");
     
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_WIND_DIRECTION)
         .SetupAngleRange()
         .SetIcon(global_settings_texture, 13)
+        .SetOffset(-90.0f)
         .SetToolTip("WIND_DIRECTION");
     
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LOGIC_MODE)
@@ -594,6 +603,19 @@ bool InitTweakSettings()
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
         .SetIcon(CAROUSEL_MESH_STYLE)
         .SetDebugToolTip(L"Visual Style");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_CHECKPOINT)
+        .SetDebugToolTip(L"Checkpoint Type");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(0.0, 300.0f)
+        .SetSteps(1.0f, 10.0f)
+        .SetDebugSuffix(L"s")
+        .SetDebugToolTip(L"Spawn Delay")
+        .SetConversion(1.0 / 30.0);
 
     // visual style
         // Entrance
@@ -624,7 +646,24 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             DebugLog("checkpoint style uid=%d, index=%d\n", action.ThingUID, action.Value);
             CThing* thing = world->GetThingByUID(action.ThingUID);
             if (thing != NULL)
-                SetCheckpointStyleIndex(thing, action.Value);
+                SetCheckpointStyle(thing, GetCheckpointType(thing), action.Value);
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE:
+        {
+            DebugLog("checkpoint type uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetCheckpointStyle(thing, action.Value, GetCheckpointStyle(thing));
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PCheckpoint* checkpoint = FindPartCheckpoint(thing);
+            if (checkpoint == NULL) break;
+            checkpoint->SpawnDelay = (u32)setting.FixedToGame(action.Value);
             break;
         }
         case E_GOOEY_NETWORK_ACTION_LIGHTING:
@@ -771,6 +810,18 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 
             break;
         }
+
+        case CAROUSEL_CHECKPOINT:
+        {
+            CIconConfig icon(3926674768ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Entrance", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Single-Life Checkpoint", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Double-Life Checkpoint", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Infinite-Lives Checkpoint", v4(1.0)));
+
+            break;
+        }
     }
 }
 
@@ -797,6 +848,7 @@ void AttachCarouselHooks()
     }
 
     TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00929f10, (u32)TABLE);
@@ -828,6 +880,8 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED_OFF] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     TABLE[E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     TABLE[E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
