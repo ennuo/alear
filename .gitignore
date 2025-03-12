@@ -31,3 +31,5 @@ _deps
 build/
 out/
 .vs/
+
+sdk/cell
