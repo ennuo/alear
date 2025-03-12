@@ -241,13 +241,39 @@ void DoPreferenceSort(CInventoryView* view)
     view->SortTermBoundaries.push_back(boundary);
 }
 
+bool IsAlphabeticalCategory(CInventoryView* view)
+{
+    if (view->HeartedOnly || (view->Descriptor.SubType & E_SUBTYPE_MADE_BY_OTHERS) != 0) return false;
+    if (view->Descriptor.Type & E_TYPE_USER_STICKER) return false;
+    if (view->Descriptor.Type & E_TYPE_USER_OBJECT) return false;
+    
+    if (view->Descriptor.Type == E_TYPE_MUSIC || view->Descriptor.Type == E_TYPE_SOUND) return true;
+    if (view->Descriptor.Type & (E_TYPE_COSTUME | E_TYPE_COSTUME_MATERIAL)) return true;
+    if (view->Descriptor.Type & E_TYPE_READYMADE) return true;
+    if (view->Descriptor.Type & E_TYPE_STICKER) return true;
+    if (view->Descriptor.Type & E_TYPE_DECORATION) return true;
+    if (view->Descriptor.Type & E_TYPE_PRIMITIVE_MATERIAL) return true;
+    if (view->Descriptor.Type & E_TYPE_BACKGROUND) return true;
+
+    return false;
+}
+
+bool HackIsToolBoundary(CInventoryView* view, SSortTermBoundary& boundary)
+{
+    CInventoryView::SInventoryItemData& data = view->PageData[boundary.Index];
+    if (data.Item == NULL) return false;
+    return data.Item->Details.ToolType != TOOL_NOT_A_TOOL;
+}
+
 void SortBoundariesAlphabetically(CInventoryView* view)
 {
-    if (view->Descriptor.Type != E_TYPE_MUSIC && view->Descriptor.Type != E_TYPE_SOUND) return;
+    if (!IsAlphabeticalCategory(view)) return;
 
     for (int i = 0; i < view->SortTermBoundaries.size(); ++i)
     {
         SSortTermBoundary& boundary = view->SortTermBoundaries[i];
+        
+        if (HackIsToolBoundary(view, boundary)) continue;
 
         int end = view->PageData.size();
         if (i + 1 < view->SortTermBoundaries.size())

@@ -35,6 +35,7 @@ void AttachCustomToolTypes();
 void AttachCustomSortModes();
 void LoadCursorSprites();
 void LoadRecordingShaders();
+void LoadPostProcessingShaders();
 
 #define E_GSUB_RLST 3536200819u
 #define E_TRANSLATIONS_RLST 4014013721u

@@ -27,6 +27,9 @@ public:
 
     void SetCollidableGame(bool collidable);
     void SetCollidablePoppet(bool collidable);
+    void SetMaterial(RMaterial* material);
+    void InitialisePolygon();
+    void SetPolygon(CRawVector<v2, CAllocatorMMAligned128> const& vertices, CRawVector<unsigned int> const& indices);
 public:
     float Moment;
     v4 EditorColourTint;
@@ -57,6 +60,9 @@ public:
     Forked Rend;
     Forked* Fork;
     CRawVector<unsigned int, CAllocatorMMAligned128> SharedIndices; // 0x174
+    s16 ElectricFrame;
+    s16 FireFrame;
+    s16 GasFrame;
 };
 
 #endif // PART_SHAPE_H

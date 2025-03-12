@@ -7,7 +7,14 @@
 #include <Resource.h>
 #include <ResourceGuidSubst.h>
 
-class RAnim : public CResource {};
+class RAnim : public CResource {
+public:
+    u32 NumFrames;
+    u32 FPS;
+    u32 LoopStart;
+    u32 Morphcount;
+};
+
 class CAnimBank {
 public:
     inline CAnimBank()

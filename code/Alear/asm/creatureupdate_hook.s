@@ -202,3 +202,22 @@ _CreaturePopitHook_CanUsePopit:
     ba 0x0035521c
 _CreaturePopitHook_CannotUsePopit:
     ba 0x00355198
+
+.global _creature_frozen_buoyancy_hook
+_creature_frozen_buoyancy_hook:
+    mr %r3, %r26
+
+    std %r2, 0x28(%r1)
+    lis %r5, _Z8CanFloatR9PCreature@h      
+    ori %r5, %r5, _Z8CanFloatR9PCreature@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z8CanFloatR9PCreature
+    ld %r2, 0x28(%r1)
+    
+    cmpwi %cr7, %r3, 1
+    beq %cr7, _DoBuoyancy
+
+_NoBuoyancy:
+    ba 0x000a5714
+_DoBuoyancy:
+    ba 0x00a5a80

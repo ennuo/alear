@@ -51,6 +51,10 @@ class PCostume : public CPart {
 public:
     void SetPowerup(RMesh* mesh, CResourceDescriptor<RPlan>& original_plan);
     void RemovePowerup(CResourceDescriptor<RPlan>& original_plan);
+    void SetMaterial(RGfxMaterial const* mat, CResourceDescriptor<RPlan> const& plan);
+public:
+    inline CP<RGfxMaterial> GetCurrentMaterial() const { return Mat; }
+    inline const CResourceDescriptor<RPlan>& GetCurrentMaterialPlan() const { return MatPlan; }
 public:
     bool NeedCostumeFixup; // 0xc
     CP<RMesh> Mesh; // 0x10

@@ -322,3 +322,199 @@ _custom_gooey_network_action_hook:
     ld %r2, 0x28(%r1)
 
     ba 0x004372a8
+
+.global _get_frizzlefry_shader_hook
+_get_frizzlefry_shader_hook:
+    std %r2, 0x28(%r1)
+    lis %r2, _Z21GetIceFirePixelShaderv@h      
+    ori %r2, %r2, _Z21GetIceFirePixelShaderv@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z21GetIceFirePixelShaderv
+    ld %r2, 0x28(%r1)
+
+    mr %r31, %r3
+    ba 0x00417180
+
+.global _is_frizzlefry_lethal_hook
+_is_frizzlefry_lethal_hook:
+    lwz %r3, 0x70(%r31)
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z18IsFrizzleFryLethal11ELethalType@h      
+    ori %r2, %r2, _Z18IsFrizzleFryLethal11ELethalType@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z18IsFrizzleFryLethal11ELethalType
+    ld %r2, 0x28(%r1)
+
+    cmpwi %cr7, %r3, 1
+    beq %cr7, IsFrizzleFryHook
+    ba 0x004172ac
+IsFrizzleFryHook:
+    ba 0x004172bc
+
+
+.global _track_frizzlefry_lethal_hook
+_track_frizzlefry_lethal_hook:
+.set TrackAudioSfx, 0x005bdd24
+    std %r2, 0x28(%r1)
+    lis %r2, _Z23GetFrizzleFryLethalTypev@h      
+    ori %r2, %r2, _Z23GetFrizzleFryLethalTypev@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z23GetFrizzleFryLethalTypev
+    ld %r2, 0x28(%r1)
+
+    mr %r4, %r30
+
+    bla TrackAudioSfx
+    ld %r2, 0x28(%r1)
+
+    ba 0x00417460
+
+.global _draw_icey_things_hook
+_draw_icey_things_hook:
+.set DrawFireyThings, 0x005b88a4
+    bla DrawFireyThings
+    ld %r2, 0x28(%r1)
+    bla DrawFireyThings
+    ld %r2, 0x28(%r1)
+    ba 0x1dd974
+
+.global _set_danger_type_ice_timer_hook
+_set_danger_type_ice_timer_hook:
+    mr %r3, %r26
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z17ResetLethalTimersP6PShape@h      
+    ori %r2, %r2, _Z17ResetLethalTimersP6PShape@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z17ResetLethalTimersP6PShape
+    ld %r2, 0x28(%r1)
+
+    ba 0x00348138
+
+.global _draw_mesh_boundary_ice_hook
+_draw_mesh_boundary_ice_hook:
+    cmpwi %cr7, %r9, 3
+    beq %cr7, IceHook
+    cmpwi %cr7, %r9, 1
+    beq %cr7, FireHook
+    ba 0x001c5188
+IceHook:
+    lwz %r9, -0x10c(%r2)
+    li %r0, 0x0
+    li %r11, 3
+    stw %r0, 0x0(%r9)
+    ba 0x001c519c
+FireHook:
+    lwz %r9, -0x10c(%r2)
+    li %r0, 0x0
+    li %r11, 1
+    stw %r0, 0x0(%r9)
+    ba 0x001c519c
+
+    # ba 0x001c5354
+
+.global _anim_update_ice_hook
+_anim_update_ice_hook:
+    mr %r3, %r31
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN12CSackBoyAnim11DoThawAnimsEv@h      
+    ori %r2, %r2, _ZN12CSackBoyAnim11DoThawAnimsEv@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN12CSackBoyAnim11DoThawAnimsEv
+    ld %r2, 0x28(%r1)
+
+    li %r0, 0
+    ba 0x000fecf4
+
+.global _anim_choose_idle_ice_hook
+_anim_choose_idle_ice_hook:
+    mr %r3, %r31
+    mr %r4, %r30
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN12CSackBoyAnim21UpdateFreezeIdleStateEi@h      
+    ori %r2, %r2, _ZN12CSackBoyAnim21UpdateFreezeIdleStateEi@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN12CSackBoyAnim21UpdateFreezeIdleStateEi
+    ld %r2, 0x28(%r1)
+
+    mr %r30, %r3
+    extsw %r26, %r30
+
+    lwz %r0, 0x150(%r31)
+    ba 0x000f6570
+
+.global _death_anim_ice_hook
+_death_anim_ice_hook:
+    cmpwi %cr7, %r30, 0x3
+    bne %cr7, DoElectricCheck
+
+    li %r25, 0x0 # loop?
+    lwz %r26, 0xCF0(%r27) # anim
+    li %r28, 0 # root bone?
+    lwz %r31, 0x598(%r29)
+    ba 0x000f23d0
+DoElectricCheck:
+    cmpwi %cr7, %r30, 0x2
+    ba 0x000f2398
+
+.global _sackboy_anim_late_update_hook
+_sackboy_anim_late_update_hook:
+    mr %r3, %r29
+
+    std %r2, 0x28(%r1)
+    lis %r2, _ZN12CSackBoyAnim21UpdateFreezeIdleStateEi@h      
+    ori %r2, %r2, _ZN12CSackBoyAnim21UpdateFreezeIdleStateEi@l
+    lwz %r2, 0x4(%r2)
+    bl ._ZN12CSackBoyAnim21UpdateFreezeIdleStateEi
+    ld %r2, 0x28(%r1)
+
+    li %r0, 0xe0
+    ba 0x000feba8
+
+.global _sackboy_anim_ice_ik_hook
+_sackboy_anim_ice_ik_hook:
+    lwz %r0, 0xcf4(%r31)
+    cmpwi %cr7, %r0, -1
+    bne %cr7, DisableIK
+
+    lwz %r0, 0xcd4(%r31)
+    cmpwi %cr7, %r0, -1
+    bne %cr7, DisableIK
+
+EnableIK:
+    ba 0x000fdec4
+DisableIK:
+    ba 0x000fdc58
+
+.global _sackboy_ground_distance_ice_hook
+_sackboy_ground_distance_ice_hook:
+    # lwz %r11, 0x934(%r31)
+    # cmpwi %cr7, %r11, 13
+    # beq %cr7, IsNonJumpableLethal
+
+    cmpwi %cr7, %r0, 0x0
+    beq %cr7, IsJumpableLethal
+    cmpwi %cr7, %r0, 0x3
+    beq %cr7, IsJumpableLethal
+
+IsNonJumpableLethal:
+    ba 0x00040904
+IsJumpableLethal:
+    ba 0x0004091c
+
+.global _hack_gather_character_settings_hook
+_hack_gather_character_settings_hook:
+    mr %r3, %r29
+    mr %r4, %r28
+
+    std %r2, 0x28(%r1)
+    lis %r2, _Z35HackSerializeExtraCharacterSettingsR16CGatherVariablesR18RCharacterSettings@h      
+    ori %r2, %r2, _Z35HackSerializeExtraCharacterSettingsR16CGatherVariablesR18RCharacterSettings@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z35HackSerializeExtraCharacterSettingsR16CGatherVariablesR18RCharacterSettings
+    ld %r2, 0x28(%r1)
+
+    ba 0x006e00fc

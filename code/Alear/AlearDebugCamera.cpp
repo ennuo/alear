@@ -1,5 +1,6 @@
 #include "AlearDebugCamera.h"
 #include "AlearSync.h"
+#include "AlearConfig.h"
 #include "PinSystem.h"
 
 #include <cell/fs/cell_fs_file_api.h>
@@ -175,6 +176,7 @@ void UpdateCameraUI(CGooeyNodeManager* manager)
                     INLINE_BOOL("Show Outlines", gShowOutlines);
                     INLINE_BOOL("Show Popit Only", gRenderOnlyPopit);
                     INLINE_BOOL("Show Extra Info", gShowCameraInfo);
+                    INLINE_BOOL("Pause Game Simulation", gPauseGameSim);
 
                     #undef INLINE_BOOL
                     

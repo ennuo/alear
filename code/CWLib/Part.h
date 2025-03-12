@@ -7,7 +7,7 @@
 class CThing;
 class CPart : public CReflectionVisitable {
 public:
-    CThing* GetThing() { return Thing; }
+    CThing* GetThing() const { return Thing; }
 private:
     CThing* Thing;
 };

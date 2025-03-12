@@ -4,6 +4,7 @@
 #include <Cg/NV/cg_types.h>
 
 #include "Resource.h"
+#include "ResourceGFXTexture.h"
 
 class CMaterialBox {
 public:

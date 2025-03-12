@@ -8,6 +8,8 @@
 #include "Part.h"
 #include "Input.h"
 
+#include "hack_thingptr.h"
+
 class RSyncedProfile;
 class RLocalProfile;
 
@@ -21,13 +23,15 @@ public:
     const CP<RSyncedProfile>& GetSyncedProfile() const;
     const CP<RLocalProfile>& GetLocalProfile() const;
     CInput* GetInput() const;
-private:
-    char Pad[0x30];
 public:
+    inline CRenderYellowHead* GetRenderYellowHead() const { return RenderYellowHead; }
+private:
+    char Pad[0x24];
+public:
+    CThingPtr Head;
     CRenderYellowHead* RenderYellowHead;
-private:
-    char Pad0[0x8];
-public:
+    float OnScreenCounter;
+    bool OnScreenStatus;
     CPoppet* Poppet;
 private:
     char Pad1[0x24];

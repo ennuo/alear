@@ -9,6 +9,8 @@
 
 #include "hack_thingptr.h"
 
+#include <AlearSR.h>
+
 
 enum EGatherType {
     GATHER_TYPE_GATHER,
@@ -178,11 +180,31 @@ public:
         Name = NULL;
     }
 
+    inline u32 GetRevision() { return 0x272; }
+
+    inline u16 GetResourceVersion() { return ALEAR_LATEST_PLUS_ONE - 1;}
+    inline u32 GetCustomVersion() { return ALEAR_BR1_LATEST_PLUS_ONE - 1; }
+
+    inline void SetResourceVersion(u16 version) {}
+    inline void SetCustomVersion(u32 version) {}
+
     inline bool IsGatherVariables() { return true; }
     inline bool GetLoading() { return Purpose == GATHER_TYPE_LOAD; }
     inline bool GetSaving() { return Purpose == GATHER_TYPE_SAVE; }
     inline bool GetCompressInts() { return false; }
     inline bool RequestToAllocate(u64 size) { return true; }
+
+    inline ReflectReturn Align(int a) { return REFLECT_OK; }
+    inline ReflectReturn CleanupDecompression() { return REFLECT_NOT_IMPLEMENTED; }
+    inline ReflectReturn LoadCompressionData(u32* totalsize) { return REFLECT_NOT_IMPLEMENTED; }
+    inline u32 GetVecLeft() { return 0; }
+    inline u8 GetCompressionFlags() { return 0; }
+    inline void SetCompressionFlags(u8 flags) { }
+    inline ReflectReturn StartCompressing() { return REFLECT_NOT_IMPLEMENTED; }
+    inline ReflectReturn FinishCompressing() { return REFLECT_NOT_IMPLEMENTED; }
+
+
+
 
     inline ReflectReturn ReadWrite(void*, int) { return REFLECT_OK; }
     inline CGatherVariables& AddChild() 

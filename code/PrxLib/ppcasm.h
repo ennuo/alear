@@ -34,3 +34,17 @@
 // Poke branches
 #define POKE_B(addr, dest) POKE_32(addr, B(dest, addr))
 #define POKE_BL(addr, dest) POKE_32(addr, BL(dest, addr))
+
+#define ASM_MANGLE(NAME) __HOOK__##NAME
+
+#define ASM_HOOK(NAME, ...) \
+    extern "C" uintptr_t __HOOK__##NAME; \
+    __asm__(".global __HOOK__" #NAME "\n___HOOK__" #NAME ":\n" __VA_ARGS__ )
+
+#define ASM_INVOKE(NAME) \
+    "std %r2, 0x28(%r1)\n" \
+    "lis %r2, " NAME "@h\n" \
+    "ori %r2, %r2, " NAME "@l\n" \
+    "lwz %r2, 0x4(%r2)\n" \
+    "bl ." NAME "\n" \
+    "ld %r2, 0x28(%r1)\n"

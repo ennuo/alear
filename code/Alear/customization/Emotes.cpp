@@ -1,11 +1,13 @@
 #include "customization/Emotes.h"
 #include "customization/Styles.h"
+#include "WinterBlast.h"
 
 #include <refcount.h>
 #include <cell/DebugLog.h>
 #include <MMAudio.h>
 #include <Variable.h>
 #include <SackBoyAnim.h>
+#include <RenderYellowHead.h>
 #include <Resource.h>
 #include <ResourceSystem.h>
 #include <ResourceSyncedProfile.h>
@@ -17,27 +19,6 @@
 CVector<CEmote> gEmotes;
 CVector<CAnimBank*> gAnimBanks;
 CStyleBank gStyleBank;
-
-extern bool gCachedAnimLoad;
-extern int gCachedAnimIndex;
-
-namespace ScriptyStuff {
-int LoadAnim(CAnimBank* ab, CGUID guid)
-{
-    if (gCachedAnimLoad) return gCachedAnimIndex++;
-
-    // the actual anim bank doesn't seem to get passed to this?
-    ab = gAnimBank;
-
-    if (ab->Subst) ab->Subst->Get(guid, guid);
-
-    int anim_index = ab->Anim.size();
-    CResourceDescriptor<RAnim> desc(guid);
-    CP<RAnim> anim = LoadResource<RAnim>(desc, STREAM_PRIORITY_DEFAULT, 0, false);
-    ab->Anim.push_back(anim);
-    return anim_index;
-}
-}
 
 CAnimStyle* GetAnimStyle(const char* id)
 {
@@ -238,6 +219,8 @@ void OnUpdateAnimationSounds(CSackBoyAnim& sb, int anim, int frame)
 
 void OnInitializeSackboyAnims(CSackBoyAnim& sb)
 {
+    CacheIceAnims(&sb, gAnimBank);
+
     CEmote* it = gEmotes.begin();
     for (; it != gEmotes.end(); ++it)
     {
@@ -250,6 +233,11 @@ void OnInitializeSackboyAnims(CSackBoyAnim& sb)
     // one is relevant.
     if (gCachedAnimLoad)
     {
+        // The non-cached load is using stack space, so initializing the extra ice
+        // data could cause problems there, but cached load is always from an allocated
+        // instance, so we actually have the space.
+        sb.InitIceData();
+
         CThing* thing = sb.Thing;
         if (thing == NULL) return;
         PYellowHead* part = thing->GetPYellowHead();

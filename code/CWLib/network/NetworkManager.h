@@ -19,11 +19,29 @@ public:
     bool DownloadOK;
 };
 
+class CUserSelectorForPad {
+public:
+    inline bool IsSelectionScreenCreated() const { return SelectionScreenCreated; }
+private:
+    bool Active;
+    bool SelectionScreenCreated;
+    bool Finished;
+};
+
+class CNetworkGameDataManager {
+public:
+    CUserSelectorForPad UserSelectorForPad;
+};
+
 class CNetworkManager {
 public:
     CNetworkMessaging& Messaging;
     CNetworkInputManager& InputManager;
     CNetworkConnectionManager& ConnectionManager;
+private:
+    void* Managers[2];
+public:
+    CNetworkGameDataManager& GameDataManager;
 };
 
 extern CNetworkManager gNetworkManager;

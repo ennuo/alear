@@ -1,3 +1,5 @@
+#include "TweakShape.h"
+
 #include <thing.h>
 #include <refcount.h>
 #include <Poppet.h>
@@ -6,6 +8,7 @@
 #include <ResourceGFXMesh.h>
 #include <PartGeneratedMesh.h>
 #include <PartRenderMesh.h>
+#include <ResourceTranslationTable.h>
 #include <PartScript.h>
 
 #include <vm/NativeFunctionCracker.h>
@@ -18,6 +21,10 @@
 
 const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
+
+const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
+const u32 E_LAMS_TWEAKABLE_MESH = MakeLamsKeyID("TWEAKABLE_MESH", "_NAME");
+const u32 E_LAMS_TWEAKABLE_DECAL = MakeLamsKeyID("TWEAKABLE_DECAL", "_NAME");
 
 StaticCP<RScript> gTweakShapeScript;
 StaticCP<RScript> gTweakCheckpointScript;
@@ -191,12 +198,12 @@ bool IsTweakShapeScriptAvailable()
 
 bool ShouldAttachShapeTweak(CThing* thing)
 {
-    if (thing == NULL || 
-        (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) ||
-        thing->GetPScript() != NULL) return false;
-    
-    PShape* shape = thing->GetPShape();
-    return shape != NULL; // && (shape->LethalType < LETHAL_POISON_GAS || shape->LethalType > LETHAL_POISON_GAS6);
+    if (thing == NULL || thing->GetPScript() != NULL) return false;
+
+    if (thing->GetPGeneratedMesh() != NULL)
+        return thing->GetPShape() != NULL;
+
+    return thing->GetPRenderMesh() != NULL;
 }
 
 MH_DefineFunc(CPoppetGooey_CanTweak, 0x0037f694, TOC1, bool, CPoppetChild*, CThing*);
@@ -212,10 +219,11 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
     if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
     PShape* shape = thing->GetPShape();
-    if (shape == NULL) return false;
-
-    if (shape->LethalType >= LETHAL_POISON_GAS && shape->LethalType <= LETHAL_POISON_GAS6)
-        return true;
+    if (shape != NULL)
+    {
+        if (shape->LethalType >= LETHAL_POISON_GAS && shape->LethalType <= LETHAL_POISON_GAS6)
+            return true;
+    }
 
     return IsTweakShapeScriptAvailable();
 }
@@ -247,12 +255,6 @@ void OnStopTweaking(CThing* thing)
 
 namespace TweakShapeNativeFunctions
 {
-    u32 GetDisplayName(CP<CResource> resource)
-    {
-        if (!resource || !resource->IsLoaded() || resource->GetResourceType() != RTYPE_PLAN) return 0;
-        return ((RPlan*)resource.GetRef())->InventoryData.NameTranslationTag;
-    }
-
     CP<CResource> GetPlan(CThing* thing)
     {
         if (thing == NULL) return NULL;
@@ -274,6 +276,25 @@ namespace TweakShapeNativeFunctions
         if (!guid) return NULL;
 
         return (CP<CResource>)LoadResourceByKey<RPlan>(guid.guid, 0, STREAM_PRIORITY_DEFAULT);
+    }
+
+    u32 GetDisplayName(CThing* thing)
+    {
+        u32 key = 0;
+
+        CP<CResource> resource = GetPlan(thing);
+        if (resource && resource->IsLoaded() && resource->GetResourceType() == RTYPE_PLAN)
+            key = ((RPlan*)resource.GetRef())->InventoryData.NameTranslationTag;
+        
+        if (thing != NULL && key == 0)
+        {
+            if (thing->GetPRenderMesh() != NULL)
+                key = thing->GetPShape() != NULL ? E_LAMS_TWEAKABLE_MESH : E_LAMS_TWEAKABLE_DECAL;
+            else
+                key = E_LAMS_TWEAKABLE_MATERIAL;
+        }
+
+        return key; 
     }
 
     bool UsesParameterAnimations(CThing* thing)
@@ -397,7 +418,7 @@ namespace TweakShapeNativeFunctions
 
     void Register()
     {
-        RegisterNativeFunction("TweakShape", "GetDisplayName__Q8Resource", true, NVirtualMachine::CNativeFunction1<u32, CP<CResource> >::Call<GetDisplayName>);
+        RegisterNativeFunction("TweakShape", "GetDisplayName__Q5Thing", true, NVirtualMachine::CNativeFunction1<u32, CThing*>::Call<GetDisplayName>);
         RegisterNativeFunction("TweakShape", "GetPlan__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetPlan>);
 
         RegisterNativeFunction("TweakShape", "UsesPlayerDefinedColour__Q5Thing", true, NVirtualMachine::CNativeFunction1<bool, CThing*>::Call<UsesPlayerDefinedColour>);

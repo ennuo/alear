@@ -85,7 +85,7 @@ public:
 
     CTweakSetting& SetSuffix(const char* lams_key)
     {
-        Suffix = MakeLamsKeyID(lams_key, NULL);;
+        Suffix = MakeLamsKeyID(lams_key, NULL);
         return *this;
     }
 

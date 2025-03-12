@@ -1,5 +1,6 @@
 #include "resources/ResourcePins.h"
 #include <Serialise.h>
+#include <Variable.h>
 
 StaticCP<RPins> gPins;
 
@@ -71,5 +72,10 @@ template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, 
 template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinsAwarded& d);
 template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinProgress& d);
 template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CPinAward& d);
+
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPinsAwarded& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPinProgress& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPinAward& d);
+
 
 #undef ADD

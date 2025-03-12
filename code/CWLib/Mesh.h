@@ -4,8 +4,51 @@
 #include <vector.h>
 #include <refcount.h>
 
+#include <spring.h>
+
+
+#include "Softbody.h"
 #include "GfxPool.h"
 #include "ResourceGfxMaterial.h"
+#include "SceneGraph.h"
+
+class CMeshShapeVertex {
+public:
+    v4 LocalPos;
+    v4 LocalNormal;
+    u32 BoneIndex;
+};
+
+class CMeshShapeInfo {
+public:
+    u32 NumVerts;
+    u32 IsPointCloud;
+};
+
+class CAnimBone {
+public:
+    u32 AnimHash;
+    int Parent;
+    int FirstChild;
+    int NextSibling;
+};
+
+class CBone : public CAnimBone {
+public:
+    m44 SkinPoseMatrix;
+    m44 InvSkinPoseMatrix;
+    v4 OBBMin;
+    v4 OBBMax;
+    v4 BoundBoxMin;
+    v4 BoundBoxMax;
+    v4 BoundSphere;
+    char Name[32];
+    u32 Flags;
+    CRawVector<CMeshShapeInfo> ShapeInfos;
+    CRawVector<CMeshShapeVertex> ShapeVerts;
+    float ShapeMinZ;
+    float ShapeMaxZ;
+};
 
 class CPrimitive {
 public:
@@ -32,9 +75,12 @@ public:
     u32 SourceStreamOffsets[35];
     u32 MorphCount;
     u32 BevelVertexCount;
-private:
-    char _Pad0[60];
-public:
+    CVector<CBone> Bones;
+    CRawVector<CCullBone> CullBones;
+    SoftbodyClusterData SoftbodyCluster;
+    SoftbodySpringVec SoftbodySprings;
+    bool ImplicitBevelSprings;
+    u8 PrimitiveType;
     CGfxHandle Indices;
     CRawVector<unsigned int> BevelStitchingPairs;
     CVector<CPrimitive> Primitives;

@@ -62,6 +62,23 @@ extern "C" uintptr_t _custom_gooey_network_action_hook;
 extern "C" uintptr_t _gooey_carousel_type_hook;
 extern "C" uintptr_t _gooey_carousel_sdf_hack_hook;
 
+extern "C" uintptr_t _get_frizzlefry_shader_hook;
+extern "C" uintptr_t _draw_icey_things_hook;
+extern "C" uintptr_t _is_frizzlefry_lethal_hook;
+extern "C" uintptr_t _track_frizzlefry_lethal_hook;
+extern "C" uintptr_t _set_danger_type_ice_timer_hook;
+extern "C" uintptr_t _draw_mesh_boundary_ice_hook;
+extern "C" uintptr_t _anim_update_ice_hook;
+extern "C" uintptr_t _anim_choose_idle_ice_hook;
+extern "C" uintptr_t _death_anim_ice_hook;
+extern "C" uintptr_t _creature_frozen_buoyancy_hook;
+extern "C" uintptr_t _sackboy_anim_late_update_hook;
+extern "C" uintptr_t _sackboy_anim_ice_ik_hook;
+extern "C" uintptr_t _sackboy_ground_distance_ice_hook;
+
+extern "C" uintptr_t _hack_gather_character_settings_hook;
+
+
 #define PORT_ALLOWED_TO_APPLY_SYNCED_UPDATES (0x000138f4)
 #define PORT_RGAME_RUN_FRAME (0x000b12a4)
 #define PORT_RGAME_SORT_PAD_INPUTS_INTO_YELLOW_HEADS (0x000a1204)

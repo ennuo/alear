@@ -1,4 +1,5 @@
 #include "AlearShared.h"
+#include "AlearConfig.h"
 #include "AlearDebugCamera.h"
 #include "InventoryItemRequest.h"
 
@@ -286,6 +287,49 @@ public:
     }
 };
 
+class CGameVarsEndpoint : public CRoute {
+public:
+    inline CGameVarsEndpoint(CWebternate* owner) : CRoute(owner) {}
+public:
+    const char* GetHref() { return "api/gamevars"; }
+    const char* GetContentType() { return "application/json"; }
+    bool IsPage() { return false; }
+
+    void DoBooleanResponse(bool& b, const char* name, const char* key, const char* value)
+    {
+        if (strcmp(key, name) != 0) return;
+        if (strcmp(value, "toggle") == 0) b = !b;
+        else b = strcmp(value, "true") == 0;
+    }
+
+    void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
+    {
+        EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
+        
+        if (method == E_HTTP_GET)
+        {
+            stream << "{";
+                stream << "\"isSimPaused\":" << (gPauseGameSim ? "true" : "false");
+            stream << "}";
+
+            return;
+        }
+
+        const char* key = NULL;
+        const char* value = NULL;
+
+        typename ParameterMap::iterator it = parameters.find("key");
+        if (it != parameters.end()) key = it->second.c_str();
+        else return;
+
+        it = parameters.find("value");
+        if (it != parameters.end()) value = it->second.c_str();
+        else return;
+
+        DoBooleanResponse(gPauseGameSim, "isSimPaused", key, value);
+    }
+};
+
 class CCinemachineEndpoint : public CRoute {
 public:
     inline CCinemachineEndpoint(CWebternate* owner) : CRoute(owner) {}
@@ -366,6 +410,7 @@ void OnWebternateSetup(CWebternate* webternate)
     webternate->AddRoute(new CInventoryPage(webternate));
     webternate->AddRoute(new CAurienPage(webternate));
     webternate->AddRoute(new CLookupResourceEndpoint(webternate));
+    webternate->AddRoute(new CGameVarsEndpoint(webternate));
     webternate->AddRoute(new CCinemachineEndpoint(webternate));
     webternate->AddRoute(new CInventoryEndpoint(webternate));
     webternate->AddRoute(new CFaviconEndpoint(webternate));

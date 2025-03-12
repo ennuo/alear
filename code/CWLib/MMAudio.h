@@ -5,7 +5,6 @@
 #include <fmod.hpp>
 #include <fmod_event.h>
 
-#include "thing.h"
 #include "Audio/FModAudioHandle.h"
 #include "Audio/FMODFile.h"
 
@@ -18,6 +17,8 @@ public:
 
 typedef CAudio::CFModAudioHandle AUDIO_HANDLE;
 typedef FModWrapper<FMOD::EventGroup> AUDIO_GROUP;
+class CThing;
+
 
 namespace CAudio 
 {

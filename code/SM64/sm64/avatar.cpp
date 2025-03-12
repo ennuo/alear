@@ -154,7 +154,6 @@ bool CMarioAvatar::IsMarioThing(CThing* thing)
     return group->HasMember(thing);
 }
 
-MH_DefineFunc(PShape_InitialisePolygon, 0x0005c7e0, TOC0, void, PShape*);
 MH_DefineFunc(TriangulateByEarClipping, 0x005d3c7c, TOC0, void, CRawVector<v2, CAllocatorMMAligned128>& polygon, CRawVector<unsigned int>& loops, CRawVector<unsigned int>& triangles, bool flipped);
 void CMarioAvatar::UpdateWorld()
 {

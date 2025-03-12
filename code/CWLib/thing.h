@@ -60,26 +60,26 @@ public:
     void AddPart(EPartType type);
     void RemovePart(EPartType type);
 public:
-    inline PBody* GetPBody() { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
-    inline PRenderMesh* GetPRenderMesh() { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
-    inline PPos* GetPPos() { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
-    inline PShape* GetPShape() { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
-    inline PGeneratedMesh* GetPGeneratedMesh() { return static_cast<PGeneratedMesh*>(Parts[PART_TYPE_GENERATED_MESH]); }
-    inline PWorld* GetPWorld() { return static_cast<PWorld*>(Parts[PART_TYPE_WORLD]); }
-    inline PYellowHead* GetPYellowHead() { return static_cast<PYellowHead*>(Parts[PART_TYPE_YELLOW_HEAD]); }
-    inline PCreature* GetPCreature() { return static_cast<PCreature*>(Parts[PART_TYPE_CREATURE]); }
-    inline PCostume* GetPCostume() { return static_cast<PCostume*>(Parts[PART_TYPE_COSTUME]); }
-    inline PGroup* GetPGroup() { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
-    inline PLevelSettings* GetPLevelSettings() { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
-    inline PGameplayData* GetPGameplayData() { return static_cast<PGameplayData*>(Parts[PART_TYPE_GAMEPLAY_DATA]); }
-    inline PScriptName* GetPScriptName() { return static_cast<PScriptName*>(Parts[PART_TYPE_SCRIPT_NAME]); }
-    inline PSwitch* GetPSwitch() { return static_cast<PSwitch*>(Parts[PART_TYPE_SWITCH]); }
-    inline PScript* GetPScript() { return static_cast<PScript*>(Parts[PART_TYPE_SCRIPT]); }
-    inline PRef* GetPRef() { return static_cast<PRef*>(Parts[PART_TYPE_REF]); }
-    inline PStickers* GetPStickers() { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
-    inline PDecorations* GetPDecorations() { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
-    inline PEffector* GetPEffector() { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
-    inline PCheckpoint* GetPCheckpoint() { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
+    inline PBody* GetPBody() const { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
+    inline PRenderMesh* GetPRenderMesh() const { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
+    inline PPos* GetPPos() const { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
+    inline PShape* GetPShape() const { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
+    inline PGeneratedMesh* GetPGeneratedMesh() const { return static_cast<PGeneratedMesh*>(Parts[PART_TYPE_GENERATED_MESH]); }
+    inline PWorld* GetPWorld() const { return static_cast<PWorld*>(Parts[PART_TYPE_WORLD]); }
+    inline PYellowHead* GetPYellowHead() const { return static_cast<PYellowHead*>(Parts[PART_TYPE_YELLOW_HEAD]); }
+    inline PCreature* GetPCreature() const { return static_cast<PCreature*>(Parts[PART_TYPE_CREATURE]); }
+    inline PCostume* GetPCostume() const { return static_cast<PCostume*>(Parts[PART_TYPE_COSTUME]); }
+    inline PGroup* GetPGroup() const { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
+    inline PLevelSettings* GetPLevelSettings() const { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
+    inline PGameplayData* GetPGameplayData() const { return static_cast<PGameplayData*>(Parts[PART_TYPE_GAMEPLAY_DATA]); }
+    inline PScriptName* GetPScriptName() const { return static_cast<PScriptName*>(Parts[PART_TYPE_SCRIPT_NAME]); }
+    inline PSwitch* GetPSwitch() const { return static_cast<PSwitch*>(Parts[PART_TYPE_SWITCH]); }
+    inline PScript* GetPScript() const { return static_cast<PScript*>(Parts[PART_TYPE_SCRIPT]); }
+    inline PRef* GetPRef() const { return static_cast<PRef*>(Parts[PART_TYPE_REF]); }
+    inline PStickers* GetPStickers() const { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
+    inline PDecorations* GetPDecorations() const { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
+    inline PEffector* GetPEffector() const { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
+    inline PCheckpoint* GetPCheckpoint() const { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

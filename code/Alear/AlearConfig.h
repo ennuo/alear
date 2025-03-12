@@ -118,6 +118,10 @@ extern ConfigMap gConfigMap;
 extern CConfigBool gUseDivergenceCheck;
 extern CConfigBool gUsePopitGradients;
 extern CConfigBool gHideMSPF;
+extern CConfigBool gLoadDefaultMaterial;
+extern CConfigBool gForceLoadEditable;
+
+extern bool gPauseGameSim;
 extern float gFarDist;
 
 void AlearInitConf();

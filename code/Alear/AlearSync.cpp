@@ -91,10 +91,11 @@ enum EGamedataFlags {
 
 enum ENetcodeMessage {
     MLD_PRINT,
+
     MLD_COMMIT,
     MLD_REQUEST_RESOURCES,
     MLD_DELETE_RESOURCES,
-    MLD_PUBLISH_HISTORY,
+    MLD_PUBLISH_HISTORY
 };
 
 // Standard matchmaking procedures

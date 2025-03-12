@@ -40,5 +40,6 @@ public:
 };
 
 extern PadData gPadData[E_PAD_INDEX_COUNT];
+bool SomePadHasInputIntercepted();
 
 #endif // PAD_INPUT_H

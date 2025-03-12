@@ -19,6 +19,7 @@
 #include <ResourceSystem.h>
 #include <ResourceGfxMaterial.h>
 #include <ResourceGFXTexture.h>
+#include <ResourceCharacterSettings.h>
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
 #include <PartGeneratedMesh.h>
@@ -82,6 +83,15 @@ void RGfxMaterial::InitializeExtraData()
 void RGfxMaterial::DestroyExtraData()
 {
     ParameterAnimations.~CVector();
+}
+
+void RCharacterSettings::InitializeExtraData()
+{
+    FramesTillFreeze = 120;
+    ForceToFreeze = 300000.0f;
+    ForceToShatterOnFreeze = 400000.0f;
+    FramesTillMeltInWater = 150;
+    FramesTillFrozenToDeath = 300;
 }
 
 void RLocalProfile::InitializeExtraData()
@@ -231,11 +241,23 @@ ReflectReturn OnSerializeExtraData(R& r, RLocalProfile& d)
     return ret;
 }
 
+template <typename R>
+ReflectReturn OnSerializeExtraData(R& r, RCharacterSettings& d)
+{
+    ReflectReturn ret = REFLECT_OK;
+    ADD(FramesTillFreeze);
+    ADD(ForceToFreeze);
+    ADD(ForceToShatterOnFreeze);
+    ADD(FramesTillMeltInWater);
+    ADD(FramesTillFrozenToDeath);
+    return ret;
+}
+
 #undef ADD
 
 bool ResourceHasCustomData(EResourceType type)
 {
-    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL || type == RTYPE_MATERIAL;
+    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL || type == RTYPE_MATERIAL || type == RTYPE_SETTINGS_CHARACTER;
 }
 
 template <typename R>
@@ -257,19 +279,15 @@ ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
                 ((RMaterial*)resource)->InitializeExtraData();
                 break;
             }
+            case RTYPE_SETTINGS_CHARACTER:
+            {
+                ((RCharacterSettings*)resource)->InitializeExtraData();
+                break;
+            }
         }
     }
 
     // if there's nothing left to serialize, obviously doesn't have custom data
-    if (r.GetLoading() && r.GetVecLeft() == 0) return REFLECT_OK;
-
-    ReflectReturn ret;
-    if ((ret = r.Align(0x10)) != REFLECT_OK) return ret;
-
-    u32 test_marker = 0x414c5352;
-    if ((ret = Reflect(r, test_marker)) != REFLECT_OK) return ret;
-
-    if (test_marker != 0x414c5352) return REFLECT_NOT_IMPLEMENTED;
 
     bool is_compressed = true;
     u16 version = r.GetResourceVersion();
@@ -277,47 +295,71 @@ ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
     u32 branch_id = 0x4c425031;
     u32 branch_version = r.GetCustomVersion();
 
-    if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
-    if (version >= ALEAR_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+    ReflectReturn ret;
 
-    r.SetResourceVersion(version);
-
-    if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
-    if ((ret = Reflect(r, is_compressed)) != REFLECT_OK) return ret;
-
-    if ((ret = Reflect(r, branch_id)) != REFLECT_OK) return ret;
-    if (branch_id != 0x4c425031) return REFLECT_FORMAT_TOO_NEW;
-
-    if ((ret = Reflect(r, branch_version)) != REFLECT_OK) return ret;
-    if (branch_version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
-    
-    r.SetCustomVersion(branch_version);
-
-    if (is_compressed)
+    if (!r.IsGatherVariables())
     {
-        if (r.GetLoading()) ret = r.LoadCompressionData(NULL);
-        else if (r.GetSaving()) ret = r.StartCompressing();
+        if (r.GetLoading() && r.GetVecLeft() == 0) return REFLECT_OK;
 
-        if (ret != REFLECT_OK) return ret;
+        if ((ret = r.Align(0x10)) != REFLECT_OK) return ret;
+    
+        u32 test_marker = 0x414c5352;
+        if ((ret = Reflect(r, test_marker)) != REFLECT_OK) return ret;
+    
+        if (test_marker != 0x414c5352) return REFLECT_NOT_IMPLEMENTED;
+    
+        if ((ret = Reflect(r, version)) != REFLECT_OK) return ret;
+        if (version >= ALEAR_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+    
+        r.SetResourceVersion(version);
+    
+        if ((ret = Reflect(r, compression_flags)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, is_compressed)) != REFLECT_OK) return ret;
+    
+        if ((ret = Reflect(r, branch_id)) != REFLECT_OK) return ret;
+        if (branch_id != 0x4c425031) return REFLECT_FORMAT_TOO_NEW;
+    
+        if ((ret = Reflect(r, branch_version)) != REFLECT_OK) return ret;
+        if (branch_version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
+        
+        r.SetCustomVersion(branch_version);
+    
+        if (is_compressed)
+        {
+            if (r.GetLoading()) ret = r.LoadCompressionData(NULL);
+            else if (r.GetSaving()) ret = r.StartCompressing();
+    
+            if (ret != REFLECT_OK) return ret;
+        }
+    
+        r.SetCompressionFlags(compression_flags);
     }
-
-    r.SetCompressionFlags(compression_flags);
 
     switch (resource->GetResourceType())
     {
         case RTYPE_SYNCED_PROFILE: ret = OnSerializeExtraData(r, *((RSyncedProfile*)resource)); break;
         case RTYPE_LOCAL_PROFILE: ret = OnSerializeExtraData(r, *((RLocalProfile*)resource)); break;
         case RTYPE_GFXMATERIAL: ret = OnSerializeExtraData(r, *((RGfxMaterial*)resource)); break;
-        case RTYPE_MATERIAL: ret = OnSerializeExtraData(r, *((RMaterial*)resource));
+        case RTYPE_MATERIAL: ret = OnSerializeExtraData(r, *((RMaterial*)resource)); break;
+        case RTYPE_SETTINGS_CHARACTER: ret = OnSerializeExtraData(r, *((RCharacterSettings*)resource)); break;
     }
-    
-    if (is_compressed)
+
+    if (!r.IsGatherVariables())
     {
-        if (r.GetLoading()) r.CleanupDecompression();
-        else if (r.GetSaving()) r.FinishCompressing();
+        if (is_compressed)
+        {
+            if (r.GetLoading()) r.CleanupDecompression();
+            else if (r.GetSaving()) r.FinishCompressing();
+        }
     }
 
     return ret;
+}
+
+void HackSerializeExtraCharacterSettings(CGatherVariables& r, RCharacterSettings& d)
+{
+    if (r.GetLoading()) d.InitializeExtraData();
+    OnSerializeExtraData(r, d);
 }
 
 template ReflectReturn OnSerializeExtraData<CReflectionLoadVector>(CReflectionLoadVector& r, RSyncedProfile& d);
@@ -326,6 +368,7 @@ template ReflectReturn OnSerializeExtraData<CReflectionFindDependencies>(CReflec
 
 template ReflectReturn ReflectExtraResourceData<CReflectionLoadVector>(CResource* resource, CReflectionLoadVector& r);
 template ReflectReturn ReflectExtraResourceData<CReflectionSaveVector>(CResource* resource, CReflectionSaveVector& r);
+
 
 RPins* AllocatePinsResource(EResourceFlag flags) 
 {
@@ -489,6 +532,11 @@ void AttachCustomRevisionHooks()
     MH_Poke32(0x00089590, LI(4, sizeof(RLocalProfile)));
     MH_Poke32(0x00088e44, LI(4, sizeof(RGfxMaterial)));
     MH_Poke32(0x00089000, LI(4, sizeof(RMaterial)));
+    MH_Poke32(0x00088f48, LI(4, sizeof(RCharacterSettings)));
+
+    // Increase the size of certain parts to account for modifications
+    MH_Poke32(0x00020f30, LI(4, sizeof(PCreature)));
+    MH_Poke32(0x0073ba14, LI(4, sizeof(PCreature)));
 
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);
@@ -754,8 +802,38 @@ void CThing::OnFinishSave()
     }
 }
 
+#include "AlearConfig.h"
+const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
 ReflectReturn CThing::OnLoad()
 {
+    if (gLoadDefaultMaterial)
+    {
+        PGeneratedMesh* mesh = GetPGeneratedMesh();
+        if (mesh != NULL && !mesh->GfxMaterial)
+        {
+            DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
+            mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+        }
+    }
+
+    if (gForceLoadEditable)
+    {
+        PShape* shape = GetPShape();
+        if (shape != NULL)
+        {
+            shape->InteractEditMode |= 3;
+            shape->InteractPlayMode |= 3;
+        }
+
+        PGroup* group = GetPGroup();
+        if (group != NULL)
+        {
+            group->Copyright = false;
+            group->Editable = true;
+            group->PickupAllMembers = false;
+        }
+    }
+
     // temp temp remove this!!!
     // PShape* shape = GetPShape();
     // if (shape != NULL)
@@ -766,6 +844,8 @@ ReflectReturn CThing::OnLoad()
     //     brightness = 1.0f;
     //     brightness_off = 0.0f;
     // }
+
+
 
     PScriptName* part = GetPScriptName();
     if (part != NULL) return part->LoadAlearData(this);
@@ -780,6 +860,8 @@ void PGeneratedMesh::InitializeExtraData()
 
 void InitResourceHooks()
 {
+    MH_PokeBranch(0x006e00f8, &_hack_gather_character_settings_hook);
+
     AttachResourceAllocationHooks();
     AttachResourceDependinateHooks();
     AttachResourceLoadHooks();

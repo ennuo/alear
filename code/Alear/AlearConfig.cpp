@@ -13,10 +13,15 @@
 
 void OnSetRenderDistanceToggle();
 
+bool gPauseGameSim;
+
 ConfigMap gConfigMap;
 CConfigBool gUsePopitGradients(L"Popit", L"Gradient", true);
 CConfigBool gUseDivergenceCheck(L"Game", L"Divergence Check", true);
 CConfigFloat gRenderDistance(L"Render", L"Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
+
+CConfigBool gLoadDefaultMaterial(L"Load", L"Use Fallback Graphics Materials", false);
+CConfigBool gForceLoadEditable(L"Load", L"Force Editable On Load", false);
 
 void CConfigOption::AddToRegistry()
 {

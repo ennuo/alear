@@ -6,6 +6,7 @@
 #include "AlearConfig.h"
 #include "PinSystem.h"
 #include "OutfitSystem.h"
+#include "TweakShape.h"
 
 #include "customization/SlapStyles.h"
 #include "customization/Emotes.h"
@@ -27,8 +28,10 @@
 #include <cell/thread.h>
 
 #include <thing.h>
+#include <ProfileCache.h>
 #include <RenderTarget.h>
 #include <Mesh.h>
+#include <GameShell.h>
 #include <Poppet.h>
 #include <PoppetChild.h>
 #include <OverlayUI.h>
@@ -61,6 +64,7 @@
 #include <gooey/GooeyNodeManager.h>
 #include <gooey/GooeyImage.h>
 #include <network/NetworkManager.h>
+#include <network/NetworkPartiesData.h>
 #include <poppet/ScriptObjectPoppet.h>
 #include <MMAudio.h>
 
@@ -261,6 +265,7 @@ void OnUpdateLevel()
 }
 
 
+extern void RenderSwitchDebug();
 void OnRunPipelinePostProcessing()
 {
     gPoppetBloomHack.clear();
@@ -276,6 +281,7 @@ void OnRunPipelinePostProcessing()
     }
     
     if (gShowOutlines) RenderShapeOutlines();
+    RenderSwitchDebug();
 }
 
 void OnPredictionOrRenderUpdate()
@@ -314,6 +320,24 @@ bool CustomTryTranslate(u32 key, tchar_t const*& out)
     if (key == MakeLamsKeyID("BP_", "HIDE_POPPET_UI"))
     {
         out = (tchar_t*)L"Hide Poppet UI";
+        return true;
+    }
+
+    if (key == E_LAMS_TWEAKABLE_MATERIAL)
+    {
+        out = (tchar_t*)L"Material";
+        return true;
+    }
+
+    if (key == E_LAMS_TWEAKABLE_MESH)
+    {
+        out = (tchar_t*)L"Mesh";
+        return true;
+    }
+    
+    if (key == E_LAMS_TWEAKABLE_DECAL)
+    {
+        out = (tchar_t*)L"Decal";
         return true;
     }
 
@@ -615,6 +639,23 @@ FMOD_RESULT LoadAllEventProjects()
     return FMOD_OK;
 }
 
+bool IsGamePaused()
+{
+    if (GetGamePartyData(E_CHECK_THREAD).NumPS3s() < 2)
+    {
+        if (gPauseGameSim) return true;
+
+        CP<RLocalProfile>& prf = ProfileCache::GetOrCreateMainUserProfile();
+        if ((prf && gGameShell->OverlayUI->IsStartMenuOpen()) || 
+            gNetworkManager.GameDataManager.UserSelectorForPad.IsSelectionScreenCreated()) 
+            return true;
+
+        return SomePadHasInputIntercepted();
+    }
+
+    return false;
+}
+
 
 namespace NPoppetUtils {
     MH_DefineFunc(UseSphereRaycast, 0x0038edb8, TOC1, bool, CThing const* thing);
@@ -816,9 +857,149 @@ extern bool CanTweakThing(CPoppet* poppet, CThing* thing);
 
 extern void AttachPoppetInterfaceExtensionHooks();
 
+enum AudioSfxType {
+    AUDIO_SFX_FIRE,
+    AUDIO_SFX_ELECTRICITY,
+    AUDIO_SFX_GAS,
+    AUDIO_SFX_ICE,
+    AUDIO_SFX_PLASMA,
+    AUDIO_SFX_NONE,
+    AUDIO_SFX_NUM_TYPES
+};
+
+AudioSfxType MapELethalTypeToAudioType(ELethalType type)
+{
+    switch (type)
+    {
+        case LETHAL_FIRE: 
+            return AUDIO_SFX_FIRE;
+        case LETHAL_BULLET: 
+            return AUDIO_SFX_PLASMA;
+        case LETHAL_POISON_GAS:
+        case LETHAL_POISON_GAS2:
+        case LETHAL_POISON_GAS3:
+        case LETHAL_POISON_GAS4:
+        case LETHAL_POISON_GAS5:
+        case LETHAL_POISON_GAS6:
+            return AUDIO_SFX_GAS;
+        case LETHAL_ELECTRIC:
+            return AUDIO_SFX_ELECTRICITY;
+        case LETHAL_ICE:
+            return AUDIO_SFX_ICE;
+        default:
+            return AUDIO_SFX_NONE;
+    }
+}
+
+bool gHackIsDrawingIceyThings;
+StaticCP<RPixelShader> gFirePixelShader;
+StaticCP<RPixelShader> gIcePixelShader;
+
+ELethalType GetFrizzleFryLethalType()
+{
+    return gHackIsDrawingIceyThings ? LETHAL_ICE : LETHAL_FIRE;
+}
+
+bool IsFrizzleFryLethal(ELethalType type)
+{
+    return type == GetFrizzleFryLethalType();
+}
+
+StaticCP<RPixelShader>& GetIceFirePixelShader()
+{
+    gHackIsDrawingIceyThings = !gHackIsDrawingIceyThings;
+    return gHackIsDrawingIceyThings ? gIcePixelShader : gFirePixelShader;
+}
+
+void ResetLethalTimers(PShape* shape)
+{
+    ELethalType type = shape->LethalType;
+    
+    if (type == LETHAL_NOT) return;
+
+    if (type == LETHAL_ELECTRIC) 
+        shape->ElectricFrame = 1;
+    else if (type == LETHAL_FIRE || type == LETHAL_ICE)
+        shape->FireFrame = 1;
+    else if (type >= LETHAL_POISON_GAS && type <= LETHAL_POISON_GAS6)
+        shape->GasFrame = 1;
+}
+
+void LoadPostProcessingShaders()
+{
+    *((CP<RPixelShader>*)&gFirePixelShader) = LoadResourceByKey<RPixelShader>(31194, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RPixelShader>*)&gIcePixelShader) = LoadResourceByKey<RPixelShader>(31195, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+
+v2 Hack_GetWalkInput(PCreature* creature)
+{
+    if (creature->State == STATE_FROZEN)
+    {
+        if (creature->Fork->AmountBodySubmerged > 0.001f || creature->Fork->AmountHeadSubmerged > creature->Config->AmountSubmergedToNotBreath)
+            return v2(0.0f);
+    }
+
+    return creature->Fork->WalkInput;
+}
+
+bool Hack_AvoidsObstacle(PCreature* creature, float f1, float f2, float f3, float f4, float f5)
+{
+    if (creature->State == STATE_FROZEN) return false;
+    return (f1 <= 0.0f && f2 <= f4 - 170.0f) || (f5 + 170.0f <= f3);
+}
+
+
+void AttachIceHooks()
+{
+    MH_Poke32(0x003c3e60, NOP); // Don't unlethalize early ice hazards
+    MH_PokeHook(0x001ab81c, MapELethalTypeToAudioType); // Play ice sounds when hazard is applied
+    MH_PokeBranch(0x0041717c, &_get_frizzlefry_shader_hook);
+    MH_PokeBranch(0x001dd96c, &_draw_icey_things_hook);
+    MH_PokeBranch(0x004172a0, &_is_frizzlefry_lethal_hook);
+    MH_PokeBranch(0x00417450, &_track_frizzlefry_lethal_hook);
+    MH_PokeBranch(0x00348098, &_set_danger_type_ice_timer_hook);
+    MH_PokeBranch(0x001c5180, &_draw_mesh_boundary_ice_hook);
+
+    MH_Poke32(0x000ea4fc, LI(4, sizeof(CSackBoyAnim)));
+    MH_PokeBranch(0x000fecf0, &_anim_update_ice_hook);
+    MH_PokeBranch(0x000f656c, &_anim_choose_idle_ice_hook);
+    MH_PokeBranch(0x000f2394, &_death_anim_ice_hook);
+
+    // dumb hack to zero initialize fields in creature fork
+    // expand thingptr initialization 
+    MH_Poke32(0x0003e934, LI(8, 0xc6));
+
+    // float
+    MH_PokeBranch(0x000a5a70, &_creature_frozen_buoyancy_hook);
+
+    MH_PokeHook(0x0002480c, Hack_GetWalkInput);
+
+    MH_PokeBranch(0x000feba4, &_sackboy_anim_late_update_hook);
+
+    // Pass WasFrozen into the OnDeath so we can trigger steam or smoke particles
+    // MH_Poke32(0x00072000, 0x80a30cfc /* lwz %r5, 0xcfc(%r3) */);
+    MH_Poke32(0x00072000, LI(5, 1));
+
+    // Don't apply leg IK fixes to Sackboy when doing thaw animation.
+    MH_PokeBranch(0x000fdeb8, &_sackboy_anim_ice_ik_hook);
+
+    // Fixup ground normal update function setting ground distance to FLT_INF
+    // when we're standing on an ice lethalized shape.
+    MH_PokeBranch(0x000408fc, &_sackboy_ground_distance_ice_hook);
+
+    // Don't avoid obstacles while frozen in a block
+    // MH_PokeHook(0x00024754, Hack_AvoidsObstacle);
+}
+
 void InitSharedHooks()
 {
     AttachPoppetInterfaceExtensionHooks();
+    AttachIceHooks();
+
+    // MH_Poke32(0x001c71a0, BLR);
+    // MH_Poke32(0x001c5180, 0x2f890003);
+    // MH_Poke32(0x001c535c, 0x39600004);
     
     // MH_Poke32(0x001c7b84, 0x4e800020);
 
@@ -909,6 +1090,8 @@ void InitSharedHooks()
 
     MH_PokeBranch(0x0034fcd8, &_popit_attempt_tweak_hook);
     MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
+
+    MH_PokeHook(0x0009a634, IsGamePaused);
 }
 
 // Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

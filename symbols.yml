@@ -64,3 +64,5 @@ _ZN4NGfx8tgVtxCurE: 0x009cdf90
 _ZN4NGfx13gTgUseNormalsE: 0x009cdfb0
 _ZN13CRenderTarget13gLinear_ClampE: 0x009cf690
 gPipelineBindings: 0x009cfec8
+gGamePartyData: 0x009756bc
+gSomePadHasInputIntercepted: 0x009dc51f

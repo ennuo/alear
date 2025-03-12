@@ -23,6 +23,8 @@ class RAnimatedTexture;
 class RPixelShader;
 class RVertexShader;
 class RSyncedProfile;
+class RGfxMaterial;
+class RCharacterSettings;
 
 enum EResourceType
 {
@@ -176,6 +178,7 @@ template <> inline EResourceType GetResourceType<RTranslationTable>() { return R
 template <> inline EResourceType GetResourceType<RFontFace>() { return RTYPE_FONTFACE; }
 template <> inline EResourceType GetResourceType<RTexture>() { return RTYPE_TEXTURE; }
 template <> inline EResourceType GetResourceType<RPins>() { return RTYPE_PINS; }
+template <> inline EResourceType GetResourceType<RGfxMaterial>() { return RTYPE_GFXMATERIAL; }
 template <> inline EResourceType GetResourceType<RMaterial>() { return RTYPE_MATERIAL; }
 template <> inline EResourceType GetResourceType<RGuidSubst>() { return RTYPE_GUID_SUBST; }
 template <> inline EResourceType GetResourceType<RFileOfBytes>() { return RTYPE_FILE_OF_BYTES; }
@@ -187,6 +190,7 @@ template <> inline EResourceType GetResourceType<RVertexShader>() { return RTYPE
 template <> inline EResourceType GetResourceType<RPixelShader>() { return RTYPE_PIXEL_SHADER; }
 template <> inline EResourceType GetResourceType<RSyncedProfile>() { return RTYPE_SYNCED_PROFILE; }
 template <> inline EResourceType GetResourceType<RLocalProfile>() { return RTYPE_LOCAL_PROFILE; }
+template <> inline EResourceType GetResourceType<RCharacterSettings>() { return RTYPE_SETTINGS_CHARACTER; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

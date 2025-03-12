@@ -1,4 +1,6 @@
 #include "PartCreature.h"
+#include "PartYellowHead.h"
+#include "thing.h"
 #include "hook.h"
 
 MH_DefineFunc(PCreature_SetState, 0x0007194c, TOC0, void, PCreature*, EState);
@@ -8,10 +10,13 @@ void PCreature::SetState(EState state)
 }
 
 
-MH_DefineFunc(PCreature_GetInput, 0x000277e8, TOC0, CInput*, PCreature*);
 CInput* PCreature::GetInput()
 {
-    return PCreature_GetInput(this);
+    CThing* thing = GetThing();
+    if (thing == NULL) return NULL;
+    PYellowHead* yellowhead = thing->GetPYellowHead();
+    if (yellowhead == NULL) return NULL;
+    return yellowhead->GetInput();
 }
 
 MH_DefineFunc(PCreature_SetScubaGear, 0x000739e4, TOC0, void, PCreature*, bool);

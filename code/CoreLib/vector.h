@@ -91,9 +91,29 @@ public:
 		this->try_reserve(capacity);
 	}
 
+	inline CRawVector(CRawVector<T, Allocator> const& vec) : CBaseVectorPolicy<T, Allocator>()
+	{
+		*this = vec;
+	}
+
 	inline ~CRawVector() 
 	{
 		Allocator::Free(gVectorBucket, this->Data);
+	}
+
+	inline CRawVector<T, Allocator>& operator=(CRawVector<T, Allocator> const& vec)
+	{
+		this->clear();
+		
+		if (vec.Data != NULL)
+		{
+			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
+			memcpy(this->Data, vec.Data, vec.Size * sizeof(T));
+			this->Size = vec.Size;
+			this->MaxSize = vec.Size;
+		}
+
+		return *this;
 	}
 
 	inline void push_front(T const& element)
@@ -160,6 +180,8 @@ public:
 
 	inline CVector<T, Allocator>& operator=(CVector<T, Allocator> const& vec)
 	{
+		if (this->Data != NULL) this->clear();
+
 		if (vec.Data != NULL)
 		{
 			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
