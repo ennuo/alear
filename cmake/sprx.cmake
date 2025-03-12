@@ -6,13 +6,13 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${MAKE_FSELF} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/alear.prx.stripped ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/alear.sprx
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND wsl --exec rm -f bin/alear.pahole.h
-)
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND wsl --exec rm -f bin/alear.pahole.h
+# )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND wsl --exec pahole --compile -a -A -d -I bin/alear.prx > bin/alear.pahole.h
-)
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND wsl --exec pahole --compile -a -A -d -I bin/alear.prx > bin/alear.pahole.h
+# )
 
 # add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 #     COMMAND wsl --exec abi-dumper  bin/alear.prx -o bin/alear.abi.dump
