@@ -949,6 +949,23 @@ bool Hack_AvoidsObstacle(PCreature* creature, float f1, float f2, float f3, floa
     return (f1 <= 0.0f && f2 <= f4 - 170.0f) || (f5 + 170.0f <= f3);
 }
 
+// Ice needs (assuming these need hooks) fixes for the following:
+// Remove layer controls when frozen
+// Remove automatic layer shifting onto platforms
+// Remove water controls (just exiting water)
+// Allow player to shift layers when on ice
+// Disable player from putting hand on wall
+// Disable footstep sounds when frozen? (not sure if this needs hook)
+// Disable bubble emitter from mouth when frozen
+// Allow player to open popit when frozen in create mode
+// Allow player to unhover when frozen while just exiting water
+// Call for fire head stun (related to standing on ice in normal state)
+
+// Additional fix:
+// Remove player avoiding ice (layer shifts when falling projectile is in the way)
+
+// Questions for Aidan:
+// Where do I get the player's velocity? I need this to check if the player is below a certain speed while frozen
 
 void AttachIceHooks()
 {

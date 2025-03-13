@@ -26,7 +26,9 @@ enum EState
     STATE_DIVER_SUIT = 11,
     STATE_GAS_MASK = 12,
     STATE_FROZEN = 13,
-    STATE_GAUNTLETS = 14
+    STATE_GAUNTLETS = 14,
+    STATE_INVINCIBLE = 15,
+    STATE_MINI_SUIT = 16
 };
 
 struct NearestObjectInfo {
@@ -166,7 +168,6 @@ public:
     bool HasBreathedAir; // 0xa48
     bool HasScubaGear; // 2633, 0xa49
     s32 Freeziness;
-    s32 LastFrozen;
     s32 WaterTimer;
     float LastForceSum;
     s32 PadForInit;

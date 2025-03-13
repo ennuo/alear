@@ -100,7 +100,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
         case STATE_FORCE:
         {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/explode_appear", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
                 CResourceDescriptor<RPlan> desc(71445);
@@ -118,6 +118,29 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
                 CResourceDescriptor<RPlan> desc(132790);
                 costume->RemovePowerup(desc);
             }
+
+            break;
+        }
+        
+        case STATE_INVINCIBLE:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_release", thing, -10000.0f, -10000.0f);
+
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+                // Set character lethal type to none
+                // shape->LethalType = LETHAL_NOT;
+            }
+
+            break;
+        }
+
+        case STATE_MINI_SUIT:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/expand", thing, -10000.0f, -10000.0f);
+
+            // Set creature MeshScale to 1.0f
 
             break;
         }
@@ -230,7 +253,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         case STATE_FORCE:
         {
             creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/pickup", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/explode_appear", thing, -10000.0f, -10000.0f);
             
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(81026, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
@@ -254,7 +277,32 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             
             break;
         }
+
+        case STATE_INVINCIBLE:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_engage", thing, -10000.0f, -10000.0f);
+
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+                // Set character lethal type to plasma
+                //shape->LethalType = LETHAL_BULLET;
+            }
+
+            break;
+        }
         
+        case STATE_MINI_SUIT:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/shrink", thing, -10000.0f, -10000.0f);
+
+            // Set creature MeshScale to 0.5f
+
+            break;
+        }
+
         case STATE_DIVER_SUIT:
         {
             creature.SetScubaGear(false);
@@ -291,6 +339,8 @@ bool CanSwim(PCreature& creature)
     return
         state == STATE_NORMAL_ ||
         state == STATE_GUN ||
+        state == STATE_INVINCIBLE ||
+        state == STATE_MINI_SUIT || 
         state == STATE_GAS_MASK;
 }
 
@@ -304,6 +354,8 @@ bool IsPowerupState(PCreature* creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
+        state == STATE_INVINCIBLE ||
+        state == STATE_MINI_SUIT || 
         state == STATE_DIVER_SUIT ||
         state == STATE_GAS_MASK;
 }
@@ -317,6 +369,8 @@ bool IsPlayableState(PCreature& creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
+        state == STATE_INVINCIBLE ||
+        state == STATE_MINI_SUIT || 
         state == STATE_DIVER_SUIT || 
         state == STATE_GAS_MASK;
 };
@@ -340,7 +394,15 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
 
             v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
             if (force.getY() < 0.0f)
-                creature.SetState(STATE_NORMAL_);
+            {
+                if(state == STATE_FROZEN)
+                {
+                    creature.SetState(STATE_NORMAL_);
+                }
+                else
+                    // This should burn player instead of instant kill
+                    return true;
+            }
 
             return IsLethalInstaKill(creature, (ELethalType)i);
         }
@@ -350,7 +412,7 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
     // don't know what I'm doing with this one, just testing
     if (lethal == LETHAL_NO_STAND)
     {
-        for (int i = LETHAL_SPIKE; i < LETHAL_TYPE_COUNT; ++i)
+        for (int i = LETHAL_FIRE; i < LETHAL_TYPE_COUNT; ++i)
         {
             if (i == LETHAL_NO_STAND) continue;
 
@@ -360,12 +422,20 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.LethalForce = creature.Fork->hurt_force[i];
             creature.TypeOfLethalThingTouched = i;
 
+            v2 force = creature.Fork->hurt_force[LETHAL_SPIKE];
+            if (force.getY() > 0.0f)
+            {
+                return false;
+            }
+
             return IsLethalInstaKill(creature, (ELethalType)i);
         }
     }
 
     // Gas mask obviously is invulnerable to gas
     if (state == STATE_GAS_MASK && lethal == LETHAL_POISON_GAS) return false;
+
+    if (state == STATE_INVINCIBLE) return false;
     
     // Diving suit is invulnerable to drowning
     if (state == STATE_DIVER_SUIT && lethal == LETHAL_DROWNED) return false;
@@ -410,6 +480,7 @@ void CollectGrapple(CThing* thing)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_GRAPPLE);
 }
 
@@ -418,6 +489,7 @@ void CollectBoots(CThing* thing, f32 speed, f32 jump)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_BOOTS);
 }
 
@@ -426,6 +498,7 @@ void CollectForce(CThing* thing)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_FORCE);
 }
 
@@ -434,6 +507,7 @@ void CollectGauntlets(CThing* thing)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_GAUNTLETS);
 }
 
@@ -442,6 +516,7 @@ void CollectGasMask(CThing* thing)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_GAS_MASK);
 }
 
@@ -450,7 +525,26 @@ void CollectDiverSuit(CThing* thing)
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_DIVER_SUIT);
+}
+
+void CollectMiniSuit(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
+    creature->SetState(STATE_MINI_SUIT);
+}
+
+void CollectInvincible(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    if (!IsPlayableState(*creature)) return;
+    creature->SetState(STATE_INVINCIBLE);
 }
 
 void RemoveAbility(CThing* thing)
@@ -497,11 +591,13 @@ void OnCreatureStateUpdate(PCreature& creature)
                    creature.SetState(STATE_FROZEN);
             }
             // Check frames since last frozen
-            //else if (creature.LastFrozen >= 60)
-            //{
-            //    if (creature.Freeziness >= COLD_FREEZINESS)
-            //        creature.SetState(STATE_FROZEN);
-            //}
+            // Should be assigned to something in the creature config later
+            // Also assigned a better variable than "StateTimer" so it doesn't check for removing powerups
+            else if (creature.StateTimer < 90)
+            {
+                if (creature.Freeziness >= COLD_FREEZINESS)
+                    creature.SetState(STATE_FROZEN);
+            }
             else if (creature.Freeziness >= MAX_FREEZINESS)
                 creature.SetState(STATE_FROZEN);
         }
@@ -543,6 +639,8 @@ void OnCreatureStateUpdate(PCreature& creature)
                 }
             }
             // If we're hit on the head, just freeze.
+            // This should check the normal of the object instead of just head
+            // since it seems to be buggy (hitting a wall triggers for example)
             else 
             {
                 // Check if creature swimming
@@ -616,18 +714,57 @@ void OnCreatureStateUpdate(PCreature& creature)
         {
             if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
                 creature.SetState(STATE_NORMAL_);
+                
+            break;
         }
 
         case STATE_FORCE:
         {
+            if ((input->ButtonsOld & PAD_BUTTON_R1) == 0 && (input->Buttons & PAD_BUTTON_R1) != 0)
+            {
+                //CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/suicide_breath_relief", thing, -10000.0f, -10000.0f);
+                // Perform explosion
+            }
             if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
                 creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
+
+        case STATE_INVINCIBLE:
+        {
+            //CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/KO2_object_powered_up", creature.GetThing(), -10000.0f, -10000.0f);
+            
+            PShape* shape = creature.GetThing()->GetPShape();
+            if (shape != NULL)
+            {
+                // Cycle editor colour here with hue shift
+                // shape->EditorColour = vec_float4(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+
+            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                creature.SetState(STATE_NORMAL_);
+            // Invincibility timeout
+            if (creature.StateTimer > 120)
+                creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
+
+        case STATE_MINI_SUIT:
+        {
+            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                creature.SetState(STATE_NORMAL_);
+                
+            break;
         }
 
         case STATE_DIVER_SUIT:
         {
             if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
                 creature.SetState(STATE_NORMAL_);
+                
+            break;
         }
 
         case STATE_GAS_MASK:
@@ -637,6 +774,8 @@ void OnCreatureStateUpdate(PCreature& creature)
                 if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
                     creature.SetState(STATE_NORMAL_);
             }
+            
+            break;
         }
     }
 }
@@ -673,4 +812,6 @@ void AlearInitCreatureHook()
     RegisterNativeFunction("TriggerCollectGauntlets", "CollectGauntlets__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGauntlets>);
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
+    RegisterNativeFunction("TriggerCollectMiniSuit", "CollectMiniSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectMiniSuit>);
+    RegisterNativeFunction("TriggerCollectInvincible", "CollectInvincible__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectInvincible>);
 }
