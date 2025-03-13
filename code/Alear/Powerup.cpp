@@ -75,7 +75,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
-                CResourceDescriptor<RPlan> desc(71445);
+                CResourceDescriptor<RPlan> desc(104011);
                 costume->RemovePowerup(desc);
             }
 
@@ -84,12 +84,16 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
         case STATE_BOOTS:
         {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "poppet/camerazone_angle_exit", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
                 CResourceDescriptor<RPlan> desc(71445);
                 costume->RemovePowerup(desc);
             }
+
+            creature.SpeedModifier = 1.0f;
+            creature.JumpModifier = 1.0f;
+            creature.StrengthModifier = 1.0f;
 
             break;
         }
@@ -106,9 +110,21 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             break;
         }
 
+        case STATE_GAUNTLETS:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/drop", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(132790);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
+
         case STATE_DIVER_SUIT:
         {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
                 CResourceDescriptor<RPlan> desc(71445);
@@ -183,7 +199,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(75854, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
-            CResourceDescriptor<RPlan> desc(71445);
+            CResourceDescriptor<RPlan> desc(104011);
             costume->SetPowerup(mesh, desc);
             
             break;
@@ -192,13 +208,21 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         case STATE_BOOTS:
         {
             creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/pickup", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "poppet/camerazone_angle_enter", thing, -10000.0f, -10000.0f);
             
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(81621, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
             CResourceDescriptor<RPlan> desc(71445);
             costume->SetPowerup(mesh, desc);
+
+            creature.SpeedModifier = 1.5f;
+            creature.JumpModifier = 1.5f;
+            creature.StrengthModifier = 1.5f;
+
+            // Going to write something to call here that will
+            // 1. Play equip animation
+            // 2. Swap out running animations
             
             break;
         }
@@ -217,10 +241,24 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             break;
         }
         
+        case STATE_GAUNTLETS:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/pickup", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(96530, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(132790);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
+        
         case STATE_DIVER_SUIT:
         {
             creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
             
             CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
@@ -265,6 +303,7 @@ bool IsPowerupState(PCreature* creature)
         state == STATE_GRAPPLE ||
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
+        state == STATE_GAUNTLETS ||
         state == STATE_DIVER_SUIT ||
         state == STATE_GAS_MASK;
 }
@@ -277,6 +316,7 @@ bool IsPlayableState(PCreature& creature)
         state == STATE_GRAPPLE ||
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
+        state == STATE_GAUNTLETS ||
         state == STATE_DIVER_SUIT || 
         state == STATE_GAS_MASK;
 };
@@ -365,23 +405,15 @@ bool IsAffectedByFire(PCreature& creature)
         state == STATE_GAS_MASK;
 }
 
-void CollectDiverSuit(CThing* thing)
+void CollectGrapple(CThing* thing)
 {
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
-    creature->SetState(STATE_DIVER_SUIT);
+    creature->SetState(STATE_GRAPPLE);
 }
 
-void CollectGasMask(CThing* thing)
-{
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    creature->SetState(STATE_GAS_MASK);
-}
-
-void CollectBoots(CThing* thing)
+void CollectBoots(CThing* thing, f32 speed, f32 jump)
 {
     if (thing == NULL) return;
     PCreature* creature = thing->GetPCreature();
@@ -395,6 +427,30 @@ void CollectForce(CThing* thing)
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
     creature->SetState(STATE_FORCE);
+}
+
+void CollectGauntlets(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    creature->SetState(STATE_GAUNTLETS);
+}
+
+void CollectGasMask(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    creature->SetState(STATE_GAS_MASK);
+}
+
+void CollectDiverSuit(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    creature->SetState(STATE_DIVER_SUIT);
 }
 
 void RemoveAbility(CThing* thing)
@@ -611,6 +667,10 @@ void AlearInitCreatureHook()
 
     MH_InitHook((void*)0x0040a828, (void*)&RemoveAbility);
 
+    RegisterNativeFunction("TriggerCollectGrapple", "CollectGrapple__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGrapple>);
+    RegisterNativeFunction("TriggerCollectBoots", "CollectBoots__Q5Thing", true, NVirtualMachine::CNativeFunction3V<CThing*, f32, f32>::Call<CollectBoots>);
+    RegisterNativeFunction("TriggerCollectForce", "CollectForce__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectForce>);
+    RegisterNativeFunction("TriggerCollectGauntlets", "CollectGauntlets__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGauntlets>);
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
 }

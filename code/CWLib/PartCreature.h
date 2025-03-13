@@ -25,7 +25,8 @@ enum EState
     STATE_MOTION_CONTROLLER = 10,
     STATE_DIVER_SUIT = 11,
     STATE_GAS_MASK = 12,
-    STATE_FROZEN = 13
+    STATE_FROZEN = 13,
+    STATE_GAUNTLETS = 14
 };
 
 struct NearestObjectInfo {
