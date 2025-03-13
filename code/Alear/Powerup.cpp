@@ -471,6 +471,22 @@ bool IsAffectedByFire(PCreature& creature)
         state == STATE_GRAPPLE ||
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
+        state == STATE_GAUNTLETS ||
+        state == STATE_MINI_SUIT ||
+        state == STATE_DIVER_SUIT ||
+        state == STATE_GAS_MASK;
+}
+
+bool IsAffectedByIce(PCreature& creature)
+{
+    EState state = creature.State;
+    return
+        state < STATE_STUNNED ||
+        state == STATE_GRAPPLE ||
+        state == STATE_BOOTS ||
+        state == STATE_FORCE ||
+        state == STATE_GAUNTLETS ||
+        state == STATE_MINI_SUIT ||
         state == STATE_DIVER_SUIT ||
         state == STATE_GAS_MASK;
 }
@@ -575,7 +591,7 @@ bool CanFloat(PCreature& creature)
 
 void OnCreatureStateUpdate(PCreature& creature)
 {
-    if (creature.State != STATE_FROZEN)
+    if (IsAffectedByIce(creature))
     {
         const int MAX_FREEZINESS = creature.Config->FramesTillFreeze;
         const int COLD_FREEZINESS = creature.Config->FramesTillFreezeCold;
@@ -584,8 +600,8 @@ void OnCreatureStateUpdate(PCreature& creature)
         {
             creature.Freeziness = MIN(creature.Freeziness + 1, MAX_FREEZINESS);
 
-            // Should freeze faster in water
-            if (creature.Fork->IsSwimming)
+            // Should freeze faster in water and with jetpack
+            if (creature.Fork->IsSwimming || creature.State == STATE_JETPACK)
             { 
                 if (creature.Freeziness >= WET_FREEZINESS)
                    creature.SetState(STATE_FROZEN);
@@ -609,7 +625,7 @@ void OnCreatureStateUpdate(PCreature& creature)
     ForceSum(creature.GetThing()->GetPShape(), 0, sum, length_sum, -FLT_MAX);
     float mixed_body_sum = creature.LastForceSum + length_sum;
 
-    if (creature.State != STATE_FROZEN)
+    if (IsAffectedByIce(creature))
     {
         if (creature.Fork->hurt_by[LETHAL_ICE].GetThing() != NULL)
         {
@@ -627,7 +643,7 @@ void OnCreatureStateUpdate(PCreature& creature)
                 creature.SetState(STATE_FROZEN);
                 if (mixed_body_sum >= creature.Config->ForceToShatterOnFreeze)
                 {
-                    // Check if in water
+                    // We don't want it to shatter in water as there should be dampening
                     if (creature.Fork->IsSwimming) 
                     {
                         creature.SetState(STATE_FROZEN);
@@ -646,7 +662,8 @@ void OnCreatureStateUpdate(PCreature& creature)
                 // Check if creature swimming
                 if (!creature.Fork->IsSwimming)
                 {   
-                    creature.SetState(STATE_FROZEN);
+                    if (mixed_body_sum >= 10000.0f)
+                        creature.SetState(STATE_FROZEN);
                 }
             }
         }

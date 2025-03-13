@@ -130,6 +130,7 @@ int CSackBoyAnim::UpdateFreezeIdleState(int last_idle)
     }
 
     // Only play sounds and animation if standing on ice
+    // Need to check if affected by ice here
     if(Thing->GetPCreature()->IsTouchingIce())
     {
         if (ShiverFrame % 7 == 1)

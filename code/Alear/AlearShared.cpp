@@ -841,7 +841,7 @@ CP<CResource> TextureFromResource(CP<CResource>& res)
     return NULL;
 }
 
-
+// Why doesn't this work?
 bool CustomIsStickerPlaceable(void* edit, CRaycastResults const& results)
 {
     if (results.SwitchConnector) return false;
@@ -936,7 +936,7 @@ v2 Hack_GetWalkInput(PCreature* creature)
 {
     if (creature->State == STATE_FROZEN)
     {
-        if (creature->Fork->AmountBodySubmerged > 0.001f || creature->Fork->AmountHeadSubmerged > creature->Config->AmountSubmergedToNotBreath)
+        //if (creature->Fork->AmountBodySubmerged > 0.001f || creature->Fork->AmountHeadSubmerged > creature->Config->AmountSubmergedToNotBreath)
             return v2(0.0f);
     }
 
@@ -952,7 +952,6 @@ bool Hack_AvoidsObstacle(PCreature* creature, float f1, float f2, float f3, floa
 // Ice needs (assuming these need hooks) fixes for the following:
 // Remove layer controls when frozen
 // Remove automatic layer shifting onto platforms
-// Remove water controls (just exiting water)
 // Allow player to shift layers when on ice
 // Disable player from putting hand on wall
 // Disable footstep sounds when frozen? (not sure if this needs hook)
@@ -966,6 +965,9 @@ bool Hack_AvoidsObstacle(PCreature* creature, float f1, float f2, float f3, floa
 
 // Questions for Aidan:
 // Where do I get the player's velocity? I need this to check if the player is below a certain speed while frozen
+
+// Notes:
+// I think the ice transition missing is because it's using the frizzlefry instead of the fire, not sure
 
 void AttachIceHooks()
 {
