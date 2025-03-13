@@ -129,11 +129,18 @@ int CSackBoyAnim::UpdateFreezeIdleState(int last_idle)
         return last_idle;
     }
 
-    if (ShiverFrame % 7 == 1)
-        CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_chatter", Thing, -10000.0f, -10000.0f);
-    ShiverFrame++;
+    // Only play sounds and animation if standing on ice
+    if(Thing->GetPCreature()->IsTouchingIce())
+    {
+        if (ShiverFrame % 7 == 1)
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_chatter", Thing, -10000.0f, -10000.0f);
+        ShiverFrame++;
 
-    return YANIM_DEATH_ICE_IDLE;
+        // Check for walk speed
+        return YANIM_DEATH_ICE_IDLE;
+    }
+
+    return last_idle;
 }
 
 void CSackBoyAnim::InitIceData()

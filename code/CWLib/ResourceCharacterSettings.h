@@ -35,8 +35,11 @@ private:
     char Pad[0x2b0];
 public:
     int FramesTillFreeze;
+    int FramesTillFreezeCold;
+    int FramesTillFreezeInWater;
     float ForceToFreeze;
     float ForceToShatterOnFreeze;
+    float ForceToShatterWhileFrozen;
     int FramesTillMeltInWater;
     int FramesTillFrozenToDeath;
 };

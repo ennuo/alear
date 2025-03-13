@@ -978,8 +978,8 @@ void AttachIceHooks()
     MH_PokeBranch(0x000feba4, &_sackboy_anim_late_update_hook);
 
     // Pass WasFrozen into the OnDeath so we can trigger steam or smoke particles
-    // MH_Poke32(0x00072000, 0x80a30cfc /* lwz %r5, 0xcfc(%r3) */);
-    MH_Poke32(0x00072000, LI(5, 1));
+    MH_Poke32(0x00072000, 0x80a30cfc /* lwz %r5, 0xcfc(%r3) */);
+    // MH_Poke32(0x00072000, LI(5, 1));
 
     // Don't apply leg IK fixes to Sackboy when doing thaw animation.
     MH_PokeBranch(0x000fdeb8, &_sackboy_anim_ice_ik_hook);
@@ -989,7 +989,7 @@ void AttachIceHooks()
     MH_PokeBranch(0x000408fc, &_sackboy_ground_distance_ice_hook);
 
     // Don't avoid obstacles while frozen in a block
-    // MH_PokeHook(0x00024754, Hack_AvoidsObstacle);
+    MH_PokeHook(0x00024754, Hack_AvoidsObstacle);
 }
 
 void InitSharedHooks()

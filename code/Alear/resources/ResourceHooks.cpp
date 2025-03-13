@@ -88,8 +88,11 @@ void RGfxMaterial::DestroyExtraData()
 void RCharacterSettings::InitializeExtraData()
 {
     FramesTillFreeze = 120;
+    FramesTillFreezeCold = 60;
+    FramesTillFreezeInWater = 10;
     ForceToFreeze = 300000.0f;
     ForceToShatterOnFreeze = 400000.0f;
+    ForceToShatterWhileFrozen = 1000.0f;
     FramesTillMeltInWater = 150;
     FramesTillFrozenToDeath = 300;
 }
@@ -246,8 +249,11 @@ ReflectReturn OnSerializeExtraData(R& r, RCharacterSettings& d)
 {
     ReflectReturn ret = REFLECT_OK;
     ADD(FramesTillFreeze);
+    ADD(FramesTillFreezeCold);
+    ADD(FramesTillFreezeInWater);
     ADD(ForceToFreeze);
     ADD(ForceToShatterOnFreeze);
+    ADD(ForceToShatterWhileFrozen);
     ADD(FramesTillMeltInWater);
     ADD(FramesTillFrozenToDeath);
     return ret;

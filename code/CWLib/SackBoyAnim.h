@@ -58,6 +58,8 @@ public:
     s32 ShiverFrame;
     bool WasFrozen;
     bool CrossedZero;
+public:
+    bool WasStunned;
 };
 
 #endif // SACK_BOY_ANIM_H

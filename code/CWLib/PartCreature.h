@@ -165,6 +165,7 @@ public:
     bool HasBreathedAir; // 0xa48
     bool HasScubaGear; // 2633, 0xa49
     s32 Freeziness;
+    s32 LastFrozen;
     s32 WaterTimer;
     float LastForceSum;
     s32 PadForInit;

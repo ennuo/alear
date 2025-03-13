@@ -42,18 +42,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
     switch (old_state)
     {
-        case STATE_GAS_MASK:
-        {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
-            if (costume != NULL)
-            {
-                CResourceDescriptor<RPlan> desc(71445);
-                costume->RemovePowerup(desc);
-            }
-
-            break;
-        }
-
         case STATE_FROZEN:
         {
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
@@ -76,29 +64,86 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             }
 
             creature.Freeziness = 0;
+            //creature.LastFrozen = 60;
             creature.WaterTimer = 0;
             
+            break;
+        }
+
+        case STATE_GRAPPLE:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
+
+        case STATE_BOOTS:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
+
+        case STATE_FORCE:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/drop", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
+
+        case STATE_DIVER_SUIT:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
+
+        case STATE_GAS_MASK:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
             break;
         }
     }
 
     switch (new_state)
     {
-        case STATE_GAS_MASK:
+        case STATE_STUNNED:
         {
-            creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
-            
-            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
-            mesh->BlockUntilLoaded();
-            
-            CResourceDescriptor<RPlan> desc(71445);
-            costume->SetPowerup(mesh, desc);
-            
+            CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
+            if (rend != NULL && rend->SackBoyAnim != NULL)
+                rend->SackBoyAnim->OnFreeze();
             break;
         }
+
         case STATE_FROZEN:
         {
+            creature.SetScubaGear(false);
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
             if (rend != NULL && rend->SackBoyAnim != NULL)
                 rend->SackBoyAnim->OnFreeze();
@@ -127,7 +172,76 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
                 shape->SetMaterial(frozenhead);
             }
 
+            break;
+        }
 
+        case STATE_GRAPPLE:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/pickup", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(75854, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
+
+        case STATE_BOOTS:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/pickup", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(81621, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
+        
+        case STATE_FORCE:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/grappling_hook/pickup", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(81026, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
+        
+        case STATE_DIVER_SUIT:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
+
+        case STATE_GAS_MASK:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
             break;
         }
     }
@@ -148,6 +262,9 @@ bool IsPowerupState(PCreature* creature)
     return 
         state == STATE_JETPACK ||
         state == STATE_GUN ||
+        state == STATE_GRAPPLE ||
+        state == STATE_BOOTS ||
+        state == STATE_FORCE ||
         state == STATE_DIVER_SUIT ||
         state == STATE_GAS_MASK;
 }
@@ -157,6 +274,9 @@ bool IsPlayableState(PCreature& creature)
     EState state = creature.State;
     return
         state < STATE_STUNNED ||
+        state == STATE_GRAPPLE ||
+        state == STATE_BOOTS ||
+        state == STATE_FORCE ||
         state == STATE_DIVER_SUIT || 
         state == STATE_GAS_MASK;
 };
@@ -178,16 +298,41 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.LethalForce = creature.Fork->hurt_force[i];
             creature.TypeOfLethalThingTouched = i;
 
+            v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
+            if (force.getY() < 0.0f)
+                creature.SetState(STATE_NORMAL_);
+
+            return IsLethalInstaKill(creature, (ELethalType)i);
+        }
+    }
+
+    // If we're touching a spike plate, check if we're touching spikes
+    // don't know what I'm doing with this one, just testing
+    if (lethal == LETHAL_NO_STAND)
+    {
+        for (int i = LETHAL_SPIKE; i < LETHAL_TYPE_COUNT; ++i)
+        {
+            if (i == LETHAL_NO_STAND) continue;
+
+            CThingPtr& ptr = creature.Fork->hurt_by[i];
+            if (ptr.GetThing() == NULL) continue;
+
+            creature.LethalForce = creature.Fork->hurt_force[i];
+            creature.TypeOfLethalThingTouched = i;
+
             return IsLethalInstaKill(creature, (ELethalType)i);
         }
     }
 
     // Gas mask obviously is invulnerable to gas
     if (state == STATE_GAS_MASK && lethal == LETHAL_POISON_GAS) return false;
+    
+    // Diving suit is invulnerable to drowning
+    if (state == STATE_DIVER_SUIT && lethal == LETHAL_DROWNED) return false;
 
     if (state == STATE_FROZEN)
     {
-        if (lethal == LETHAL_SPIKE || lethal == LETHAL_POISON_GAS || lethal == LETHAL_ELECTRIC)
+        if (lethal == LETHAL_SPIKE || lethal == LETHAL_POISON_GAS || lethal == LETHAL_NO_STAND || lethal == LETHAL_ELECTRIC)
         {
             creature.TypeOfLethalThingTouched = LETHAL_ICE;
             return false;
@@ -213,6 +358,9 @@ bool IsAffectedByFire(PCreature& creature)
     EState state = creature.State;
     return
         state < STATE_STUNNED ||
+        state == STATE_GRAPPLE ||
+        state == STATE_BOOTS ||
+        state == STATE_FORCE ||
         state == STATE_DIVER_SUIT ||
         state == STATE_GAS_MASK;
 }
@@ -231,6 +379,22 @@ void CollectGasMask(CThing* thing)
     PCreature* creature = thing->GetPCreature();
     if (creature == NULL) return;
     creature->SetState(STATE_GAS_MASK);
+}
+
+void CollectBoots(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    creature->SetState(STATE_BOOTS);
+}
+
+void CollectForce(CThing* thing)
+{
+    if (thing == NULL) return;
+    PCreature* creature = thing->GetPCreature();
+    if (creature == NULL) return;
+    creature->SetState(STATE_FORCE);
 }
 
 void RemoveAbility(CThing* thing)
@@ -264,10 +428,25 @@ void OnCreatureStateUpdate(PCreature& creature)
     if (creature.State != STATE_FROZEN)
     {
         const int MAX_FREEZINESS = creature.Config->FramesTillFreeze;
+        const int COLD_FREEZINESS = creature.Config->FramesTillFreezeCold;
+        const int WET_FREEZINESS = creature.Config->FramesTillFreezeInWater;
         if (creature.IsTouchingIce())
         {
             creature.Freeziness = MIN(creature.Freeziness + 1, MAX_FREEZINESS);
-            if (creature.Freeziness >= MAX_FREEZINESS)
+
+            // Should freeze faster in water
+            if (creature.Fork->IsSwimming)
+            { 
+                if (creature.Freeziness >= WET_FREEZINESS)
+                   creature.SetState(STATE_FROZEN);
+            }
+            // Check frames since last frozen
+            //else if (creature.LastFrozen >= 60)
+            //{
+            //    if (creature.Freeziness >= COLD_FREEZINESS)
+            //        creature.SetState(STATE_FROZEN);
+            //}
+            else if (creature.Freeziness >= MAX_FREEZINESS)
                 creature.SetState(STATE_FROZEN);
         }
         else creature.Freeziness = MAX(creature.Freeziness - 1, 0);   
@@ -295,10 +474,27 @@ void OnCreatureStateUpdate(PCreature& creature)
                 if (mixed_body_sum >= creature.Config->ForceToFreeze)
                 creature.SetState(STATE_FROZEN);
                 if (mixed_body_sum >= creature.Config->ForceToShatterOnFreeze)
-                    creature.SetState(STATE_DEAD);
+                {
+                    // Check if in water
+                    if (creature.Fork->IsSwimming) 
+                    {
+                        creature.SetState(STATE_FROZEN);
+                    }
+                    else 
+                    {
+                        creature.SetState(STATE_DEAD);
+                    }
+                }
             }
             // If we're hit on the head, just freeze.
-            else creature.SetState(STATE_FROZEN);
+            else 
+            {
+                // Check if creature swimming
+                if (!creature.Fork->IsSwimming)
+                {   
+                    creature.SetState(STATE_FROZEN);
+                }
+            }
         }
     }
 
@@ -310,6 +506,13 @@ void OnCreatureStateUpdate(PCreature& creature)
     // Handle all custom powerup/sackboy states here
     switch (creature.State)
     {
+        //case STATE_NORMAL_:
+        //{
+        //    creature.LastFrozen -= 1;
+        //    if (creature.LastFrozen <= 0) 
+        //        creature.LastFrozen = 0;
+        //}
+
         case STATE_FROZEN:
         {
             // So the player doesn't drown when frozen in ice
@@ -317,12 +520,13 @@ void OnCreatureStateUpdate(PCreature& creature)
             creature.AirTimeLeft = 900;
             creature.Freeziness = 0;
 
-            if (creature.Fork->AmountBodySubmerged > 0.001f || creature.Fork->AmountHeadSubmerged > creature.Config->AmountSubmergedToNotBreath)
+            if (CanFloat(creature))
             {
                 creature.StateTimer = 0;
                 creature.WaterTimer += 1;
 
-                if (creature.WaterTimer > creature.Config->FramesTillMeltInWater)
+                // Only melt if not touching ice while in water
+                if (creature.WaterTimer > creature.Config->FramesTillMeltInWater && !creature.IsTouchingIce())
                     creature.SetState(STATE_NORMAL_);
             }
             else if (mixed_body_sum > creature.Config->ForceToSmashWhenFrozen)
@@ -338,14 +542,45 @@ void OnCreatureStateUpdate(PCreature& creature)
 
             if (creature.StateTimer > creature.Config->FramesTillFrozenToDeath)
             {
-                creature.TypeOfLethalThingTouched = LETHAL_ICE;
-                creature.SetState(STATE_DEAD);
+                // Check if creature isn't moving
+                //if ( < creature.Config->ForceToShatterWhileFrozen)
+                //{
+                    creature.TypeOfLethalThingTouched = LETHAL_ICE;
+                    creature.SetState(STATE_DEAD);
+                //}
             }
 
             if ((input->ButtonsOld & PAD_BUTTON_TRIANGLE) == 0 && (input->Buttons & PAD_BUTTON_TRIANGLE) != 0)
                 creature.SetState(STATE_NORMAL_);
             
             break;
+        }
+
+        case STATE_BOOTS:
+        {
+            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                creature.SetState(STATE_NORMAL_);
+        }
+
+        case STATE_FORCE:
+        {
+            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                creature.SetState(STATE_NORMAL_);
+        }
+
+        case STATE_DIVER_SUIT:
+        {
+            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                creature.SetState(STATE_NORMAL_);
+        }
+
+        case STATE_GAS_MASK:
+        {
+            if(!creature.Fork->hurt_by[LETHAL_POISON_GAS])
+            {   
+                if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                    creature.SetState(STATE_NORMAL_);
+            }
         }
     }
 }
