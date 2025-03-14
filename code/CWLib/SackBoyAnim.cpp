@@ -94,7 +94,28 @@ void CSackBoyAnim::Explode()
     FramesSinceExploded = 0;
 }
 
+// Taken from sackboyanim.ff
 /*
+void CSackBoyAnim::OnDeath(bool suicide, bool was_frozen)
+{
+    PCreature* creature = Thing->GetPCreature();
+    PYellowHead* yellowhead = Thing->GetPYellowHead();
+    CRenderYellowHead* render_yellow_head = yellowhead->GetRenderYellowHead();
+
+    if(GetTypeOfLethalThingTouched(thing) == LETHAL_FIRE)
+        Burnilate(was_frozen);
+    if(!suicide)
+        if(GetTypeOfLethalThingTouched(thing) == LETHAL_NOT)
+
+        
+    CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/death_explosion", thing, -10000.0f, -10000.0f);
+    Explode()
+
+    if(!IsScoreLocked(World))
+        AlterPlayerScore(PlayerNumber, GetPlayerScore * -0.050000);
+}
+*/
+
 void CSackBoyAnim::DeathSmoke(f32 size)
 {
     PCreature* creature = Thing->GetPCreature();
@@ -102,9 +123,7 @@ void CSackBoyAnim::DeathSmoke(f32 size)
     //posw = size
         //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
 }
-*/
 
-/*
 // Unfinished because I don't know where to call AddFluidBlob
 void CSackBoyAnim::Steam(f32 size)
 {
@@ -113,10 +132,8 @@ void CSackBoyAnim::Steam(f32 size)
     //posw = size
         //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
 }
-*/
 
 // Taken from sackboyanim.ff
-// I'll leave the replacement of this up to you
 void CSackBoyAnim::Burnilate(bool was_frozen)
 {
     PCreature* creature = Thing->GetPCreature();
@@ -125,8 +142,7 @@ void CSackBoyAnim::Burnilate(bool was_frozen)
     
     if(was_frozen) 
     {
-        // Missing RestoreMesh call, I messed up here somehow
-        //render_yellow_head->RestoreMesh(Thing);
+        RestoreMesh(Thing);
         SetEffectMesh(NULL);
         Steam(2.5f);
     }

@@ -12,6 +12,7 @@
 #include "ResourcePlan.h"
 #include "ResourceLevel.h"
 #include <PartCreature.h>
+#include <Explode.h>
 
 #include "WinterBlast.h"
 
@@ -669,6 +670,7 @@ void OnCreatureStateUpdate(PCreature& creature)
     CInput* input = creature.GetInput();
     if (input == NULL) return;
 
+    CThing* thing = creature.GetThing();
     // Handle all custom powerup/sackboy states here
     switch (creature.State)
     {
@@ -721,10 +723,19 @@ void OnCreatureStateUpdate(PCreature& creature)
             
             break;
         }
+        
+        case STATE_GUN:
+        {
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GUN, L"BP_REMOVE_PAINTINATOR"))
+            {}
+            //    creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
 
         case STATE_BOOTS:
         {
-            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_BOOTS, L"BP_REMOVE_BOOTS"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -732,12 +743,40 @@ void OnCreatureStateUpdate(PCreature& creature)
 
         case STATE_FORCE:
         {
-            if ((input->ButtonsOld & PAD_BUTTON_R1) == 0 && (input->Buttons & PAD_BUTTON_R1) != 0)
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE, L"BP_FORCE"))
             {
-                //CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/suicide_breath_relief", thing, -10000.0f, -10000.0f);
-                // Perform explosion
+                ExplosionInfo info;
+                GetExplosionInfo(thing, info);
+                info.Center = info.Center + v4(0.0f, -50.0f, 0.0f, 0.0f);
+                info.IgnoreYellowHead = true;
+
+                info.OuterRadius = 250.0f;
+                info.InnerRadius = 250.0f;
+                info.MaxVel = 100.0f;
+                info.MaxForce = 1500.0f;
+                info.MaxAngVel = 1.0f;
+
+                CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/suicide_breath_relief", thing, -10000.0f, -10000.0f);
+                ApplyRadialForce(info);
             }
-            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_FORCE, L"BP_REMOVE_FORCE"))
+                creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
+
+        case STATE_GRAPPLE:
+        {
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_GRAPPLE, L"BP_GRAPPLE")) {}
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GRAPPLE, L"BP_REMOVE_GRAPPLE"))
+                creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
+        
+        case STATE_GAUNTLETS:
+        {
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_POWER_GLOVES, L"BP_REMOVE_POWER_GLOVES"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -755,8 +794,8 @@ void OnCreatureStateUpdate(PCreature& creature)
                 //shape->EditorColourTint = v4();
             }
 
-            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
-                creature.SetState(STATE_NORMAL_);
+            //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_INVINCIBLE, (const wchar_t*)NULL))
+            //    creature.SetState(STATE_NORMAL_);
             // Invincibility timeout
             if (creature.StateTimer > 120)
                 creature.SetState(STATE_NORMAL_);
@@ -766,7 +805,7 @@ void OnCreatureStateUpdate(PCreature& creature)
 
         case STATE_MINI_SUIT:
         {
-            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_MINI_SUIT, L"BP_REMOVE_MINI_SUIT"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -774,7 +813,7 @@ void OnCreatureStateUpdate(PCreature& creature)
 
         case STATE_DIVER_SUIT:
         {
-            if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_DIVER_SUIT, L"BP_REMOVE_DIVER_SUIT"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -784,7 +823,7 @@ void OnCreatureStateUpdate(PCreature& creature)
         {
             if(!creature.Fork->hurt_by[LETHAL_POISON_GAS])
             {   
-                if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)
+                if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GAS_MASK, L"BP_REMOVE_GAS_MASK"))
                     creature.SetState(STATE_NORMAL_);
             }
             
