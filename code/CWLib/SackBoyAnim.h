@@ -32,6 +32,12 @@ public:
     void SetEffectMesh(RMesh* mesh);
     void DoDeathAnims();
     void Explode();
+    void Steam(f32 size);
+    void DeathSmoke(f32 size);
+    void Burnilate(bool was_frozen);
+    void Gasify();
+    void Electrify();
+    void DoBarge(bool mirror, f32 walk_vel);
     int DoElectricDeath();
 private:
     void FreezeSolid();

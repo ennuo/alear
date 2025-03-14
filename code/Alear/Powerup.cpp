@@ -126,12 +126,13 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         {
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_release", thing, -10000.0f, -10000.0f);
 
-            PShape* shape = thing->GetPShape();
-            if (shape != NULL)
-            {
-                // Set character lethal type to none
-                // shape->LethalType = LETHAL_NOT;
-            }
+            CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
+
+            rend->SetDissolving(false);
+            //shape->EditorColour = v4(1.0, 1.0, 1.0, 1.0);
+            //shape->EditorColourTint = v4(1.0, 1.0, 1.0, 1.0);
+            // Set character lethal type to none
+            // shape->LethalType = LETHAL_NOT;
 
             break;
         }
@@ -172,14 +173,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
     switch (new_state)
     {
-        case STATE_STUNNED:
-        {
-            CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
-            if (rend != NULL && rend->SackBoyAnim != NULL)
-                rend->SackBoyAnim->OnFreeze();
-            break;
-        }
-
         case STATE_FROZEN:
         {
             creature.SetScubaGear(false);
@@ -283,12 +276,11 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_engage", thing, -10000.0f, -10000.0f);
 
-            PShape* shape = thing->GetPShape();
-            if (shape != NULL)
-            {
-                // Set character lethal type to plasma
-                //shape->LethalType = LETHAL_BULLET;
-            }
+            CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
+
+            rend->SetDissolving(true);
+            // Set character lethal type to plasma
+            //shape->LethalType = LETHAL_BULLET;
 
             break;
         }
@@ -400,8 +392,11 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
                     creature.SetState(STATE_NORMAL_);
                 }
                 else
-                    // This should burn player instead of instant kill
-                    return true;
+                {
+                    creature.SetState(STATE_STUNNED);
+                    // Set frames since frozen to be less here
+                    // Reset to normal state..
+                }
             }
 
             return IsLethalInstaKill(creature, (ELethalType)i);
@@ -609,7 +604,7 @@ void OnCreatureStateUpdate(PCreature& creature)
             // Check frames since last frozen
             // Should be assigned to something in the creature config later
             // Also assigned a better variable than "StateTimer" so it doesn't check for removing powerups
-            else if (creature.StateTimer < 90)
+            else if (creature.StateTimer < 60)
             {
                 if (creature.Freeziness >= COLD_FREEZINESS)
                     creature.SetState(STATE_FROZEN);
@@ -756,7 +751,8 @@ void OnCreatureStateUpdate(PCreature& creature)
             if (shape != NULL)
             {
                 // Cycle editor colour here with hue shift
-                // shape->EditorColour = vec_float4(1.0f, 1.0f, 1.0f, 1.0f);
+                //shape->EditorColour = v4();
+                //shape->EditorColourTint = v4();
             }
 
             if ((input->ButtonsOld & PAD_BUTTON_CIRCLE) == 0 && (input->Buttons & PAD_BUTTON_CIRCLE) != 0)

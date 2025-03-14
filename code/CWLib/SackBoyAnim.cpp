@@ -94,6 +94,107 @@ void CSackBoyAnim::Explode()
     FramesSinceExploded = 0;
 }
 
+/*
+void CSackBoyAnim::DeathSmoke(f32 size)
+{
+    PCreature* creature = Thing->GetPCreature();
+    //creature->GetForceOfLethalThingTouched()
+    //posw = size
+        //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
+}
+*/
+
+/*
+// Unfinished because I don't know where to call AddFluidBlob
+void CSackBoyAnim::Steam(f32 size)
+{
+    PCreature* creature = Thing->GetPCreature();
+    //creature->GetForceOfLethalThingTouched()
+    //posw = size
+        //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
+}
+*/
+
+// Taken from sackboyanim.ff
+// I'll leave the replacement of this up to you
+void CSackBoyAnim::Burnilate(bool was_frozen)
+{
+    PCreature* creature = Thing->GetPCreature();
+    PYellowHead* yellowhead = Thing->GetPYellowHead();
+    CRenderYellowHead* render_yellow_head = yellowhead->GetRenderYellowHead();
+    
+    if(was_frozen) 
+    {
+        // Missing RestoreMesh call, I messed up here somehow
+        //render_yellow_head->RestoreMesh(Thing);
+        SetEffectMesh(NULL);
+        Steam(2.5f);
+    }
+    else
+    {
+        DeathSmoke(4.0f);
+
+        render_yellow_head->SnapshotCostume();
+        render_yellow_head->SetMesh(NULL);
+        SetEffectMesh(BurnMesh);
+    
+        for (int i = 0; i < GetClusterCount(Thing, 1); ++i)
+            SetBlendClusterRigidity(Thing, 1, i, 0.000937f);
+    }
+}
+
+// Taken from sackboyanim.ff
+void CSackBoyAnim::Gasify()
+{
+    PCreature* creature = Thing->GetPCreature();
+    PYellowHead* yellowhead = Thing->GetPYellowHead();
+    CRenderYellowHead* render_yellow_head = yellowhead->GetRenderYellowHead();
+
+    if(creature->StateTimer - 1 > 1)
+        render_yellow_head->SetMesh(NULL);
+}
+
+// Taken from sackboyanim.ff
+/*
+void CSackBoyAnim::Electrify()
+{
+
+}
+*/
+
+// Taken from sackboyanim.ff
+// I started to label a bit of the bytecode but this is quickly becoming too much
+/* 
+void CSackBoyAnim::DoBarge(bool mirror, f32 walk_vel)
+{
+    if(BargAnim == 0)
+    BargAnim = YANIM_RUN_BARGE02_INTO
+    WalkFrame = 0;
+    if(YANIM_RUN_BARGE02_INTO == BargAnim)
+    if(BargAnim == 0)
+    barg_anim = BargAnim;
+    if(WalkFrame >= (GetNumFrames(YANIM_RUN_BARGE02_INTO) - 1))
+
+    barg_anim = YANIM_RUN_BARGE02;
+    WalkFrame = 0;
+    barg_anim = YANIM_RUN_BARGE02;
+    BargeFrames++;
+    if(!barging)
+        bargy = clamp((BargeFrames / 5.0f), 0.0f, 1.0f);
+        
+        bargy = clamp((1.0f - (BargeOut / 5.0f)), 0.0f, 1.0f);
+    BargeOut++;
+    if(bargy > 0.010000)
+        SampleAnimi(Thing, run_slot, barg_anim, WalkFrame, true);
+    if(ArmTouching == 2) 
+    {
+    }
+    if(mirror)
+        Mirror(Thing, 1, run_slot);
+    Blend(Thing, 4, 4, 1, bargy); 
+}
+*/
+
 void CSackBoyAnim::DoDeathAnims()
 {
     PCreature* part_creature = Thing->GetPCreature();
@@ -112,6 +213,7 @@ void CSackBoyAnim::DoDeathAnims()
     if (WasNormal)
     {
         DeathFlip = 0;
+        //if (part_creature->GetForceOfLethalThingTouched().getX() < 0.0f && lethal_type == LETHAL_ELECTRIC)
         if (part_creature->GetForceOfLethalThingTouched().getX() < 0.0f && lethal_type == LETHAL_ELECTRIC)
             DeathFlip = 1;
     }
@@ -124,6 +226,8 @@ void CSackBoyAnim::DoDeathAnims()
             if (DeathFrame == 0)
                 CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/gas_death", thing, -10000.0f, -10000.0f);
             render_yellow_head->SetDissolving(DeathFrame < 2);
+            // Longer gas death animation (for fun)
+            //render_yellow_head->SetDissolving(DeathFrame >= GetNumFrames(anim));
             break;
         }
         case LETHAL_ELECTRIC:
@@ -170,6 +274,15 @@ void CSackBoyAnim::DoDeathAnims()
         }
         case LETHAL_CRUSH:
         {
+            // I'd like to trigger the "stun" animation here
+            /*
+            if (creature_state == STATE_STUNNED)
+            {
+                anim = YANIM_DEATH_FIRE_STUN_T_L;
+                loop = true;
+                IsFrozen = false;
+            }
+            */
             render_yellow_head->SetIgnoreBodyAng(true);
             if (DeathFrame == 0)
                 CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/squashed_splat", thing, -10000.0f, -10000.0f);
@@ -216,7 +329,7 @@ void CSackBoyAnim::DoDeathAnims()
             IsFrozen = true;
             if (DeathFrame == 0 && creature_state != STATE_FROZEN)
                 VelAtFreeze = OldVel;
-            
+
             if (creature_state == STATE_DEAD)
             {
                 IsFrozen = false;
