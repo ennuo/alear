@@ -113,6 +113,8 @@ public:
     inline u32 GetStateTimer() const { return StateTimer; }
     inline u8 GetState() const { return State; }
 
+    inline v4 GetForceOfLethalThingTouched() const { return *(v4*)&LethalForce; }
+    inline int GetTypeOfLethalThingTouched() const { return TypeOfLethalThingTouched; }
 public:
     Forked Game;
     Forked Rend;

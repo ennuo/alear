@@ -14,5 +14,12 @@ public:
     ClusterName* Name;
 };
 
+class CImplicitEllipsoid {
+public:
+    m44 Transform;
+    s32 ParentBone;
+    s32 AffectWorldOnly;
+};
+
 
 #endif // SOFTBODY_H

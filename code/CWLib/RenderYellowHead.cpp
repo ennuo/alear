@@ -35,6 +35,12 @@ void CRenderYellowHead::SetSoftbodySim(bool enabled)
     CRenderYellowHead_SetSoftbodySim(this, enabled);
 }
 
+MH_DefineFunc(CRenderYellowHead_SetDissolving, 0x000e442c, TOC0, void, CRenderYellowHead*, bool);
+void CRenderYellowHead::SetDissolving(bool dissolving)
+{
+    CRenderYellowHead_SetDissolving(this, dissolving);
+}
+
 namespace ScriptyStuff 
 {
     int LoadAnim(CAnimBank* ab, CGUID guid)
@@ -78,6 +84,16 @@ namespace ScriptyStuff
         thing->GetPYellowHead()->GetRenderYellowHead()->InstanceSoftPhys[mesh]->ClusterEffect[cluster] = effect;
     }
 
+    void SetSoftPhysCollision(CThing* thing, int mesh, bool ellipse, bool inside_ellipse, bool convex, bool plane, bool cluster_ellipse)
+    {
+        RSettingsSoftPhys* phys = thing->GetPYellowHead()->GetRenderYellowHead()->InstanceSoftPhys[mesh];
+        phys->EllipseCollision = ellipse;
+        phys->InsideEllipseCollision = inside_ellipse;
+        phys->ConvexCollision = convex;
+        phys->PlaneCollision = plane;
+        phys->ClusterEllipseCollision = cluster_ellipse;
+    }
+
     MH_DefineFunc(_RestoreMesh, 0x000e63d4, TOC0, void, CThing*);
     void RestoreMesh(CThing* thing)
     {
@@ -93,6 +109,24 @@ namespace ScriptyStuff
     void SampleAnimi(CThing* thing, int dst, int anim, int frame, bool looped)
     {
         _SampleAnimi(thing, dst, anim, frame, looped);
+    }
+
+    MH_DefineFunc(_Mirror, 0x000e48dc, TOC0, void, CThing*, int, int);
+    void Mirror(CThing* thing, int dst, int src)
+    {
+        _Mirror(thing, dst, src);
+    }
+
+    MH_DefineFunc(_Blend, 0x000e4d60, TOC0, void, CThing*, int, int, int, float);
+    void Blend(CThing* thing, int dst, int a, int b, float f)
+    {
+        _Blend(thing, dst, a, b, f);
+    }
+
+    MH_DefineFunc(_SetExternalForce, 0x000e51e4, TOC0, void, CThing*, int, v4);
+    void SetExternalForce(CThing* thing, int mesh, v4 f)
+    {
+        _SetExternalForce(thing, mesh, f);
     }
 
     void SetSoftPhysSpringScale(CThing* thing, int mesh, float scale)
