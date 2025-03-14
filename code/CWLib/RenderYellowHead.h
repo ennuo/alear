@@ -20,9 +20,11 @@ public:
     void SetMesh(CP<RMesh> const& mesh);
     void SetEffectMesh(CP<RMesh> const& mesh);
     void SetSoftbodySim(bool enabled);
+    void SetDissolving(bool dissolving);
 public:
     inline const CThing* GetYellowThing() const { return YellowThing; }
     inline const PRenderMesh* GetEffectMesh() const { return EffectMesh; }
+    inline void SetIgnoreBodyAng(bool ignore) { *(((bool*)this) + 0x35c) = ignore; }
 public:
     m44 BodyOfs;
     m44 RibbonMat;
@@ -61,7 +63,13 @@ namespace ScriptyStuff {
     void RestoreMesh(CThing* thing);
     int GetNumFrames(CThing* thing, int anim);
     void SampleAnimi(CThing* thing, int dst, int anim, int frame, bool looped);
+
+    void Mirror(CThing* thing, int dst, int src);
+    void Blend(CThing* thing, int dst, int a, int b, float f);
+    void SetExternalForce(CThing* thing, int mesh, v4 f);
+
     void SetSoftPhysSpringScale(CThing* thing, int mesh, float scale);
+    void SetSoftPhysCollision(CThing* thing, int mesh, bool ellipse, bool inside_ellipse, bool convex, bool plane, bool cluster_ellipse);
 };
 
 

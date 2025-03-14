@@ -90,6 +90,14 @@ public:
     float MinUV[2];
     float MaxUV[2];
     float AreaScaleFactor;
+    CRawVector<void*> TriAdjInfo;
+    u32 MinSpringVert;
+    u32 MaxSpringVert;
+    u32 MinUnalignedSpringVert;
+    u32 SpringTrisStripped;
+    CRawVector<void*> SoftbodyVertEquivalences;
+    CRawVector<float> Mass;
+    CRawVector<CImplicitEllipsoid> ImplicitEllipsoids;
 };
 
 #endif // MESH_H

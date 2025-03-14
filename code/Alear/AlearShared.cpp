@@ -966,8 +966,11 @@ bool Hack_AvoidsObstacle(PCreature* creature, float f1, float f2, float f3, floa
 // Questions for Aidan:
 // Where do I get the player's velocity? I need this to check if the player is below a certain speed while frozen
 
-// Notes:
-// I think the ice transition missing is because it's using the frizzlefry instead of the fire, not sure
+
+void REIMPL_CSackBoyAnim_DoDeathAnims(CSackBoyAnim* self)
+{
+    self->DoDeathAnims();
+}
 
 void AttachIceHooks()
 {
@@ -1009,6 +1012,8 @@ void AttachIceHooks()
 
     // Don't avoid obstacles while frozen in a block
     MH_PokeHook(0x00024754, Hack_AvoidsObstacle);
+
+    MH_PokeHook(0x000f2334, REIMPL_CSackBoyAnim_DoDeathAnims);
 }
 
 void InitSharedHooks()
