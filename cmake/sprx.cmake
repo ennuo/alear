@@ -19,7 +19,10 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # )
 
 
+file(READ "${PROJECT_SOURCE_DIR}/install.txt" INSTALL_PATH)
+
+
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy
 	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/alear.sprx"
-	"E:/emu/rpcs3/dev_hdd0/game/LBP1DEBUG/USRDIR/alear.sprx")
+	${INSTALL_PATH})
