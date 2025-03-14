@@ -33,4 +33,4 @@ out/
 .vs/
 
 sdk/cell
-cmake/sprx.cmake
+install.txt
