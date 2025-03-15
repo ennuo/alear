@@ -19,6 +19,18 @@ CInput* PCreature::GetInput()
     return yellowhead->GetInput();
 }
 
+MH_DefineFunc(PCreature_SetJetpack, 0x0007244c, TOC0, void, PCreature*, CThing*, float, v2*);
+void PCreature::SetJetpack(CThing* thing, float tether_length, v2* param_3)
+{
+    PCreature_SetJetpack(this, thing, tether_length, param_3);
+}
+
+MH_DefineFunc(PCreature_StartGunState, 0x00073718, TOC0, void, PCreature*, CThing*);
+void PCreature::StartGunState(CThing* thing)
+{
+    PCreature_StartGunState(this, thing);
+}
+
 MH_DefineFunc(PCreature_SetScubaGear, 0x000739e4, TOC0, void, PCreature*, bool);
 void PCreature::SetScubaGear(bool active)
 {

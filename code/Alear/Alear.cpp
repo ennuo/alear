@@ -35,13 +35,13 @@
 #include <FartRO.h>
 #include <resources/ResourceAnimatedTexture.h>
 
-
 extern "C" void _gfxbind_hook_naked();
 extern void InitGooeyNetworkHooks();
 extern bool InitTweakSettings();
 extern void LoadSackboyPolygon();
 
 bool AlearCheckPatch();
+
 bool AlearEpilogue()
 {
     DebugLog("FileDB::DBs:\n");
@@ -290,7 +290,11 @@ void AlearStartup()
     InitAlearOptUiHooks();
     if (gEnableFHD) AlearHookHD();
     AttachNetworkingHooks();
-    
+
+    MH_PokeHook(0x0040b678, SetJetpackTether);
+    MH_PokeHook(0x0040a9f4, CollectGun);
+    MH_PokeHook(0x0040a92c, SetScubaGear);
+
     MH_Poke32(0x0001da24, 0x39200001);
     
 

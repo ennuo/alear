@@ -176,7 +176,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
     {
         case STATE_FROZEN:
         {
-            creature.SetScubaGear(false);
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
             if (rend != NULL && rend->SackBoyAnim != NULL)
                 rend->SackBoyAnim->OnFreeze();
@@ -274,7 +273,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
         case STATE_INVINCIBLE:
         {
-            creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_engage", thing, -10000.0f, -10000.0f);
 
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
@@ -288,7 +286,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         
         case STATE_MINI_SUIT:
         {
-            creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/shrink", thing, -10000.0f, -10000.0f);
 
             // Set creature MeshScale to 0.5f
@@ -557,6 +554,52 @@ void CollectInvincible(CThing* thing)
     if (creature == NULL) return;
     if (!IsPlayableState(*creature)) return;
     creature->SetState(STATE_INVINCIBLE);
+}
+
+void SetJetpackTether(CThing* thing, CThing* creature_thing, float tether_length, v2* param_4)
+{
+    PCreature* creature;
+    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*creature)) return;
+    creature->SetJetpack(creature_thing,(double)tether_length,param_4);
+}
+
+void CollectGun(CThing* thing, CThing* creature_thing)
+{
+    PCreature* creature;
+    //if (param_2 != (CThing *)0x0) {
+    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
+
+    //pRVar2 = (pCVar2->Config).Ref;
+    //creature->Config
+
+    // Return if in frozen state
+    if(!IsPlayableState(*creature)) return;
+    
+    float submerged;
+
+    //if (*(int *)(pRVar2 + 0x1c) == 3)
+    if(creature->Config->IsLoaded())
+        submerged = creature->Config->AmountSubmergedToLosePowerups;
+        //fVar1 = *(float *)(pRVar2 + 0xa0);
+    else
+        submerged = 0.3f;
+        //fVar1 = *(float *)(in_r2 + -0x3cb8);
+
+    //if (pCVar2->Fork->AmountBodySubmerged <= fVar1)
+    if(creature->Fork->AmountBodySubmerged <= submerged)
+        creature->StartGunState(creature_thing);
+        //FUN_007045a8(pCVar2,param_1);
+}
+
+void SetScubaGear(CThing* thing, bool active)
+{
+    PCreature* creature;
+    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
+    if(!IsPlayableState(*creature)) return;
+    if (active && !creature->HasScubaGear)
+        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
+        creature->SetScubaGear(active);
 }
 
 void RemoveAbility(CThing* thing)
