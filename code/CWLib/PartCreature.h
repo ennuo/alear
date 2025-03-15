@@ -105,7 +105,7 @@ public:
     };
 public:
     void BeSlapped(CThing const* thing, v2 force);
-    void SetJetpack(CThing* thing, float tether_length, v2* param_3);
+    void SetJetpack(CThing* attachment, float length, v2 pos);
     void StartGunState(CThing* thing);
     void SetScubaGear(bool active);
     void SetState(EState state);

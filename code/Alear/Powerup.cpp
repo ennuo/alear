@@ -484,111 +484,101 @@ bool IsAffectedByIce(PCreature& creature)
         state == STATE_GAS_MASK;
 }
 
-void CollectGrapple(CThing* thing)
+void CollectGrapple(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_GRAPPLE);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_GRAPPLE);
 }
 
-void CollectBoots(CThing* thing, f32 speed, f32 jump)
+void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_BOOTS);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_BOOTS);
 }
 
-void CollectForce(CThing* thing)
+void CollectForce(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_FORCE);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_FORCE);
 }
 
-void CollectGauntlets(CThing* thing)
+void CollectGauntlets(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_GAUNTLETS);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_GAUNTLETS);
 }
 
-void CollectGasMask(CThing* thing)
+void CollectGasMask(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_GAS_MASK);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_GAS_MASK);
 }
 
-void CollectDiverSuit(CThing* thing)
+void CollectDiverSuit(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_DIVER_SUIT);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_DIVER_SUIT);
 }
 
-void CollectMiniSuit(CThing* thing)
+void CollectMiniSuit(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_MINI_SUIT);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_MINI_SUIT);
 }
 
-void CollectInvincible(CThing* thing)
+void CollectInvincible(CThing* player)
 {
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetState(STATE_INVINCIBLE);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_INVINCIBLE);
 }
 
-void SetJetpackTether(CThing* thing, CThing* creature_thing, float tether_length, v2* param_4)
+void SetJetpackTether(CThing* player, CThing* attachment, float length, v2 pos)
 {
-    PCreature* creature;
-    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
-    if (!IsPlayableState(*creature)) return;
-    creature->SetJetpack(creature_thing,(double)tether_length,param_4);
+    PCreature* part_creature;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    part_creature->SetJetpack(attachment, length, pos);
 }
 
 void CollectGun(CThing* thing, CThing* creature_thing)
 {
-    PCreature* creature;
-    //if (param_2 != (CThing *)0x0) {
-    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
+    PCreature* part_creature;
+    if (thing == NULL || (part_creature = thing->GetPCreature()) == NULL) return;
 
     //pRVar2 = (pCVar2->Config).Ref;
     //creature->Config
 
     // Return if in frozen state
-    if(!IsPlayableState(*creature)) return;
+    if(!IsPlayableState(*part_creature)) return;
     
     float submerged;
 
     //if (*(int *)(pRVar2 + 0x1c) == 3)
-    if(creature->Config->IsLoaded())
-        submerged = creature->Config->AmountSubmergedToLosePowerups;
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
         //fVar1 = *(float *)(pRVar2 + 0xa0);
     else
         submerged = 0.3f;
         //fVar1 = *(float *)(in_r2 + -0x3cb8);
 
     //if (pCVar2->Fork->AmountBodySubmerged <= fVar1)
-    if(creature->Fork->AmountBodySubmerged <= submerged)
-        creature->StartGunState(creature_thing);
+    if(part_creature->Fork->AmountBodySubmerged <= submerged)
+        part_creature->StartGunState(creature_thing);
         //FUN_007045a8(pCVar2,param_1);
 }
 
@@ -902,7 +892,7 @@ void AlearInitCreatureHook()
     MH_InitHook((void*)0x0040a828, (void*)&RemoveAbility);
 
     RegisterNativeFunction("TriggerCollectGrapple", "CollectGrapple__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGrapple>);
-    RegisterNativeFunction("TriggerCollectBoots", "CollectBoots__Q5Thing", true, NVirtualMachine::CNativeFunction3V<CThing*, f32, f32>::Call<CollectBoots>);
+    RegisterNativeFunction("TriggerCollectBoots", "CollectBoots__Q5Thing", true, NVirtualMachine::CNativeFunction4V<CThing*, f32, f32, f32>::Call<CollectBoots>);
     RegisterNativeFunction("TriggerCollectForce", "CollectForce__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectForce>);
     RegisterNativeFunction("TriggerCollectGauntlets", "CollectGauntlets__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGauntlets>);
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);

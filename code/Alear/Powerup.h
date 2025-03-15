@@ -6,7 +6,7 @@
 #include "cell/DebugLog.h"
 
 void AlearInitCreatureHook();
-void SetJetpackTether(CThing* thing, CThing* creature_thing, float tether_length, v2* param_4);
+void SetJetpackTether(CThing* player, CThing* attachment, float length, v2 pos);
 void CollectGun(CThing* thing, CThing* creature_thing);
 void SetScubaGear(CThing* thing, bool active);
 
