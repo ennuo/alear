@@ -122,6 +122,18 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
             break;
         }
+
+        case STATE_GAS_MASK:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            if (costume != NULL)
+            {
+                CResourceDescriptor<RPlan> desc(71445);
+                costume->RemovePowerup(desc);
+            }
+
+            break;
+        }
         
         case STATE_INVINCIBLE:
         {
@@ -138,15 +150,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             break;
         }
 
-        case STATE_MINI_SUIT:
-        {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/expand", thing, -10000.0f, -10000.0f);
-
-            // Set creature MeshScale to 1.0f
-
-            break;
-        }
-
         case STATE_DIVER_SUIT:
         {
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
@@ -159,14 +162,27 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             break;
         }
 
-        case STATE_GAS_MASK:
+        case STATE_SWIMMING_FINS:
         {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_try", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
-                CResourceDescriptor<RPlan> desc(71445);
+                CResourceDescriptor<RPlan> desc(124415);
                 costume->RemovePowerup(desc);
             }
+            
+            creature.SpeedModifier = 1.0f;
+            creature.JumpModifier = 1.0f;
+            creature.StrengthModifier = 1.0f;
+
+            break;
+        }
+        
+        case STATE_MINI_SUIT:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/expand", thing, -10000.0f, -10000.0f);
+
+            // Set creature MeshScale to 1.0f
 
             break;
         }
@@ -232,10 +248,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CResourceDescriptor<RPlan> desc(71445);
             costume->SetPowerup(mesh, desc);
 
-            creature.SpeedModifier = 1.5f;
-            creature.JumpModifier = 1.5f;
-            creature.StrengthModifier = 1.5f;
-
             // Going to write something to call here that will
             // 1. Play equip animation
             // 2. Swap out running animations
@@ -270,6 +282,20 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             
             break;
         }
+        
+        case STATE_GAS_MASK:
+        {
+            creature.SetScubaGear(false);
+            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            mesh->BlockUntilLoaded();
+            
+            CResourceDescriptor<RPlan> desc(71445);
+            costume->SetPowerup(mesh, desc);
+            
+            break;
+        }
 
         case STATE_INVINCIBLE:
         {
@@ -280,15 +306,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             rend->SetDissolving(true);
             // Set character lethal type to plasma
             //shape->LethalType = LETHAL_BULLET;
-
-            break;
-        }
-        
-        case STATE_MINI_SUIT:
-        {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/shrink", thing, -10000.0f, -10000.0f);
-
-            // Set creature MeshScale to 0.5f
 
             break;
         }
@@ -306,18 +323,26 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             
             break;
         }
-
-        case STATE_GAS_MASK:
+        
+        case STATE_SWIMMING_FINS:
         {
-            creature.SetScubaGear(false);
-            CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
             
-            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(124368, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
-            CResourceDescriptor<RPlan> desc(71445);
+            CResourceDescriptor<RPlan> desc(124415);
             costume->SetPowerup(mesh, desc);
             
+            break;
+        }
+
+        case STATE_MINI_SUIT:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/shrink", thing, -10000.0f, -10000.0f);
+
+            // Set creature MeshScale to 0.5f
+
             break;
         }
     }
@@ -329,9 +354,10 @@ bool CanSwim(PCreature& creature)
     return
         state == STATE_NORMAL_ ||
         state == STATE_GUN ||
+        state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
-        state == STATE_MINI_SUIT || 
-        state == STATE_GAS_MASK;
+        state == STATE_SWIMMING_FINS ||
+        state == STATE_MINI_SUIT;
 }
 
 bool IsPowerupState(PCreature* creature)
@@ -344,10 +370,11 @@ bool IsPowerupState(PCreature* creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
+        state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
-        state == STATE_MINI_SUIT || 
+        state == STATE_SWIMMING_FINS ||
         state == STATE_DIVER_SUIT ||
-        state == STATE_GAS_MASK;
+        state == STATE_MINI_SUIT;
 }
 
 bool IsPlayableState(PCreature& creature)
@@ -359,10 +386,11 @@ bool IsPlayableState(PCreature& creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
+        state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
-        state == STATE_MINI_SUIT || 
-        state == STATE_DIVER_SUIT || 
-        state == STATE_GAS_MASK;
+        state == STATE_SWIMMING_FINS ||
+        state == STATE_DIVER_SUIT ||
+        state == STATE_MINI_SUIT;
 };
 
 bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
@@ -465,9 +493,10 @@ bool IsAffectedByFire(PCreature& creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
-        state == STATE_MINI_SUIT ||
+        state == STATE_GAS_MASK ||
+        state == STATE_SWIMMING_FINS ||
         state == STATE_DIVER_SUIT ||
-        state == STATE_GAS_MASK;
+        state == STATE_MINI_SUIT;
 }
 
 bool IsAffectedByIce(PCreature& creature)
@@ -479,54 +508,121 @@ bool IsAffectedByIce(PCreature& creature)
         state == STATE_BOOTS ||
         state == STATE_FORCE ||
         state == STATE_GAUNTLETS ||
-        state == STATE_MINI_SUIT ||
+        state == STATE_GAS_MASK ||
+        state == STATE_SWIMMING_FINS ||
         state == STATE_DIVER_SUIT ||
-        state == STATE_GAS_MASK;
+        state == STATE_MINI_SUIT;
 }
+
+/*
+
+bool IsPlayerSubmerged(PCreature& part_creature)
+{
+    float submerged;
+
+    if(part_creature.Config->IsLoaded())
+        submerged = part_creature.Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature.Fork->AmountBodySubmerged <= submerged)
+        return true;
+    return false;
+}
+*/
+
+/*
+bool CheckPowerup(CThing& player, PCreature& part_creature)
+{
+    if (player == NULL || (part_creature = player.GetPCreature()) == NULL) return true;
+    if (!IsPlayableState(part_creature)) return true;
+    return false;
+}
+*/
 
 void CollectGrapple(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+    // Return if submerged
+    //if(IsPlayerSubmerged(*part_creature)) return;
+
     part_creature->SetState(STATE_GRAPPLE);
 }
 
 void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
 {
     PCreature* part_creature;
+    PScript* part_script;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+    // Return if submerged
+    //if(IsPlayerSubmerged(*part_creature)) return;
+
+    // I don't know what I fucked up here this time, but this crashes
+    // I had it working at one point too
+    //part_creature->SpeedModifier = part_script->GetValue<float>("SpeedModifier", 1.25f);
+    //part_creature->JumpModifier = part_script->GetValue<float>("JumpModifier", 1.25f);
+    //part_creature->StrengthModifier = part_script->GetValue<float>("StrengthModifier", 1.0f);
+
     part_creature->SetState(STATE_BOOTS);
 }
 
 void CollectForce(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+    // Return if submerged
+    //if(IsPlayerSubmerged(*part_creature)) return;
+    
     part_creature->SetState(STATE_FORCE);
 }
 
 void CollectGauntlets(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+    // Return if submerged
+    //if(IsPlayerSubmerged(*part_creature)) return;
+
     part_creature->SetState(STATE_GAUNTLETS);
 }
 
 void CollectGasMask(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
     part_creature->SetState(STATE_GAS_MASK);
 }
 
+void CollectSwimmingFins(CThing* player)
+{
+    PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    part_creature->SetState(STATE_SWIMMING_FINS);
+}
+
 void CollectDiverSuit(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
     part_creature->SetState(STATE_DIVER_SUIT);
@@ -535,6 +631,8 @@ void CollectDiverSuit(CThing* player)
 void CollectMiniSuit(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
     part_creature->SetState(STATE_MINI_SUIT);
@@ -543,68 +641,96 @@ void CollectMiniSuit(CThing* player)
 void CollectInvincible(CThing* player)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
-    part_creature->SetState(STATE_INVINCIBLE);
+    part_creature->ReactToLethal = false;
 }
 
 void SetJetpackTether(CThing* player, CThing* attachment, float length, v2 pos)
 {
     PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
     part_creature->SetJetpack(attachment, length, pos);
 }
 
-void CollectGun(CThing* thing, CThing* creature_thing)
+void StartGunState(CThing* creature_thing)
 {
     PCreature* part_creature;
-    if (thing == NULL || (part_creature = thing->GetPCreature()) == NULL) return;
-
-    //pRVar2 = (pCVar2->Config).Ref;
-    //creature->Config
-
-    // Return if in frozen state
-    if(!IsPlayableState(*part_creature)) return;
+    PScript* part_script;
+    CScriptVariant result;
     
-    float submerged;
-
-    //if (*(int *)(pRVar2 + 0x1c) == 3)
-    if(part_creature->Config->IsLoaded())
-        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
-        //fVar1 = *(float *)(pRVar2 + 0xa0);
-    else
-        submerged = 0.3f;
-        //fVar1 = *(float *)(in_r2 + -0x3cb8);
-
-    //if (pCVar2->Fork->AmountBodySubmerged <= fVar1)
-    if(part_creature->Fork->AmountBodySubmerged <= submerged)
-        part_creature->StartGunState(creature_thing);
-        //FUN_007045a8(pCVar2,param_1);
-}
-
-void SetScubaGear(CThing* thing, bool active)
-{
-    PCreature* creature;
-    if (thing == NULL || (creature = thing->GetPCreature()) == NULL) return;
-    if(!IsPlayableState(*creature)) return;
-    if (active && !creature->HasScubaGear)
-        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
-        creature->SetScubaGear(active);
-}
-
-void RemoveAbility(CThing* thing)
-{
-    if (thing == NULL) return;
-    PCreature* creature = thing->GetPCreature();
-    if (creature == NULL) return;
-
-    if (IsPowerupState(creature))
-        creature->SetState(STATE_NORMAL_);
-    
-    if (creature->HasScubaGear)
+    //int set_count = part_script->GetValue("BulletCount", result);
+    int bullet_count = part_creature->Fork->BulletCount;
+    int max_bullet_count = part_creature->MaxBulletCount;
+    // Check if in gun state so we can refill if needed
+    if(part_creature->State == STATE_GUN)
     {
-        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
-        creature->SetScubaGear(false);
+        // If the ammo is empty or if the max count is 0
+        if(bullet_count == 0 || max_bullet_count == 0) return;
+        // If the current ammo is less than setting ammo
+        //else if(bullet_count <= set_count) return;
+        //deploy leftover
+        //part_creature->SetState(creature_thing, STATE_NORMAL_);
+    }
+    CAudio::PlaySample(CAudio::gSFX, "gameplay/paintball_gun/pickup", creature_thing, -10000.0f, -10000.0f);
+
+    //part_creature->Fork->BulletCount = set_count;
+    //part_creature->MaxBulletCount = set_count; 
+
+    part_creature->SetState(STATE_GUN);
+}
+
+void CollectGun(CThing* player, CThing* creature_thing)
+{
+    PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+    // Return if submerged
+    //if(IsPlayerSubmerged(*part_creature)) return;
+    //float submerged;
+
+    //if(part_creature->Config->IsLoaded())
+    //    submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    //else
+    //    submerged = 0.3f;
+    //if(part_creature->Fork->AmountBodySubmerged <= submerged)
+    //    return;
+    part_creature->StartGunState(creature_thing);
+}
+
+void SetScubaGear(CThing* player, bool active)
+{
+    PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+
+    if (active && !part_creature->HasScubaGear)
+        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", player, -10000.0f, -10000.0f);
+        part_creature->SetScubaGear(active);
+}
+
+void RemoveAbility(CThing* player)
+{
+    if (player == NULL) return;
+    PCreature* part_creature = player->GetPCreature();
+    if (part_creature == NULL) return;
+
+    if (IsPowerupState(part_creature))
+    part_creature->SetState(STATE_NORMAL_);
+    
+    if (part_creature->HasScubaGear)
+    {
+        CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", player, -10000.0f, -10000.0f);
+        part_creature->SetScubaGear(false);
     }
 }
 
@@ -835,10 +961,43 @@ void OnCreatureStateUpdate(PCreature& creature)
                 
             break;
         }
-
-        case STATE_MINI_SUIT:
+        
+        case STATE_GAS_MASK:
         {
-            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_MINI_SUIT, L"BP_REMOVE_MINI_SUIT"))
+            if(!creature.Fork->hurt_by[LETHAL_POISON_GAS])
+            {   
+                if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GAS_MASK, L"BP_REMOVE_GAS_MASK"))
+                    creature.SetState(STATE_NORMAL_);
+            }
+            
+            break;
+        }
+
+        case STATE_SWIMMING_FINS:
+        {
+            float submerged;
+
+            if(creature.Config->IsLoaded())
+                submerged = creature.Config->AmountSubmergedToLosePowerups;
+            else
+                submerged = 0.3f;
+                
+            // Only set speed up if in water
+            //if(IsPlayerSubmerged(creature))
+            if(creature.Fork->AmountBodySubmerged > submerged)
+            {
+                creature.SpeedModifier = 3.0f;
+                creature.JumpModifier = 3.0f;
+                creature.StrengthModifier = 3.0f;
+            }
+            else
+            {
+                creature.SpeedModifier = 1.0f;
+                creature.JumpModifier = 1.0f;
+                creature.StrengthModifier = 1.0f;
+            }
+
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_SWIMMING_FINS, L"BP_REMOVE_SWIMMING_FINS"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -851,15 +1010,12 @@ void OnCreatureStateUpdate(PCreature& creature)
                 
             break;
         }
-
-        case STATE_GAS_MASK:
+        
+        case STATE_MINI_SUIT:
         {
-            if(!creature.Fork->hurt_by[LETHAL_POISON_GAS])
-            {   
-                if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GAS_MASK, L"BP_REMOVE_GAS_MASK"))
-                    creature.SetState(STATE_NORMAL_);
-            }
-            
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_MINI_SUIT, L"BP_REMOVE_MINI_SUIT"))
+                creature.SetState(STATE_NORMAL_);
+                
             break;
         }
     }
@@ -892,10 +1048,11 @@ void AlearInitCreatureHook()
     MH_InitHook((void*)0x0040a828, (void*)&RemoveAbility);
 
     RegisterNativeFunction("TriggerCollectGrapple", "CollectGrapple__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGrapple>);
-    RegisterNativeFunction("TriggerCollectBoots", "CollectBoots__Q5Thing", true, NVirtualMachine::CNativeFunction4V<CThing*, f32, f32, f32>::Call<CollectBoots>);
+    RegisterNativeFunction("TriggerCollectBoots", "CollectBoots__Q5Thingfff", true, NVirtualMachine::CNativeFunction4V<CThing*, f32, f32, f32>::Call<CollectBoots>);
     RegisterNativeFunction("TriggerCollectForce", "CollectForce__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectForce>);
     RegisterNativeFunction("TriggerCollectGauntlets", "CollectGauntlets__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGauntlets>);
     RegisterNativeFunction("TriggerCollectGasMask", "CollectGasMask__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectGasMask>);
+    RegisterNativeFunction("TriggerCollectSwimmingFins", "CollectSwimmingFins__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectSwimmingFins>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
     RegisterNativeFunction("TriggerCollectMiniSuit", "CollectMiniSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectMiniSuit>);
     RegisterNativeFunction("TriggerCollectInvincible", "CollectInvincible__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectInvincible>);

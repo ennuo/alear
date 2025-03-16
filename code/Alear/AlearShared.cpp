@@ -579,12 +579,12 @@ void OnLocalProfileLoadFinished(RLocalProfile* prf)
 
     AddToolToInventory(prf, "POPPET_TOOL_PLAN_TAKE", TOOL_SHAPE_TAKE_PLAN, 42929u);
     AddToolToInventory(prf, "POPPET_TOOL_VERTEX_EDIT", TOOL_SHAPE_VERTEX_EDIT, 42407u);
-    // Slice n Dice
-    // Dot to Dot
-    // Eyedropper
+    //AddToolToInventory(prf, "POPPET_TOOL_SLICE_N_DICE", TOOL_SLICE_N_DICE, 3646450585u);
+    //AddToolToInventory(prf, "POPPET_TOOL_DOT_TO_DOT", TOOL_DOT_TO_DOT, 2762794371u);
+    AddToolToInventory(prf, "POPPET_TOOL_EYEDROPPER", TOOL_EYEDROPPER, 2693374007u);
     AddToolToInventory(prf, "POPPET_TOOL_FLOOD_FILL", TOOL_SHAPE_FLOOD_FILL, 42406u);
-    // uv edit
-    // advanced glue
+    //AddToolToInventory(prf, "POPPET_TOOL_UV_EDIT", TOOL_UV_EDIT, 3373407558u);
+    //AddToolToInventory(prf, "POPPET_TOOL_GLUE", TOOL_GLUE, 2739668065u);
     AddToolToInventory(prf, "POPPET_TOOL_UNPHYSICS", TOOL_UNPHYSICS, 3430870302u);
     AddToolToInventory(prf, "POPPET_TOOL_DANGER_UNLETHAL", TOOL_SHAPE_UNLETHAL, 42936u);
     AddToolToInventory(prf, "POPPET_TOOL_DANGER_FIRE", TOOL_SHAPE_BURNINATE, 42933u);
@@ -596,6 +596,7 @@ void OnLocalProfileLoadFinished(RLocalProfile* prf)
     AddToolToInventory(prf, "POPPET_TOOL_DANGER_CRUSH", TOOL_SHAPE_CRUSH, 3664313855u);
     AddToolToInventory(prf, "POPPET_TOOL_DANGER_DROWN", TOOL_SHAPE_DROWNED, 3664313855u);
     AddToolToInventory(prf, "POPPET_TOOL_STICKER_PICK", TOOL_STICKER_PICK, 42408u);
+    AddToolToInventory(prf, "POPPET_IMPORT_PHOTO_FROM_XMB", TOOL_DECORATION_IMPORT_PHOTO, 65645u);
 }
 
 

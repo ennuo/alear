@@ -181,9 +181,23 @@ void FixupCursorSpriteRect(CPoppet* poppet)
     }
 }
 
-void CPoppet::EyedropperPick(CThing* thing)
+void CPoppet::EyedropperPick(CPoppet* poppet, CThing* thing)
 {
-
+    CResourceDescriptor<RPlan> guid(33579);
+    CResourceDescriptor<RPlan> body_guid(thing->PlanGUID);
+    CResourceDescriptor<RPlan> gfx_guid(thing->GetPGeneratedMesh()->PlanGUID);
+    if(thing->PlanGUID)
+        poppet->FloodFillMaterialPlan = body_guid;
+    else if(thing->GetPGeneratedMesh()->PlanGUID) 
+        poppet->FloodFillMaterialPlan = gfx_guid;
+    else
+        poppet->FloodFillMaterialPlan = guid;
+    poppet->FloodFillPhysicsMaterial = thing->GetPShape()->MMaterial;
+    poppet->FloodFillSoundEnumOverride = thing->GetPShape()->SoundEnumOverride;
+    poppet->FloodFillGfxMaterial = thing->GetPGeneratedMesh()->GfxMaterial;
+    poppet->FloodFillBevel = thing->GetPGeneratedMesh()->Bevel;
+    poppet->FloodFillBevelSize = thing->GetPShape()->BevelSize;
+    poppet->PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
 }
 
 void CPoppet::EyedropperDrop(CThing* thing)
@@ -283,6 +297,11 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             poppet->SendPoppetDangerMessage(LETHAL_BULLET);
             break;
         }
+        case TOOL_EYEDROPPER:
+        {
+            //poppet->EyedropperDrop();
+            break;
+        }
         case TOOL_UNPHYSICS:
         {
             DebugLog("SEND: E_POPPET_UNPHYSICS_MESSAGE\n");
@@ -354,6 +373,7 @@ void AttachCustomToolTypes()
     TABLE[TOOL_SHAPE_SPIKE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_ICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    //TABLE[TOOL_EYEDROPPER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);
