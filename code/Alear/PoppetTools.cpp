@@ -181,8 +181,9 @@ void FixupCursorSpriteRect(CPoppet* poppet)
     }
 }
 
-void CPoppet::EyedropperPick(CPoppet* poppet, CThing* thing)
+void CPoppet::EyedropperPick(CThing* thing)
 {
+    CPoppet* poppet;
     CResourceDescriptor<RPlan> guid(33579);
     CResourceDescriptor<RPlan> body_guid(thing->PlanGUID);
     CResourceDescriptor<RPlan> gfx_guid(thing->GetPGeneratedMesh()->PlanGUID);
@@ -299,7 +300,7 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
         }
         case TOOL_EYEDROPPER:
         {
-            //poppet->EyedropperDrop();
+            //poppet->EyedropperPick();
             break;
         }
         case TOOL_UNPHYSICS:
@@ -373,7 +374,7 @@ void AttachCustomToolTypes()
     TABLE[TOOL_SHAPE_SPIKE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_ICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
-    //TABLE[TOOL_EYEDROPPER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_EYEDROPPER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);

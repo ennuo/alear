@@ -399,13 +399,11 @@ namespace TweakShapeNativeFunctions
                 poppet->SetDangerType(thing);
                 break;
             }
-            /*
             case TOOL_EYEDROPPER:
             {
-                //poppet->EyedropperPick(&poppet, *thing);
+                poppet->EyedropperPick(thing);
                 break;
             }
-            */
             case TOOL_SHAPE_TAKE_PLAN:
             {
                 CVector<CThingPtr> things;

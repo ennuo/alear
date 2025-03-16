@@ -167,7 +167,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
-                CResourceDescriptor<RPlan> desc(124415);
+                CResourceDescriptor<RPlan> desc(2000002);
                 costume->RemovePowerup(desc);
             }
             
@@ -328,10 +328,10 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         {
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
             
-            CP<RMesh> mesh = LoadResourceByKey<RMesh>(124368, 0, STREAM_PRIORITY_DEFAULT);
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(2000001, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
-            CResourceDescriptor<RPlan> desc(124415);
+            CResourceDescriptor<RPlan> desc(2000002);
             costume->SetPowerup(mesh, desc);
             
             break;
@@ -581,6 +581,15 @@ void CollectForce(CThing* player)
     if (!IsPlayableState(*part_creature)) return;
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
+    
+    float submerged;
+
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged <= submerged)
+        return;
     
     part_creature->SetState(STATE_FORCE);
 }
@@ -986,9 +995,9 @@ void OnCreatureStateUpdate(PCreature& creature)
             //if(IsPlayerSubmerged(creature))
             if(creature.Fork->AmountBodySubmerged > submerged)
             {
-                creature.SpeedModifier = 3.0f;
-                creature.JumpModifier = 3.0f;
-                creature.StrengthModifier = 3.0f;
+                creature.SpeedModifier = 50.0f;
+                creature.JumpModifier = 1.0f;
+                creature.StrengthModifier = 1.0f;
             }
             else
             {
