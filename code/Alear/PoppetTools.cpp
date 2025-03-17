@@ -198,7 +198,7 @@ void CPoppet::EyedropperPick(CThing* thing)
     poppet->FloodFillGfxMaterial = thing->GetPGeneratedMesh()->GfxMaterial;
     poppet->FloodFillBevel = thing->GetPGeneratedMesh()->Bevel;
     poppet->FloodFillBevelSize = thing->GetPShape()->BevelSize;
-    poppet->PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
+    //poppet->PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
 }
 
 void CPoppet::EyedropperDrop(CThing* thing)

@@ -342,7 +342,7 @@ void CSackBoyAnim::DoDeathAnims()
         case LETHAL_ICE:
         {
             anim = YANIM_DEATH_ICE_INTO;
-            IsFrozen = true;
+            //IsFrozen = true;
             if (DeathFrame == 0 && creature_state != STATE_FROZEN)
                 VelAtFreeze = OldVel;
 

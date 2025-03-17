@@ -491,19 +491,51 @@ DisableIK:
 
 .global _sackboy_ground_distance_ice_hook
 _sackboy_ground_distance_ice_hook:
-    # lwz %r11, 0x934(%r31)
-    # cmpwi %cr7, %r11, 13
-    # beq %cr7, IsNonJumpableLethal
+    lwz %r11, 0x934(%r31)
+    cmpwi %cr7, %r11, 13
+    beq %cr7, IsNonJumpableLethal
 
     cmpwi %cr7, %r0, 0x0
     beq %cr7, IsJumpableLethal
     cmpwi %cr7, %r0, 0x3
+    beq %cr7, IsJumpableLethal
+    cmpwi %cr7, %r0, 0x4
+    beq %cr7, IsJumpableLethal
+    
+    # Invincible State
+    cmpwi %cr7, %r11, 15
     beq %cr7, IsJumpableLethal
 
 IsNonJumpableLethal:
     ba 0x00040904
 IsJumpableLethal:
     ba 0x0004091c
+
+# doesn't work, so sad!
+.global _water_jumping_diver_suit_hook
+_water_jumping_diver_suit_hook:
+    lwz %r11, 0x934(%r31)
+    cmpwi %cr7, %r11, 0xa
+    beq %cr7, UpdateJumpingIsSwimming
+
+    lbz %r0, 0x40(%r9)
+    ba 0x00064c0c
+    
+UpdateJumpingIsSwimming:
+    ba 0x00064cdc
+    
+# doesn't work, so sad!
+.global _water_boost_disable_swimming_fins_hook
+_water_boost_disable_swimming_fins_hook:
+    lwz %r11, 0x934(%r31)
+    cmpwi %cr7, %r11, 0x11
+    beq %cr7, SwimStrokeInput
+
+    lbz %r0, 0x0(%r3)
+    ba 0x00043408
+    
+SwimStrokeInput:
+    ba 0x00043730
 
 .global _hack_gather_character_settings_hook
 _hack_gather_character_settings_hook:
