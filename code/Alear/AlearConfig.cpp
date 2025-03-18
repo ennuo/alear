@@ -23,6 +23,8 @@ CConfigFloat gRenderDistance(L"Render", L"Render Distance", gFarDist, 0.0f, NAN,
 CConfigBool gLoadDefaultMaterial(L"Load", L"Use Fallback Graphics Materials", false);
 CConfigBool gForceLoadEditable(L"Load", L"Force Editable On Load", false);
 
+CConfigBool gUseIceAccessibility(L"Accessibility", L"Ice Shake Mode", false);
+
 void CConfigOption::AddToRegistry()
 {
     typename ConfigMap::iterator it = gConfigMap.find(Category);

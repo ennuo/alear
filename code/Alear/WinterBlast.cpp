@@ -50,6 +50,7 @@ void CSackBoyAnim::FreezeSolid()
 
     rend->SnapshotCostume();
     rend->SetEffectMesh(IceCubeMesh);
+    rend->SetMesh(FrozenMesh);
 
     const int m = 1;
     int clusters = GetClusterCount(Thing, m);

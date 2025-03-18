@@ -121,6 +121,8 @@ extern CConfigBool gHideMSPF;
 extern CConfigBool gLoadDefaultMaterial;
 extern CConfigBool gForceLoadEditable;
 
+extern CConfigBool gUseIceAccessibility;
+
 extern bool gPauseGameSim;
 extern float gFarDist;
 

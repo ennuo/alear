@@ -37,6 +37,7 @@ private:
     char Pad1[0x24];
 public:
     u32 SuicideHoldFrameCount;
+    void SetJetpack(CThing* attachment, float length, v2 pos);
 };
 
 #endif // PART_YELLOW_HEAD_H

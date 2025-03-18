@@ -106,8 +106,8 @@ public:
     };
 public:
     void BeSlapped(CThing const* thing, v2 force);
-    void SetJetpack(CThing* attachment, float length, v2 pos);
     void StartGunState(CThing* thing);
+    void StopGrabbing(PCreature* creature);
     void SetScubaGear(bool active);
     void SetState(EState state);
     CInput* GetInput();
@@ -174,8 +174,11 @@ public:
     bool HasScubaGear; // 2633, 0xa49
     s32 Freeziness;
     s32 WaterTimer;
+    u32 FramesSinceFrozen;
     float LastForceSum;
     s32 PadForInit;
+public:
+    bool CanDropPowerup;
 };
 
 #endif // PART_CREATURE_H

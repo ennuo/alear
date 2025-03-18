@@ -2,6 +2,7 @@
 
 #include "thing.h"
 #include "RenderYellowHead.h"
+#include "FluidRender.h"
 
 #include <hook.h>
 
@@ -121,7 +122,7 @@ void CSackBoyAnim::DeathSmoke(f32 size)
     PCreature* creature = Thing->GetPCreature();
     //creature->GetForceOfLethalThingTouched()
     //posw = size
-        //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
+        //CFluidRender::AddFluidBlob(v4(1.0, 1.0, 1.0, 1.0), v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
 }
 
 // Unfinished because I don't know where to call AddFluidBlob
@@ -130,7 +131,7 @@ void CSackBoyAnim::Steam(f32 size)
     PCreature* creature = Thing->GetPCreature();
     //creature->GetForceOfLethalThingTouched()
     //posw = size
-        //AddFluidBlob(pos, v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
+        //CFluidRender::AddFluidBlob(v4(1.0, 1.0, 1.0, 1.0), v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
 }
 
 // Taken from sackboyanim.ff
