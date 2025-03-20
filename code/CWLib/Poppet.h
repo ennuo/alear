@@ -32,7 +32,7 @@ class RLocalProfile;
 class CPoppet : public CReflectionVisitable {
 friend void CustomRaycastAgainstSwitches(CPoppet* poppet);
 public:
-    void EyedropperPick(CPoppet* poppet, CThing* thing);
+    void EyedropperPick(CThing* thing);
     void EyedropperDrop(CThing* thing);
 
     void ClearHiddenList();

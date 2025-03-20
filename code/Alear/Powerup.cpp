@@ -12,10 +12,11 @@
 #include "ResourcePlan.h"
 #include "ResourceLevel.h"
 #include <PartCreature.h>
+#include <PartYellowHead.h>
 #include <Explode.h>
 
+#include "AlearConfig.h"
 #include "WinterBlast.h"
-
 
 float gSackboyThickness;
 CRawVector<v2, CAllocatorMMAligned128> gSackboyPolygon;
@@ -65,9 +66,12 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             }
 
             creature.Freeziness = 0;
-            //creature.LastFrozen = 60;
+            creature.FramesSinceFrozen = 0;
             creature.WaterTimer = 0;
             
+            // STORING THIS IN AMMO COUNT, FUCK YOU!
+            creature.AmmoFillFactor = 0;
+
             break;
         }
 
@@ -141,6 +145,8 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
 
+            rend->SetMesh(LoadResourceByKey<RMesh>(1087, 0, STREAM_PRIORITY_DEFAULT));
+            
             rend->SetDissolving(false);
             //shape->EditorColour = v4(1.0, 1.0, 1.0, 1.0);
             //shape->EditorColourTint = v4(1.0, 1.0, 1.0, 1.0);
@@ -155,7 +161,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
-                CResourceDescriptor<RPlan> desc(71445);
+                CResourceDescriptor<RPlan> desc(2000005);
                 costume->RemovePowerup(desc);
             }
 
@@ -167,7 +173,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_drop", thing, -10000.0f, -10000.0f);
             if (costume != NULL)
             {
-                CResourceDescriptor<RPlan> desc(124415);
+                CResourceDescriptor<RPlan> desc(2000002);
                 costume->RemovePowerup(desc);
             }
             
@@ -212,8 +218,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
                 shape->SetPolygon(vertices, gSackboyLoops);
 
                 shape->OldMMaterial = shape->MMaterial;
-
-                
 
                 CP<RMaterial> frozenhead = LoadResourceByKey<RMaterial>(20560, 0, STREAM_PRIORITY_DEFAULT);
                 frozenhead->BlockUntilLoaded();
@@ -303,9 +307,9 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
 
+            rend->SnapshotCostume();
+            rend->SetMesh(LoadResourceByKey<RMesh>(2000004, 0, STREAM_PRIORITY_DEFAULT));
             rend->SetDissolving(true);
-            // Set character lethal type to plasma
-            //shape->LethalType = LETHAL_BULLET;
 
             break;
         }
@@ -315,10 +319,10 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
             
-            CP<RMesh> mesh = LoadResourceByKey<RMesh>(71438, 0, STREAM_PRIORITY_DEFAULT);
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(2000006, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
-            CResourceDescriptor<RPlan> desc(71445);
+            CResourceDescriptor<RPlan> desc(2000005);
             costume->SetPowerup(mesh, desc);
             
             break;
@@ -328,10 +332,12 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         {
             CAudio::PlaySample(CAudio::gSFX, "gameplay/water/special/aqualung_pickup", thing, -10000.0f, -10000.0f);
             
-            CP<RMesh> mesh = LoadResourceByKey<RMesh>(124368, 0, STREAM_PRIORITY_DEFAULT);
+            //*((CP<RMesh>*)&SwimmingFinsMesh) = LoadResourceByKey<RMesh>(2000001, 0, STREAM_PRIORITY_DEFAULT);
+
+            CP<RMesh> mesh = LoadResourceByKey<RMesh>(2000001, 0, STREAM_PRIORITY_DEFAULT);
             mesh->BlockUntilLoaded();
             
-            CResourceDescriptor<RPlan> desc(124415);
+            CResourceDescriptor<RPlan> desc(2000002);
             costume->SetPowerup(mesh, desc);
             
             break;
@@ -413,7 +419,7 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
             if (force.getY() < 0.0f)
             {
-                if(state == STATE_FROZEN)
+                if(state == STATE_FROZEN && state != STATE_INVINCIBLE)
                 {
                     creature.SetState(STATE_NORMAL_);
                 }
@@ -456,7 +462,8 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
     // Gas mask obviously is invulnerable to gas
     if (state == STATE_GAS_MASK && lethal == LETHAL_POISON_GAS) return false;
 
-    if (state == STATE_INVINCIBLE) return false;
+    // Invincible is not invulnerable to gas
+    if (state == STATE_INVINCIBLE && lethal != LETHAL_POISON_GAS) return false;
     
     // Diving suit is invulnerable to drowning
     if (state == STATE_DIVER_SUIT && lethal == LETHAL_DROWNED) return false;
@@ -472,7 +479,7 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
         if (lethal == LETHAL_FIRE)
         {
             v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
-            return force.getY() >= 0.0f;
+            return force.getY() < 0.0f;
         }
     }
 
@@ -541,6 +548,8 @@ bool CheckPowerup(CThing& player, PCreature& part_creature)
 
 void CollectGrapple(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
@@ -548,12 +557,23 @@ void CollectGrapple(CThing* player)
     if (!IsPlayableState(*part_creature)) return;
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
+    
+    float submerged;
 
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged > submerged) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_GRAPPLE);
 }
 
 void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     PScript* part_script;
     // Return if invalid
@@ -563,17 +583,28 @@ void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
 
+    float submerged;
+
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged > submerged) return;
+
     // I don't know what I fucked up here this time, but this crashes
     // I had it working at one point too
     //part_creature->SpeedModifier = part_script->GetValue<float>("SpeedModifier", 1.25f);
     //part_creature->JumpModifier = part_script->GetValue<float>("JumpModifier", 1.25f);
     //part_creature->StrengthModifier = part_script->GetValue<float>("StrengthModifier", 1.0f);
 
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_BOOTS);
 }
 
 void CollectForce(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
@@ -582,11 +613,22 @@ void CollectForce(CThing* player)
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
     
+    float submerged;
+
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged > submerged) return;
+    
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_FORCE);
 }
 
 void CollectGauntlets(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
@@ -595,36 +637,57 @@ void CollectGauntlets(CThing* player)
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
 
+    float submerged;
+
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged > submerged) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_GAUNTLETS);
 }
 
 void CollectGasMask(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_GAS_MASK);
 }
 
 void CollectSwimmingFins(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_SWIMMING_FINS);
 }
 
 void CollectDiverSuit(CThing* player)
 {
+    // Fields to add:
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_DIVER_SUIT);
 }
 
@@ -635,17 +698,24 @@ void CollectMiniSuit(CThing* player)
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
+
+    part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_MINI_SUIT);
 }
 
 void CollectInvincible(CThing* player)
 {
+    // Fields to add:
+    // time (limit on state)
+    // can be dropped
     PCreature* part_creature;
     // Return if invalid
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
     part_creature->ReactToLethal = false;
+    part_creature->CanDropPowerup = true;
+    part_creature->SetState(STATE_INVINCIBLE);
 }
 
 void SetJetpackTether(CThing* player, CThing* attachment, float length, v2 pos)
@@ -655,9 +725,10 @@ void SetJetpackTether(CThing* player, CThing* attachment, float length, v2 pos)
     //if(CheckPowerup(*player, *part_creature)) return;
     if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
     if (!IsPlayableState(*part_creature)) return;
-    part_creature->SetJetpack(attachment, length, pos);
+    player->GetPYellowHead()->SetJetpack(attachment, length, pos);
 }
 
+/*
 void StartGunState(CThing* creature_thing)
 {
     PCreature* part_creature;
@@ -684,6 +755,7 @@ void StartGunState(CThing* creature_thing)
 
     part_creature->SetState(STATE_GUN);
 }
+*/
 
 void CollectGun(CThing* player, CThing* creature_thing)
 {
@@ -694,14 +766,12 @@ void CollectGun(CThing* player, CThing* creature_thing)
     if (!IsPlayableState(*part_creature)) return;
     // Return if submerged
     //if(IsPlayerSubmerged(*part_creature)) return;
-    //float submerged;
-
-    //if(part_creature->Config->IsLoaded())
-    //    submerged = part_creature->Config->AmountSubmergedToLosePowerups;
-    //else
-    //    submerged = 0.3f;
-    //if(part_creature->Fork->AmountBodySubmerged <= submerged)
-    //    return;
+    float submerged;    
+    if(part_creature->Config->IsLoaded())
+        submerged = part_creature->Config->AmountSubmergedToLosePowerups;
+    else
+        submerged = 0.3f;
+    if(part_creature->Fork->AmountBodySubmerged > submerged) return;
     part_creature->StartGunState(creature_thing);
 }
 
@@ -725,7 +795,7 @@ void RemoveAbility(CThing* player)
     if (part_creature == NULL) return;
 
     if (IsPowerupState(part_creature))
-    part_creature->SetState(STATE_NORMAL_);
+        part_creature->SetState(STATE_NORMAL_);
     
     if (part_creature->HasScubaGear)
     {
@@ -764,7 +834,7 @@ void OnCreatureStateUpdate(PCreature& creature)
             // Check frames since last frozen
             // Should be assigned to something in the creature config later
             // Also assigned a better variable than "StateTimer" so it doesn't check for removing powerups
-            else if (creature.StateTimer < 60)
+            else if (creature.FramesSinceFrozen < 60)
             {
                 if (creature.Freeziness >= COLD_FREEZINESS)
                     creature.SetState(STATE_FROZEN);
@@ -798,15 +868,18 @@ void OnCreatureStateUpdate(PCreature& creature)
                 creature.SetState(STATE_FROZEN);
                 if (mixed_body_sum >= creature.Config->ForceToShatterOnFreeze)
                 {
+                    // DEPRECATED
+
+
                     // We don't want it to shatter in water as there should be dampening
-                    if (creature.Fork->IsSwimming) 
-                    {
+                    //if (creature.Fork->IsSwimming) 
+                    //{
                         creature.SetState(STATE_FROZEN);
-                    }
-                    else 
-                    {
-                        creature.SetState(STATE_DEAD);
-                    }
+                    //}
+                    //else 
+                    //{
+                    //    creature.SetState(STATE_DEAD);
+                    //}
                 }
             }
             // If we're hit on the head, just freeze.
@@ -831,6 +904,8 @@ void OnCreatureStateUpdate(PCreature& creature)
 
     CThing* thing = creature.GetThing();
     // Handle all custom powerup/sackboy states here
+    
+    //part_creature->CanDropPowerup = true;
     switch (creature.State)
     {
         //case STATE_NORMAL_:
@@ -867,18 +942,44 @@ void OnCreatureStateUpdate(PCreature& creature)
                     creature.SetState(STATE_NORMAL_);
             }
 
-            if (creature.StateTimer > creature.Config->FramesTillFrozenToDeath)
-            {
+            // TEMPORARILY DISABLED FUCK YOU
+            //if (creature.StateTimer > creature.Config->FramesTillFrozenToDeath)
+            //{
                 // Check if creature isn't moving
                 //if ( < creature.Config->ForceToShatterWhileFrozen)
                 //{
-                    creature.TypeOfLethalThingTouched = LETHAL_ICE;
-                    creature.SetState(STATE_DEAD);
+                    //creature.TypeOfLethalThingTouched = LETHAL_ICE;
+                    //creature.SetState(STATE_DEAD);
                 //}
-            }
+            //}
 
-            if ((input->ButtonsOld & PAD_BUTTON_TRIANGLE) == 0 && (input->Buttons & PAD_BUTTON_TRIANGLE) != 0)
+            //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_BREAK_FREE_RIGHTSTICK, L"BP_BREAK_FREE"))
+            //    creature.SetState(STATE_NORMAL_);
+            
+            // STORING THIS IN AMMO BECAUSE WHY NOT FUCK YOU
+            if (creature.AmmoFillFactor >= 3)
                 creature.SetState(STATE_NORMAL_);
+                
+            if (!gUseIceAccessibility)
+            {
+                if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_BREAK_FREE_TRIANGLE, L"BP_BREAK_FREE"))
+                {
+                    CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_shake_tinkle", thing, -10000.0f, -10000.0f);
+                    creature.AmmoFillFactor++;
+                }
+            }
+            else
+            {
+                if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_BREAK_FREE_SHAKE, L"BP_BREAK_FREE"))
+                    creature.SetState(STATE_NORMAL_);
+            }
+            //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_BREAK_FREE_CROSS, L"BP_BREAK_FREE"))
+            //    creature.SetState(STATE_NORMAL_);
+            //if (ShiverFrame % 3 == 1)
+            //    creature.SetState(STATE_NORMAL_);
+
+            //if ((input->ButtonsOld & PAD_BUTTON_TRIANGLE) == 0 && (input->Buttons & PAD_BUTTON_TRIANGLE) != 0)
+            //    creature.SetState(STATE_NORMAL_);
             
             break;
         }
@@ -893,7 +994,17 @@ void OnCreatureStateUpdate(PCreature& creature)
         }
 
         case STATE_BOOTS:
-        {
+        {   
+            float submerged;
+
+            if(creature.Config->IsLoaded())
+                submerged = creature.Config->AmountSubmergedToLosePowerups;
+            else
+                submerged = 0.3f;
+            if(creature.Fork->AmountBodySubmerged > submerged)
+                creature.SetState(STATE_NORMAL_);
+
+            //if(DropPowerup(STATE_BOOTS))
             if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_BOOTS, L"BP_REMOVE_BOOTS"))
                 creature.SetState(STATE_NORMAL_);
                 
@@ -902,6 +1013,15 @@ void OnCreatureStateUpdate(PCreature& creature)
 
         case STATE_FORCE:
         {
+            float submerged;
+
+            if(creature.Config->IsLoaded())
+                submerged = creature.Config->AmountSubmergedToLosePowerups;
+            else
+                submerged = 0.3f;
+            if(creature.Fork->AmountBodySubmerged > submerged)
+                creature.SetState(STATE_NORMAL_);
+
             if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE, L"BP_FORCE"))
             {
                 ExplosionInfo info;
@@ -925,7 +1045,16 @@ void OnCreatureStateUpdate(PCreature& creature)
         }
 
         case STATE_GRAPPLE:
-        {
+        {   
+            float submerged;
+
+            if(creature.Config->IsLoaded())
+                submerged = creature.Config->AmountSubmergedToLosePowerups;
+            else
+                submerged = 0.3f;
+            if(creature.Fork->AmountBodySubmerged > submerged)
+                creature.SetState(STATE_NORMAL_);
+                
             if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_GRAPPLE, L"BP_GRAPPLE")) {}
             if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GRAPPLE, L"BP_REMOVE_GRAPPLE"))
                 creature.SetState(STATE_NORMAL_);
@@ -934,7 +1063,16 @@ void OnCreatureStateUpdate(PCreature& creature)
         }
         
         case STATE_GAUNTLETS:
-        {
+        {   
+            float submerged;
+
+            if(creature.Config->IsLoaded())
+                submerged = creature.Config->AmountSubmergedToLosePowerups;
+            else
+                submerged = 0.3f;
+            if(creature.Fork->AmountBodySubmerged > submerged)
+                creature.SetState(STATE_NORMAL_);
+
             if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_POWER_GLOVES, L"BP_REMOVE_POWER_GLOVES"))
                 creature.SetState(STATE_NORMAL_);
                 
@@ -949,14 +1087,17 @@ void OnCreatureStateUpdate(PCreature& creature)
             if (shape != NULL)
             {
                 // Cycle editor colour here with hue shift
-                //shape->EditorColour = v4();
-                //shape->EditorColourTint = v4();
+                
+                CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
+                //rend->EffectMesh->EditorColour = v4();
             }
 
             //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_INVINCIBLE, (const wchar_t*)NULL))
             //    creature.SetState(STATE_NORMAL_);
             // Invincibility timeout
-            if (creature.StateTimer > 120)
+            //if (creature.StateTimer > 120)
+            //    creature.SetState(STATE_NORMAL_);
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GRAPPLE, L"BP_REMOVE_INVINCIBLE"))
                 creature.SetState(STATE_NORMAL_);
                 
             break;
@@ -986,9 +1127,9 @@ void OnCreatureStateUpdate(PCreature& creature)
             //if(IsPlayerSubmerged(creature))
             if(creature.Fork->AmountBodySubmerged > submerged)
             {
-                creature.SpeedModifier = 3.0f;
-                creature.JumpModifier = 3.0f;
-                creature.StrengthModifier = 3.0f;
+                creature.SpeedModifier = 50.0f;
+                creature.JumpModifier = 1.0f;
+                creature.StrengthModifier = 1.0f;
             }
             else
             {

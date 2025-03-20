@@ -37,3 +37,9 @@ CInput* PYellowHead::GetInput() const
 {
     return PYellowHead_GetInput(this);
 }
+
+MH_DefineFunc(PYellowHead_SetJetpack, 0x005bd9d4, TOC1, void, PYellowHead*, CThing* attachment, f32 length, v2 pos);
+void PYellowHead::SetJetpack(CThing* attachment, float length, v2 pos)
+{
+    return PYellowHead_SetJetpack(this, attachment, length, pos);
+}

@@ -70,6 +70,11 @@ static EButtonPrompts gButtonPrompts[] =
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_GRAPPLE
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_POWER_GLOVES
     
+    BP_SHAKE, // BUTTON_CONFIG_BREAK_FREE_SHAKE
+    BP_RIGHTSTICK, // BUTTON_CONFIG_BREAK_FREE_STICK
+    BP_TRIANGLE, // BUTTON_CONFIG_BREAK_FREE_TRIANGLE
+    BP_CROSS, // BUTTON_CONFIG_BREAK_FREE_CROSS
+    
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_GAS_MASK
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_DIVER_SUIT
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_SWIMMING_FINS
@@ -95,6 +100,14 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
         case BUTTON_CONFIG_FORCE:
         case BUTTON_CONFIG_GRAPPLE:
             return (buttons & PAD_BUTTON_R1) != 0;
+        case BUTTON_CONFIG_BREAK_FREE_SHAKE:
+            return (buttons & PAD_BUTTON_TRIANGLE) != 0;
+        case BUTTON_CONFIG_BREAK_FREE_RIGHTSTICK:
+            return (buttons & PAD_BUTTON_TRIANGLE) != 0;
+        case BUTTON_CONFIG_BREAK_FREE_TRIANGLE:
+            return (buttons & PAD_BUTTON_TRIANGLE) != 0;
+        case BUTTON_CONFIG_BREAK_FREE_CROSS:
+            return (buttons & PAD_BUTTON_CROSS) != 0;
         case BUTTON_CONFIG_REMOVE_GUN:
         case BUTTON_CONFIG_REMOVE_FORCE:
         case BUTTON_CONFIG_REMOVE_BOOTS:
@@ -146,6 +159,11 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_GRAPPLE:
         case BUTTON_CONFIG_REMOVE_GRAPPLE:
         case BUTTON_CONFIG_REMOVE_POWER_GLOVES:
+        
+        case BUTTON_CONFIG_BREAK_FREE_SHAKE:
+        case BUTTON_CONFIG_BREAK_FREE_RIGHTSTICK:
+        case BUTTON_CONFIG_BREAK_FREE_TRIANGLE:
+        case BUTTON_CONFIG_BREAK_FREE_CROSS:
 
         case BUTTON_CONFIG_REMOVE_GAS_MASK:
         case BUTTON_CONFIG_REMOVE_DIVER_SUIT:
