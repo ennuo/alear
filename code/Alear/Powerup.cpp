@@ -378,7 +378,6 @@ bool IsPowerupState(PCreature* creature)
         state == STATE_GAUNTLETS ||
         state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
-        state == STATE_SWIMMING_FINS ||
         state == STATE_DIVER_SUIT ||
         state == STATE_MINI_SUIT;
 }
@@ -1022,7 +1021,7 @@ void OnCreatureStateUpdate(PCreature& creature)
             if(creature.Fork->AmountBodySubmerged > submerged)
                 creature.SetState(STATE_NORMAL_);
 
-            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE, L"BP_FORCE"))
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, L"BP_FORCE"))
             {
                 ExplosionInfo info;
                 GetExplosionInfo(thing, info);

@@ -120,6 +120,7 @@ extern CConfigBool gUsePopitGradients;
 extern CConfigBool gHideMSPF;
 extern CConfigBool gLoadDefaultMaterial;
 extern CConfigBool gForceLoadEditable;
+extern CConfigBool gForceMeshScaling;
 
 extern CConfigBool gUseIceAccessibility;
 

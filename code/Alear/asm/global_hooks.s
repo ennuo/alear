@@ -538,55 +538,37 @@ UpdateJumpingIsSwimming:
 /*
 .global _water_boost_disable_swimming_fins_hook
 _water_boost_disable_swimming_fins_hook:
-    lwz %r11, 0x934(%r31)
+    lwz %r11, 0x934(%r3)
     cmpwi %cr7, %r11, 0x11
     beq %cr7, SwimStrokeInput
 
-    lbz %r0, 0x0(%r3)
-    ba 0x00043408
+    lwz %r3, 0x24(%r9)
+    ba 0x000372ac
     
 SwimStrokeInput:
-    ba 0x00043730  
+    ba 0x00037320
 */
 
-/*
-.global _collect_gun_disable_ice_hook
-_collect_gun_disable_ice_hook:
-    lwz %r11, 0x934(%r31)
-    cmpwi %cr7, %r11, 0x11
-    beq %cr7, CanCollectGun
+# Load list of guids from txt file
+.global _can_scale_guid_list_hook
+_can_scale_guid_list_hook:
+    lwz %r3, 0x34(%r9)
 
+    std %r2, 0x28(%r1)
+    lis %r2, _Z12CanScaleMesh5CGUID@h
+    ori %r2, %r2, _Z12CanScaleMesh5CGUID@l
+    lwz %r2, 0x4(%r2)
+    bl ._Z12CanScaleMesh5CGUID
+    ld %r2, 0x28(%r1)
 
-    std %r3, 0x28(%r1)
-    lis %r3, _Z10CollectGunP6CThingS0_@h      
-    ori %r3, %r5, _Z10CollectGunP6CThingS0_@l
-    lwz %r3, 0x4(%r5)
-    bl ._Z10CollectGunP6CThingS0_
-    ld %r3, 0x28(%r1)
-
-    lwz %r3, _Z10CollectGunP6CThingS0_
-    lwz %r0, 0x40(%r3)
-    ba 0x0040aa08
+    ld %r10, 0xc0(%r1)
     
-CanCollectGun:
-    ba 0x0040aa48  
-*/
+    cmpwi %cr7, %r3, 1
+    bne %cr7, DisableScalingHook
+    ba 0x0036ae4c
 
-/*
-# Prevent jetpack from being collected if frozen
-# doesn't work, so sad!
-.global _set_jetpack_tether_is_frozen_hook
-_set_jetpack_tether_is_frozen_hook:
-    lwz %r11, 0x934(%r31)
-    cmpwi %cr7, %r11, 0xb
-    beq %cr7, JetpackTetherNull
-
-    lwz %r0, 0x24(%r3)
-    ba 0x0040b694
-    
-JetpackTetherNull:
-    ba 0x0040b6a8
-*/
+DisableScalingHook:
+    ba 0x0036ae18
 
 /*
 # Prevent jetpack from being collected if frozen

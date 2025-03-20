@@ -85,3 +85,22 @@ void CPoppetInventory::TakePlan(CVector<CThingPtr> const& things)
 {
     CPoppetInventory_TakePlan(this, things);
 }
+
+bool IsMeshBlacklisted(CGUID mesh_guid)
+{
+    DebugLog("MESH GUID:g%d\n", (u32)mesh_guid);
+    switch ((u32)mesh_guid)
+    {
+        case 0x2d94:
+            return false;
+            break;
+    }
+    return true;
+}
+
+bool CanScaleMesh(CGUID mesh_guid)
+{
+    if(!gForceMeshScaling)
+        return IsMeshBlacklisted(mesh_guid);
+    return true;
+}

@@ -1021,6 +1021,10 @@ void InitSharedHooks()
 {
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
+    
+    // Disable scale list
+    MH_PokeBranch(0x0036add4, &_can_scale_guid_list_hook);
+    //MH_PokeBranch(0x000372a8, &_water_boost_disable_swimming_fins_hook);
 
     // MH_Poke32(0x001c71a0, BLR);
     // MH_Poke32(0x001c5180, 0x2f890003);

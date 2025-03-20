@@ -94,6 +94,8 @@ public:
     v2 CustomPoppetOffset;
     bool HidePoppetGooey;
     bool ShowTether;
+    bool CanScaleMesh(CGUID mesh_guid);
+    bool IsMeshBlacklisted(CGUID mesh_guid);
 };
 
 

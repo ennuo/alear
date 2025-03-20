@@ -63,7 +63,7 @@ static EButtonPrompts gButtonPrompts[] =
     BP_L3, // BUTTON_CONFIG_DEACTIVATE_DIRECT_CONTROL
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_SCUBA_GEAR
 
-    BP_R1, // BUTTON_CONFIG_FORCE
+    BP_R1, // BUTTON_CONFIG_FORCE_BLAST
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_FORCE
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_BOOTS
     BP_R1, // BUTTON_CONFIG_GRAPPLE
@@ -97,7 +97,7 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
             return (buttons & PAD_BUTTON_L2) != 0;
         case BUTTON_CONFIG_POPPET_SHOW:
             return (buttons & PAD_BUTTON_L1) != 0;
-        case BUTTON_CONFIG_FORCE:
+        case BUTTON_CONFIG_FORCE_BLAST:
         case BUTTON_CONFIG_GRAPPLE:
             return (buttons & PAD_BUTTON_R1) != 0;
         case BUTTON_CONFIG_BREAK_FREE_SHAKE:
@@ -153,7 +153,7 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_ACTIVATE_DIRECT_CONTROL:
         case BUTTON_CONFIG_REMOVE_SCUBA_GEAR:
 
-        case BUTTON_CONFIG_FORCE:
+        case BUTTON_CONFIG_FORCE_BLAST:
         case BUTTON_CONFIG_REMOVE_FORCE:
         case BUTTON_CONFIG_REMOVE_BOOTS:
         case BUTTON_CONFIG_GRAPPLE:
