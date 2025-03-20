@@ -1,6 +1,9 @@
 #include "Poppet.h"
 #include "hook.h"
 
+#include "cell/DebugLog.h"
+#include "AlearConfig.h"
+
 MH_DefineFunc(CPoppet_GetBubbleSize, 0x00343dc4, TOC1, v2, CPoppet*);
 MH_DefineFunc(CPoppet_RenderHoverObject, 0x00344ab4, TOC1, void, CPoppet*, CThing*, float);
 MH_DefineFunc(CPoppet_GetMode, 0x0033efa8, TOC1, EPoppetMode, const CPoppet*);
@@ -86,21 +89,17 @@ void CPoppetInventory::TakePlan(CVector<CThingPtr> const& things)
     CPoppetInventory_TakePlan(this, things);
 }
 
-bool IsMeshBlacklisted(CGUID mesh_guid)
+bool CanScaleMesh(CGUID mesh_guid)
 {
-    DebugLog("MESH GUID:g%d\n", (u32)mesh_guid);
-    switch ((u32)mesh_guid)
+    if (gForceMeshScaling) return true;
+
+    DebugLog("Checking if we can scale g%08x\n", mesh_guid.guid);
+
+    switch (mesh_guid.guid)
     {
         case 0x2d94:
             return false;
-            break;
     }
-    return true;
-}
 
-bool CanScaleMesh(CGUID mesh_guid)
-{
-    if(!gForceMeshScaling)
-        return IsMeshBlacklisted(mesh_guid);
     return true;
 }

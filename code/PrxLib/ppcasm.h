@@ -41,6 +41,9 @@
     extern "C" uintptr_t __HOOK__##NAME; \
     __asm__(".global __HOOK__" #NAME "\n___HOOK__" #NAME ":\n" __VA_ARGS__ )
 
+#define ASM_STORE_TOC "std %r2, 0x28(%r1)\n"
+#define ASM_RESTORE_TOC "ld %r2, 0x28(%r1)\n"
+
 #define ASM_INVOKE(NAME) \
     "std %r2, 0x28(%r1)\n" \
     "lis %r2, " NAME "@h\n" \

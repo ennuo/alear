@@ -244,14 +244,12 @@ enum EInstructionClass
     IC_BRANCH
 };
 
-struct LoadConstInstructionBool { /* VMInstruction.h:314 */
-    u32 Bool:1;
-    u8 field1_0x1;
-    u8 field2_0x2;
-    u8 field3_0x3;
-    u32 DstIdx:16;
-    u8 field5_0x6;
-    u32 Op:8;
+struct LoadConstInstructionBool {
+	unsigned int Bool : 1;
+	unsigned int : 0;
+	unsigned int DstIdx : 16;
+	unsigned int : 8;
+	unsigned int Op : 8;
 };
 
 struct SetMemberInstruction { /* VMInstruction.h:329 */

@@ -1,3 +1,5 @@
+.include "asm/macros/fnptr.s"
+
 .global _global_onswapbuffers_hook
 _global_onswapbuffers_hook:
     # Call the extended handler function
@@ -552,23 +554,29 @@ SwimStrokeInput:
 # Load list of guids from txt file
 .global _can_scale_guid_list_hook
 _can_scale_guid_list_hook:
+.set ExitCanScaleHook_DisableScaling, 0x0036ae18
+.set ExitCanScaleHook_AllowScaling, 0x0036ae4c
     lwz %r3, 0x34(%r9)
 
-    std %r2, 0x28(%r1)
-    lis %r2, _Z12CanScaleMesh5CGUID@h
-    ori %r2, %r2, _Z12CanScaleMesh5CGUID@l
-    lwz %r2, 0x4(%r2)
-    bl ._Z12CanScaleMesh5CGUID
-    ld %r2, 0x28(%r1)
+    # Function stores whether or not we can currently scale this object
+    # in %r10 because it knows the function calls in the block don't use this 
+    # volatile register, so we'll just temporarily store it in the stack space
+    # used for the tint color.
+    std %r10, 0xc0(%r1)
 
+    call _Z12CanScaleMesh5CGUID
+
+    # Restore the last state of the variable keeping track of
+    # whether or not we can stale now that we've existed our function
+    # with possible side effects.
     ld %r10, 0xc0(%r1)
     
     cmpwi %cr7, %r3, 1
     bne %cr7, DisableScalingHook
-    ba 0x0036ae4c
 
+    ba ExitCanScaleHook_AllowScaling
 DisableScalingHook:
-    ba 0x0036ae18
+    ba ExitCanScaleHook_DisableScaling
 
 /*
 # Prevent jetpack from being collected if frozen

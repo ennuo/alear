@@ -6,8 +6,8 @@
 
 class PJoint : public CPart {
 public:
-    void SetA(PJoint* joint, CThing* thing);
-    void SetB(PJoint* joint, CThing* thing);
+    void SetA(CThing* thing);
+    void SetB(CThing* thing);
 };
 
 
