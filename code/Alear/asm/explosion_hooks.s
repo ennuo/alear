@@ -40,3 +40,17 @@ GetExplosiveSound:
     lwz %r5, 0x70(%r1)
     
     ba ExitExplosionParticleHook
+
+.global _explosion_ignore_yellowhead_hook
+_explosion_ignore_yellowhead_hook:
+.set IgnoreYellowHead, 0x2c
+    cmpwi %cr7, %r0, 0x1
+    beq %cr7, SkipYellowHead
+
+    lbz %r0, IgnoreYellowHead(%r26)
+    cmpwi %cr7, %r0, 0x1
+    beq %cr7, SkipYellowHead
+
+    ba 0x0020f0a8
+SkipYellowHead:
+    ba 0x0020f078
