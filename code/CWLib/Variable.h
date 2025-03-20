@@ -227,10 +227,20 @@ public:
         ResourceType = RTYPE_INVALID;
     }
 
+    inline void SetName(const char* name)
+    {
+        ClearName();
+        if (name != NULL)
+        {
+            Name = name;
+            DynamicName = false;
+        }
+    }
+
     template <typename T>
     void Init(T* data)
     {
-        Name = "<Root>";
+        SetName("<Root>");
         Type = VARIABLE_TYPE_STRUCT;
         Data = (void*)data;
         ReflectFunction = (ReflectFunctionPtr)GetReflectFunction<T, false>::Get();
@@ -269,7 +279,9 @@ template <> inline EVariableType GetVariableType<CVector<CSlapMesh> >() { return
 template <> inline EVariableType GetVariableType<CVector<CEmote> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CVector<CEmoteSound> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CVector<CAnimStyle> >() { return VARIABLE_TYPE_ARRAY; }
+template <> inline EVariableType GetVariableType<CVector<CGUID> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CThingPtr>() { return VARIABLE_TYPE_THINGPTR; }
+template <> inline EVariableType GetVariableType<CGUID>() { return VARIABLE_TYPE_U32; }
 
 // variable.h: 288, all defined here
 template <typename D>

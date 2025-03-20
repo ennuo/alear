@@ -25,6 +25,7 @@ class RVertexShader;
 class RSyncedProfile;
 class RGfxMaterial;
 class RCharacterSettings;
+class RGuidList;
 
 enum EResourceType
 {
@@ -62,8 +63,10 @@ enum EResourceType
     RTYPE_PARTICLE_SETTINGS=31,
     RTYPE_LOCAL_PROFILE=32,
     RTYPE_LIMITS_SETTINGS=33,
-    RTYPE_PARTICLE_TEMPLATE=34,
-    RTYPE_PARTICLE_LIBRARY=35,
+    // RTYPE_PARTICLE_TEMPLATE=34,
+    // RTYPE_PARTICLE_LIBRARY=35,
+    RTYPE_TUTORIALS=34,
+    RTYPE_GUID_LIST=35,
     RTYPE_AUDIO_MATERIALS=36,
     RTYPE_SETTINGS_FLUID=37,
     RTYPE_PLAN=38,
@@ -191,6 +194,7 @@ template <> inline EResourceType GetResourceType<RPixelShader>() { return RTYPE_
 template <> inline EResourceType GetResourceType<RSyncedProfile>() { return RTYPE_SYNCED_PROFILE; }
 template <> inline EResourceType GetResourceType<RLocalProfile>() { return RTYPE_LOCAL_PROFILE; }
 template <> inline EResourceType GetResourceType<RCharacterSettings>() { return RTYPE_SETTINGS_CHARACTER; }
+template <> inline EResourceType GetResourceType<RGuidList>() { return RTYPE_GUID_LIST; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

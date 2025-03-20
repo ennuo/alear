@@ -1,6 +1,7 @@
 #include "resources/ResourceHooks.h"
 #include "resources/ResourcePins.h"
 #include "resources/ResourceOutfitList.h"
+#include "resources/ResourceGuidList.h"
 #include "resources/ResourceAnimatedTexture.h"
 #include "customization/PoppetStyles.h"
 
@@ -30,9 +31,12 @@
 
 extern "C" uintptr_t _reflectextradata_load;
 extern "C" uintptr_t _reflectextradata_save;
+extern "C" uintptr_t _allocatenewresource_rtype_guid_list;
 extern "C" uintptr_t _allocatenewresource_rtype_pins;
 extern "C" uintptr_t _allocatenewresource_rtype_outfit_list;
 extern "C" uintptr_t _allocatenewresource_rtype_animated_texture;
+extern "C" uintptr_t _reflectresource_gather_rtype_guid_list;
+extern "C" uintptr_t _reflectresource_load_rtype_guid_list;
 extern "C" uintptr_t _reflectresource_load_rtype_pins;
 extern "C" uintptr_t _reflectresource_load_rtype_outfit_list;
 extern "C" uintptr_t _reflectresource_load_rtype_animated_texture;
@@ -376,6 +380,8 @@ template ReflectReturn OnSerializeExtraData<CReflectionFindDependencies>(CReflec
 template ReflectReturn ReflectExtraResourceData<CReflectionLoadVector>(CResource* resource, CReflectionLoadVector& r);
 template ReflectReturn ReflectExtraResourceData<CReflectionSaveVector>(CResource* resource, CReflectionSaveVector& r);
 
+template void CGatherVariables::Init<RGuidList>(RGuidList* data);
+
 
 RPins* AllocatePinsResource(EResourceFlag flags) 
 {
@@ -395,6 +401,12 @@ RAnimatedTexture* AllocateAnimatedTextureResource(EResourceFlag flags)
     return new RAnimatedTexture(flags);
 }
 
+RGuidList* AllocateGuidListResource(EResourceFlag flags)
+{
+    DebugLog("Attempting to allocate new RGuidList resource instance!\n");
+    return new RGuidList(flags);
+}
+
 void AttachResourceNames()
 {
     MH_Poke32(0x000877c0, 0x2b830000 + (RTYPE_LAST - 1));
@@ -411,6 +423,7 @@ void AttachResourceNames()
     TABLE[RTYPE_PINS] = "RPins";
     TABLE[RTYPE_OUTFIT_LIST] = "ROutfitList";
     TABLE[RTYPE_ANIMATED_TEXTURE] = "RAnimatedTexture";
+    TABLE[RTYPE_GUID_LIST] = "RGuidList";
 
     // Replace the TOC reference with our newly allocated table
     MH_Poke32(0x0091d4ac, (u32)TABLE);
@@ -441,6 +454,7 @@ void AttachResourceDependinateHooks()
     TABLE[RTYPE_PINS] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
     TABLE[RTYPE_OUTFIT_LIST] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
     TABLE[RTYPE_ANIMATED_TEXTURE] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
+    TABLE[RTYPE_GUID_LIST] = (u32)&_reflectresource_dependinate_ok - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092e160, (u32)TABLE);
@@ -471,6 +485,7 @@ void AttachResourceLoadHooks()
     TABLE[RTYPE_PINS] = (u32)&_reflectresource_load_rtype_pins - (u32)TABLE;
     TABLE[RTYPE_OUTFIT_LIST] = (u32)&_reflectresource_load_rtype_outfit_list - (u32)TABLE;
     TABLE[RTYPE_ANIMATED_TEXTURE] = (u32)&_reflectresource_load_rtype_animated_texture - (u32)TABLE;
+    TABLE[RTYPE_GUID_LIST] = (u32)&_reflectresource_load_rtype_guid_list - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092e164, (u32)TABLE);
@@ -493,6 +508,7 @@ void AttachResourceIds()
     TABLE[RTYPE_PINS] = "PINb";
     TABLE[RTYPE_OUTFIT_LIST] = "OUTb";
     TABLE[RTYPE_ANIMATED_TEXTURE] = "ATXb";
+    TABLE[RTYPE_GUID_LIST] = "GLTbGLTt";
 
     // Replace the TOC reference with our newly allocated table
     MH_Poke32(0x0091d4b0, (u32)TABLE);
@@ -523,9 +539,38 @@ void AttachResourceAllocationHooks()
     TABLE[RTYPE_PINS] = (u32)&_allocatenewresource_rtype_pins - (u32)TABLE;
     TABLE[RTYPE_OUTFIT_LIST] = (u32)&_allocatenewresource_rtype_outfit_list - (u32)TABLE;
     TABLE[RTYPE_ANIMATED_TEXTURE] = (u32)&_allocatenewresource_rtype_animated_texture - (u32)TABLE;
+    TABLE[RTYPE_GUID_LIST] = (u32)&_allocatenewresource_rtype_guid_list - (u32)TABLE;
     
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0091d678, (u32)TABLE);
+}
+
+void AttachResourceTextSerializationHooks()
+{
+    // We need to update the switch case that controls which
+    // resource gets initialized based on the type.
+    MH_Poke32(0x003c80cc, 0x2b800000 + (RTYPE_LAST - 1));
+
+    // Initialise the switch table with the offsets to the invalid resource type case
+    const int SWITCH_LABEL = 0x003c80f0;
+    const int NOP_LABEL = 0x003c81c0;
+    const int LABEL_COUNT = 0x2b;
+    static s32 TABLE[RTYPE_LAST];
+    for (int i = 0; i < RTYPE_LAST; ++i)
+        TABLE[i] = NOP_LABEL - (u32)TABLE;
+
+    // Copy the old switch case into our new table and replace the offsets.
+    MH_Read(SWITCH_LABEL, TABLE, LABEL_COUNT * sizeof(s32));
+    for (int i = 0; i < LABEL_COUNT; ++i)
+    {
+        s32 target = SWITCH_LABEL + TABLE[i] - (u32)TABLE;
+        TABLE[i] = target;
+    }
+
+    TABLE[RTYPE_GUID_LIST] = (u32)&_reflectresource_gather_rtype_guid_list - (u32)TABLE;
+    
+    // Switch out the pointer to the switch case in the TOC
+    MH_Poke32(0x0092e18c, (u32)TABLE);
 }
 
 void AttachCustomRevisionHooks()
@@ -570,8 +615,8 @@ ESerialisationType GetPreferredSerialisationType(EResourceType type)
         case RTYPE_POPPET_SETTINGS:
         case RTYPE_SETTINGS_NETWORK:
         case RTYPE_PARTICLE_SETTINGS:
-        case RTYPE_PARTICLE_TEMPLATE:
-        case RTYPE_PARTICLE_LIBRARY:
+        // case RTYPE_PARTICLE_TEMPLATE:
+        // case RTYPE_PARTICLE_LIBRARY:
         case RTYPE_AUDIO_MATERIALS:
         case RTYPE_SETTINGS_FLUID:
         case RTYPE_TEXTURE_LIST:
@@ -873,6 +918,7 @@ void InitResourceHooks()
     AttachResourceDependinateHooks();
     AttachResourceLoadHooks();
     AttachResourceIds();
+    AttachResourceTextSerializationHooks();
     AttachResourceNames();
     AttachCustomRevisionHooks();
 

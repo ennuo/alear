@@ -2,6 +2,22 @@
 .set RTYPE_ANIMATED_TEXTURE, 45
 .set RTYPE_PINS, 47
 .set RTYPE_OUTFIT_LIST, 50
+.set RTYPE_GUID_LIST, 35
+
+.global _allocatenewresource_rtype_guid_list
+_allocatenewresource_rtype_guid_list:
+    rldicl %r3, %r31, 0x0, 0x20
+    
+    std %r2, 0x28(%r1)
+    lis %r7, _Z24AllocateGuidListResource13EResourceFlag@h      
+    ori %r7, %r7, _Z24AllocateGuidListResource13EResourceFlag@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z24AllocateGuidListResource13EResourceFlag
+    ld %r2, 0x28(%r1)
+    
+    mr %r29, %r3
+    mr %r25, %r29
+    ba 0x00088bb8
 
 .global _allocatenewresource_rtype_pins
 _allocatenewresource_rtype_pins:
@@ -47,6 +63,35 @@ _allocatenewresource_rtype_animated_texture:
     mr %r29, %r3
     mr %r25, %r29
     ba 0x00088bb8
+
+.global _reflectresource_gather_rtype_guid_list
+_reflectresource_gather_rtype_guid_list:
+    mr %r3, %r29
+    mr %r4, %r27
+
+    std %r2, 0x28(%r1)
+    lis %r7, _ZN16CGatherVariables4InitI9RGuidListEEvPT_@h      
+    ori %r7, %r7, _ZN16CGatherVariables4InitI9RGuidListEEvPT_@l
+    lwz %r2, 0x4(%r7)
+    bl ._ZN16CGatherVariables4InitI9RGuidListEEvPT_
+    ld %r2, 0x28(%r1)
+
+    ba 0x003c81c0
+
+.global _reflectresource_load_rtype_guid_list
+_reflectresource_load_rtype_guid_list:
+    rldicl %r3, %r3, 0x0, 0x20
+    rldicl %r4, %r4, 0x0, 0x20
+
+    std %r2, 0x28(%r1)
+    lis %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R9RGuidList@h      
+    ori %r7, %r7, _Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R9RGuidList@l
+    lwz %r2, 0x4(%r7)
+    bl ._Z7ReflectI21CReflectionLoadVectorE13ReflectReturnRT_R9RGuidList
+    ld %r2, 0x28(%r1)
+
+    mr %r27, %r3
+    ba 0x0072735c
 
 .global _reflectresource_load_rtype_pins
 _reflectresource_load_rtype_pins:
@@ -157,6 +202,8 @@ _reflectresource_dependinate_ok:
 
 .global _get_serialisationtype_hook
 _get_serialisationtype_hook:
+    cmpwi %cr7, %r3, RTYPE_GUID_LIST
+    beq %cr7, _SerialisationType_Binary
     cmpwi %cr7, %r3, RTYPE_PINS
     beq %cr7, _SerialisationType_Binary
     cmpwi %cr7, %r3, RTYPE_OUTFIT_LIST
