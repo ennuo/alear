@@ -69,6 +69,23 @@ ReflectReturn Reflect(R& r, CStyleBank& d)
     return ret;
 }
 
+template<typename R>
+ReflectReturn Reflect(R& r, CPoppetOutline& d)
+{
+    ReflectReturn ret;
+    ADD(Plan);
+    ADD(Mesh);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CPoppetOutlineConfig& d)
+{
+    ReflectReturn ret;
+    ADD(Outlines);
+    return ret;
+}
+
 // this is technically meant to be a templated function, but I don't feel like rewriting it right now,
 // and we only need the CReflectionLoadVector version
 
@@ -107,6 +124,9 @@ template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CEmoteBank
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CEmoteSound& d);
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CAnimStyle& d);
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CStyleBank& d);
+
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPoppetOutlineConfig& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPoppetOutline& d);
 
 MH_DefineFunc(GatherVariablesLoad, 0x003fb94c, TOC1, ReflectReturn, ByteArray& v, CGatherVariables& variables, bool ignore_head, char* header_4bytes);
 

@@ -607,3 +607,26 @@ _hack_gather_character_settings_hook:
     ld %r2, 0x28(%r1)
 
     ba 0x006e00fc
+
+.global _get_outline_guid_hook
+_get_outline_guid_hook:
+    stw %r7, 0x28(%r1)
+
+    lwz %r3, 0x34(%r9)
+    callw _Z18GetOutlinePlanGUID5CGUID
+    
+    lwz %r7, 0x28(%r1)
+    lwz %r12, -0x7a24(%r2)
+
+    cmpwi %cr7, %r3, -0x2A43
+    beq %cr7, MouthVectors
+    cmpwi %cr7, %r3, -0x1395
+    beq %cr7, EyeVectors
+    b NoWeirdVectorAssignmentExit
+
+MouthVectors:
+    ba 0x00359464
+EyeVectors:
+    ba 0x00359508
+NoWeirdVectorAssignmentExit:
+    ba 0x0035910c

@@ -1,6 +1,8 @@
 #ifndef V2_VECTORISED_H
 #define V2_VECTORISED_H
 
+#include <vectormath/cpp/vectormath_aos.h>
+
 struct vint {
     unsigned int V  __attribute__ ((__vector_size__ (16)));
 };
@@ -25,6 +27,8 @@ struct v2 {
     inline v2(float x, float y) { V = (__vector float){x, y, 0.0f, 0.0f}; }
     inline v2(float x, float y, float z, float w) { V = (__vector float){x, y, z, w}; }
     inline v2(__vector float v) { V = v; }
+
+    inline v2(Vectormath::Aos::Vector4 v) { V = v.get128(); }
 
     inline vfloat operator[](unsigned int idx) { return vfloat(V, idx); }
 

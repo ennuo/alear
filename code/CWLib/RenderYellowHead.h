@@ -24,7 +24,7 @@ public:
 public:
     inline const CThing* GetYellowThing() const { return YellowThing; }
     inline const PRenderMesh* GetEffectMesh() const { return EffectMesh; }
-    inline void SetIgnoreBodyAng(bool ignore) { *(((bool*)this) + 0x35c) = ignore; }
+    inline void SetIgnoreBodyAng(bool ignore) { IgnoreBodyAng = ignore; }
 public:
     m44 BodyOfs;
     m44 RibbonMat;
@@ -41,8 +41,14 @@ public:
     CMorphWeightInstance MorphWeightInstance;
     const CThing* YellowThing;
     const PRenderMesh* EffectMesh;
+    const PRenderMesh* GunMesh;
+    bool IgnoreBodyAng;
+    CP<RMesh> NormalMesh;
+    CP<RGfxMaterial> NormalMat;
+    CResourceDescriptor<RPlan> NormalMatPlan;
+    RPSAnimData** CurAnimTemp;
 private:
-    char Pad1[0xbc];
+    char Pad1[128];
 public:
     RSettingsSoftPhys* InstanceSoftPhys[2];
     float* BlendClusterRigidity[2];
@@ -50,6 +56,10 @@ private:
     char Pad2[0x34];
 public:
     CSackBoyAnim* SackBoyAnim; // 0x458
+private:
+    char Pad3[0x500];
+public:
+    CAnimBank* AnimBank;
 };
 
 extern bool gCachedAnimLoad;
