@@ -12,11 +12,18 @@
 #include <PartPhysicsWorld.h>
 
 #include <network/NetworkUtilsNP.h>
+#include <mem_stl_buckets.h>
 
 #include <algorithm>
+#include <set>
 
 
 class CNamedPolygon {
+public:
+    inline bool operator<(const CNamedPolygon& rhs) const
+    {
+        return guid < rhs.guid;
+    }
 public:
     u32 guid;
     CRawVector<v2, CAllocatorMMAligned128> polygon;
@@ -25,23 +32,11 @@ public:
 CPoppetOutlineConfig gPoppetOutlineData;
 extern CVector<CNamedPolygon> gNamedPolygons;
 
-struct SortByPlanKey
-{
-    bool operator()(CPoppetOutline& a, CPoppetOutline& z) const
-    {
-        return a.Plan < z.Plan;
-    }
-};
-
 bool LoadPoppetMeshOutlines()
 {
     gPoppetOutlineData.Outlines.clear();
     
-
-    DebugLog("attempting to load poppet mesh outlines...");
     CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_OUTLINES_KEY, 0, STREAM_PRIORITY_DEFAULT);
-    
-    DebugLog("%s\n", file.GetRef());
 
     file->BlockUntilLoaded();
     if (!file->IsLoaded()) return false;
@@ -55,7 +50,15 @@ bool LoadPoppetMeshOutlines()
         return false;
     }
 
-    std::sort(gPoppetOutlineData.Outlines.begin(), gPoppetOutlineData.Outlines.end(), SortByPlanKey());
+    // The game uses a binary search to find outlines, so make sure we're sorted in ascending order.
+    std::sort(gPoppetOutlineData.Outlines.begin(), gPoppetOutlineData.Outlines.end(), std::less<CPoppetOutline>());
+
+    DebugLog("Loaded %d outlines...\n", gPoppetOutlineData.Outlines.size());
+    for (int i = 0; i < gPoppetOutlineData.Outlines.size(); ++i)
+    {
+        const CPoppetOutline& outline = gPoppetOutlineData.Outlines[i];
+        DebugLog("[%d] [Mesh]=g%08x [Plan]=g%08x\n", i, outline.Mesh, outline.Plan);
+    }
 
     return true;
 }
@@ -71,10 +74,22 @@ void LoadOutlinePolygons()
 
     CThing* world_thing = new CThing();
     world_thing->AddPart(PART_TYPE_WORLD);
-    
+
+    std::set<u32, std::less<u32>, STLBucketAlloc<u32> > plans_processed;
+
+    DebugLog("Caching named polygons...\n");
+
     for (CPoppetOutline* poppet_outline = gPoppetOutlineData.Outlines.begin(); poppet_outline != gPoppetOutlineData.Outlines.end(); ++poppet_outline)
     {
-        DebugLog("DEADBEEF! Attempting to load poppet outline object g%08x\n", poppet_outline->Plan);
+        if (plans_processed.find(poppet_outline->Plan) != plans_processed.end())
+        {
+            DebugLog("Skipping load of outline for mesh g%08x since we already have plan g%08x cached!\n", poppet_outline->Mesh, poppet_outline->Plan);
+            continue;
+        }
+
+        plans_processed.insert(poppet_outline->Plan);
+
+        DebugLog("Caching poppet outline object g%08x\n", poppet_outline->Plan);
         
         CP<RPlan> plan = LoadResourceByKey<RPlan>(poppet_outline->Plan, 0, STREAM_PRIORITY_DEFAULT);
         plan->BlockUntilLoaded();
@@ -105,6 +120,13 @@ void LoadOutlinePolygons()
         gNamedPolygons.push_back(polygon);
     }
 
+    DebugLog("Finished loading named polygons! Count: %d\n", gNamedPolygons.size());
+    for (int i = 0; i < gNamedPolygons.size(); ++i)
+    {
+        const CNamedPolygon& polygon = gNamedPolygons[i];
+        DebugLog("[%d] [PlanGUID]=g%08x, [NumVerts] = %d\n", i, polygon.guid, polygon.polygon.size());
+    }
+
     delete world_thing;
 }
 
@@ -121,13 +143,8 @@ u32 GetOutlinePlanGUID(u32 mesh_guid)
     for (CPoppetOutline* outline = outlines.begin(); outline != outlines.end(); ++outline)
     {
         if (outline->Mesh == mesh_guid)
-        {
-            DebugLog("found outline guid for g%d -> g%d\n", mesh_guid, outline->Plan);
             return outline->Plan;
-        }
     }
-
-    DebugLog("Couldn't find outline GUID for g%d\n", mesh_guid);
 
     return 0;
 }
