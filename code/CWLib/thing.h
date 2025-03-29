@@ -12,7 +12,7 @@
 #include "PartPhysicsWorld.h"
 #include "PartStickers.h"
 #include "PartRenderPosition.h"
-#include "PartJoint.h"
+#include "PartPhysicsJoint.h"
 #include "PartShape.h"
 #include "PartGeneratedMesh.h"
 #include "PartGroup.h"
