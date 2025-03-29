@@ -6,6 +6,8 @@
 
 class CPoppetOutline {
 public:
+    inline bool operator<(const CPoppetOutline& rhs) const { return Plan < rhs.Plan; }
+public:
     u32 Plan;
     u32 Mesh;
 };
