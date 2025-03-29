@@ -1,4 +1,4 @@
-#include "PartJoint.h"
+#include "PartPhysicsJoint.h"
 #include <hook.h>
 
 MH_DefineFunc(PJoint_SetA, 0x000608ec, TOC1, void, PJoint*, CThing*);

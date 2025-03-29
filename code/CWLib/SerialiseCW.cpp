@@ -70,6 +70,23 @@ ReflectReturn Reflect(R& r, CStyleBank& d)
 }
 
 template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoint& d)
+{
+    ReflectReturn ret;
+    ADD(Mesh);    
+    ADD(InactiveMesh);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoints& d)
+{
+    ReflectReturn ret;
+    ADD(Joints);
+    return ret;
+}
+
+template<typename R>
 ReflectReturn Reflect(R& r, CPoppetOutline& d)
 {
     ReflectReturn ret;
@@ -127,6 +144,9 @@ template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CStyleBank
 
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPoppetOutlineConfig& d);
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CPoppetOutline& d);
+
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CRenderJoint& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CRenderJoints& d);
 
 MH_DefineFunc(GatherVariablesLoad, 0x003fb94c, TOC1, ReflectReturn, ByteArray& v, CGatherVariables& variables, bool ignore_head, char* header_4bytes);
 

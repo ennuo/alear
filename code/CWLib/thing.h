@@ -24,10 +24,11 @@
 #include "PartDecoration.h"
 #include "PartEffector.h"
 #include "PartCheckpoint.h"
+#include "PartPhysicsJoint.h"
 
 #include "hack_thingptr.h"
 
-class PJoint;
+
 class PBody : public CPart {};
 class PPos;
 

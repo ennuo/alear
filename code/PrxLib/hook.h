@@ -36,6 +36,7 @@ u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size);
 
 void* MH_Allocate(size_t size);
 void* MH_Shellcode(u32* data, size_t size);
+void MH_InitCall(void* address, void* hook);
 
 inline void MH_Poke32(u32 address, u32 value)
 {
@@ -61,5 +62,6 @@ type(*name)(__VA_ARGS__) = (type (*)(__VA_ARGS__))&_##name;
 
 #define MH_PokeBranch(address, target) MH_Poke32(address, B(target, address))
 #define MH_PokeHook(address, function) MH_InitHook((void*)address, (void*)&function)
+#define MH_PokeCall(address, function) MH_InitCall((void*)address, (void*)&function)
 
 #endif // HOOK_H

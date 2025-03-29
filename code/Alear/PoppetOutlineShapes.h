@@ -22,6 +22,6 @@ public:
 extern CPoppetOutlineConfig gPoppetOutlineData;
 void LoadOutlinePolygons();
 
-#define E_OUTLINES_KEY (3256491230u)
+enum { E_OUTLINES_KEY = 3256491230u };
 
 #endif // POPPET_OUTLINE_SHAPES_H

@@ -8,6 +8,8 @@
 #include "OutfitSystem.h"
 #include "TweakShape.h"
 #include "PoppetOutlineShapes.h"
+#include "RenderJoint.h"
+#include "AlearSerialization.h"
 
 #include "customization/SlapStyles.h"
 #include "customization/Emotes.h"
@@ -1018,10 +1020,17 @@ void AttachIceHooks()
     MH_PokeHook(0x000f2334, REIMPL_CSackBoyAnim_DoDeathAnims);
 }
 
+void AttachRenderJointHooks()
+{
+    MH_PokeHook(0x0003e3a0, GetRenderJointMesh);
+}
+
 void InitSharedHooks()
 {
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
+    AttachRenderJointHooks();
+    AttachSerializationHooks();
 
     MH_PokeHook(0x0035ac5c, LoadOutlinePolygons);
     MH_PokeBranch(0x003590b4, &_get_outline_guid_hook);

@@ -17,6 +17,7 @@
 #include "FileWatcher.h"
 #include "PinSystem.h"
 #include "OutfitSystem.h"
+#include "RenderJoint.h"
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -76,6 +77,7 @@ CInitStep gAlearInitSteps[] =
     { "Alear File Watcher", NULL, InitFileWatcher, CloseFileWatcher, NULL, false, NULL },
     { "Slap Styles", NULL, LoadSlapStyles, UnloadSlapStyles, NULL, false, NULL },
     { "Outfit Lists", NULL, LoadOutfits, NULL, NULL, false, NULL },
+    { "Joint Meshes", NULL, LoadJointMeshes, NULL, NULL, false, NULL },
     { "Alear Gooey Network Extensions", NULL, InitTweakSettings, false, NULL },
     { "Alear Epilogue", NULL, AlearEpilogue, NULL, NULL, false, NULL },
     #ifdef __SM64__

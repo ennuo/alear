@@ -26,6 +26,7 @@ class RSyncedProfile;
 class RGfxMaterial;
 class RCharacterSettings;
 class RGuidList;
+class RJoint;
 
 enum EResourceType
 {
@@ -195,6 +196,7 @@ template <> inline EResourceType GetResourceType<RSyncedProfile>() { return RTYP
 template <> inline EResourceType GetResourceType<RLocalProfile>() { return RTYPE_LOCAL_PROFILE; }
 template <> inline EResourceType GetResourceType<RCharacterSettings>() { return RTYPE_SETTINGS_CHARACTER; }
 template <> inline EResourceType GetResourceType<RGuidList>() { return RTYPE_GUID_LIST; }
+template <> inline EResourceType GetResourceType<RJoint>() { return RTYPE_JOINT; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

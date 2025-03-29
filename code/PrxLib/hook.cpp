@@ -57,6 +57,43 @@ void* MH_Shellcode(u32* data, size_t size)
     return stub;
 }
 
+void MH_InitCall(void* address, void* hook)
+{
+    u32 hook_fn_data = ((u32*)hook)[0];
+    u32 hook_fn_toc = ((u32*)hook)[1];
+
+
+    const u32 FUNCTION_CALL_INDEX = 3;
+    const u32 BRANCH_INDEX = 5;
+
+    u32 shellcode[] =
+    {
+        // Store the current TOC base
+        0xf8410028, // std %r2, 0x28(%r1)
+
+        // Fixup our TOC base and push the function address
+        LIS(2, (hook_fn_toc >> 16)),
+        ORI(2, 2, (hook_fn_toc & 0xffff)),
+
+        0xDEADBEEF, // Function call address to be replaced
+
+        // Restoure our TOC base and branch back
+        0xe8410028, // ld r2, 0x28(r1)
+        0xDEADBEEF
+    };
+
+    void* stub = MH_Allocate(sizeof(shellcode));
+    
+    shellcode[FUNCTION_CALL_INDEX] = BL(hook_fn_data, (u32*)stub + FUNCTION_CALL_INDEX);
+    shellcode[BRANCH_INDEX] = B((u32)address + 4, (u32*)stub + BRANCH_INDEX);
+    
+    MH_Write(stub, shellcode, sizeof(shellcode));
+
+    u32 branch = B(stub, address);
+    MH_Write(address, &branch, sizeof(u32));
+
+}
+
 void MH_InitHook(void* address, void* hook)
 {
     if (!g_HookInit)
