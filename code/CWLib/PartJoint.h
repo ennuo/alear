@@ -8,6 +8,8 @@ class PJoint : public CPart {
 public:
     void SetA(CThing* thing);
     void SetB(CThing* thing);
+    u8 InteractPlayMode;
+    u8 InteractEditMode;
 };
 
 

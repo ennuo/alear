@@ -76,6 +76,11 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         {
             return (type & E_TYPE_USER_STICKER) != 0;
         }
+        
+        case TOOL_STICKER_WASH:
+        {
+            return (type & E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_EYETOY) != 0 && edit;
+        }
 
         case TOOL_SHAPE_ELECTRIFY:
         case TOOL_SHAPE_BURNINATE:
@@ -86,15 +91,21 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_SHAPE_CRUSH:
         case TOOL_SHAPE_DROWNED:
         case TOOL_SHAPE_SPIKE:
-        // case TOOL_UNPHYSICS:
+        case TOOL_UNPHYSICS:
         case TOOL_SHAPE_VERTEX_EDIT:
         {
             return (type & E_TYPE_TOOL) != 0 && edit;
         }
 
         case TOOL_SHAPE_FLOOD_FILL:
+        case TOOL_DOT_TO_DOT:
         {
-            return (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_SHAPE)) != 0 && edit;
+            return (type & (E_TYPE_TOOL | E_TYPE_FLOOD_FILL)) != 0 && edit;
+        }
+        
+        case TOOL_EYEDROPPER:
+        {
+            return (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_MATERIAL)) != 0 && (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_MATERIAL)) != 0 && edit;
         }
 
         default: return false;

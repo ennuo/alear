@@ -867,9 +867,38 @@ ReflectReturn CThing::OnLoad()
             mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
         }
     }
+    
+    if (gLoadDefaultMaterial)
+    {
+        PGeneratedMesh* mesh = GetPGeneratedMesh();
+        if (mesh != NULL && !mesh->GfxMaterial)
+        {
+            DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
+            mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+        }
+    }
 
     if (gForceLoadEditable)
-    {
+    {   
+        /*
+        PJoint* joint = GetPJoint();
+        if (joint != NULL)
+        {
+            joint->InteractEditMode |= 2;
+            joint->InteractPlayMode |= 2;
+        }
+        */
+        
+        PEmitter* emitter = GetPEmitter();
+        if (emitter != NULL)
+        {
+            PRenderMesh* render_mesh = GetPRenderMesh();
+            if (render_mesh == NULL)
+            {
+
+            }
+        }
+       
         PShape* shape = GetPShape();
         if (shape != NULL)
         {

@@ -362,6 +362,7 @@ bool CanSwim(PCreature& creature)
         state == STATE_GUN ||
         state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
+        state == STATE_DIVER_SUIT ||
         state == STATE_SWIMMING_FINS ||
         state == STATE_MINI_SUIT;
 }
@@ -815,7 +816,9 @@ bool CanFloat(PCreature& creature)
 
 void OnCreatureStateUpdate(PCreature& creature)
 {
-    if (IsAffectedByIce(creature))
+    //DebugLog("ICE RANGE: min:%f, max:%f\n", creature.Fork->ObstacleMin, creature.Fork->ObstacleMax);
+
+    if (IsAffectedByIce(creature))  
     {
         const int MAX_FREEZINESS = creature.Config->FramesTillFreeze;
         const int COLD_FREEZINESS = creature.Config->FramesTillFreezeCold;
@@ -1080,7 +1083,7 @@ void OnCreatureStateUpdate(PCreature& creature)
 
         case STATE_INVINCIBLE:
         {
-            //CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/KO2_object_powered_up", creature.GetThing(), -10000.0f, -10000.0f);
+            CAudio::PlaySample(CAudio::gSFX, "gameplay/special_objects/laser_loop", creature.GetThing(), -10000.0f, -10000.0f);
             
             PShape* shape = creature.GetThing()->GetPShape();
             if (shape != NULL)

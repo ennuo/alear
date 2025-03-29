@@ -12,6 +12,7 @@
 #include "PartPhysicsWorld.h"
 #include "PartStickers.h"
 #include "PartRenderPosition.h"
+#include "PartJoint.h"
 #include "PartShape.h"
 #include "PartGeneratedMesh.h"
 #include "PartGroup.h"
@@ -23,6 +24,7 @@
 #include "PartRef.h"
 #include "PartDecoration.h"
 #include "PartEffector.h"
+#include "PartEmitter.h"
 #include "PartCheckpoint.h"
 
 #include "hack_thingptr.h"
@@ -61,6 +63,7 @@ public:
     void RemovePart(EPartType type);
 public:
     inline PBody* GetPBody() const { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
+    inline PJoint* GetPJoint() const { return static_cast<PJoint*>(Parts[PART_TYPE_JOINT]); }
     inline PRenderMesh* GetPRenderMesh() const { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
     inline PPos* GetPPos() const { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
     inline PShape* GetPShape() const { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
@@ -79,6 +82,7 @@ public:
     inline PStickers* GetPStickers() const { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
     inline PDecorations* GetPDecorations() const { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
     inline PEffector* GetPEffector() const { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
+    inline PEmitter* GetPEmitter() const { return static_cast<PEmitter*>(Parts[PART_TYPE_EMITTER]); }
     inline PCheckpoint* GetPCheckpoint() const { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
 public:
     CThingPtr* FirstPtr;

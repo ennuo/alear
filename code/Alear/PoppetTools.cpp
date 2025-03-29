@@ -81,6 +81,9 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
 
         case SUBMODE_EYEDROPPER:
             return CURSOR_EYEDROPPER;
+            
+        case SUBMODE_DOT_TO_DOT:
+            return CURSOR_DOT_TO_DOT;
         
         case SUBMODE_DANGER:
         {
@@ -164,6 +167,7 @@ void FixupCursorSpriteRect(CPoppet* poppet)
 
     const v4 LETHAL_CURSOR_OFFSET(0.0f, 22.5f, 0.0f, 0.0f);
     const v4 FLOOD_FILL_CURSOR_OFFSET(15.0f, 17.5f, 0.0f, 0.0f);
+    const v4 EYEDROPPER_CURSOR_OFFSET(26.0f, 25.0f, 0.0f, 0.0f);
 
     if (icon_index == CURSOR_FLOOD_FILL)
     {
@@ -171,6 +175,13 @@ void FixupCursorSpriteRect(CPoppet* poppet)
         vtx[1].pos += FLOOD_FILL_CURSOR_OFFSET;
         vtx[2].pos += FLOOD_FILL_CURSOR_OFFSET;
         vtx[3].pos += FLOOD_FILL_CURSOR_OFFSET;
+    }
+    if (icon_index == CURSOR_EYEDROPPER)
+    {
+        vtx[0].pos += EYEDROPPER_CURSOR_OFFSET;
+        vtx[1].pos += EYEDROPPER_CURSOR_OFFSET;
+        vtx[2].pos += EYEDROPPER_CURSOR_OFFSET;
+        vtx[3].pos += EYEDROPPER_CURSOR_OFFSET;
     }
     else if (IsLethalCursor(icon_index))
     {
@@ -184,20 +195,54 @@ void FixupCursorSpriteRect(CPoppet* poppet)
 void CPoppet::EyedropperPick(CThing* thing)
 {
     CPoppet* poppet;
-    CResourceDescriptor<RPlan> guid(33579);
+    CResourceDescriptor<RPlan> guid(31701u);
     CResourceDescriptor<RPlan> body_guid(thing->PlanGUID);
     CResourceDescriptor<RPlan> gfx_guid(thing->GetPGeneratedMesh()->PlanGUID);
-    if(thing->PlanGUID)
-        poppet->FloodFillMaterialPlan = body_guid;
-    else if(thing->GetPGeneratedMesh()->PlanGUID) 
+    if(thing->GetPGeneratedMesh()->PlanGUID) 
+    {
+        DebugLog("Checking if we can floodfill GFX\n");
         poppet->FloodFillMaterialPlan = gfx_guid;
+    }
+    else if(thing->PlanGUID)
+    {
+        DebugLog("Checking if we can floodfill BODY\n");
+        poppet->FloodFillMaterialPlan = body_guid;
+    }
     else
+    {
+        DebugLog("Checking if we can floodfill DEFAULT\n");
         poppet->FloodFillMaterialPlan = guid;
-    poppet->FloodFillPhysicsMaterial = thing->GetPShape()->MMaterial;
-    poppet->FloodFillSoundEnumOverride = thing->GetPShape()->SoundEnumOverride;
-    poppet->FloodFillGfxMaterial = thing->GetPGeneratedMesh()->GfxMaterial;
-    poppet->FloodFillBevel = thing->GetPGeneratedMesh()->Bevel;
-    poppet->FloodFillBevelSize = thing->GetPShape()->BevelSize;
+    }
+    CP<RMaterial>& physics_material = thing->GetPShape()->MMaterial;
+    if(physics_material)
+    {
+        DebugLog("PHYSICS MATERIAL: \n");
+        poppet->FloodFillPhysicsMaterial = physics_material;
+    }
+    //u32 sound_enum = thing->GetPShape()->SoundEnumOverride;
+    if(thing->GetPShape()->SoundEnumOverride)
+    {
+        DebugLog("SOUND ENUM: \n");
+        poppet->FloodFillSoundEnumOverride = thing->GetPShape()->SoundEnumOverride;
+    }
+    CP<RGfxMaterial>& gfx_material = thing->GetPGeneratedMesh()->GfxMaterial;
+    if(gfx_material)
+    {
+        DebugLog("GFX MATERIAL: \n");
+        poppet->FloodFillGfxMaterial = gfx_material;
+    }
+    CP<RBevel>& bevel = thing->GetPGeneratedMesh()->Bevel;
+    if(bevel)
+    {
+        DebugLog("BEVEL: \n");
+        poppet->FloodFillBevel = bevel;
+    }
+    float bevel_size = thing->GetPShape()->BevelSize;
+    if(bevel_size)
+    {
+        DebugLog("BEVEL SIZE: \n");
+        poppet->FloodFillBevelSize = bevel_size;
+    }
     //poppet->PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
 }
 
@@ -266,6 +311,16 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
             poppet->PushMode(MODE_CURSOR, SUBMODE_UNPHYSICS);
             return;
         }
+        case E_POPPET_EYEDROPPER_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_EYEDROPPER);
+            return;
+        }
+        case E_POPPET_DOT_TO_DOT_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_DOT_TO_DOT);
+            return;
+        }
     }
 }
 
@@ -301,6 +356,12 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
         case TOOL_EYEDROPPER:
         {
             //poppet->EyedropperPick();
+            poppet->SendPoppetMessage(E_POPPET_EYEDROPPER_MESSAGE);
+            break;
+        }
+        case TOOL_DOT_TO_DOT:
+        {
+            poppet->SendPoppetMessage(E_POPPET_DOT_TO_DOT_MESSAGE);
             break;
         }
         case TOOL_UNPHYSICS:
@@ -311,7 +372,7 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
         }
         case TOOL_POPIT_GRADIENT:
         {
-            // poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE)
+            //poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE)
             break;
         }
     }
@@ -343,6 +404,8 @@ void AttachCustomPoppetMessages()
     }
 
     TABLE[E_POPPET_UNPHYSICS_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_EYEDROPPER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_DOT_TO_DOT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092afb4, (u32)TABLE);
@@ -375,6 +438,8 @@ void AttachCustomToolTypes()
     TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_ICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_EYEDROPPER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_DOT_TO_DOT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_UV_EDIT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);
