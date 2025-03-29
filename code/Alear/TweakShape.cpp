@@ -210,6 +210,7 @@ MH_DefineFunc(CPoppetGooey_CanTweak, 0x0037f694, TOC1, bool, CPoppetChild*, CThi
 bool CanTweakThing(CPoppet* poppet, CThing* thing)
 {
     if (thing == NULL) return false;
+    if (poppet->GetSubMode() == SUBMODE_EDIT_VERTS) return false;
     
     CPoppetChild* gooey = (CPoppetChild*)((char*)poppet + 0xa60);
     if (CPoppetGooey_CanTweak(gooey, thing)) return true;
@@ -401,7 +402,8 @@ namespace TweakShapeNativeFunctions
             }
             case TOOL_EYEDROPPER:
             {
-                poppet->EyedropperPick(thing);
+                if(thing->GetPGeneratedMesh())
+                    poppet->EyedropperPick(thing);
                 break;
             }
             case TOOL_SHAPE_TAKE_PLAN:

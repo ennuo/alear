@@ -1,5 +1,8 @@
 #include "Poppet.h"
 #include "hook.h"
+#include "AlearConfig.h"
+
+#include <cell/DebugLog.h>
 
 #include "cell/DebugLog.h"
 #include "AlearConfig.h"
@@ -97,7 +100,68 @@ bool CanScaleMesh(CGUID mesh_guid)
 
     switch (mesh_guid.guid)
     {
+        // Sackboy
+        case 0x43f:
+        // Spawn Points
+        // Wood
         case 0x2d94:
+        case 0x4009:
+        case 0x7a06:
+        case 0xd89f:
+        case 0x10b22:
+        // Chrome
+        case 0x1d1b1:
+        case 0x1d1b4:
+        case 0x1d1b5:
+        case 0x1d86d:
+        // Plastic
+        case 0x1d1bb:
+        case 0x1d1bc:
+        case 0x1d1be:
+        case 0x1d86b:
+        // Cardboard
+        case 0x1d859:
+        case 0x1d853:
+        case 0x1d867:
+        case 0x1dd3f:
+        // Link
+        case 0xe91:
+        // Race Kit
+        case 0x2d40:
+        case 0x2d86:
+        // Player Limit Post
+        case 0x99fb:
+        // Scoreboards
+        // Cardboard
+        case 0x441c:
+        // Wood
+        // Chrome
+        // Plastic
+        // Video Screens
+        case 0x67d0:
+        // Pod
+        case 0x2f6c:
+        // Early Powerups
+        case 0x8e1:
+        case 0x94d:
+        case 0x94e:
+        case 0xb9a:
+        // Powerup Pedestals
+        case 0x1054a:
+        case 0x106a0:
+        case 0x1074d:
+        case 0x10ad3:
+        case 0x10ad5:
+        case 0x1290c:
+        case 0x13c88:
+        case 0x13c86:
+        case 0x13ed8:
+        case 0x18fc1:
+        case 0xc731f6f7:
+        case 0x9d98bde9:
+        case 0xc190b37e:
+        case 0x88cc859b:
+        case 0xbe8735f3:
             return false;
     }
 
