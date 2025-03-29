@@ -66,3 +66,4 @@ _ZN13CRenderTarget13gLinear_ClampE: 0x009cf690
 gPipelineBindings: 0x009cfec8
 gGamePartyData: 0x009756bc
 gSomePadHasInputIntercepted: 0x009dc51f
+gNamedPolygons: 0x009d99a0

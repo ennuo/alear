@@ -30,6 +30,7 @@
 
 #include "RPCS3.h"
 #include "ppcasm.h"
+#include "PoppetOutlineShapes.h"
 
 #include "ResourceSystem.h"
 #include <FartRO.h>

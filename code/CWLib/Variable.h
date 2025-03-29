@@ -10,6 +10,7 @@
 #include "hack_thingptr.h"
 
 #include <AlearSR.h>
+#include <PoppetOutlineShapes.h>
 
 
 enum EGatherType {
@@ -76,6 +77,10 @@ template<typename R>
 ReflectReturn Reflect(R& r, CStyleBank& d);
 template<typename R>
 ReflectReturn Reflect(R& r, CThingPtr& d);
+template <typename R>
+ReflectReturn Reflect(R& r, CPoppetOutlineConfig& d);
+template <typename R>
+ReflectReturn Reflect(R& r, CPoppetOutline& d);
 
 
 // variable.h: 147
@@ -282,6 +287,7 @@ template <> inline EVariableType GetVariableType<CVector<CAnimStyle> >() { retur
 template <> inline EVariableType GetVariableType<CVector<CGUID> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CThingPtr>() { return VARIABLE_TYPE_THINGPTR; }
 template <> inline EVariableType GetVariableType<CGUID>() { return VARIABLE_TYPE_U32; }
+template <> inline EVariableType GetVariableType<CVector<CPoppetOutline> >() { return VARIABLE_TYPE_ARRAY; };
 
 // variable.h: 288, all defined here
 template <typename D>

@@ -79,6 +79,8 @@ extern "C" uintptr_t _sackboy_ground_distance_ice_hook;
 extern "C" uintptr_t _can_scale_guid_list_hook;
 //extern "C" uintptr_t _water_boost_disable_swimming_fins_hook;
 
+extern "C" uintptr_t _get_outline_guid_hook;
+
 extern "C" uintptr_t _hack_gather_character_settings_hook;
 
 

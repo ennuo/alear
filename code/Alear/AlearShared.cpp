@@ -7,6 +7,7 @@
 #include "PinSystem.h"
 #include "OutfitSystem.h"
 #include "TweakShape.h"
+#include "PoppetOutlineShapes.h"
 
 #include "customization/SlapStyles.h"
 #include "customization/Emotes.h"
@@ -1021,7 +1022,11 @@ void InitSharedHooks()
 {
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
+
+    MH_PokeHook(0x0035ac5c, LoadOutlinePolygons);
+    MH_PokeBranch(0x003590b4, &_get_outline_guid_hook);
     
+
     // Disable scale list
     MH_PokeBranch(0x0036add4, &_can_scale_guid_list_hook);
     //MH_PokeBranch(0x000372a8, &_water_boost_disable_swimming_fins_hook);
@@ -1085,11 +1090,11 @@ void InitSharedHooks()
     MH_PokeBranch(0x0034df5c, &_popit_close_hook);
 
     // Hooks for animated texture buttons
-    // MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));
-    // MH_PokeBranch(0x003227d8, &_gooey_image_ctor_animated_hook);
-    // MH_PokeBranch(0x00300268, &_sdf_button_animated_hook);
-    // MH_PokeBranch(0x00322f94, &_gooey_image_update_hook);
-    // MH_InitHook((void*)0x0043be2c, (void*)&TextureFromResource);
+    MH_Poke32(0x006ae1ac, LI(4, sizeof(CGooeyImage)));
+    MH_PokeBranch(0x003227d8, &_gooey_image_ctor_animated_hook);
+    MH_PokeBranch(0x00300268, &_sdf_button_animated_hook);
+    MH_PokeBranch(0x00322f94, &_gooey_image_update_hook);
+    MH_InitHook((void*)0x0043be2c, (void*)&TextureFromResource);
 
     // float v = -63600.0f;
     // MH_Poke32(0x008137c4, *((u32*)&v)); // SCREEN_MIN_Y

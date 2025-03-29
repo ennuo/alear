@@ -1,6 +1,8 @@
 #include "AlearHooks.h"
 #include "AlearShared.h"
 
+#include <GuidHash.h>
+
 #include <cell/DebugLog.h>
 #include <refcount.h>
 
