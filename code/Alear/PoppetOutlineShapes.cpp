@@ -13,6 +13,9 @@
 
 #include <network/NetworkUtilsNP.h>
 
+#include <algorithm>
+
+
 class CNamedPolygon {
 public:
     u32 guid;
@@ -22,12 +25,24 @@ public:
 CPoppetOutlineConfig gPoppetOutlineData;
 extern CVector<CNamedPolygon> gNamedPolygons;
 
+struct SortByPlanKey
+{
+    bool operator()(CPoppetOutline& a, CPoppetOutline& z) const
+    {
+        return a.Plan < z.Plan;
+    }
+};
+
 bool LoadPoppetMeshOutlines()
 {
     gPoppetOutlineData.Outlines.clear();
     
+
+    DebugLog("attempting to load poppet mesh outlines...");
     CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_OUTLINES_KEY, 0, STREAM_PRIORITY_DEFAULT);
     
+    DebugLog("%s\n", file.GetRef());
+
     file->BlockUntilLoaded();
     if (!file->IsLoaded()) return false;
 
@@ -40,15 +55,16 @@ bool LoadPoppetMeshOutlines()
         return false;
     }
 
+    std::sort(gPoppetOutlineData.Outlines.begin(), gPoppetOutlineData.Outlines.end(), SortByPlanKey());
+
     return true;
 }
+
+bool gHasLoadedPolygons;
 
 void LoadOutlinePolygons()
 {
     CMainGameStageOverride _stage_override(E_UPDATE_STAGE_OTHER_WORLD);
-
-    if (gPoppetOutlineData.Outlines.empty())
-        LoadPoppetMeshOutlines();
 
     gNamedPolygons.try_resize(0);
     gNamedPolygons.try_reserve(gPoppetOutlineData.Outlines.size());
@@ -58,9 +74,9 @@ void LoadOutlinePolygons()
     
     for (CPoppetOutline* poppet_outline = gPoppetOutlineData.Outlines.begin(); poppet_outline != gPoppetOutlineData.Outlines.end(); ++poppet_outline)
     {
-        DebugLog("DEADBEEF! Attempting to load poppet outline object g%08x\n", poppet_outline->Plan.guid);
+        DebugLog("DEADBEEF! Attempting to load poppet outline object g%08x\n", poppet_outline->Plan);
         
-        CP<RPlan> plan = LoadResourceByKey<RPlan>(poppet_outline->Plan.guid, 0, STREAM_PRIORITY_DEFAULT);
+        CP<RPlan> plan = LoadResourceByKey<RPlan>(poppet_outline->Plan, 0, STREAM_PRIORITY_DEFAULT);
         plan->BlockUntilLoaded();
 
         if (!plan->IsLoaded()) continue;
@@ -73,7 +89,7 @@ void LoadOutlinePolygons()
         PPos* part_pos = thing->GetPPos();
 
         CNamedPolygon polygon;
-        polygon.guid = poppet_outline->Plan.guid;
+        polygon.guid = poppet_outline->Plan;
 
         CRawVector<v2, CAllocatorMMAligned128>& vertices = polygon.polygon;
         vertices = thing->GetPShape()->Polygon;
@@ -92,14 +108,26 @@ void LoadOutlinePolygons()
     delete world_thing;
 }
 
-CGUID GetOutlinePlanGUID(CGUID mesh_guid)
+u32 GetOutlinePlanGUID(u32 mesh_guid)
 {
+    if (!gHasLoadedPolygons)
+    {
+        LoadPoppetMeshOutlines();
+        LoadOutlinePolygons();
+        gHasLoadedPolygons = true;
+    }
+
     CVector<CPoppetOutline>& outlines = gPoppetOutlineData.Outlines;
     for (CPoppetOutline* outline = outlines.begin(); outline != outlines.end(); ++outline)
     {
         if (outline->Mesh == mesh_guid)
+        {
+            DebugLog("found outline guid for g%d -> g%d\n", mesh_guid, outline->Plan);
             return outline->Plan;
+        }
     }
+
+    DebugLog("Couldn't find outline GUID for g%d\n", mesh_guid);
 
     return 0;
 }

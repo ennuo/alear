@@ -6,8 +6,8 @@
 
 class CPoppetOutline {
 public:
-    CGUID Plan;
-    CGUID Mesh;
+    u32 Plan;
+    u32 Mesh;
 };
 
 class CPoppetOutlineConfig {

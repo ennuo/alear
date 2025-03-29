@@ -610,13 +610,52 @@ _hack_gather_character_settings_hook:
 
 .global _get_outline_guid_hook
 _get_outline_guid_hook:
-    stw %r7, 0x28(%r1)
+
+    # This function doesn't actually have a stack,
+    # so we'll have to backup some registers ourself
+    # for the function call.
+
+    stdu %r1, -0x100(%r1)
+
+    # Not sure what registers are actually important,
+    # so I'll just store all the registers.
+    # Not even going to bother with vector registers since they should all be
+    # preserved since this function doesn't deal with any vector operations.
+    
+    std %r4, 0x30(%r1)
+    std %r5, 0x38(%r1)
+    std %r6, 0x40(%r1)
+    std %r7, 0x48(%r1)
+    std %r8, 0x50(%r1)
+    std %r9, 0x58(%r1)
+    std %r10, 0x60(%r1)
+    std %r11, 0x68(%r1)
+    std %r12, 0x70(%r1)
+
+    # Also make sure to store the link register
+    mflr %r0
+    std %r0, 0x110(%r1)
 
     lwz %r3, 0x34(%r9)
-    callw _Z18GetOutlinePlanGUID5CGUID
-    
-    lwz %r7, 0x28(%r1)
-    lwz %r12, -0x7a24(%r2)
+    call _Z18GetOutlinePlanGUIDj
+
+    # Destroy our fake function call stack
+    # and restore the registers.
+
+    ld %r4, 0x30(%r1)
+    ld %r5, 0x38(%r1)
+    ld %r6, 0x40(%r1)
+    ld %r7, 0x48(%r1)
+    ld %r8, 0x50(%r1)
+    ld %r9, 0x58(%r1)
+    ld %r10, 0x60(%r1)
+    ld %r11, 0x68(%r1)
+    ld %r12, 0x70(%r1)
+
+    ld %r0, 0x110(%r1)
+    mtlr %r0
+
+    addi %r1, %r1, 0x100
 
     cmpwi %cr7, %r3, -0x2A43
     beq %cr7, MouthVectors

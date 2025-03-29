@@ -287,7 +287,7 @@ template <> inline EVariableType GetVariableType<CVector<CAnimStyle> >() { retur
 template <> inline EVariableType GetVariableType<CVector<CGUID> >() { return VARIABLE_TYPE_ARRAY; }
 template <> inline EVariableType GetVariableType<CThingPtr>() { return VARIABLE_TYPE_THINGPTR; }
 template <> inline EVariableType GetVariableType<CGUID>() { return VARIABLE_TYPE_U32; }
-template <> inline EVariableType GetVariableType<CVector<CPoppetOutlineConfig> >() { return VARIABLE_TYPE_ARRAY; };
+template <> inline EVariableType GetVariableType<CVector<CPoppetOutline> >() { return VARIABLE_TYPE_ARRAY; };
 
 // variable.h: 288, all defined here
 template <typename D>

@@ -1023,9 +1023,10 @@ void InitSharedHooks()
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
 
-    // MH_PokeHook(0x0035ac5c, LoadOutlinePolygons);
+    MH_PokeHook(0x0035ac5c, LoadOutlinePolygons);
+    MH_PokeBranch(0x003590b4, &_get_outline_guid_hook);
+    
 
-    // MH_PokeBranch(0x003590b4, &_get_outline_guid_hook);
     // Disable scale list
     MH_PokeBranch(0x0036add4, &_can_scale_guid_list_hook);
     //MH_PokeBranch(0x000372a8, &_water_boost_disable_swimming_fins_hook);

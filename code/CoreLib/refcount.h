@@ -112,10 +112,41 @@ public:
 		NextPtr = gStaticCPHead;
 		gStaticCPHead = (StaticCPForm*)this;
 	}
+
+	StaticCP(T* ptr) { this->CopyFrom(ptr); }
+	StaticCP(const StaticCP<T>& rhs) { this->CopyFrom(rhs.Ref); }
 	
 	static void RemoveRef(void* ptr)
 	{
-		(*(CP<T>*)ptr) = (T*)NULL;
+		(*(StaticCP<T>*)ptr) = (T*)NULL;
+	}
+public:
+	StaticCP<T>& operator=(T const* rhs)
+	{
+		if (this->Ref) 
+		{
+			if ((this->Ref->Release() - 1) == 0)
+				delete this->Ref;
+		}
+
+		this->Ref = (T*)rhs;
+
+		if (this->Ref)
+			this->Ref->AddRef();
+	}
+
+	StaticCP<T>& operator=(StaticCP<T> const& rhs) 
+	{
+		if (this->Ref) 
+		{
+			if ((this->Ref->Release() - 1) == 0)
+				delete this->Ref;
+		}
+
+		this->Ref = rhs.Ref;
+
+		if (this->Ref)
+			this->Ref->AddRef();
 	}
 public:
     RemoveRefFunc RemoveRefPtr;
