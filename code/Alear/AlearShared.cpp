@@ -314,36 +314,6 @@ void OnUpdateHttpTasks()
 CVector<CP<RTranslationTable> > gTranslations;
 bool CustomTryTranslate(u32 key, tchar_t const*& out)
 {
-    if (key == MakeLamsKeyID("BP_", "HIDE_TETHER"))
-    {
-        out = (tchar_t*)L"Hide Tether";
-        return true;
-    }
-
-    if (key == MakeLamsKeyID("BP_", "HIDE_POPPET_UI"))
-    {
-        out = (tchar_t*)L"Hide Poppet UI";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MATERIAL)
-    {
-        out = (tchar_t*)L"Material";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MESH)
-    {
-        out = (tchar_t*)L"Mesh";
-        return true;
-    }
-    
-    if (key == E_LAMS_TWEAKABLE_DECAL)
-    {
-        out = (tchar_t*)L"Decal";
-        return true;
-    }
-
     static tchar_t EMPTY_STRING[] = { 0x20 };
 
     if (gTranslations.size() == 0)
@@ -1061,7 +1031,7 @@ void InitSharedHooks()
 
     MH_PokeBranch(0x00381354, &_popit_dopoppetsection_hook);
     MH_PokeBranch(0x0002018c, &_initextradata_cthing_hook);
-    MH_PokeBranch(0x00022530, &_destroyextradata_cthing_hook);
+    MH_PokeBranch(0x000225d0, &_destroyextradata_cthing_hook);
 
     MH_PokeBranch(0x00234fcc, &_global_webternate_hook);
 

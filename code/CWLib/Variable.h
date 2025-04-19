@@ -54,7 +54,15 @@ enum EVariableType {
 
 class CGatherVariables;
 typedef ReflectReturn (*ReflectFunctionPtr)(CGatherVariables&, void*);
+typedef CReflectionVisitable* (*CreateFunc)();
+typedef void (*DeleteFunc)(CReflectionVisitable*);
 
+template <typename T>
+class FunctionAdapt {
+public:
+    static CReflectionVisitable* CreateFn() { return new T(); }
+    static void DeleteFn(CReflectionVisitable* ptr) { delete ptr; }
+};
 
 // TEMP SHIT UNTIL I FIGURE OUT THE REFLECTION NONSENSE
 #include "customization/SlapStyles.h"
@@ -116,24 +124,18 @@ ReflectReturn ReflectVector(R& r, D& d)
     }
 
     u32 len = size;
-    bool init = d.begin() != NULL;
-
-    if (r.GetLoading())
-    {
-        if (!init && size != 0)
-        {
-            size = 0;
-            d.try_resize(len);
-        }
-    }
-    else if (!r.GetSaving() && init)
+    
+    if ((r.GetLoading() && d.begin() == NULL) || d.begin() == NULL)
     {
         if (size != 0)
         {
             size = 0;
             d.try_resize(len);
         }
+    }
 
+    if (r.GetLoading())
+    {
         d.clear();
         d.try_resize(len);
     }
@@ -151,6 +153,30 @@ template<typename R, typename D>
 ReflectReturn Reflect(R& r, CVector<D>& d)
 {
     return ReflectVector<R, CVector<D> >(r, d);
+}
+
+template<typename R>
+ReflectReturn ReflectGP(R& r, CReflectionVisitable*& d, CreateFunc cf, DeleteFunc df, unsigned int size, bool& add);
+
+template<typename R, typename D>
+ReflectReturn Reflect(R& r, D*& d)
+{
+    if (!r.IsGatherVariables()) return REFLECT_NOT_IMPLEMENTED;
+
+    bool add;
+    ReflectReturn ret;
+
+    D* ptr = d;
+    ret = ReflectGP(r, (CReflectionVisitable*&)d, FunctionAdapt<D>::CreateFn, FunctionAdapt<D>::DeleteFn, sizeof(D), add);
+    d = ptr;
+
+    if (ptr != NULL)
+        return Add(r, *d, "->");
+
+    // if (ret == REFLECT_OK && add)
+    //     return Add(r, *d, "->");
+    
+    return ret;
 }
 
 template <typename T, bool some_bool>
@@ -271,35 +297,29 @@ public:
     bool DynamicName;
 };
 
-// not sure how these are meant to work, so just doing it like this for now
-template <typename T> inline EVariableType GetVariableType() { return VARIABLE_TYPE_STRUCT; }
-template <> inline EVariableType GetVariableType<MMString<char> >() { return VARIABLE_TYPE_STRING; }
-template <> inline EVariableType GetVariableType<MMString<wchar_t> >() { return VARIABLE_TYPE_WSTRING; }
-template <> inline EVariableType GetVariableType<MMString<tchar_t> >() { return VARIABLE_TYPE_WSTRING; }
-template <> inline EVariableType GetVariableType<s8>() { return VARIABLE_TYPE_U8; }
-template <> inline EVariableType GetVariableType<u8>() { return VARIABLE_TYPE_U8; }
-template <> inline EVariableType GetVariableType<s16>() { return VARIABLE_TYPE_U16; }
-template <> inline EVariableType GetVariableType<u16>() { return VARIABLE_TYPE_U16; }
-template <> inline EVariableType GetVariableType<s32>() { return VARIABLE_TYPE_U32; }
-template <> inline EVariableType GetVariableType<u32>() { return VARIABLE_TYPE_U32; }
-template <> inline EVariableType GetVariableType<f32>() { return VARIABLE_TYPE_FLOAT; }
-template <> inline EVariableType GetVariableType<bool>() { return VARIABLE_TYPE_BOOL; }
-template <> inline EVariableType GetVariableType<v4>() { return VARIABLE_TYPE_V4; }
-template <> inline EVariableType GetVariableType<CVector<CSlapMesh> >() { return VARIABLE_TYPE_ARRAY; }
-template <> inline EVariableType GetVariableType<CVector<CEmote> >() { return VARIABLE_TYPE_ARRAY; }
-template <> inline EVariableType GetVariableType<CVector<CEmoteSound> >() { return VARIABLE_TYPE_ARRAY; }
-template <> inline EVariableType GetVariableType<CVector<CAnimStyle> >() { return VARIABLE_TYPE_ARRAY; }
-template <> inline EVariableType GetVariableType<CVector<CGUID> >() { return VARIABLE_TYPE_ARRAY; }
-template <> inline EVariableType GetVariableType<CThingPtr>() { return VARIABLE_TYPE_THINGPTR; }
-template <> inline EVariableType GetVariableType<CGUID>() { return VARIABLE_TYPE_U32; }
-template <> inline EVariableType GetVariableType<CVector<CPoppetOutline> >() { return VARIABLE_TYPE_ARRAY; };
-template <> inline EVariableType GetVariableType<CVector<CRenderJoint> >() { return VARIABLE_TYPE_ARRAY; };
+template <typename T> struct variable_type { static const EVariableType value = VARIABLE_TYPE_STRUCT; };
+template <typename T> struct variable_type<T*> { static const EVariableType value = VARIABLE_TYPE_PTR; };
+template <typename T> struct variable_type<CVector<T> > { static const EVariableType value = VARIABLE_TYPE_ARRAY; };
+template <> struct variable_type<MMString<char> > { static const EVariableType value = VARIABLE_TYPE_STRING; };
+template <> struct variable_type<MMString<wchar_t> > { static const EVariableType value = VARIABLE_TYPE_WSTRING; };
+template <> struct variable_type<MMString<tchar_t> > { static const EVariableType value = VARIABLE_TYPE_WSTRING; };
+template <> struct variable_type<s8> { static const EVariableType value = VARIABLE_TYPE_U8; };
+template <> struct variable_type<u8> { static const EVariableType value = VARIABLE_TYPE_U8; };
+template <> struct variable_type<s16> { static const EVariableType value = VARIABLE_TYPE_U16; };
+template <> struct variable_type<u16> { static const EVariableType value = VARIABLE_TYPE_U16; };
+template <> struct variable_type<s32> { static const EVariableType value = VARIABLE_TYPE_U32; };
+template <> struct variable_type<u32> { static const EVariableType value = VARIABLE_TYPE_U32; };
+template <> struct variable_type<f32> { static const EVariableType value = VARIABLE_TYPE_FLOAT; };
+template <> struct variable_type<bool> { static const EVariableType value = VARIABLE_TYPE_BOOL; };
+template <> struct variable_type<v4> { static const EVariableType value = VARIABLE_TYPE_V4; };
+template <> struct variable_type<CThingPtr> { static const EVariableType value = VARIABLE_TYPE_THINGPTR; };
+template <> struct variable_type<CGUID> { static const EVariableType value = VARIABLE_TYPE_U32; };
 
 // variable.h: 288, all defined here
 template <typename D>
 ReflectReturn Add(CGatherVariables& r, D& d, char* c)
 {
-    EVariableType type = GetVariableType<D>();
+    const EVariableType type = variable_type<D>::value;
     ReflectFunctionPtr ptr = NULL;
     if (type >= VARIABLE_TYPE_STRUCT)
         ptr = (ReflectFunctionPtr)GetReflectFunction<D, false>::Get();

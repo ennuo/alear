@@ -38,6 +38,8 @@ public:
     void ClearHiddenList();
     void InitializeExtraData();
     void DestroyExtraData();
+
+    void RaycastAgainstSwitchConnector(v4 ray_start, v4 ray_dir, CRaycastResults& results);
 public:
     const CP<RLocalProfile>& GetLocalProfile() const;
     void RenderHoverObject(CThing* thing, float outline);
@@ -50,6 +52,9 @@ public:
     CThing* GetThingToIgnore();
     void SendPoppetDangerMessage(ELethalType lethal_type);
     void PushMode(EPoppetMode mode, EPoppetSubMode submode);
+    void PopMode();
+    void Backup();
+    void ScrubBackup();
     void SendPoppetMessage(EPoppetMessageType message);
     void SetDangerType(CThing* thing);
 private:

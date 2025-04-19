@@ -27,6 +27,20 @@ struct ps3_write {
     u32 Word;
 };
 
+template<typename T>
+uintptr_t GetFunctionPointer(T fn)
+{
+    union
+    {
+        uintptr_t opd;
+        T t;
+    } data;
+
+    data.t = fn;
+
+    return data.opd;
+}
+
 #define MAX_WRITES (1024)
 extern ps3_write gWriteCache[MAX_WRITES];
 extern u32 gNumWrites;
@@ -62,6 +76,7 @@ type(*name)(__VA_ARGS__) = (type (*)(__VA_ARGS__))&_##name;
 
 #define MH_PokeBranch(address, target) MH_Poke32(address, B(target, address))
 #define MH_PokeHook(address, function) MH_InitHook((void*)address, (void*)&function)
+#define MH_PokeMemberHook(address, function) MH_InitHook((void*)address, (void*)GetFunctionPointer(&function))
 #define MH_PokeCall(address, function) MH_InitCall((void*)address, (void*)&function)
 
 #endif // HOOK_H

@@ -1,5 +1,6 @@
 #include "Serialise.h"
 #include "SharedSerialise.h"
+#include "Variable.h"
 
 #include "cell/DebugLog.h"
 
@@ -97,4 +98,12 @@ template <>
 ReflectReturn ReflectDescriptor(CReflectionSaveVector& r, CResourceDescriptorBase& d, bool cp, bool type)
 {
     return ReflectDescriptor_ReflectionSaveVector(r, d, cp, type);
+}
+
+
+MH_DefineFunc(ReflectGP_CGatherVariables, 0x006f2a00, TOC1, ReflectReturn, CGatherVariables& r, CReflectionVisitable*& d, CreateFunc cf, DeleteFunc df, unsigned int size, bool& ad);
+template<>
+ReflectReturn ReflectGP<CGatherVariables>(CGatherVariables& r, CReflectionVisitable*& d, CreateFunc cf, DeleteFunc df, unsigned int size, bool& add)
+{
+    return ReflectGP_CGatherVariables(r, d, cf, df, size, add);
 }

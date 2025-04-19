@@ -27,6 +27,13 @@ enum EJointType
     JOINT_TYPE_MAX
 };
 
+enum EJointPattern
+{
+    JOINT_PATTERN_WAVE,
+    JOINT_PATTERN_FORWARDS,
+    JOINT_PATTERN_FLIPPER
+};
+
 class PJoint : public CPart {
 struct Forked {
     v2 AccumulatedImpulse[3];

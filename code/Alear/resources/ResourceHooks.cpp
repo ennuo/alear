@@ -26,6 +26,7 @@
 #include <PartGeneratedMesh.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <Poppet.h>
 #include <hook.h>
 #include <ppcasm.h>
 
@@ -117,6 +118,15 @@ void RSyncedProfile::InitializeExtraData()
     StyleID = STYLEID_DEFAULT;
     new (&AnimationStyle) MMString<char>();
     AnimationStyle = "sackboy";
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, SPortData& d)
+{
+    ReflectReturn ret;
+    ADD(From);
+    ADD(To);
+    return ret;
 }
 
 template <typename R>
@@ -590,6 +600,9 @@ void AttachCustomRevisionHooks()
     MH_Poke32(0x00020f30, LI(4, sizeof(PCreature)));
     MH_Poke32(0x0073ba14, LI(4, sizeof(PCreature)));
 
+    MH_Poke32(0x00021438, LI(4, sizeof(PSwitch)));
+    MH_Poke32(0x0073c53c, LI(4, sizeof(PSwitch)));
+
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);
     MH_PokeBranch(0x000af44c, &_initextradata_syncedprofile);
@@ -694,7 +707,10 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
     if (version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
 
-    while (r.GetVecLeft() > 0)
+    // fucked up in earlier versions, so one byte was missing from data,
+    // but that only causes texture animations to be slightly inaccurate,
+    // so this is a good enough fix to prevent those levels from breaking.
+    while (r.GetVecLeft() >= 4)
     {
         u32 chunk;
         if ((ret = r.ReadWrite(&chunk, sizeof(u32))) != REFLECT_OK) return ret;
@@ -715,6 +731,43 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
                 }
 
                 DebugLog("gfxm: <%f, %f>\n", mesh->TextureAnimationSpeed, mesh->TextureAnimationSpeedOff);
+                break;
+            }
+            case 0x4c4f4743: /* LOGC */
+            {
+                PSwitch* part_switch = thing->GetPSwitch();
+                if (part_switch == NULL) return REFLECT_UNINITIALISED;
+
+                if ((ret = Reflect(r, part_switch->PortData)) != REFLECT_OK) return ret;
+
+                break;
+            }
+            case 0x594c4844: /* YLHD */
+            {
+                PYellowHead* part_yellowhead = thing->GetPYellowHead();
+                if (part_yellowhead == NULL || part_yellowhead->Poppet == NULL) return REFLECT_UNINITIALISED;
+
+                CPoppet* poppet = part_yellowhead->Poppet;
+
+
+                CVector<unsigned int> hidden_uids;
+                if ((ret = Reflect(r, hidden_uids)) != REFLECT_OK) return ret;
+
+                poppet->HiddenList.clear();
+                for (int i = 0; i < hidden_uids.size(); ++i)
+                {
+                    // this isnt assured to work but whatever
+                    CThing* thing = thing->World->GetThingByUID(hidden_uids[i]);
+                    if (thing == NULL) continue;
+                    poppet->HiddenList.push_back(thing);
+                }
+
+                if ((ret = Reflect(r, poppet->Raycast.HitPort)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, poppet->Raycast.RefPort)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, poppet->Edit.SwitchConnectorPort)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, poppet->Edit.SwitchConnectorRefPort)) != REFLECT_OK) return ret;
+
+
                 break;
             }
             // case 0x4c414e44: /* LAND */
@@ -775,6 +828,41 @@ ReflectReturn PScriptName::WriteAlearData()
         if ((ret = Reflect(r, mesh->TextureAnimationSpeedOff)) != REFLECT_OK) return ret;
     }
 
+    PSwitch* part_switch = thing->GetPSwitch();
+    if (part_switch != NULL && part_switch->HasCustomData())
+    {
+        u32 magic = 0x4c4f4743;
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+        if ((ret = Reflect(r, part_switch->PortData)) != REFLECT_OK) return ret;
+    }
+
+    PYellowHead* part_yellowhead = thing->GetPYellowHead();
+    if (part_yellowhead != NULL && part_yellowhead->Poppet != NULL)
+    {
+        u32 magic = 0x594c4844;
+
+        CPoppet* poppet = part_yellowhead->Poppet;
+
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+        // We have to use UIDs to avoid reflection errors on retail clients
+        // if a thing hasn't already been serialized.
+        CVector<unsigned int> hidden_uids(poppet->HiddenList.size());
+        for (CThingPtr* it = poppet->HiddenList.begin(); it != poppet->HiddenList.end(); ++it)
+        {
+            CThing* thing = it->GetThing();
+            if (thing == NULL) continue;
+            hidden_uids.push_back(thing->UID);
+        }
+
+        if ((ret = Reflect(r, hidden_uids)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, poppet->Raycast.HitPort)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, poppet->Raycast.RefPort)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, poppet->Edit.SwitchConnectorPort)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, poppet->Edit.SwitchConnectorRefPort)) != REFLECT_OK) return ret;
+    }
+
     // PShape* shape = thing->GetPShape();
     // if (shape != NULL && shape->HasCustomData())
     // {
@@ -795,7 +883,7 @@ ReflectReturn PScriptName::WriteAlearData()
     if (name_len != Name.size()) Name.resize(name_len, '\0');
 
     // Append our own data after the null terminator of the script name.
-    Name.resize(name_len + vec.size(), '\0');
+    Name.resize(name_len + vec.size() + 1, '\0');
     memcpy(Name.begin() + name_len + 1, vec.begin(), vec.size());
 
     return REFLECT_OK;
@@ -803,8 +891,15 @@ ReflectReturn PScriptName::WriteAlearData()
 
 bool CThing::HasCustomPartData()
 {
+    PYellowHead* yellowhead = GetPYellowHead();
+    if (yellowhead != NULL && yellowhead->Poppet != NULL) return true;
+    
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL && part_switch->HasCustomData()) return true;
+
     PGeneratedMesh* mesh = GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData()) return true;
+
     // PShape* shape = GetPShape();
     // if (shape != NULL && shape->HasCustomData()) return true;
 
@@ -813,34 +908,21 @@ bool CThing::HasCustomPartData()
 
 void CThing::OnStartSave()
 {
-    // PWorld* world = GetPWorld();
-    // if (world != NULL)
-    // {
-    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
-    //     {
-    //         CThing* thing = *it;
-    //         if (thing == this || thing == NULL) continue;
-    //         thing->OnStartSave();
-    //     }
-    // }
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+        part_switch->GenerateLegacyData();
 
     if (!HasCustomPartData()) return;
+
     AddPart(PART_TYPE_SCRIPT_NAME);
     GetPScriptName()->WriteAlearData();
 }
 
 void CThing::OnFinishSave()
 {
-    // PWorld* world = GetPWorld();
-    // if (world != NULL)
-    // {
-    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
-    //     {
-    //         CThing* thing = *it;
-    //         if (thing == this || thing == NULL) continue;
-    //         thing->OnFinishSave();
-    //     }
-    // }
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+        part_switch->ClearLegacyData();
 
     PScriptName* part = GetPScriptName();
     if (part != NULL)
@@ -854,20 +936,79 @@ void CThing::OnFinishSave()
     }
 }
 
-#include "AlearConfig.h"
-const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
-ReflectReturn CThing::OnLoad()
+enum
 {
-    if (gLoadDefaultMaterial)
+    E_KEY_AND_GATE = 73728,
+    E_KEY_OR_GATE = 73733,
+    E_KEY_XOR_GATE = 73739,
+    E_KEY_NOT_GATE = 73718,
+    E_KEY_ALWAYS_ON = 78675,
+    E_KEY_SWITCH_BASE = 42511
+};
+
+void CThing::OnFixup()
+{
+    DebugLog("fixing loading thing...\n");
+
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
     {
-        PGeneratedMesh* mesh = GetPGeneratedMesh();
-        if (mesh != NULL && !mesh->GfxMaterial)
+        // fixup model
+        PRenderMesh* part_render_mesh = GetPRenderMesh();
+        if (part_render_mesh == NULL)
         {
-            DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
-            mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+            AddPart(PART_TYPE_RENDER_MESH);
+            part_render_mesh = GetPRenderMesh();
+
+            part_render_mesh->BoneThings.clear();
+            part_render_mesh->BoneThings.push_back(this);
+        }
+
+        switch (part_switch->Type)
+        {
+            case SWITCH_TYPE_AND: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_AND_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_OR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_OR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_XOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_XOR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_NOT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_NOT_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_ALWAYS_ON: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ALWAYS_ON, 0, STREAM_PRIORITY_DEFAULT); break;
+        }
+
+        PScript* part_script = GetPScript();
+        if (part_script == NULL)
+        {
+            AddPart(PART_TYPE_SCRIPT);
+            CP<RScript> script = LoadResourceByKey<RScript>(E_KEY_SWITCH_BASE, 0, STREAM_PRIORITY_DEFAULT);
+            script->BlockUntilLoaded();
+            GetPScript()->SetScript(script);
+        }
+
+        RMesh* mesh = part_render_mesh->Mesh;
+        if (mesh != NULL)
+        {
+            mesh->BlockUntilLoaded();
+            GetPPos()->AnimHash = mesh->mesh.Bones.front().AnimHash;
+        }
+
+        for (int i = 0; i < part_switch->Outputs.size(); ++i)
+        {
+            CSwitchOutput* output = part_switch->Outputs[i];
+            for (int j = 0; j < output->TargetList.size(); ++j)
+            {
+                CSwitchTarget& target = output->TargetList[j];
+                target.Thing->SetInput(output, target.Port);
+            }
         }
     }
-    
+}
+
+#include "AlearConfig.h"
+const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
+
+ReflectReturn CThing::OnLoad()
+{
+    DebugLog("finished loading thing...\n");
+    ReflectReturn ret = REFLECT_OK;
+
     if (gLoadDefaultMaterial)
     {
         PGeneratedMesh* mesh = GetPGeneratedMesh();
@@ -880,15 +1021,6 @@ ReflectReturn CThing::OnLoad()
 
     if (gForceLoadEditable)
     {   
-        /*
-        PJoint* joint = GetPJoint();
-        if (joint != NULL)
-        {
-            joint->InteractEditMode |= 2;
-            joint->InteractPlayMode |= 2;
-        }
-        */
-        
         PEmitter* emitter = GetPEmitter();
         if (emitter != NULL)
         {
@@ -898,7 +1030,7 @@ ReflectReturn CThing::OnLoad()
 
             }
         }
-       
+
         PShape* shape = GetPShape();
         if (shape != NULL)
         {
@@ -927,9 +1059,25 @@ ReflectReturn CThing::OnLoad()
     // }
 
 
+    // Alear data will fixup the behaviors, but by default,
+    // we'll copy the old behavior to all our targets.
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+    {
+        // The outputs haven't been fixed up yet, so everything should still be in the target list.
+        for (CThingPtr* ptr = part_switch->TargetList.begin(); ptr != part_switch->TargetList.end(); ++ptr)
+            (*ptr)->Behaviour = part_switch->BehaviourOld;
+    }
 
     PScriptName* part = GetPScriptName();
-    if (part != NULL) return part->LoadAlearData(this);
+    if (part != NULL)
+    {
+        if ((ret = part->LoadAlearData(this)) != REFLECT_OK) return ret;
+    }
+
+    if (part_switch != NULL)
+        part_switch->OnPartLoaded();
+
     return REFLECT_OK;
 }
 
@@ -970,5 +1118,7 @@ void InitResourceHooks()
     MH_PokeBranch(0x00770954, &_on_reflect_load_thing_hook);
     MH_PokeBranch(0x0076cf28, &_on_reflect_start_save_thing_hook);
     MH_PokeBranch(0x0076cf34, &_on_reflect_finish_save_thing_hook);
+    MH_PokeBranch(0x003c4224, &_on_fixup_thing_hook);
     MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
+    MH_PokeBranch(0x0005e6a8, &_initextradata_part_switch);
 }

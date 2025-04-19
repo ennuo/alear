@@ -17,6 +17,11 @@ public:
     {
         Set(thing);
     }
+
+    inline CThingPtr(CThingPtr const& rhs) : Thing(NULL), Next(NULL), Prev(NULL)
+    {
+        *this = rhs;
+    }
     
     void Unset();
     void Set(CThing* thing);

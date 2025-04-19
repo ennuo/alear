@@ -35,13 +35,33 @@ void CThing::SetWorld(PWorld* world, u32 preferred_uid)
 
 void CThing::InitializeExtraData()
 {
+    Behaviour = SWITCH_BEHAVIOR_OFF_ON;
+    ObjectType = OBJECT_UNKNOWN;
     CustomThingData = new CCustomThingData();
 }
 
+#include <cell/DebugLog.h>
 void CThing::DestroyExtraData()
 {
+    DebugLog("destroying thing with uid %d\n", UID);
+    CThingPtr* ptr = FirstPtr;
+    while (ptr != NULL)
+    {
+        DebugLog("ptr: %08x, next: %08x\n", ptr, ptr->Next);
+        ptr = ptr->Next;
+    }
+
     if (CustomThingData != NULL)
+    {
+        for (int i = 0; i < CustomThingData->InputList.size(); ++i)
+        {
+            CSwitchOutput* input = CustomThingData->InputList[i];
+            if (input == NULL) continue;
+            input->RemoveTarget(this, i);
+        }
+        
         delete CustomThingData;
+    }
 }
 
 // not technically supposed to be here but i dont care

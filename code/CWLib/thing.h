@@ -30,18 +30,22 @@
 
 #include "hack_thingptr.h"
 
+enum EObjectType
+{
+    OBJECT_UNKNOWN
+};
+
 
 class PBody : public CPart {};
 class PPos;
 
 class CCustomThingData {
 public:
-    inline CCustomThingData()
-    {
-        memset(this, 0, sizeof(CCustomThingData));
-    }
+    inline CCustomThingData() : Microchip(), InputList()
+    {}
 public:
     CThing* Microchip;
+    CVector<CSwitchOutput*> InputList;
 };
 
 class CThing : public CReflectionVisitable {
@@ -53,15 +57,26 @@ public:
     void DestroyExtraData();
 
     bool HasCustomPartData();
-    
+
     void OnStartSave();
     void OnFinishSave();
-        
     ReflectReturn OnLoad();
+    void OnFixup();
+
+
+
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
     void RemovePart(EPartType type);
+
+    CSwitchOutput* GetInput(int port);
+    void SetInput(CSwitchOutput* input, int port);
+    inline int GetNumInputs() const 
+    {
+        if (CustomThingData == NULL) return 0;
+        return CustomThingData->InputList.size();
+    }
 public:
     inline PBody* GetPBody() const { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
     inline PJoint* GetPJoint() const { return static_cast<PJoint*>(Parts[PART_TYPE_JOINT]); }
@@ -102,6 +117,11 @@ public:
     u16 CreatedBy;
     u16 ChangedBy;
     bool Stamping;
+private:
+    char Pad[0x7];
+private:
+    u8 ObjectType;
+    u8 Behaviour;
     CCustomThingData* CustomThingData;
 };
 

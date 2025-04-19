@@ -156,3 +156,9 @@ ReflectReturn Reflect(CGatherVariables& r, CThingPtr& d)
 {
     return Reflect_CGatherVariables_CThingPtr(r, d);
 }
+
+template<>
+ReflectReturn Reflect(CReflectionSaveVector& r, CP<RTexture>& d)
+{
+    return REFLECT_NOT_IMPLEMENTED;
+}

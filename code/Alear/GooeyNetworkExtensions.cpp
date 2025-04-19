@@ -174,6 +174,15 @@ public:
         return *this;
     }
 
+    CTweakSetting& SetupCounter()
+    {
+        Widget = TWEAK_WIDGET_MEASURER;
+        StepSize = 1.0f;
+        StepSizeDPad = 10.0f;
+
+        return *this;
+    }
+
     CTweakSetting& SetupFraction()
     {
         Widget = TWEAK_WIDGET_MEASURER;
@@ -406,6 +415,20 @@ namespace TweakSettingNativeFunctions
 
         switch (network_action)
         {
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED: return thing->GetPSwitch()->Inverted;
+            case E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY:
+            {
+                PSwitch* part_switch = thing->GetPSwitch();
+                if (part_switch->HideInPlayMode == true && part_switch->HideConnectors == true) return 0;
+                if (part_switch->HideInPlayMode == false && part_switch->HideConnectors == true) return 1;
+                return 2;
+            }
+            case E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY: return setting.GameToFixed(thing->GetPSwitch()->ManualActivation.Analogue);
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT: return setting.GameToFixed(thing->GetPSwitch()->NumInputs);
+            case E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT:
+            case E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT:
+                return thing->GetPSwitch()->OutputType;
+            
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyle(thing);
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE: return GetCheckpointType(thing);
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY:
@@ -499,6 +522,11 @@ bool InitTweakSettings()
 
     CIconConfig global_settings_texture(E_KEY_GLOBAL_SETTINGS_SDF, 4, 4);
     CIconConfig paramanim_texture(E_KEY_PARAM_ANIMATIONS_SDF, 1, 2);
+    CIconConfig visualstyle_texture(2172845213ul, 1, 1);
+    CIconConfig inputs_icon_texture(2190825069ul, 1, 1);
+    CIconConfig batteryoutput_icon_texture(2216320518ul, 1, 1);
+    CIconConfig visibleinplaymode_icon_texture(2958198268ul, 1, 1);
+    CIconConfig sensor_icons(2481301814ul, 4, 4);
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LIGHTING)
         .SetupLighting()
@@ -601,6 +629,7 @@ bool InitTweakSettings()
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE)
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(visualstyle_texture, 0)
         .SetIcon(CAROUSEL_MESH_STYLE)
         .SetDebugToolTip(L"Visual Style");
 
@@ -616,6 +645,48 @@ bool InitTweakSettings()
         .SetDebugSuffix(L"s")
         .SetDebugToolTip(L"Spawn Delay")
         .SetConversion(1.0 / 30.0);
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED)
+        .SetupYesNo()
+        .SetIcon(sensor_icons, 4)
+        .SetDebugToolTip(L"Invert Output");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(visibleinplaymode_icon_texture, 0)
+        .SetIcon(CAROUSEL_SWITCH_VISIBILITY)
+        .SetDebugToolTip(L"Electronics and Cable Visibility");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY)
+        .SetupFraction()
+        .SetIcon(batteryoutput_icon_texture, 0)
+        .SetMinMax(-100.0f, 100.0f)
+        .SetDebugToolTip(L"Output");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT)
+        .SetupCounter()
+        .SetIcon(inputs_icon_texture, 0)
+        .SetMinMax(2.0f, 100.0f)
+        .SetSteps(1.0f, 1.0f)
+        .SetDebugToolTip(L"Number of Ports");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(sensor_icons, 9)
+        .SetIcon(CAROUSEL_AND_GATE_OUTPUT)
+        .SetDebugToolTip(L"Output Value");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(sensor_icons, 9)
+        .SetIcon(CAROUSEL_OR_GATE_OUTPUT)
+        .SetDebugToolTip(L"Output Value");
+
+    
+
+    
+
+    
 
     // visual style
         // Entrance
@@ -641,6 +712,94 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
     switch (action.Action)
     {
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL) part_switch->Inverted = action.Value;
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL)
+            {
+                switch (action.Value)
+                {
+                    case 0:
+                    {
+                        part_switch->HideConnectors = true;
+                        part_switch->HideInPlayMode = true;
+                        
+                        break;
+                    }
+                    case 1:
+                    {
+                        part_switch->HideConnectors = true;
+                        part_switch->HideInPlayMode = false;
+                        break;
+                    }
+                    case 2:
+                    {
+                        part_switch->HideConnectors = false;
+                        part_switch->HideInPlayMode = false;
+                    }
+
+                }
+            }
+
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL)
+            {
+                float analogue = setting.FixedToGame(action.Value);
+                part_switch->ManualActivation.Analogue = analogue;
+                part_switch->ManualActivation.Ternary = analogue < 0.0f ? -1 : analogue > 0.0f ? 1 : 0;
+            }
+
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+
+            int num_inputs = MAX((int)setting.FixedToGame(action.Value), 2);
+            if (part_switch != NULL)
+            {
+                for (int i = part_switch->NumInputs - 1; i >= action.Value; --i)
+                {
+                    CSwitchOutput* input = thing->GetInput(i);
+                    if (input != NULL)
+                        input->RemoveTarget(thing, i);
+                }
+
+                part_switch->NumInputs = num_inputs;
+            }
+
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT:
+        case E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL)
+                part_switch->OutputType = action.Value;
+            break;
+        }
+
         case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE:
         {
             DebugLog("checkpoint style uid=%d, index=%d\n", action.ThingUID, action.Value);
@@ -797,6 +956,8 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
 void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 {
+    CIconConfig basic_icons(2173444119ul, 2, 4);
+
     switch (type)
     {
         case CAROUSEL_MESH_STYLE:
@@ -819,6 +980,37 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Single-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Double-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Infinite-Lives Checkpoint", v4(1.0)));
+
+            break;
+        }
+
+        case CAROUSEL_SWITCH_VISIBILITY:
+        {
+            CIconConfig icon(3442365560ul, 1, 2);
+
+            items.push_back(CCarouselItem(basic_icons.Texture, basic_icons.GetUV(0), L"No", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Switch Visible", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Switch and Cables Visible", v4(1.0)));
+
+            break;
+        }
+
+        case CAROUSEL_AND_GATE_OUTPUT:
+        {
+            CIconConfig icon(3778299051ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Minimum Input", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Multiply Inputs", v4(1.0)));
+
+            break;
+        }
+
+        case CAROUSEL_OR_GATE_OUTPUT:
+        {
+            CIconConfig icon(3778299051ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Max Input", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Add Inputs", v4(1.0)));
 
             break;
         }
@@ -848,6 +1040,9 @@ void AttachCarouselHooks()
     }
 
     TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_SWITCH_VISIBILITY] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_AND_GATE_OUTPUT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_OR_GATE_OUTPUT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
@@ -902,6 +1097,15 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_TINT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_MURKINESS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_BITS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
+
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_COLOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);

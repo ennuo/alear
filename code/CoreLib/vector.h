@@ -185,7 +185,13 @@ public:
 		if (vec.Data != NULL)
 		{
 			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
-			memcpy(this->Data, vec.Data, vec.Size * sizeof(T));
+			for (int i = 0; i < vec.Size; ++i)
+			{
+				T& element = this->Data[i];
+				new (&element) T();
+				this->Data[i] = vec.Data[i];
+			}
+			
 			this->Size = vec.Size;
 			this->MaxSize = vec.Size;
 		}
@@ -259,7 +265,7 @@ public:
 					for (u32 i = 0; i < this->Size; ++i)
 					{
 						T& old = this->Data[i];
-						new (&data[i]) T();
+						new (data + i) T();
 						data[i] = old;
 						(&old)->~T();
 					}

@@ -298,19 +298,11 @@ _on_reflect_finish_save_thing_hook:
     mr %r3, %r26
     ba 0x0076cf38
 
-.global _initextradata_part_generatedmesh
-_initextradata_part_generatedmesh:
+create_hook on_fixup_thing_hook, 0x003c4228
     mr %r3, %r28
-
-    std %r2, 0x28(%r1)
-    lis %r2, _ZN14PGeneratedMesh19InitializeExtraDataEv@h      
-    ori %r2, %r2, _ZN14PGeneratedMesh19InitializeExtraDataEv@l
-    lwz %r2, 0x4(%r2)
-    bl ._ZN14PGeneratedMesh19InitializeExtraDataEv
-    ld %r2, 0x28(%r1)
-
-    ld %r0, 0xb0(%r1)
-    ba 0x00031f10
+    call _ZN6CThing7OnFixupEv
+    rldicl %r9, %r28, 0x0, 0x20
+    ret
 
 .global _custom_gooey_network_action_hook
 _custom_gooey_network_action_hook:
