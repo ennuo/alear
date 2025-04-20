@@ -62,9 +62,6 @@ public:
     void OnFinishSave();
     ReflectReturn OnLoad();
     void OnFixup();
-
-
-
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);

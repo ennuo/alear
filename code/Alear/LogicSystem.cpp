@@ -28,12 +28,14 @@
 #include <vm/ScriptFunction.h>
 
 const v4 PORT_ZBIAS = v4(0.0f, 0.0f, 10.0f, 0.0f);
+const float PORT_RADIUS = 20.0f;
 
 namespace NPoppetUtils
 {
     MH_DefineFunc(RaySphereIntersect, 0x0038eedc, TOC1, bool, v4 center, float radius, v4 ray_pos, v4 ray_dir, float& intersect_dist);
 }
 
+MH_DefineFunc(HitTestRayVsAABB, 0x002272c4, TOC0, bool, v4 boxmin, v4 boxmax, v4 origin, v4 dir, float* tout, v4* hitout);
 namespace SystemFunctions
 {
     MH_DefineFunc(DrawRectangle, 0x0046369c, TOC1, void, v4 min, v4 max, v4 col, bool world_space, bool z_test, bool fill);
@@ -41,6 +43,53 @@ namespace SystemFunctions
 
 CSwitchDefinition gSwitchDefinitions[NUM_SWITCH_TYPES];
 CSwitchDefinition gDefaultSwitchDefinition;
+
+bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, bool output, v4 ray_pos, v4 ray_dir, float& intersect_dist)
+{
+    PRenderMesh* part_render_mesh;
+    if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
+    if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+
+    CMesh& mesh = part_render_mesh->Mesh->mesh;
+
+    // There technically shouldn't ever normally be a case where
+    // the model doesn't have any bones due to how LBP works in general,
+    // but we'll still check it anyways, I guess.
+    if (mesh.Bones.size() == 0) return false;
+
+    CBone& bone = mesh.Bones.front();
+    const m44& wpos = thing->GetPPos()->GetWorldPosition();
+
+    v4 center = bone.SkinPoseMatrix.getCol3();
+
+    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+    float inc = dist / (float)num_ports;
+
+    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
+    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
+
+    // If we're raycasting against this port while trying to connect a switch,
+    // we'll split the mesh's bound box for a boxcast.
+    if (!output && switch_connector)
+    {
+        v4 bl(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
+        v4 tr(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
+        
+        v4 hitout;
+        float tout;
+        bool hit =  HitTestRayVsAABB(wpos * bl, wpos * tr, ray_pos, ray_dir, &tout, NULL);
+
+        if (!hit || intersect_dist < tout) return false;
+
+        intersect_dist = tout;
+        return true;
+    }
+
+    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
+
+    // Otherwise, we'll do a sphere cast against the port.
+    return NPoppetUtils::RaySphereIntersect(wpos * v4(origin, (top + bottom) / 2.0f, center.getZ(), 1.0f), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+}
 
 void InitializeSwitchDefinitions()
 {
@@ -75,8 +124,25 @@ void InitializeSwitchDefinitions()
     }
 }
 
+int GetNumInputs(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PSwitch* sw = thing->GetPSwitch();
+    if (sw != NULL)
+    {
+        if (sw->Type == SWITCH_TYPE_AND || sw->Type == SWITCH_TYPE_OR || sw->Type == SWITCH_TYPE_XOR || sw->Type == SWITCH_TYPE_SELECTOR)
+            return sw->NumInputs;
+        if (sw->Type == SWITCH_TYPE_ALWAYS_ON)
+            return 0;
+    }
+
+    return 1;
+}
+
 void RenderSwitchDebug()
 {
+    return;
+
     PWorld* world = gGame->GetWorld();
     if (world == NULL) return;
     for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
@@ -85,27 +151,48 @@ void RenderSwitchDebug()
         if (sw == NULL) continue;
 
         CThing* thing = sw->GetThing();
-        const CSwitchDefinition& def = sw->GetSwitchDefinition();
         m44& wpos = thing->GetPPos()->Game.WorldPosition;
 
-        int num_inputs = def.NumInputs;
-        if (sw->Type == SWITCH_TYPE_AND || sw->Type == SWITCH_TYPE_OR || sw->Type == SWITCH_TYPE_XOR || sw->Type == SWITCH_TYPE_SELECTOR)
-            num_inputs = sw->NumInputs;
+        int num_inputs = GetNumInputs(thing);
+        CBone& bone = thing->GetPRenderMesh()->Mesh->mesh.Bones.front();
+
+        v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+
+        float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+        float inc = dist / (float)num_inputs;
+
 
         for (int i = 0; i < num_inputs; ++i)
         {
-            v4 offset = def.GetInputPortOffset(i, num_inputs) + PORT_ZBIAS;
-            v4 radius = v4(def.InputPortRadius, def.InputPortRadius, 0.0f, 0.0f);
+            float top = bone.BoundBoxMax.getY() - (inc * (float)(i + 0));
+            float bottom = bone.BoundBoxMax.getY() - (inc * (float)(i + 1));
 
-            SystemFunctions::DrawRectangle(wpos * (offset - radius), wpos * (offset + radius), v4(1.0f), true, true, true);
+            v4 bl(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
+            v4 tr(bone.BoundBoxMin.getX(), ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
+
+            v4 color;
+            switch (i % 3)
+            {
+                case 0: color = v4(1.0f, 0.0f, 0.0f, 1.0f); break;
+                case 1: color = v4(0.0f, 1.0f, 0.0f, 1.0f); break;
+                case 2: color = v4(0.0f, 0.0f, 1.0f, 1.0f); break;
+            }
+
+            SystemFunctions::DrawRectangle(wpos * bl, wpos * tr, color, true, true, true);
         }
 
-        for (int i = 0; i < def.NumOutputs; ++i)
-        {
-            v4 offset = def.GetOutputPortOffset(i, def.NumOutputs) + PORT_ZBIAS;
-            v4 radius = v4(def.OutputPortRadius, def.OutputPortRadius, 0.0f, 0.0f);
+        int num_outputs = sw->Outputs.size();
+        inc = dist / (float)num_outputs;
 
-            SystemFunctions::DrawRectangle(wpos * (offset - radius), wpos * (offset + radius), v4(1.0f), true, false, true);
+        for (int i = 0; i < num_outputs; ++i)
+        {
+            float top = bone.BoundBoxMax.getY() - (inc * (float)(i + 0));
+            float bottom = bone.BoundBoxMax.getY() - (inc * (float)(i + 1));
+
+            v4 bl(bone.BoundBoxMax.getX(), ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
+            v4 tr(bone.BoundBoxMax.getX() + PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
+
+            SystemFunctions::DrawRectangle(wpos * bl, wpos * tr, v4(1.0f), true, true, true);
         }
     }
 }
@@ -357,6 +444,10 @@ bool CPoppetEditState::SetSwitchConnector(CThing* switch_thing, CThing* connecto
         SwitchConnectorPort = poppet->Raycast.HitPort;
         SwitchConnectorRefPort = poppet->Raycast.RefPort;
 
+        // dumb hack
+        poppet->Raycast.HitThing = NULL;
+        poppet->Raycast.HitPort = -1;
+
         DebugLog("grabbing connector @ port %d\n", SwitchConnectorPort);
 
         return true;
@@ -456,6 +547,19 @@ void PSwitch::Update()
 {
     for (CSwitchOutput** it = Outputs.begin(); it != Outputs.end(); ++it)
         (*it)->Activation = GetNewActivation((*it)->Port);
+
+    if (Type == SWITCH_TYPE_AND || Type == SWITCH_TYPE_OR || Type == SWITCH_TYPE_XOR || Type == SWITCH_TYPE_SELECTOR)
+    {
+        const m44& wpos = GetThing()->GetPPos()->GetWorldPosition();
+
+        m44 new_matrix = m44::identity();
+        new_matrix.setCol0(v4(0.75f, 0.0f, 0.0f, 0.0f));
+        new_matrix.setCol1(v4(0.0f, 0.75f + ((NumInputs - 2) * (0.75f * 0.5f) ), 0.0f, 0.0f));
+        new_matrix.setCol2(v4(0.0f, 0.0f, 1.0f, 0.0f));
+        new_matrix.setCol3(wpos.getCol3());
+
+        GetThing()->GetPPos()->SetWorldPos(new_matrix, false, 0);
+    }
 
 
     PRenderMesh* part_render_mesh = GetThing()->GetPRenderMesh();
@@ -569,6 +673,127 @@ public:
     int To;
 };
 
+bool GetPortPos(CThing*thing, int port, bool output, v4& out)
+{
+    if (port == 255) return false;
+
+    PRenderMesh* part_render_mesh;
+    if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
+    if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+
+    CMesh& mesh = part_render_mesh->Mesh->mesh;
+
+    // There technically shouldn't ever normally be a case where
+    // the model doesn't have any bones due to how LBP works in general,
+    // but we'll still check it anyways, I guess.
+    if (mesh.Bones.size() == 0) return false;
+
+    CBone& bone = mesh.Bones.front();
+    const m44& wpos = thing->GetPPos()->GetWorldPosition();
+
+    v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+
+    int num_ports;
+    if (output)
+    {
+        PSwitch* part_switch = thing->GetPSwitch();
+        if (part_switch == NULL) return false;
+        num_ports = part_switch->Outputs.size();
+    }
+    else num_ports = GetNumInputs(thing);
+
+    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+    float inc = dist / (float)num_ports;
+
+    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
+    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
+
+    if (output)
+        out = wpos * v4(bone.BoundBoxMax.getX() + PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
+    else
+        out = wpos * v4(bone.BoundBoxMin.getX() - PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
+    
+    return true;
+}
+
+void DrawWire(CSwitchOutput* output, CPoppet* player, CThing* target, int port)
+{
+    bool loose = false;
+    
+
+    v4 a, b;
+    if (!GetPortPos(output->Owner->GetThing(), output->Port, true, a)) return;
+    if (target != NULL && !GetPortPos(target, port, false, b)) return;
+
+    if (target == NULL)
+    {
+        if (player != NULL)
+            b = player->Raycast.GetHitPoint();
+        else
+            b = a + v4(5.0f, 0.0f, 0.0f, 0.0f);
+        
+        loose = true;
+    }
+
+    v4 points[8];
+    v4 tint(1.0f);
+    m44 trans = m44::identity();
+    int num_points;
+    float dist;
+
+    if (loose)
+    {
+        num_points = 2;
+        points[0] = a;
+        points[1] = b;
+        dist = Vectormath::Aos::length(b - a); 
+    }
+    else
+    {
+        bool below = a.getY() > b.getY();
+        bool left = a.getX() > b.getX();
+
+        // Hack for if we're connected to ourselves
+        if (target == output->Owner->GetThing())
+        {
+            below = false;
+            left = true;
+        }
+
+        num_points = Hermite(points, 7, a, b,
+            500.0f,
+            below ? -500.0f : (left ? 500.0f : 0.0f),
+            500.0f,
+            0.0f
+        );
+
+        points[num_points++] = b;
+
+        dist = 0.0f;
+        for (int i = 1; i < num_points; ++i)
+            dist += Vectormath::Aos::length(points[i] - points[i - 1]);
+    }
+
+    CP<RGfxMaterial> mat = LoadResourceByKey<RGfxMaterial>(0xadeb, 0, STREAM_PRIORITY_DEFAULT);
+    mat->BlockUntilLoaded();
+
+    RenderRope(
+        mat,
+        (const v2*)points,
+        (const v2*)points,
+        num_points,
+        sizeof(v2),
+        25.0f,
+        dist,
+        false,
+        true,
+        trans,
+        trans,
+        false,
+        tint
+    );
+}
+
 void CustomRenderWires()
 {
     PWorld* world = gGame->GetWorld();
@@ -576,14 +801,6 @@ void CustomRenderWires()
 
     // 0xcc7c - error wire
     // 0xadeb - default wire
-
-    CP<RGfxMaterial> mat = LoadResourceByKey<RGfxMaterial>(0xadeb, 0, STREAM_PRIORITY_DEFAULT);
-    mat->BlockUntilLoaded();
-
-    v2 points[8];
-    v4* points_v4 = (v4*)points;
-    v4 tint(1.0f);
-    m44 trans = m44::identity();
 
     cellGcmSetDepthMask(gCellGcmCurrentContext, CELL_GCM_TRUE);
 
@@ -598,36 +815,14 @@ void CustomRenderWires()
         CPoppet* poppet = yellowhead->Poppet;
         if (poppet == NULL || poppet->GetSubMode() != SUBMODE_SWITCH_CONNECTOR) continue;
 
-        CThing* switch_thing = poppet->Edit.SwitchConnectorRef;
-        int switch_port = poppet->Edit.SwitchConnectorRefPort;
-
-        if (switch_thing == NULL) continue;
-
+        if (poppet->Edit.SwitchConnectorRef == NULL) continue;
         held_wires.push_back(SHeldWire(poppet));
 
-        const CSwitchDefinition& def = switch_thing->GetPSwitch()->GetSwitchDefinition();
-        v4 port_offset = (switch_thing->GetPPos()->Game.WorldPosition * def.GetOutputPortOffset(switch_port, def.NumOutputs)) + PORT_ZBIAS;
-
-
-        points_v4[0] = port_offset;
-        points_v4[1] = poppet->Raycast.GetHitPoint();
-
-        float dist = Vectormath::Aos::length(points_v4[1] - points_v4[0]);
-
-        RenderRope(
-            mat,
-            points,
-            points,
-            2,
-            sizeof(v2),
-            25.0f,
-            dist,
-            false,
-            true,
-            trans,
-            trans,
-            false,
-            tint
+        DrawWire(
+            poppet->Edit.SwitchConnectorRef->GetPSwitch()->Outputs[poppet->Edit.SwitchConnectorRefPort], 
+            poppet, 
+            poppet->Raycast.HitThing, 
+            poppet->Raycast.HitPort
         );
     }
 
@@ -637,19 +832,34 @@ void CustomRenderWires()
         PSwitch* part_switch = *it;
         if (part_switch == NULL) continue;
         CThing* thing = part_switch->GetThing();
-        v4 pos = thing->GetPPos()->GetBestGameplayPosv4();
 
-        const CSwitchDefinition& def = part_switch->GetSwitchDefinition();
         for (int i = 0; i < part_switch->Outputs.size(); ++i)
         {
-            CSwitchOutput& output = *part_switch->Outputs[i];
+            CSwitchOutput* output = part_switch->Outputs[i];
+            
+            // If we don't have any targets, render a small little output wire
+            // to give the user indication that there's an output.
+            if (output->TargetList.size() == 0)
+            {
+                // If anybody is holding a wire from this output, skip!
+                bool has_wire = false;
+                for (int i = 0; i < held_wires.size(); ++i)
+                {
+                    if (held_wires[i].Source == thing && held_wires[i].From == i)
+                    {
+                        has_wire = true;
+                        break;
+                    }
+                }
 
-            v4 start_point = (thing->GetPPos()->Game.WorldPosition * def.GetOutputPortOffset(i, def.NumOutputs)) + PORT_ZBIAS;
+                if (!has_wire)
+                    DrawWire(output, NULL, NULL, -1);
+            }
 
-            for (int j = 0; j < output.TargetList.size(); ++j)
+            for (int j = 0; j < output->TargetList.size(); ++j)
             {
                 bool is_held_wire = false;
-                CSwitchTarget& target = output.TargetList[j];
+                CSwitchTarget& target = output->TargetList[j];
 
                 for (SHeldWire* held_wire = held_wires.begin(); held_wire != held_wires.end(); ++held_wire)
                 {
@@ -663,62 +873,10 @@ void CustomRenderWires()
 
                 if (is_held_wire) continue;
 
-
-                const CSwitchDefinition& target_def = GetSwitchDefinition(target.Thing);
-                const int num_inputs = target.Thing->GetNumInputs();
-
-                v4 end_point = (target.Thing->GetPPos()->Game.WorldPosition * def.GetInputPortOffset(target.Port, num_inputs)) + PORT_ZBIAS;
-                
-                
-
-                bool below = start_point.getY() > end_point.getY();
-                bool left = start_point.getX() > end_point.getX();
-
-                if (target.Thing == thing)
-                {
-                    below = false;
-                    left = true;
-                }
-
-                int num_points = Hermite(points_v4, 7, start_point, end_point,
-
-                    500.0f,
-                    below ? -500.0f : (left ? 500.0f : 0.0f),
-                    500.0f,
-                    0.0f
-
-                    // 1000.0f,
-                    // below ? -1000.0f : (left ? 0.0f : 1000.0f),
-                    // 1000.0f,
-                    // 0.0f
-                );
-
-                points_v4[num_points++] = end_point;
-
-                float dist = 0.0f;
-                for (int i = 1; i < num_points; ++i)
-                    dist += Vectormath::Aos::length(points_v4[i] - points_v4[i - 1]);
-
-                RenderRope(
-                    mat,
-                    points,
-                    points,
-                    num_points,
-                    sizeof(v2),
-                    25.0f,
-                    dist,
-                    false,
-                    true,
-                    trans,
-                    trans,
-                    false,
-                    tint
-                );
-
+                DrawWire(output, NULL, target.Thing, target.Port);
             }
         }
     }
-
 
     cellGcmSetDepthMask(gCellGcmCurrentContext, CELL_GCM_FALSE);
 }
@@ -734,24 +892,24 @@ void CPoppet::RaycastAgainstSwitchConnector(v4 ray_start, v4 ray_dir, CRaycastRe
 
     PWorld* world = gGame->GetWorld();
 
+    CSwitchOutput* output = Edit.SwitchConnectorRef->GetPSwitch()->Outputs[Edit.SwitchConnectorRefPort];
+
     for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
     {
         PSwitch* sw = (*it);
         CThing* thing = sw->GetThing();
 
-        float t;
+        float t = 1.0e+20f;
 
         m44 wpos = thing->GetPPos()->Game.WorldPosition;
-        const CSwitchDefinition& def = sw->GetSwitchDefinition();
-
-        int num_inputs = def.NumInputs;
-        if (sw->Type == SWITCH_TYPE_AND || sw->Type == SWITCH_TYPE_OR || sw->Type == SWITCH_TYPE_XOR || sw->Type == SWITCH_TYPE_SELECTOR)
-            num_inputs = sw->NumInputs;
+        int num_inputs = GetNumInputs(thing);
 
         for (int i = 0; i < num_inputs; ++i)
         {
-            v4 offset = (wpos * def.GetInputPortOffset(i, num_inputs)) + PORT_ZBIAS;
-            if (!NPoppetUtils::RaySphereIntersect(offset, def.InputPortRadius, ray_start, ray_dir, t)) continue;
+            // If we're already connected to this port, we can ignore raycasting against it.
+            if (thing->GetInput(i) == output) continue;
+
+            if (!RaycastPort(thing, i, num_inputs, true, false, ray_start, ray_dir, t)) continue;
             if (t >= 1.0e+20f) continue;
 
 
@@ -784,7 +942,7 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
     raycast.HitPort = -1;
     raycast.RefPort = -1;
 
-    float t;
+    float t = 1.0e+20f;
     CThing* hit;
 
     for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
@@ -796,11 +954,9 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
 
         // Test against our own output ports first
         m44 wpos = thing->GetPPos()->Game.WorldPosition;
-        const CSwitchDefinition& def = sw->GetSwitchDefinition();
-        for (int i = 0; i < def.NumOutputs; ++i)
+        for (int i = 0; i < sw->Outputs.size(); ++i)
         {
-            v4 offset = (wpos * def.GetOutputPortOffset(i, def.NumOutputs)) + PORT_ZBIAS;
-            if (!NPoppetUtils::RaySphereIntersect(offset, def.OutputPortRadius, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
+            if (!RaycastPort(thing, i, sw->Outputs.size(), false, true, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
             if (t >= 1.0e+20f) continue;
 
             raycast.SwitchConnector = true;
@@ -827,18 +983,14 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
             CSwitchOutput& output = *sw->Outputs[ref_port];
             for (CSwitchTarget* target = output.TargetList.begin(); target != output.TargetList.end(); ++target)
             {
-                CThing* connector_thing = target->Thing;
-                if (connector_thing == NULL) continue;
+                if (target->Thing == NULL) continue;
 
-                const CSwitchDefinition& connector_def = GetSwitchDefinition(connector_thing);
-
-                v4 offset = (connector_thing->GetPPos()->Game.WorldPosition * connector_def.GetInputPortOffset(target->Port, GetNumInputs(connector_thing))) + PORT_ZBIAS;
-                if (!NPoppetUtils::RaySphereIntersect(offset, def.InputPortRadius, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
+                if (!RaycastPort(target->Thing, target->Port, GetNumInputs(target->Thing), false, false, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
                 DebugLog("hit an input!!!\n");
                 if (t >= 1.0e+20f) continue;
 
                 raycast.SwitchConnector = true;
-                raycast.HitThing = connector_thing;
+                raycast.HitThing = target->Thing;
                 raycast.RefThing = thing;
 
                 poppet->m_bestTFromPSwitches = t;
