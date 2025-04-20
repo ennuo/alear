@@ -93,6 +93,8 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
     // Only implementing our custom input types here
     switch (button_config)
     {
+        case BUTTON_CONFIG_POPPET_COPY:
+            return (buttons & PAD_BUTTON_L3) != 0;
         case BUTTON_CONFIG_POPPET_ACTION:
             return (buttons & PAD_BUTTON_CROSS) != 0;
         case BUTTON_CONFIG_POPPET_DELETE:

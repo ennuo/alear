@@ -614,16 +614,26 @@ void CPoppetEditState::UpdateSwitchConnector()
         poppet->PopMode();
     }
 
-    if (!is_loose && input->IsJustClicked(BUTTON_CONFIG_POPPET_DELETE, L"BP_DELETE_SWITCH"))
+    if (!is_loose)
     {
-        PlayPoppetEditSound("poppet/deleteobject", -10000.0f, -10000.0f);
-        poppet->Backup();
+        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_DELETE, L"BP_DELETE_SWITCH"))
+        {
+            PlayPoppetEditSound("poppet/deleteobject", -10000.0f, -10000.0f);
+            poppet->Backup();
+    
+            part_switch->Outputs[SwitchConnectorRefPort]->RemoveTarget(SwitchConnector, SwitchConnectorPort);
+    
+            ClearSwitchConnector();
+            poppet->PopMode();
+        }
 
-        part_switch->Outputs[SwitchConnectorRefPort]->RemoveTarget(SwitchConnector, SwitchConnectorPort);
+        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_COPY, (const wchar_t*)NULL))
+        {
+            PlayPoppetEditSound("poppet/createstamp", -10000.0f, -10000.0f);
 
-        ClearSwitchConnector();
-        poppet->PopMode();
-
+            SwitchConnector = SwitchConnectorRef;
+            SwitchConnectorPort = -1;
+        }
     }
 }
 
