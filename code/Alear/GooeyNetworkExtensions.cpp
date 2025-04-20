@@ -777,7 +777,7 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             int num_inputs = MAX((int)setting.FixedToGame(action.Value), 2);
             if (part_switch != NULL)
             {
-                for (int i = part_switch->NumInputs - 1; i >= action.Value; --i)
+                for (int i = part_switch->NumInputs - 1; i >= num_inputs; --i)
                 {
                     CSwitchOutput* input = thing->GetInput(i);
                     if (input != NULL)
