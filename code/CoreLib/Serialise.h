@@ -239,6 +239,7 @@ ReflectReturn Reflect(R& r, s32& h)
         h = (u32)(h << 1) ^ (h >> 31);
         ReflectReturn res = ReflectCompressedInt(r, h);
         h = (s32)(h >> 1) ^ (u32)(-(s32)(h & 1));
+        return res;
     }
     else return r.ReadWrite((void*)&h, sizeof(u32));
 }

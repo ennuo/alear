@@ -121,11 +121,14 @@ void RSyncedProfile::InitializeExtraData()
 }
 
 template<typename R>
-ReflectReturn Reflect(R& r, SPortData& d)
+ReflectReturn Reflect(R& r, CSwitchSignal& d);
+
+template<typename R>
+ReflectReturn Reflect(R& r, CCompactSwitchOutput& d)
 {
     ReflectReturn ret;
-    ADD(From);
-    ADD(To);
+    ADD(Activation);
+    ADD(Ports);
     return ret;
 }
 
@@ -664,7 +667,7 @@ private:
 ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 {
     ReflectReturn ret = REFLECT_OK;
-    CScopedPart _scoped_part(PART_TYPE_SCRIPT);
+    CScopedPart _scoped_part(PART_TYPE_SCRIPT_NAME);
 
     const char* s = Name.c_str();
     int name_len = StringLength(s);
@@ -738,7 +741,35 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
                 PSwitch* part_switch = thing->GetPSwitch();
                 if (part_switch == NULL) return REFLECT_UNINITIALISED;
 
-                if ((ret = Reflect(r, part_switch->PortData)) != REFLECT_OK) return ret;
+                CVector<CCompactSwitchOutput> outputs;
+
+                if ((ret = Reflect(r, outputs)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->ManualActivation)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->CrappyOldLBP1Switch)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->Behaviour)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->OutputType)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->PlaySwitchAudio)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->DetectUnspawnedPlayers)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->ResetWhenFull)) != REFLECT_OK) return ret;
+
+                DebugLog("loaded logic component with %d outputs\n", outputs.size());
+
+                CThingPtr* it = part_switch->TargetList.begin();
+                
+                part_switch->Outputs.try_resize(outputs.size());
+                for (int i = 0; i < outputs.size(); ++i)
+                {
+                    CCompactSwitchOutput& compact = outputs[i];
+                    CSwitchOutput* output = new CSwitchOutput();
+                    output->Owner = part_switch;
+                    output->Port = i;
+
+                    output->Activation = compact.Activation;
+                    for (int j = 0; j < compact.Ports.size(); ++j, ++it)
+                        output->TargetList.push_back(CSwitchTarget(*it, compact.Ports[j]));
+                    
+                    part_switch->Outputs[i] = output;
+                }
 
                 break;
             }
@@ -829,12 +860,25 @@ ReflectReturn PScriptName::WriteAlearData()
     }
 
     PSwitch* part_switch = thing->GetPSwitch();
-    if (part_switch != NULL && part_switch->HasCustomData())
+    if (part_switch != NULL)
     {
         u32 magic = 0x4c4f4743;
         if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
 
-        if ((ret = Reflect(r, part_switch->PortData)) != REFLECT_OK) return ret;
+        CVector<CCompactSwitchOutput> outputs(part_switch->Outputs.size());
+        for (int i = 0; i < part_switch->Outputs.size(); ++i)
+            outputs.push_back(CCompactSwitchOutput(part_switch->Outputs[i]));
+
+        DebugLog("writing logic component with %d outputs\n", outputs.size());
+        
+        if ((ret = Reflect(r, outputs)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->ManualActivation)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->CrappyOldLBP1Switch)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->Behaviour)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->OutputType)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->PlaySwitchAudio)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->DetectUnspawnedPlayers)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->ResetWhenFull)) != REFLECT_OK) return ret;
     }
 
     PYellowHead* part_yellowhead = thing->GetPYellowHead();
@@ -894,8 +938,7 @@ bool CThing::HasCustomPartData()
     PYellowHead* yellowhead = GetPYellowHead();
     if (yellowhead != NULL && yellowhead->Poppet != NULL) return true;
     
-    PSwitch* part_switch = GetPSwitch();
-    if (part_switch != NULL && part_switch->HasCustomData()) return true;
+    if (GetPSwitch() != NULL) return true;
 
     PGeneratedMesh* mesh = GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData()) return true;
@@ -949,6 +992,8 @@ enum
 void CThing::OnFixup()
 {
     DebugLog("fixing loading thing...\n");
+
+    UpdateObjectType();
 
     PSwitch* part_switch = GetPSwitch();
     if (part_switch != NULL)

@@ -41,23 +41,52 @@ namespace SystemFunctions
     MH_DefineFunc(DrawRectangle, 0x0046369c, TOC1, void, v4 min, v4 max, v4 col, bool world_space, bool z_test, bool fill);
 }
 
-CSwitchDefinition gSwitchDefinitions[NUM_SWITCH_TYPES];
-CSwitchDefinition gDefaultSwitchDefinition;
+CBone* GetRootBone(CThing* thing)
+{
+    if (thing == NULL) return NULL;
+    
+    const CMesh* mesh;
+    if (thing->GetPGeneratedMesh() != NULL) mesh = thing->GetPGeneratedMesh()->SharedMesh;
+    else
+    {
+        PRenderMesh* part_render_mesh;
+        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return NULL; 
+        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return NULL;
+
+        mesh = &part_render_mesh->Mesh->mesh;
+    }
+
+    if (mesh == NULL || mesh->Bones.size() == 0) return NULL;
+    return mesh->Bones.begin();
+}
 
 bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, bool output, v4 ray_pos, v4 ray_dir, float& intersect_dist)
 {
-    PRenderMesh* part_render_mesh;
-    if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
-    if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+    if (thing == NULL) return false;
 
-    CMesh& mesh = part_render_mesh->Mesh->mesh;
+    bool centered = false;
+
+    const CMesh* mesh;
+    if (thing->GetPGeneratedMesh() != NULL) 
+    {
+        mesh = thing->GetPGeneratedMesh()->SharedMesh;
+        centered = num_ports == 1 && !output;
+    }
+    else
+    {
+        PRenderMesh* part_render_mesh;
+        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
+        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+
+        mesh = &part_render_mesh->Mesh->mesh;
+    }
 
     // There technically shouldn't ever normally be a case where
     // the model doesn't have any bones due to how LBP works in general,
     // but we'll still check it anyways, I guess.
-    if (mesh.Bones.size() == 0) return false;
+    if (mesh == NULL || mesh->Bones.size() == 0) return false;
 
-    CBone& bone = mesh.Bones.front();
+    CBone& bone = mesh->Bones.front();
     const m44& wpos = thing->GetPPos()->GetWorldPosition();
 
     v4 center = bone.SkinPoseMatrix.getCol3();
@@ -72,8 +101,18 @@ bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, 
     // we'll split the mesh's bound box for a boxcast.
     if (!output && switch_connector)
     {
-        v4 bl(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
-        v4 tr(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
+        v4 bl, tr;
+
+        if (centered)
+        {
+            bl = bone.BoundBoxMin;
+            tr = bone.BoundBoxMax;
+        }
+        else
+        {
+            bl = v4(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
+            tr = v4(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
+        }
         
         v4 hitout;
         float tout;
@@ -85,90 +124,164 @@ bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, 
         return true;
     }
 
-    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
-
     // Otherwise, we'll do a sphere cast against the port.
+
+    if (centered)
+        return NPoppetUtils::RaySphereIntersect(wpos * center, PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+
+    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
     return NPoppetUtils::RaySphereIntersect(wpos * v4(origin, (top + bottom) / 2.0f, center.getZ(), 1.0f), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
 }
 
-void InitializeSwitchDefinitions()
+int GetNumOutputs(PSwitch* sw)
 {
-    DebugLog("initializing switch definitions...\n");
-
+    switch (sw->Type)
     {
-        CSwitchDefinition& def = gSwitchDefinitions[SWITCH_TYPE_AND];
-        def.SwitchType = SWITCH_TYPE_AND;
-        def.MaxInputs = MAX_PORTS;
-        def.NumInputs = 2;
-    }
-
-    {
-        CSwitchDefinition& def = gSwitchDefinitions[SWITCH_TYPE_OR];
-        def.SwitchType = SWITCH_TYPE_OR;
-        def.MaxInputs = MAX_PORTS;
-        def.NumInputs = 2;
-    }
-
-    {
-        CSwitchDefinition& def = gSwitchDefinitions[SWITCH_TYPE_ALWAYS_ON];
-        def.SwitchType = SWITCH_TYPE_ALWAYS_ON;
-        def.MaxInputs = 0;
-        def.NumInputs = 0;
-    }
-
-    {
-        CSwitchDefinition& def = gSwitchDefinitions[SWITCH_TYPE_NOT];
-        def.SwitchType = SWITCH_TYPE_NOT;
-        def.MaxInputs = 1;
-        def.NumInputs = 1;    
-    }
-}
-
-int GetNumInputs(CThing* thing)
-{
-    if (thing == NULL) return 0;
-    PSwitch* sw = thing->GetPSwitch();
-    if (sw != NULL)
-    {
-        if (sw->Type == SWITCH_TYPE_AND || sw->Type == SWITCH_TYPE_OR || sw->Type == SWITCH_TYPE_XOR || sw->Type == SWITCH_TYPE_SELECTOR)
-            return sw->NumInputs;
-        if (sw->Type == SWITCH_TYPE_ALWAYS_ON)
-            return 0;
+        case SWITCH_TYPE_SIGN_SPLIT:
+            return 2;
+        case SWITCH_TYPE_SELECTOR:
+            return sw->NumInputs - 1;
     }
 
     return 1;
 }
 
+int GetNumInputs(CThing* thing)
+{
+    switch (thing->ObjectType)
+    {
+        case OBJECT_TAG:
+        case OBJECT_LIGHT:
+        case OBJECT_EXPLOSIVE_IMPACT:
+        case OBJECT_EXPLOSIVE_TRIGGERED:
+        case OBJECT_DISSOLVABLE:
+        case OBJECT_MESH_GENERATED_TWEAKABLE:
+        case OBJECT_MESH_GENERATED_HOLOGRAM:
+        case OBJECT_MESH_GENERATED_STICKER_PANEL:
+        case OBJECT_MESH_GENERATED_OUTLINE:
+        case OBJECT_MESH_GENERATED_SILHOUETTE:
+        case OBJECT_MESH_TWEAKABLE:
+        case OBJECT_JOINT_MOTOR_BOLT:
+        case OBJECT_JOINT_WOBBLE_BOLT:
+        case OBJECT_JOINT_CHAIN:
+        case OBJECT_JOINT_PISTON:
+        case OBJECT_CAMERA_GAME:
+        case OBJECT_CAMERA_MOVIE:
+        case OBJECT_SWITCH_TOGGLE:
+        case OBJECT_SWITCH_RANDOM:
+        case OBJECT_SWITCH_NOT:
+        case OBJECT_SWITCH_SIGN_SPLIT:
+        case OBJECT_SWITCH_ANIMATIC:
+        case OBJECT_SWITCH_CIRCUIT_NODE:
+        case OBJECT_LETHALISER:
+        case OBJECT_DESTROYER:
+        case OBJECT_SACKBOT_BEHAVIOUR:
+        case OBJECT_SOUND:
+        case OBJECT_MUSIC_NORMAL:
+        case OBJECT_MUSIC_INTERACTIVE:
+        case OBJECT_EMITTER:
+        case OBJECT_PHYSICS_TWEAK:
+        case OBJECT_MATERIAL_TWEAK:
+        case OBJECT_SMOKE_MACHINE:
+        case OBJECT_THRUSTER:
+        case OBJECT_BUBBLE_MACHINE:
+        case OBJECT_GLOBAL_LIGHT_TWEAK:
+        case OBJECT_GLOBAL_WATER_TWEAK:
+        case OBJECT_GLOBAL_AUDIO_TWEAK:
+        case OBJECT_GLOBAL_GRAVITY_TWEAK:
+        case OBJECT_SCORE_GIVER:
+        case OBJECT_GAME_ENDER:
+        case OBJECT_BOUNCE_PAD:
+        case OBJECT_MOVER:
+        case OBJECT_FOLLOWER:
+        case OBJECT_IN_OUT_MOVER:
+        case OBJECT_GYROSCOPE:
+        case OBJECT_LOOK_AT_ROTATOR:
+        case OBJECT_ROCKET_ROTATOR:
+        case OBJECT_ROTATOR:
+        case OBJECT_CUSTOM_NOTE:
+        case OBJECT_CREATURE_BRAIN_BASE:
+        case OBJECT_MAGIC_MOUTH:
+        case OBJECT_MAGIC_EYE:
+        case OBJECT_ENTRANCE:
+        case OBJECT_CHECKPOINT_SINGLE_LIFE:
+        case OBJECT_CHECKPOINT_DOUBLE_LIFE:
+        case OBJECT_CHECKPOINT_INFINITE_LIFE:
+        case OBJECT_SCOREBOARD:
+        case OBJECT_LEVEL_LINK:
+        case OBJECT_CLOSE_LEVEL:
+        case OBJECT_SCORE_BUBBLE:
+        case OBJECT_PRIZE_BUBBLE:
+        case OBJECT_KEY:
+        case OBJECT_RACE_START:
+        case OBJECT_RACE_END:
+        case OBJECT_BULLET_WATER:
+        case OBJECT_TUTORIAL_MONITOR:
+        case OBJECT_MOTION_RECORDER:
+        case OBJECT_PIN_GIVER:
+        case OBJECT_ATTRACTOR:
+        case OBJECT_WORM_HOLE:
+        case OBJECT_MESH_GENERATED_TOUCH:
+        case OBJECT_STATICCLING_TWEAK:
+        case OBJECT_SPINNING_OBJECT:
+        case OBJECT_MESH_GENERATED_DCCOMICS_SPEED:
+        case OBJECT_MESH_GENERATED_DCCOMICS_LANTERNPOWER:
+        case OBJECT_MESH_GENERATED_DCCOMICS_FIREFLAKES:
+            return 1;
+
+        case OBJECT_SWITCH_COUNTDOWN:
+        case OBJECT_SWITCH_TIMER:
+        case OBJECT_SWITCH_DIRECTION:
+        case OBJECT_ADVANCED_ROTATOR:
+            return 2;
+
+        case OBJECT_ADVANCED_MOVER:
+        case OBJECT_JOYSTICK_ROTATOR:
+            return 3;
+
+        case OBJECT_SWITCH_AND:
+        case OBJECT_SWITCH_OR:
+        case OBJECT_SWITCH_XOR:
+            return thing->GetPSwitch()->NumInputs;
+        
+        case OBJECT_SWITCH_SELECTOR:
+            return thing->GetPSwitch()->Outputs.size() + 1;
+    }
+
+    return 0;
+}
+
 void RenderSwitchDebug()
 {
-    return;
-
     PWorld* world = gGame->GetWorld();
     if (world == NULL) return;
-    for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
-    {
-        PSwitch* sw = (*it);
-        if (sw == NULL) continue;
 
-        CThing* thing = sw->GetThing();
-        m44& wpos = thing->GetPPos()->Game.WorldPosition;
+    for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    {
+        CThing* thing = *it;
+        if (thing == NULL || thing->GetPPos() == NULL) continue;
 
         int num_inputs = GetNumInputs(thing);
-        CBone& bone = thing->GetPRenderMesh()->Mesh->mesh.Bones.front();
+        if (num_inputs == 0) continue;
 
-        v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+        m44& wpos = thing->GetPPos()->Game.WorldPosition;
 
-        float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+        CBone* bone = GetRootBone(thing);
+        if (bone == NULL) continue;
+
+        v4 center = bone->SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+
+        float dist = abs(bone->BoundBoxMax.getY() - bone->BoundBoxMin.getY());
         float inc = dist / (float)num_inputs;
 
 
         for (int i = 0; i < num_inputs; ++i)
         {
-            float top = bone.BoundBoxMax.getY() - (inc * (float)(i + 0));
-            float bottom = bone.BoundBoxMax.getY() - (inc * (float)(i + 1));
+            float top = bone->BoundBoxMax.getY() - (inc * (float)(i + 0));
+            float bottom = bone->BoundBoxMax.getY() - (inc * (float)(i + 1));
 
-            v4 bl(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
-            v4 tr(bone.BoundBoxMin.getX(), ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
+            v4 bl(bone->BoundBoxMin.getX() - PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
+            v4 tr(bone->BoundBoxMin.getX(), ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
 
             v4 color;
             switch (i % 3)
@@ -181,28 +294,23 @@ void RenderSwitchDebug()
             SystemFunctions::DrawRectangle(wpos * bl, wpos * tr, color, true, true, true);
         }
 
+        PSwitch* sw = thing->GetPSwitch();
+        if (sw == NULL) continue;
+
         int num_outputs = sw->Outputs.size();
         inc = dist / (float)num_outputs;
 
         for (int i = 0; i < num_outputs; ++i)
         {
-            float top = bone.BoundBoxMax.getY() - (inc * (float)(i + 0));
-            float bottom = bone.BoundBoxMax.getY() - (inc * (float)(i + 1));
+            float top = bone->BoundBoxMax.getY() - (inc * (float)(i + 0));
+            float bottom = bone->BoundBoxMax.getY() - (inc * (float)(i + 1));
 
-            v4 bl(bone.BoundBoxMax.getX(), ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
-            v4 tr(bone.BoundBoxMax.getX() + PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
+            v4 bl(bone->BoundBoxMax.getX(), ((top + bottom) / 2.0f) - PORT_RADIUS, center.getZ(), 1.0f);
+            v4 tr(bone->BoundBoxMax.getX() + PORT_RADIUS * 2.0f, ((top + bottom) / 2.0f) + PORT_RADIUS, center.getZ(), 1.0f);
 
             SystemFunctions::DrawRectangle(wpos * bl, wpos * tr, v4(1.0f), true, true, true);
         }
     }
-}
-
-const CSwitchDefinition& GetSwitchDefinition(const CThing* thing)
-{
-    if (thing == NULL) return gDefaultSwitchDefinition;
-    PSwitch* part_switch = thing->GetPSwitch();
-    if (part_switch == NULL) return gDefaultSwitchDefinition;
-    return part_switch->GetSwitchDefinition();
 }
 
 int GetNumInputs(const CThing* thing)
@@ -220,13 +328,6 @@ MH_DefineFunc(PSwitch_RaycastConnector, 0x0004d764, TOC0, bool, PSwitch*, v4, v4
 bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
 {
     return PSwitch_RaycastConnector(this, start, dir, t, hit);
-}
-
-const CSwitchDefinition& PSwitch::GetSwitchDefinition() const
-{
-    if (0 <= Type && Type < NUM_SWITCH_TYPES)
-        return gSwitchDefinitions[Type];
-    return gDefaultSwitchDefinition;
 }
 
 void CPoppet::InitializeExtraData()
@@ -306,11 +407,11 @@ CSwitchOutput::~CSwitchOutput()
 void PSwitch::InitializeExtraData()
 {
     new (&Outputs) CVector<CSwitchOutput>();
-    new (&PortData) CVector<SPortData>();
     new (&ManualActivation) CSwitchSignal();
     Behaviour = 0;
-    UpdateFrame = 0;
     OutputType = 0;
+    CrappyOldLBP1Switch = true;
+    PlaySwitchAudio = true;
 }
 
 void PSwitch::DestroyExtraData()
@@ -319,13 +420,11 @@ void PSwitch::DestroyExtraData()
         delete Outputs[i];
     
     Outputs.~CVector();
-    PortData.~CVector();
 }
 
 void PSwitch::ClearLegacyData()
 {
     TargetList.clear();
-    PortData.clear();
     ConnectorGrabbed.clear();
     ConnectorPoints.clear();
     ConnectorPos.clear();
@@ -336,66 +435,45 @@ void PSwitch::GenerateLegacyData()
     ConnectorGrabbed.clear();
     ConnectorPos.clear();
 
+    DeprecatedManualActivation = ManualActivation.Analogue;
+
     // If we're saving a switch, copy all thing references into
     // the target list, so references get cached and for compatibility
     // with retail.
     for (int i = 0; i < Outputs.size(); ++i)
     {
         CSwitchOutput& output = *Outputs[i];
+        
+        if (i == 0)
+            Activation = output.Activation.Analogue;
+        
         for (int j = 0; j < output.TargetList.size(); ++j)
         {
             CSwitchTarget& target = output.TargetList[j];
-            const CSwitchDefinition& def = GetSwitchDefinition();
 
             ConnectorGrabbed.push_back(false);
-            ConnectorPos.push_back(def.GetOutputPortOffset(j, def.NumOutputs));
+            ConnectorPos.push_back(v4(0.0f));
 
             TargetList.push_back(target.Thing);
         }
     }
-
-    // Generate all port mappings since we can't directly write them to the binary
-    // without using serialization extensions.
-    PortData.clear();
-    for (int i = 0; i < Outputs.size(); ++i)
-    {
-        CSwitchOutput& output = *Outputs[i];
-        for (int j = 0; j < output.TargetList.size(); ++j)
-            PortData.push_back(SPortData(i, output.TargetList[j].Port));
-    }
-}
-
-bool PSwitch::HasCustomData()
-{
-    // If anything is connected from an output
-    // other than the first, then we'll have to
-    // serialize extra data.
-    for (int i = 1; i < Outputs.size(); ++i)
-    {
-        if (Outputs[i]->TargetList.size() != 0)
-            return true;
-    }
-
-    // If we're targeting anything other than the first
-    // port of another switch, then we need to serialize extra data.
-    for (int i = 0; i < Outputs.size(); ++i)
-    for (int j = 0; j < Outputs[i]->TargetList.size(); ++j)
-    {
-        if (Outputs[i]->TargetList[j].Port != 0)
-            return true;
-    }
-
-    return false;
 }
 
 void PSwitch::OnPartLoaded()
 {
-    // Convert target list to output list, since we
-    // don't serialize it directly to maintain
-    // compatibility with retail levels.
-    const CSwitchDefinition& def = GetSwitchDefinition();
-    Outputs.try_resize(def.NumOutputs);
-    for (int i = 0; i < def.NumOutputs; ++i)
+    // If the outputs array isn't empty, it means it got
+    // populated from the data extensions.
+    if (Outputs.size() != 0)
+    {
+        ClearLegacyData();
+        return;
+    }
+
+    // Otherwise if it is empty, means we're working with legacy data,
+    // so construct our outputs and assign the target list to them.
+
+    Outputs.try_resize(GetNumOutputs(this));
+    for (int i = 0; i < Outputs.size(); ++i)
     {
         CSwitchOutput* output = new CSwitchOutput();
         output->Owner = this;
@@ -404,27 +482,11 @@ void PSwitch::OnPartLoaded()
         Outputs[i] = output;
     }
 
-    // If we didn't get any port data from the Alear extension data,
-    // then it means everything is fine just targeting the first port
-    // from the first output.
-    if (PortData.empty())
-    {
-        CSwitchOutput* output = Outputs.front();
-        output->TargetList.try_resize(TargetList.size());
-        for (int i = 0; i < TargetList.size(); ++i)
-            output->TargetList[i].Thing = TargetList[i];
-    }
-    // If we have port data though, it gives us the mappings for each port.
-    else
-    {
-        for (int i = 0; i < TargetList.size(); ++i)
-        {
-            SPortData port_data = PortData[i];
-            DebugLog("port remap from %d to %d\n", port_data.From, port_data.To);
-            Outputs[port_data.From]->TargetList.push_back(CSwitchTarget(TargetList[i], port_data.To));
-        }
-    }
-
+    CSwitchOutput* output = Outputs.front();
+    output->TargetList.try_resize(TargetList.size());
+    for (int i = 0; i < TargetList.size(); ++i)
+        output->TargetList[i].Thing = TargetList[i];
+    
     ClearLegacyData();
 }
 
@@ -466,6 +528,26 @@ void CPoppetEditState::ClearSwitchConnector()
     SwitchConnector = NULL;
     SwitchConnectorRef = NULL;
     SetCursorHoverObject(NULL, -1);
+}
+
+void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool one_shot)
+{
+    switch (target->ObjectType)
+    {
+        case OBJECT_EMITTER:
+        {
+            if (!one_shot) return;
+
+            PEmitter* part_emitter = target->GetPEmitter();
+            if (part_emitter == NULL) return;
+
+            if (target->Behaviour != EMITTER_BEHAVIOR_ONE_SHOT) return;
+
+            part_emitter->AttemptFire(false, NULL);
+
+            break;
+        }
+    }
 }
 
 CSwitchSignal PSwitch::GetActivationFromInput(int port)
@@ -546,7 +628,25 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
 void PSwitch::Update()
 {
     for (CSwitchOutput** it = Outputs.begin(); it != Outputs.end(); ++it)
-        (*it)->Activation = GetNewActivation((*it)->Port);
+    {
+        CSwitchOutput* output = *it;
+
+        CSwitchSignal old = output->Activation;
+        if (output->TargetList.size() == 0)
+            output->Activation = CSwitchSignal();    
+        else 
+            output->Activation = GetNewActivation(output->Port);
+
+        bool one_shot = (!old.Ternary && output->Activation.Ternary) || CrappyOldLBP1Switch;
+        bool change = old.Ternary != output->Activation.Ternary || old.Player != output->Activation.Player;
+        if (change || one_shot)
+        {
+            for (CSwitchTarget* target = output->TargetList.begin(); target != output->TargetList.end(); ++target)
+                PerformReactionStatic(output, target->Thing, target->Port, one_shot);
+        }
+    }
+
+    CrappyOldLBP1Switch = false;
 
     if (Type == SWITCH_TYPE_AND || Type == SWITCH_TYPE_OR || Type == SWITCH_TYPE_XOR || Type == SWITCH_TYPE_SELECTOR)
     {
@@ -793,10 +893,10 @@ void DrawWire(CSwitchOutput* output, CPoppet* player, CThing* target, int port)
         (const v2*)points,
         num_points,
         sizeof(v2),
-        25.0f,
+        20.0f,
         dist,
         false,
-        true,
+        false,
         trans,
         trans,
         false,
@@ -903,11 +1003,11 @@ void CPoppet::RaycastAgainstSwitchConnector(v4 ray_start, v4 ray_dir, CRaycastRe
     PWorld* world = gGame->GetWorld();
 
     CSwitchOutput* output = Edit.SwitchConnectorRef->GetPSwitch()->Outputs[Edit.SwitchConnectorRefPort];
-
-    for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
+    
+    for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
     {
-        PSwitch* sw = (*it);
-        CThing* thing = sw->GetThing();
+        CThing* thing = (*it);
+        if (thing == NULL || thing->GetPPos() == NULL || GetNumInputs(thing) == 0) continue;
 
         float t = 1.0e+20f;
 
@@ -1085,10 +1185,32 @@ template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchSig
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchTarget& d);
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchOutput& d);
 
+template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CSwitchSignal& d);
+template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CSwitchSignal& d);
+
 ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
 {
     ReflectReturn ret;
+    ADD(Inverted);
+    ADD(Radius);
+    ADD(ColorIndex);
+    ADD(CrappyOldLBP1Switch);
+    ADD(BehaviourOld);
     ADD(Outputs);
+    ADD(HideInPlayMode);
+    ADD(Type);
+    ADD(ReferenceThing);
+    ADD(ManualActivation);
+    ADD(ActivationHoldTime);
+    ADD(RequireAll);
+    ADD(BulletsRequired);
+    ADD(BulletsDetected);
+    ADD(BulletRefreshTime);
+    ADD(ResetWhenFull);
+    ADD(Behaviour);
+    ADD(HideConnectors);
+    ADD(DetectUnspawnedPlayers);
+    ADD(PlaySwitchAudio);
     return ret;
 }
 
@@ -1104,7 +1226,7 @@ extern "C" uintptr_t _raycast_hook;
 extern "C" uintptr_t _popit_destroy_extra_data_hook;
 extern "C" uintptr_t _popit_init_extra_data_hook;
 extern "C" uintptr_t _render_wire_hook;
-extern "C" uintptr_t _switch_gather_variables_hook;
+
 
 void OnPartSwitchDestructor(PSwitch* sw)
 {
@@ -1179,16 +1301,19 @@ namespace LogicSystemNativeFunctions
 void InitLogicSystemHooks()
 {
     LogicSystemNativeFunctions::Register();
-    InitializeSwitchDefinitions();
 
     MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
     MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
+
+    MH_PokeHook(0x007407b4, GatherSwitchVariables);
 
     MH_PokeMemberHook(0x00365a0c, CPoppetEditState::SetSwitchConnector);
     MH_PokeMemberHook(0x003759dc, CPoppetEditState::UpdateSwitchConnector);
     MH_PokeMemberHook(0x0034aa24, CPoppet::RaycastAgainstSwitchConnector);
     MH_PokeMemberHook(0x00078ed8, PSwitch::Update);
     MH_PokeCall(0x0004632c, OnPartSwitchDestructor);
+
+    MH_PokeMemberHook(0x00077c18, PEmitter::Update);
 
     // replace stb with stw for collating raycast so it copies additional fields
     MH_Poke32(0x00356aa0, 0x815f004c /* lwz %r10, 0x4c(%r31) */);
@@ -1206,6 +1331,4 @@ void InitLogicSystemHooks()
     MH_PokeBranch(0x0034f264, &_popit_init_extra_data_hook);
     MH_PokeBranch(0x0034b4f4, &_popit_destroy_extra_data_hook);
     MH_PokeBranch(0x001df8f4, &_render_wire_hook);
-
-    MH_PokeBranch(0x00740884, &_switch_gather_variables_hook);
 }

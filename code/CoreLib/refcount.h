@@ -62,6 +62,8 @@ public:
 
 		if (Ref)
 			Ref->AddRef();
+
+		return *this;
 	}
 
 	CP<T>& operator=(CP<T> const& rhs) 
@@ -76,6 +78,8 @@ public:
 
 		if (Ref)
 			Ref->AddRef();
+
+		return *this;
 	}
 public:
 	bool operator!() const { return !Ref; }
@@ -133,6 +137,8 @@ public:
 
 		if (this->Ref)
 			this->Ref->AddRef();
+
+		return *this;
 	}
 
 	StaticCP<T>& operator=(StaticCP<T> const& rhs) 
@@ -147,6 +153,8 @@ public:
 
 		if (this->Ref)
 			this->Ref->AddRef();
+
+		return *this;
 	}
 public:
     RemoveRefFunc RemoveRefPtr;

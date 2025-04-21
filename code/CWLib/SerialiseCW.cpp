@@ -111,7 +111,7 @@ template<typename R, typename D>
 ReflectReturn Reflect(R& r, CP<D>& d)
 {
     if (r.IsGatherVariables() || r.GetSaving()) return REFLECT_NOT_IMPLEMENTED;
-    ReflectResourceCP_CReflectionLoadVector(r, (CP<CResource>*)&d, GetResourceType<D>());
+    return ReflectResourceCP_CReflectionLoadVector(r, (CP<CResource>*)&d, GetResourceType<D>());
 }
 
 

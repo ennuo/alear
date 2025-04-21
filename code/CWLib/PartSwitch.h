@@ -28,6 +28,14 @@ enum SwitchBehavior
     SWITCH_BEHAVIOR_COUNT
 };
 
+enum EmitterBehavior
+{
+    EMITTER_BEHAVIOR_OFF_ON,
+    EMITTER_BEHAVIOR_ONE_SHOT,
+    EMITTER_BEHAVIOR_SPEED_SCALE,
+    EMITTER_BEHAVIOR_COUNT
+};
+
 enum SwitchEvent
 {
     SWITCH_EVENT_UPDATE,
@@ -127,73 +135,6 @@ enum ESwitchType
     NUM_SWITCH_TYPES
 };
 
-class CSwitchDefinition {
-    public:
-        inline CSwitchDefinition() : BaseMesh(), InputPortMesh(), OutputPortMesh(), AuxillaryPortMesh()
-        {
-            SwitchType = SWITCH_TYPE_INVALID;
-    
-            NumOutputs = 1;
-            NumInputs = 1;
-            NumAuxillaryInputs = 0;
-            
-            MaxInputs = 1;
-            MaxOutputs = 1;
-    
-            Left = 60.0f;
-            Right = 100.0f;
-            Top = 60.0f;
-            Bottom = 60.0f;
-    
-            PortIncrementBias = 0.0f;
-            InputPortRadius = 20.0f;
-            OutputPortRadius = 20.0f;
-            AuxillaryPortRadius = 20.0f;
-        }
-    public:
-        inline v4 GetInputPortOffset(int index, int num_ports) const
-        {
-            float spacing = (Top + Bottom) / (num_ports + 1.0f);
-            return v4(-Left, Top - (spacing * (index + 1)) - (InputPortRadius / 2.0f * index), 0.0f, 1.0f);
-        }
-    
-        inline v4 GetOutputPortOffset(int index, int num_ports) const
-        {
-            float spacing = (Top + Bottom) / (num_ports + 1.0f);
-            return v4(Right, Top - (spacing * (index + 1)) - (OutputPortRadius / 2.0f * index), 0.0f, 1.0f);
-        }
-    
-        inline v4 GetAuxillaryPortOffset(int index, int num_ports) const
-        {
-            float spacing = (Left + Right) / (num_ports + 1.0f);
-            return v4(Left - (spacing * (index + 1)) - (AuxillaryPortRadius / 2.0f * index), -Bottom, 0.0f, 1.0f);
-        }
-    public:
-        CP<RMesh> BaseMesh;
-        CP<RMesh> InputPortMesh;
-        CP<RMesh> OutputPortMesh;
-        CP<RMesh> AuxillaryPortMesh;
-    
-        ESwitchType SwitchType;
-    
-        u32 NumOutputs;
-        u32 NumInputs;
-        u32 NumAuxillaryInputs;
-    
-        u32 MaxInputs;
-        u32 MaxOutputs;
-    
-        f32 Left;
-        f32 Right;
-        f32 Bottom;
-        f32 Top;
-    
-        f32 PortIncrementBias;
-        f32 InputPortRadius;
-        f32 OutputPortRadius;
-        f32 AuxillaryPortRadius;
-    };
-
 class ConnectorPointList {
 public:
     inline ConnectorPointList() : Points(), Initialized() {}
@@ -259,13 +200,18 @@ public:
     const wchar_t* UserDefinedName;
 };
 
-class SPortData {
+class CCompactSwitchOutput {
 public:
-    inline SPortData() : From(), To() {}
-    inline SPortData(u8 from, u8 to) : From(from), To(to) {}
+    inline CCompactSwitchOutput() : Activation(), Ports() {}
+    inline CCompactSwitchOutput(CSwitchOutput* output) : Activation(output->Activation), Ports()
+    {
+        Ports.try_resize(output->TargetList.size());
+        for (int i = 0; i < output->TargetList.size(); ++i)
+            Ports[i] = output->Port;
+    }
 public:
-    u8 From;
-    u8 To;
+    CSwitchSignal Activation;
+    CVector<u32> Ports; 
 };
 
 class PSwitch : public CPart {
@@ -273,10 +219,8 @@ public:
     void InitializeExtraData();
     void DestroyExtraData();
     void OnPartLoaded();
-    bool HasCustomData();
     void GenerateLegacyData();
     void ClearLegacyData();
-    const CSwitchDefinition& GetSwitchDefinition() const;
 public:
     void Update();
     CSwitchSignal GetActivationFromInput(int port);
@@ -328,12 +272,14 @@ public:
 private:
     char Pad[0xc];
 public:
-    int UpdateFrame;
+    CVector<CSwitchOutput*> Outputs;
+    CSwitchSignal ManualActivation;
+    bool CrappyOldLBP1Switch;
     int Behaviour;
     int OutputType;
-    CSwitchSignal ManualActivation;
-    CVector<CSwitchOutput*> Outputs;
-    CVector<SPortData> PortData;
+    bool PlaySwitchAudio;
+    bool DetectUnspawnedPlayers;
+    bool ResetWhenFull;
 };
 
 #endif // PART_SWITCH_H

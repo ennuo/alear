@@ -64,8 +64,9 @@ unsigned int StringCopy(wchar_t* dst, wchar_t const* src, unsigned int size);
 size_t FormatStringVarArg(char* dst, unsigned int size, char const* format, va_list args)
 {
 	dst[size - 1] = '\0';
-	vsnprintf(dst, size, format, args);
+	size_t len = vsnprintf(dst, size, format, args);
 	dst[size - 1] = '\0';
+	return len;
 }
 
 
