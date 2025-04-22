@@ -425,6 +425,7 @@ namespace TweakSettingNativeFunctions
             }
             case E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY: return setting.GameToFixed(thing->GetPSwitch()->ManualActivation.Analogue);
             case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT: return setting.GameToFixed(thing->GetPSwitch()->NumInputs);
+            case E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0: return setting.GameToFixed(thing->GetPSwitch()->Type);
             case E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT:
             case E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT:
                 return thing->GetPSwitch()->OutputType;
@@ -670,6 +671,14 @@ bool InitTweakSettings()
         .SetSteps(1.0f, 1.0f)
         .SetDebugToolTip(L"Number of Ports");
 
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0)
+        .SetupCounter()
+        .SetIcon(inputs_icon_texture, 0)
+        .SetMinMax(SWITCH_TYPE_AND, NUM_SWITCH_TYPES - 1)
+        .SetSteps(1.0f, 1.0f)
+        .SetDebugToolTip(L"DEV ONLY! Switch Type");
+
+
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT)
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
         .SetIcon(sensor_icons, 9)
@@ -766,6 +775,15 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
                 part_switch->ManualActivation.Ternary = analogue < 0.0f ? -1 : analogue > 0.0f ? 1 : 0;
             }
 
+            break;
+        }
+        case E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            part_switch->Type = (int)setting.FixedToGame(action.Value);
+            thing->OnFixup();
             break;
         }
         case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT:
@@ -1103,6 +1121,7 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_COLOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

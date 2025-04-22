@@ -1336,11 +1336,21 @@ namespace LogicSystemNativeFunctions
         return MakeLamsKeyID(prefix, "_NAME");
     }
 
+    void SetSwitchType(CThing* thing, int type)
+    {
+        PSwitch* part_switch;
+        if (thing == NULL || (part_switch = thing->GetPSwitch()) == NULL) return;
+
+        part_switch->Type == type;
+        thing->OnFixup();
+    }
+
     void Register()
     {
         RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
         RegisterNativeFunction("SwitchBase", "GetNumOutputs__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetNumOutputs>);
         RegisterNativeFunction("SwitchBase", "GetTweakTitle__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetTweakTitle>);
+        RegisterNativeFunction("SwitchBase", "SetSwitchType__i", false, NVirtualMachine::CNativeFunction2V<CThing*, int>::Call<SetSwitchType>);
     }
 }
 
