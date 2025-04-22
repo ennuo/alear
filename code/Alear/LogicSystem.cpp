@@ -1147,7 +1147,6 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
                 if (target->Thing == NULL) continue;
 
                 if (!RaycastPort(target->Thing, target->Port, GetNumInputs(target->Thing), false, false, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
-                DebugLog("hit an input!!!\n");
                 if (t >= 1.0e+20f) continue;
 
                 raycast.SwitchConnector = true;

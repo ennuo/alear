@@ -207,7 +207,7 @@ public:
     {
         Ports.try_resize(output->TargetList.size());
         for (int i = 0; i < output->TargetList.size(); ++i)
-            Ports[i] = output->Port;
+            Ports[i] = output->TargetList[i].Port;
     }
 public:
     CSwitchSignal Activation;
