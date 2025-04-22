@@ -986,7 +986,9 @@ enum
     E_KEY_XOR_GATE = 73739,
     E_KEY_NOT_GATE = 73718,
     E_KEY_ALWAYS_ON = 78675,
-    E_KEY_SWITCH_BASE = 42511
+    E_KEY_SWITCH_BASE = 42511,
+    E_KEY_SIGN_SPLIT = 77755,
+    E_KEY_DIRECTION = 73736
 };
 
 void CThing::OnFixup()
@@ -1016,6 +1018,8 @@ void CThing::OnFixup()
             case SWITCH_TYPE_XOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_XOR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_NOT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_NOT_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_ALWAYS_ON: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ALWAYS_ON, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_SIGN_SPLIT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SIGN_SPLIT, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_DIRECTION: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_DIRECTION, 0, STREAM_PRIORITY_DEFAULT); break;
         }
 
         PScript* part_script = GetPScript();

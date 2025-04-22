@@ -561,6 +561,8 @@ CSwitchSignal PSwitch::GetActivationFromInput(int port)
     return activation;
 }
 
+MH_DefineFunc(GetNewActivationButton, 0x0006e7c8, TOC0, float, PSwitch*);
+
 CSwitchSignal PSwitch::GetNewActivation(int port)
 {
     CSwitchSignal activation;
@@ -571,6 +573,14 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
 
     switch (Type)
     {
+        case SWITCH_TYPE_BUTTON:
+        {
+            analogue = GetNewActivationButton(this);
+            ternary = analogue < 0.0f ? -1 : analogue > 0.0f ? 1 : 0;
+            player = E_PLAYER_NUMBER_NONE;
+            
+            break;
+        }
         case SWITCH_TYPE_ALWAYS_ON:
         {
             activation = ManualActivation;
@@ -607,6 +617,29 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
 
             break;
         }
+        case SWITCH_TYPE_SIGN_SPLIT:
+        {
+            CSwitchSignal input = GetActivationFromInput(0);
+            player = input.Player;
+            if (port == 0)
+            {
+                analogue = -input.Analogue;
+                ternary = -input.Ternary;
+                if (analogue <= 0.0f)
+                {
+                    ternary = ternary > 0 ? 1 : 0;
+                    analogue = 0.0f;
+                }
+                else if (ternary < 0) ternary = 0;
+            }
+            else
+            {
+                analogue = input.Analogue > 0.0f ? input.Analogue : 0.0f;
+                ternary = input.Ternary > 0 ? 1 : 0;
+            }
+            
+            break;
+        }
     }
 
     if (Inverted)
@@ -632,10 +665,7 @@ void PSwitch::Update()
         CSwitchOutput* output = *it;
 
         CSwitchSignal old = output->Activation;
-        if (output->TargetList.size() == 0)
-            output->Activation = CSwitchSignal();    
-        else 
-            output->Activation = GetNewActivation(output->Port);
+        output->Activation = GetNewActivation(output->Port);
 
         bool one_shot = (!old.Ternary && output->Activation.Ternary) || CrappyOldLBP1Switch;
         bool change = old.Ternary != output->Activation.Ternary || old.Player != output->Activation.Player;
@@ -664,7 +694,19 @@ void PSwitch::Update()
 
     PRenderMesh* part_render_mesh = GetThing()->GetPRenderMesh();
     if (Outputs.size() > 0 && part_render_mesh != NULL)
-        part_render_mesh->EditorColour = v4(abs(Outputs[0]->Activation.Analogue));
+    {
+        float activation = abs(Outputs[0]->Activation.Analogue);
+        if (Type == SWITCH_TYPE_SIGN_SPLIT)
+        {
+            activation = 0.0f;
+            if (Outputs[0]->Activation.Ternary)
+                activation = 1.0f / 3.0f;
+            else if (Outputs[1]->Activation.Ternary)
+                activation = 2.0f / 3.0f;
+        }
+
+        part_render_mesh->EditorColour = v4(activation);
+    }
 }
 
 void CPoppetEditState::UpdateSwitchConnector()
