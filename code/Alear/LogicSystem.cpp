@@ -483,9 +483,12 @@ void PSwitch::OnPartLoaded()
     }
 
     CSwitchOutput* output = Outputs.front();
-    output->TargetList.try_resize(TargetList.size());
+    output->TargetList.try_reserve(TargetList.size());
     for (int i = 0; i < TargetList.size(); ++i)
-        output->TargetList[i].Thing = TargetList[i];
+    {
+        if (TargetList[i] == NULL) continue;
+        output->TargetList.push_back(CSwitchTarget(TargetList[i], 0));
+    }
     
     ClearLegacyData();
 }
@@ -841,6 +844,8 @@ bool GetPortPos(CThing*thing, int port, bool output, v4& out)
     if (mesh.Bones.size() == 0) return false;
 
     CBone& bone = mesh.Bones.front();
+    if (thing->GetPPos() == NULL) return false;
+    
     const m44& wpos = thing->GetPPos()->GetWorldPosition();
 
     v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;

@@ -766,8 +766,11 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
                     output->Activation = compact.Activation;
                     for (int j = 0; j < compact.Ports.size(); ++j, ++it)
+                    {
+                        if (*it == NULL) continue;
                         output->TargetList.push_back(CSwitchTarget(*it, compact.Ports[j]));
-                    
+                    }
+
                     part_switch->Outputs[i] = output;
                 }
 
@@ -1115,7 +1118,10 @@ ReflectReturn CThing::OnLoad()
     {
         // The outputs haven't been fixed up yet, so everything should still be in the target list.
         for (CThingPtr* ptr = part_switch->TargetList.begin(); ptr != part_switch->TargetList.end(); ++ptr)
+        {
+            if (ptr->GetThing() == NULL) continue;
             (*ptr)->Behaviour = part_switch->BehaviourOld;
+        }
     }
 
     PScriptName* part = GetPScriptName();
