@@ -483,6 +483,10 @@ void PSwitch::OnPartLoaded()
     }
 
     CSwitchOutput* output = Outputs.front();
+    
+    output->Activation.Analogue = Activation;
+    ManualActivation.Analogue = DeprecatedManualActivation;
+    
     output->TargetList.try_reserve(TargetList.size());
     for (int i = 0; i < TargetList.size(); ++i)
     {
@@ -845,7 +849,7 @@ bool GetPortPos(CThing*thing, int port, bool output, v4& out)
 
     CBone& bone = mesh.Bones.front();
     if (thing->GetPPos() == NULL) return false;
-    
+
     const m44& wpos = thing->GetPPos()->GetWorldPosition();
 
     v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;
