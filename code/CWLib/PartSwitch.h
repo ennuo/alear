@@ -17,7 +17,7 @@
 // how it works in LBP2, but with some additional nonsense.
 
 
-#define MAX_PORTS (100)
+#define MAX_PORTS (10)
 
 enum SwitchBehavior
 {
@@ -223,10 +223,10 @@ public:
     void ClearLegacyData();
 public:
     void Update();
+    void SetInputCount(int size);
+    void RemoveOutput(int port);
     CSwitchSignal GetActivationFromInput(int port);
     CSwitchSignal GetNewActivation(int port);
-public:
-    bool RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit);
 public:
     CVector<CThingPtr> TargetList;
     CVector<CThingPtr> EditorHackTargetList;
@@ -257,9 +257,13 @@ public:
     union
     {
         int BulletsRequired;
-        int NumInputs;
+        int InputCount;
     };
-    int BulletsDetected;
+    union
+    {
+        int BulletsDetected;
+        int SelectorState;
+    };
     int BulletPlayerNumber;
     u32 BulletRefreshTime;
     float Activation;

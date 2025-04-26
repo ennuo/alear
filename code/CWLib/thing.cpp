@@ -33,6 +33,23 @@ void CThing::SetWorld(PWorld* world, u32 preferred_uid)
     CThing_SetWorld(this, world, preferred_uid);
 }
 
+void CThing::Deflate()
+{
+    switch (ObjectType)
+    {
+        case OBJECT_SWITCH_SELECTOR:
+        case OBJECT_SWITCH_AND:
+        case OBJECT_SWITCH_OR:
+        case OBJECT_SWITCH_XOR:
+        case OBJECT_SWITCH_NOT:
+        case OBJECT_SWITCH_ALWAYS_ON:
+        case OBJECT_SWITCH_SIGN_SPLIT:
+        case OBJECT_SWITCH_DIRECTION:
+            RemovePart(PART_TYPE_RENDER_MESH);
+            break;
+    }
+}
+
 void CThing::InitializeExtraData()
 {
     Behaviour = 0;

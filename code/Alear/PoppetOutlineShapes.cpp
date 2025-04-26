@@ -148,3 +148,8 @@ u32 GetOutlinePlanGUID(u32 mesh_guid)
 
     return 0;
 }
+
+bool GetOutlinePolygon(u32 guid, CRawVector<v2, CAllocatorMMAligned128>& poly_out, const m44& world)
+{
+    return false;
+}

@@ -67,3 +67,5 @@ gPipelineBindings: 0x009cfec8
 gGamePartyData: 0x009756bc
 gSomePadHasInputIntercepted: 0x009dc51f
 gNamedPolygons: 0x009d99a0
+HugeBoneArray: 0x009d0c04
+gUniqueThingsOnCamera: 0x00974494

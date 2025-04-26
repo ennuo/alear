@@ -661,3 +661,9 @@ EyeVectors:
     ba 0x00359508
 NoWeirdVectorAssignmentExit:
     ba 0x0035910c
+
+create_hook render_mesh_setup_rendering_hook, 0x0003ecb8
+    mr %r3, %r31
+    call _ZNK11PRenderMesh14SetupRenderingEv
+    ret
+

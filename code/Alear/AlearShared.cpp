@@ -239,11 +239,11 @@ void OnUpdateLevel()
         //         poppet->ClearHiddenList();
         // }
         
-        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI, L"BP_HIDE_TETHER"))
-            poppet->ShowTether = !poppet->ShowTether;
+        // if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI, L"BP_HIDE_TETHER"))
+        //     poppet->ShowTether = !poppet->ShowTether;
 
-        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI, L"BP_HIDE_POPPET_UI"))
-            poppet->HidePoppetGooey = !poppet->HidePoppetGooey;
+        // if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI, L"BP_HIDE_POPPET_UI"))
+        //     poppet->HidePoppetGooey = !poppet->HidePoppetGooey;
 
         if (hover != NULL && 
             poppet->GetMode() == MODE_CURSOR && 

@@ -415,6 +415,7 @@ namespace TweakSettingNativeFunctions
 
         switch (network_action)
         {
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT: return setting.GameToFixed(thing->GetPSwitch()->SelectorState);
             case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED: return thing->GetPSwitch()->Inverted;
             case E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY:
             {
@@ -424,7 +425,7 @@ namespace TweakSettingNativeFunctions
                 return 2;
             }
             case E_GOOEY_NETWORK_ACTION_SWITCH_BATTERY: return setting.GameToFixed(thing->GetPSwitch()->ManualActivation.Analogue);
-            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT: return setting.GameToFixed(thing->GetPSwitch()->NumInputs);
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT: return setting.GameToFixed(thing->GetPSwitch()->InputCount);
             case E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0: return setting.GameToFixed(thing->GetPSwitch()->Type);
             case E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT:
             case E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT:
@@ -667,9 +668,17 @@ bool InitTweakSettings()
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT)
         .SetupCounter()
         .SetIcon(inputs_icon_texture, 0)
-        .SetMinMax(2.0f, 100.0f)
+        .SetMinMax(1.0f, 10.0f)
         .SetSteps(1.0f, 1.0f)
         .SetDebugToolTip(L"Number of Ports");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT)
+        .SetupCounter()
+        .SetIcon(sensor_icons, 3)
+        .SetOffset(1.0f)
+        .SetMinMax(1.0f, 10.0f)
+        .SetSteps(1.0f, 1.0f)
+        .SetDebugToolTip(L"Current State");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_DEBUG_ACTION0)
         .SetupCounter()
@@ -786,24 +795,28 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             thing->OnFixup();
             break;
         }
+
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+
+            int index = MIN((int)setting.FixedToGame(action.Value), part_switch->Outputs.size() - 1);
+            if (part_switch != NULL)
+                part_switch->SelectorState = index;
+            
+            break;
+        }
         case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_PORT_COUNT:
         {
             CThing* thing = world->GetThingByUID(action.ThingUID);
             if (thing == NULL) break;
             PSwitch* part_switch = thing->GetPSwitch();
 
-            int num_inputs = MAX((int)setting.FixedToGame(action.Value), 2);
+            int num_inputs = MAX((int)setting.FixedToGame(action.Value), 1);
             if (part_switch != NULL)
-            {
-                for (int i = part_switch->NumInputs - 1; i >= num_inputs; --i)
-                {
-                    CSwitchOutput* input = thing->GetInput(i);
-                    if (input != NULL)
-                        input->RemoveTarget(thing, i);
-                }
-
-                part_switch->NumInputs = num_inputs;
-            }
+                part_switch->SetInputCount(num_inputs);
 
             break;
         }
@@ -1125,6 +1138,7 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_AND_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);

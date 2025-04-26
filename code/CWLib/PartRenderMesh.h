@@ -10,7 +10,11 @@
 
 #include "hack_thingptr.h"
 
+class CMeshInstance;
 class PRenderMesh : public CPart {
+public:
+    void SetupRendering() const;
+    void DMACullBones() const;
 public:
     u16 HandyIndex;
     u16 FrustVisible;
@@ -25,7 +29,7 @@ public:
     CThingPtr SpriteLightThing;
     CVector<CThingPtr> BoneThings;
     CP<RMesh> Mesh;
-    void* MeshInstance;
+    CMeshInstance* MeshInstance;
 private:
     char Pad2[0x12];
 public:

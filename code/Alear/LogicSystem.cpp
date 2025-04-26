@@ -1,4 +1,5 @@
 #include "Hermite.h"
+#include "AlearHooks.h"
 
 #include <PartSwitch.h>
 #include <GfxPool.h>
@@ -22,13 +23,22 @@
 
 #include <cell/gcm.h>
 #include <gfxcore.h>
+#include <mmalex.h>
 
 #include <vm/NativeFunctionCracker.h>
 #include <vm/NativeRegistry.h>
 #include <vm/ScriptFunction.h>
 
+#include <SceneGraph.h>
+
 const v4 PORT_ZBIAS = v4(0.0f, 0.0f, 10.0f, 0.0f);
 const float PORT_RADIUS = 20.0f;
+
+enum 
+{
+    PORT_OUTPUT = (1 << 0),
+    PORT_SELECTOR = (1 << 1)
+};
 
 namespace NPoppetUtils
 {
@@ -41,96 +51,70 @@ namespace SystemFunctions
     MH_DefineFunc(DrawRectangle, 0x0046369c, TOC1, void, v4 min, v4 max, v4 col, bool world_space, bool z_test, bool fill);
 }
 
-CBone* GetRootBone(CThing* thing)
+m44 GetUniformMatrix(const m44& transform)
 {
-    if (thing == NULL) return NULL;
+    m33 mat3 = transform.getUpper3x3();
+    mat3[0] /= Vectormath::Aos::length(mat3[0]);
+    mat3[0] *= Vectormath::Aos::length(mat3[1]);
+    m44 mat4 = m44::identity();
+    mat4.setUpper3x3(mat3);
+    mat4.setCol3(transform.getCol3());
     
-    const CMesh* mesh;
-    if (thing->GetPGeneratedMesh() != NULL) mesh = thing->GetPGeneratedMesh()->SharedMesh;
-    else
-    {
-        PRenderMesh* part_render_mesh;
-        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return NULL; 
-        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return NULL;
-
-        mesh = &part_render_mesh->Mesh->mesh;
-    }
-
-    if (mesh == NULL || mesh->Bones.size() == 0) return NULL;
-    return mesh->Bones.begin();
+    return mat4;
 }
 
-bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, bool output, v4 ray_pos, v4 ray_dir, float& intersect_dist)
+float Normalize(v3& col)
 {
-    if (thing == NULL) return false;
-
-    bool centered = false;
-
-    const CMesh* mesh;
-    if (thing->GetPGeneratedMesh() != NULL) 
+    float d = Vectormath::Aos::dot(col, col);
+    if (d > 1.0e-35f)
     {
-        mesh = thing->GetPGeneratedMesh()->SharedMesh;
-        centered = num_ports == 1 && !output;
+        d = mmalex::sqrtf(d);
+        col *= 1.0f / d;
     }
     else
     {
-        PRenderMesh* part_render_mesh;
-        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
-        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
-
-        mesh = &part_render_mesh->Mesh->mesh;
+        col = v3(0.0f);
+        d = 0.0f;
     }
 
-    // There technically shouldn't ever normally be a case where
-    // the model doesn't have any bones due to how LBP works in general,
-    // but we'll still check it anyways, I guess.
-    if (mesh == NULL || mesh->Bones.size() == 0) return false;
+    return d;
+}
 
-    CBone& bone = mesh->Bones.front();
-    const m44& wpos = thing->GetPPos()->GetWorldPosition();
+void Decompose(v4& translation, m44& rotation, v3& scale, const m44& transform)
+{
+    m33 mat3 = transform.getUpper3x3();
+    
+    scale.setX(Normalize(mat3[0]));
+    scale.setY(Normalize(mat3[1]));
+    scale.setZ(Normalize(mat3[2]));
 
-    v4 center = bone.SkinPoseMatrix.getCol3();
-
-    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
-    float inc = dist / (float)num_ports;
-
-    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
-    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
-
-    // If we're raycasting against this port while trying to connect a switch,
-    // we'll split the mesh's bound box for a boxcast.
-    if (!output && switch_connector)
+    if (Vectormath::Aos::determinant(rotation) < 0.0f)
     {
-        v4 bl, tr;
-
-        if (centered)
-        {
-            bl = bone.BoundBoxMin;
-            tr = bone.BoundBoxMax;
-        }
-        else
-        {
-            bl = v4(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
-            tr = v4(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
-        }
-        
-        v4 hitout;
-        float tout;
-        bool hit =  HitTestRayVsAABB(wpos * bl, wpos * tr, ray_pos, ray_dir, &tout, NULL);
-
-        if (!hit || intersect_dist < tout) return false;
-
-        intersect_dist = tout;
-        return true;
+        mat3 *= -1.0f;
+        scale *= -1.0f;
     }
 
-    // Otherwise, we'll do a sphere cast against the port.
+    rotation = m44::identity();
+    rotation.setUpper3x3(mat3);
 
-    if (centered)
-        return NPoppetUtils::RaySphereIntersect(wpos * center, PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+    translation = transform.getCol3();
+}
 
-    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
-    return NPoppetUtils::RaySphereIntersect(wpos * v4(origin, (top + bottom) / 2.0f, center.getZ(), 1.0f), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+void Decompose(v4& translation, q4& rotation, v3& scale, const m44& transform)
+{
+    m33 mat3 = transform.getUpper3x3();
+
+    scale.setX(Normalize(mat3[0]));
+    scale.setY(Normalize(mat3[1]));
+    scale.setZ(Normalize(mat3[2]));
+    if (Vectormath::Aos::determinant(mat3) < 0.0f)
+    {
+        mat3 *= -1.0f;
+        scale *= -1.0f;
+    }
+
+    rotation = q4(mat3);
+    translation = transform.getCol3();
 }
 
 int GetNumOutputs(PSwitch* sw)
@@ -140,13 +124,28 @@ int GetNumOutputs(PSwitch* sw)
         case SWITCH_TYPE_SIGN_SPLIT:
             return 2;
         case SWITCH_TYPE_SELECTOR:
-            return sw->NumInputs - 1;
+            return sw->InputCount;
     }
 
     return 1;
 }
 
-int GetNumInputs(CThing* thing)
+int GetTopInputs(const CThing* thing)
+{
+    return 0;
+}
+
+int GetBottomInputs(const CThing* thing)
+{
+    switch (thing->ObjectType)
+    {
+        case OBJECT_SWITCH_SELECTOR: return 1;
+    }
+
+    return 0;
+}
+
+int GetNumInputs(const CThing* thing)
 {
     switch (thing->ObjectType)
     {
@@ -242,13 +241,105 @@ int GetNumInputs(CThing* thing)
         case OBJECT_SWITCH_AND:
         case OBJECT_SWITCH_OR:
         case OBJECT_SWITCH_XOR:
-            return thing->GetPSwitch()->NumInputs;
+            return thing->GetPSwitch()->InputCount;
         
         case OBJECT_SWITCH_SELECTOR:
             return thing->GetPSwitch()->Outputs.size() + 1;
     }
 
     return 0;
+}
+
+CBone* GetRootBone(const CThing* thing)
+{
+    if (thing == NULL) return NULL;
+    
+    const CMesh* mesh;
+    if (thing->GetPGeneratedMesh() != NULL) mesh = thing->GetPGeneratedMesh()->SharedMesh;
+    else
+    {
+        PRenderMesh* part_render_mesh;
+        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return NULL; 
+        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return NULL;
+
+        mesh = &part_render_mesh->Mesh->mesh;
+    }
+
+    if (mesh == NULL || mesh->Bones.size() == 0) return NULL;
+    return mesh->Bones.begin();
+}
+
+bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, bool output, v4 ray_pos, v4 ray_dir, float& intersect_dist)
+{
+    if (thing == NULL) return false;
+
+    bool centered = false;
+
+    const CMesh* mesh;
+    if (thing->GetPGeneratedMesh() != NULL) 
+    {
+        mesh = thing->GetPGeneratedMesh()->SharedMesh;
+        centered = num_ports == 1 && !output;
+    }
+    else
+    {
+        PRenderMesh* part_render_mesh;
+        if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
+        if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+
+        mesh = &part_render_mesh->Mesh->mesh;
+    }
+
+    // There technically shouldn't ever normally be a case where
+    // the model doesn't have any bones due to how LBP works in general,
+    // but we'll still check it anyways, I guess.
+    if (mesh == NULL || mesh->Bones.size() == 0) return false;
+
+    CBone& bone = mesh->Bones.front();
+    const m44& wpos = thing->GetPPos()->GetWorldPosition();
+
+    v4 center = bone.SkinPoseMatrix.getCol3();
+
+    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+    float inc = dist / (float)num_ports;
+
+    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
+    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
+
+    // If we're raycasting against this port while trying to connect a switch,
+    // we'll split the mesh's bound box for a boxcast.
+    if (!output && switch_connector)
+    {
+        v4 bl, tr;
+
+        if (centered)
+        {
+            bl = bone.BoundBoxMin;
+            tr = bone.BoundBoxMax;
+        }
+        else
+        {
+            bl = v4(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
+            tr = v4(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
+        }
+        
+        v4 hitout;
+        float tout;
+        bool hit =  HitTestRayVsAABB(wpos * bl, wpos * tr, ray_pos, ray_dir, &tout, NULL);
+
+        if (!hit || intersect_dist < tout) return false;
+
+        intersect_dist = tout;
+        return true;
+    }
+
+    // Otherwise, we'll do a sphere cast against the port.
+
+    if (centered)
+        return NPoppetUtils::RaySphereIntersect(wpos * center, PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+
+    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
+    return NPoppetUtils::RaySphereIntersect(wpos * v4(origin, (top + bottom) / 2.0f, center.getZ(), 1.0f), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
 }
 
 void RenderSwitchDebug()
@@ -259,7 +350,7 @@ void RenderSwitchDebug()
     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
     {
         CThing* thing = *it;
-        if (thing == NULL || thing->GetPPos() == NULL) continue;
+        if (thing == NULL || thing->GetPPos() == NULL || thing->Stamping) continue;
 
         int num_inputs = GetNumInputs(thing);
         if (num_inputs == 0) continue;
@@ -273,6 +364,12 @@ void RenderSwitchDebug()
 
         float dist = abs(bone->BoundBoxMax.getY() - bone->BoundBoxMin.getY());
         float inc = dist / (float)num_inputs;
+
+        
+        
+        SystemFunctions::DrawRectangle(wpos * (bone->BoundBoxMin + PORT_ZBIAS), wpos * (bone->BoundBoxMax + PORT_ZBIAS), v4(1.0f, 0.0f, 0.0f, 1.0f), true, true, true);
+        continue;
+        
 
 
         for (int i = 0; i < num_inputs; ++i)
@@ -313,23 +410,6 @@ void RenderSwitchDebug()
     }
 }
 
-int GetNumInputs(const CThing* thing)
-{
-    if (thing == NULL) return 0;
-    
-    PSwitch* part_switch = thing->GetPSwitch();
-    if (part_switch == NULL)
-        return thing->GetPScript() != NULL ? 1 : 0;
-    
-    return part_switch->NumInputs;
-}
-
-MH_DefineFunc(PSwitch_RaycastConnector, 0x0004d764, TOC0, bool, PSwitch*, v4, v4, float&, CThing*&);
-bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
-{
-    return PSwitch_RaycastConnector(this, start, dir, t, hit);
-}
-
 void CPoppet::InitializeExtraData()
 {
     new (&HiddenList) CVector<CThingPtr>();
@@ -345,7 +425,7 @@ void CPoppet::DestroyExtraData()
     HiddenList.~CVector();
 }
 
-CSwitchOutput* CThing::GetInput(int port)
+CSwitchOutput* CThing::GetInput(int port) const
 {
     if (port < 0 || CustomThingData->InputList.size() <= port) return NULL;
     return CustomThingData->InputList[port];
@@ -357,6 +437,23 @@ void CThing::SetInput(CSwitchOutput* input, int port)
     if (inputs.size() <= port)
         inputs.try_resize(port + 1);
     inputs[port] = input;
+}
+
+void CThing::RemoveInput(int port)
+{
+    CSwitchOutput* input = GetInput(port);
+    if (input != NULL)
+        input->RemoveTarget(this, port);
+    
+    for (int i = port + 1; i < CustomThingData->InputList.size(); ++i)
+    {
+        input = GetInput(i);
+        if (input != NULL)
+        {
+            input->RemoveTarget(this, port);
+            input->AddTarget(this, port - 1);
+        }
+    }
 }
 
 int CSwitchOutput::GetTargetIndex(CThing* thing, int port)
@@ -541,6 +638,18 @@ void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool 
 {
     switch (target->ObjectType)
     {
+        case OBJECT_SWITCH_SELECTOR:
+        {
+            if (!one_shot) return;
+
+            PSwitch* sw = target->GetPSwitch();
+            if (sw == NULL || port != 0) return;
+
+            sw->ManualActivation.Player = input->Activation.Player;
+            sw->SelectorState = (sw->SelectorState + input->Activation.Ternary) % sw->Outputs.size();
+
+            break;
+        }
         case OBJECT_EMITTER:
         {
             if (!one_shot) return;
@@ -624,6 +733,17 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
 
             break;
         }
+        case SWITCH_TYPE_SELECTOR:
+        {
+            if (SelectorState == port)
+            {
+                player = ManualActivation.Player;
+                ternary = 1;
+                analogue = 1.0f;
+            }
+
+            break;
+        }
         case SWITCH_TYPE_SIGN_SPLIT:
         {
             CSwitchSignal input = GetActivationFromInput(0);
@@ -662,11 +782,82 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
         }
     }
 
+
+
     return activation;
+}
+
+void PSwitch::SetInputCount(int size)
+{
+    CThing* thing = GetThing();
+
+    if (Type == SWITCH_TYPE_SELECTOR)
+    {
+        for (int i = Outputs.size() - 1; i >= size; --i)
+            RemoveOutput(i);
+
+        Outputs.try_resize(size);
+        for (int i = 0; i < size; ++i)
+        {
+            if (Outputs[i] != NULL) continue;
+            Outputs[i] = new CSwitchOutput();
+            Outputs[i]->Port = i;
+            Outputs[i]->Owner = this;
+        }
+
+    }
+
+    for (int i = InputCount - 1; i >= size; --i)
+    {
+        CSwitchOutput* input = thing->GetInput(i);
+        if (input != NULL)
+            input->RemoveTarget(thing, i);
+    }
+
+    InputCount = size;
+}
+
+void PSwitch::RemoveOutput(int port)
+{
+    if (port < Outputs.size())
+    {
+        if (Outputs[port] != NULL) delete Outputs[port];
+        Outputs.erase(Outputs.begin() + port);
+        for (int i = 0; i < Outputs.size(); ++i)
+            Outputs[i]->Port = i;
+    }
 }
 
 void PSwitch::Update()
 {
+    if (Type == SWITCH_TYPE_SELECTOR)
+    {
+        v4 translation; v3 scale; m44 rotation;
+        Decompose(translation, rotation, scale, GetThing()->GetPPos()->Game.WorldPosition);
+
+        scale.setX(InputCount * scale.getY());
+
+        m44 wpos = rotation * m44::scale(scale);
+        wpos.setCol3(translation);
+        GetThing()->GetPPos()->SetWorldPos(wpos, false, 0);
+    }
+
+    if (GetThing()->Stamping) return;
+    
+    if (Type == SWITCH_TYPE_SELECTOR && Outputs.size() - 1 >= 0)
+    {
+        for (int port = Outputs.size() - 1; port >= 0; --port)
+        {
+            CSwitchSignal activation = GetActivationFromInput(port + 1);
+            if (activation.Ternary != 0)
+            {
+                SelectorState = port;
+                ManualActivation.Player = activation.Player;
+                break;
+            }
+        }
+    }
+
     for (CSwitchOutput** it = Outputs.begin(); it != Outputs.end(); ++it)
     {
         CSwitchOutput* output = *it;
@@ -685,20 +876,6 @@ void PSwitch::Update()
 
     CrappyOldLBP1Switch = false;
 
-    if (Type == SWITCH_TYPE_AND || Type == SWITCH_TYPE_OR || Type == SWITCH_TYPE_XOR || Type == SWITCH_TYPE_SELECTOR)
-    {
-        const m44& wpos = GetThing()->GetPPos()->GetWorldPosition();
-
-        m44 new_matrix = m44::identity();
-        new_matrix.setCol0(v4(0.75f, 0.0f, 0.0f, 0.0f));
-        new_matrix.setCol1(v4(0.0f, 0.75f + ((NumInputs - 2) * (0.75f * 0.5f) ), 0.0f, 0.0f));
-        new_matrix.setCol2(v4(0.0f, 0.0f, 1.0f, 0.0f));
-        new_matrix.setCol3(wpos.getCol3());
-
-        GetThing()->GetPPos()->SetWorldPos(new_matrix, false, 0);
-    }
-
-
     PRenderMesh* part_render_mesh = GetThing()->GetPRenderMesh();
     if (Outputs.size() > 0 && part_render_mesh != NULL)
     {
@@ -712,6 +889,9 @@ void PSwitch::Update()
                 activation = 2.0f / 3.0f;
         }
 
+        if (Type == SWITCH_TYPE_SELECTOR)
+            activation = InputCount / 10.0f;
+        
         part_render_mesh->EditorColour = v4(activation);
     }
 }
@@ -832,27 +1012,42 @@ public:
     int To;
 };
 
-bool GetPortPos(CThing*thing, int port, bool output, v4& out)
+bool GetPortPos(const CThing* thing, int port, bool output, v4& out)
 {
     if (port == 255) return false;
 
-    PRenderMesh* part_render_mesh;
-    if (thing == NULL || (part_render_mesh = thing->GetPRenderMesh()) == NULL) return false;
-    if (!part_render_mesh->Mesh || !part_render_mesh->Mesh->IsLoaded()) return false;
+    CBone* bone = GetRootBone(thing);
+    if (bone == NULL || thing->GetPPos() == NULL) return false;
 
-    CMesh& mesh = part_render_mesh->Mesh->mesh;
+    const m44& wpos = thing->GetPPos()->Rend.WorldPosition;
+    v4 center = bone->SkinPoseMatrix.getCol3() + PORT_ZBIAS;
 
-    // There technically shouldn't ever normally be a case where
-    // the model doesn't have any bones due to how LBP works in general,
-    // but we'll still check it anyways, I guess.
-    if (mesh.Bones.size() == 0) return false;
+    v4 min = bone->BoundBoxMin;
+    v4 max = bone->BoundBoxMax;
 
-    CBone& bone = mesh.Bones.front();
-    if (thing->GetPPos() == NULL) return false;
+    if (thing->ObjectType == OBJECT_SWITCH_SELECTOR && (port != 0 || output))
+    {
+        PSwitch* sw = thing->GetPSwitch();
 
-    const m44& wpos = thing->GetPPos()->GetWorldPosition();
 
-    v4 center = bone.SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+        float dist = abs(max.getX() - min.getX());
+
+        float inc = dist / (float)sw->InputCount;
+
+        if (!output) port -= 1;
+
+        float left = min.getX() + (inc * (float)(port + 0));
+        float right = min.getX() + (inc * (float)(port + 1));
+        float top = max.getY();
+        float bottom = min.getY();
+
+        if (output)
+            out = wpos * v4((left + right) / 2.0f, top + 11.331f, center.getZ(), 1.0f);
+        else
+            out = wpos * v4((left + right) / 2.0f, bottom - 11.331f, center.getZ(), 1.0f);
+
+        return true;
+    }
 
     int num_ports;
     if (output)
@@ -861,18 +1056,34 @@ bool GetPortPos(CThing*thing, int port, bool output, v4& out)
         if (part_switch == NULL) return false;
         num_ports = part_switch->Outputs.size();
     }
-    else num_ports = GetNumInputs(thing);
+    else 
+    {
+        num_ports = GetNumInputs(thing);
+        if (thing->ObjectType == OBJECT_SWITCH_SELECTOR)
+            num_ports = 1;
+    }
 
-    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+    float top = max.getY();
+    float bottom = max.getY();
+
+    float dist = abs(max.getY() - min.getY());
+    const float spacing = 61.8731f;
+    if (num_ports > 2)
+    {
+        dist += (num_ports - 2) * (spacing * 0.5f);
+        top += (num_ports - 2) * (spacing * 0.25f);
+        bottom += (num_ports - 2) * (spacing * 0.25f);
+    }
+
     float inc = dist / (float)num_ports;
 
-    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
-    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
+    top -= (inc * (float)(port + 0));
+    bottom -= (inc * (float)(port + 1));
 
     if (output)
-        out = wpos * v4(bone.BoundBoxMax.getX() + PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
+        out = wpos * v4(max.getX() + PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
     else
-        out = wpos * v4(bone.BoundBoxMin.getX() - PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
+        out = wpos * v4(min.getX() - PORT_RADIUS, ((top + bottom) / 2.0f), center.getZ(), 1.0f);
     
     return true;
 }
@@ -935,7 +1146,7 @@ void DrawWire(CSwitchOutput* output, CPoppet* player, CThing* target, int port)
             dist += Vectormath::Aos::length(points[i] - points[i - 1]);
     }
 
-    CP<RGfxMaterial> mat = LoadResourceByKey<RGfxMaterial>(0xadeb, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RGfxMaterial> mat = LoadResourceByKey<RGfxMaterial>(75684, 0, STREAM_PRIORITY_DEFAULT);
     mat->BlockUntilLoaded();
 
     RenderRope(
@@ -1111,7 +1322,7 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
         PSwitch* sw = (*it);
         CThing* thing = sw->GetThing();
 
-        if (thing == ignored) continue;
+        if (thing == ignored || thing->GetPPos() == NULL) continue;
 
         // Test against our own output ports first
         m44 wpos = thing->GetPPos()->Game.WorldPosition;
@@ -1144,7 +1355,7 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
             CSwitchOutput& output = *sw->Outputs[ref_port];
             for (CSwitchTarget* target = output.TargetList.begin(); target != output.TargetList.end(); ++target)
             {
-                if (target->Thing == NULL) continue;
+                if (target->Thing == NULL || target->Thing->GetPPos() == NULL) continue;
 
                 if (!RaycastPort(target->Thing, target->Port, GetNumInputs(target->Thing), false, false, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
                 if (t >= 1.0e+20f) continue;
@@ -1167,6 +1378,194 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
                 raycast.HitPort = target->Port;
             }
         }
+    }
+}
+
+#define MAX_RENDER_PORTS (512)
+extern m44* HugeBoneArray;
+CMeshInstance* HugePortArray;
+int gRenderPortIndex;
+
+void AddPortsToBuckets()
+{
+    for (int i = 0; i < MIN(gRenderPortIndex, MAX_RENDER_PORTS); ++i)
+        HugePortArray[i].AddToBuckets(true, false, false);
+}
+
+void OnSceneGraphStartFrame()
+{
+    gRenderPortIndex = 0;
+}
+
+CMeshInstance* AllocateHugePort()
+{
+    return &HugePortArray[gRenderPortIndex++ % MAX_RENDER_PORTS];
+}
+
+void GatherPortsForDrawing()
+{
+    PWorld* world = gGame->GetWorld();
+    if (world == NULL) return;
+
+    for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
+    {
+        const CThing* thing = *it;
+        if (thing == NULL) continue;
+
+        int num_inputs = GetNumInputs(thing);
+        if (num_inputs == 0) continue;
+
+        CP<RMesh> primary_port_mesh;
+        CP<RMesh> secondary_port_mesh;
+
+        switch (thing->ObjectType)
+        {
+            case OBJECT_SWITCH_SELECTOR:
+                primary_port_mesh = LoadResourceByKey<RMesh>(73813 , 0, STREAM_PRIORITY_DEFAULT);
+                secondary_port_mesh = LoadResourceByKey<RMesh>(73762, 0, STREAM_PRIORITY_DEFAULT);
+
+                break;
+            case OBJECT_SWITCH_AND:
+            case OBJECT_SWITCH_OR:
+            case OBJECT_SWITCH_XOR:
+                primary_port_mesh = LoadResourceByKey<RMesh>(73759, 0, STREAM_PRIORITY_DEFAULT);
+                break;
+            default:
+                primary_port_mesh = LoadResourceByKey<RMesh>(73762, 0, STREAM_PRIORITY_DEFAULT);
+                break;
+        }
+    
+        switch (thing->ObjectType)
+        {
+            default:
+            {
+                if (thing->GetPPos() == NULL) continue;
+
+                for (int i = 0; i < num_inputs; ++i)
+                {
+                    CP<RMesh> mesh = thing->ObjectType == OBJECT_SWITCH_SELECTOR && i == 0 ? secondary_port_mesh : primary_port_mesh;
+                    if (!mesh->IsLoaded()) continue;
+
+                    v4 port_pos;
+                    if (!GetPortPos(thing, i, false, port_pos)) continue;
+                    // port_pos -= PORT_ZBIAS;
+
+                    CMeshInstance* inst = AllocateHugePort();
+
+                    inst->FirstBoneIndex = AllocateHugeBones(1);
+                    if (inst->FirstBoneIndex == -1) continue;
+        
+
+                    PRenderMesh dumb_hack;
+                    dumb_hack.MeshInstance = inst;
+                    dumb_hack.Mesh = mesh;
+                    dumb_hack.DMACullBones();
+        
+                    inst->SetMesh(&mesh->mesh);
+                    inst->Invalidate();
+
+                    v4 translation; m44 rotation; v3 scale;
+                    Decompose(translation, rotation, scale, thing->GetPPos()->Rend.WorldPosition);
+
+                    // undo weird scaling shit
+                    scale.setX(scale.getY());
+
+                    // m44 wpos = rotation * m44::scale(scale);
+                    m44 wpos = m44::identity();
+                    wpos.setCol3(port_pos);
+
+                    HugeBoneArray[inst->FirstBoneIndex] = wpos;
+        
+                    inst->InitInstanceForRender(inst->FirstBoneIndex, 1, NULL, NULL);
+        
+                    inst->InstanceTexture = NULL;
+        
+                    if (thing->ObjectType == OBJECT_SWITCH_SELECTOR)
+                    {
+                        if (i > 0)
+                        {
+                            float input = thing->GetPSwitch()->GetActivationFromInput(i).Analogue;
+                            float output = thing->GetPSwitch()->Outputs[i - 1]->Activation.Analogue;
+                            inst->InstanceColor = v4(abs(output), abs(input), 1.0f, 1.0f);
+                        }
+                    }
+                    else
+                    {
+                        CSwitchOutput* signal = thing->GetInput(i);
+                        if (signal == NULL) inst->InstanceColor = v4(0.0f, 0.0f, 0.0f, 1.0f);
+                        else inst->InstanceColor = v4(abs(signal->Activation.Analogue));
+                    }
+                }
+
+                break;
+            }
+        }
+
+
+    }
+}
+
+MH_DefineFunc(CMeshInstance_AddToBuckets, 0x001f9328, TOC0, void, CMeshInstance*, bool, bool, bool);
+void CMeshInstance::AddToBuckets(bool a, bool b, bool c)
+{
+    CMeshInstance_AddToBuckets(this, a, b, c);
+}
+
+MH_DefineFunc(_AllocateHugeBones, 0x001edf44, TOC0, u32, u32);
+u32 AllocateHugeBones(u32 numBonesRequired)
+{
+    return _AllocateHugeBones(numBonesRequired);
+}
+
+MH_DefineFunc(CMeshInstance_CMeshInstance, 0x001ef184, TOC0, void, CMeshInstance*);
+CMeshInstance::CMeshInstance()
+{
+    CMeshInstance_CMeshInstance(this);
+}
+
+MH_DefineFunc(CMeshInstance_Invalidate, 0x001f12a0, TOC0, void, CMeshInstance*);
+void CMeshInstance::Invalidate()
+{
+    CMeshInstance_Invalidate(this);
+}
+
+MH_DefineFunc(CMeshInstance_SetMesh, 0x001f1708, TOC0, void, CMeshInstance*, CMesh*);
+void CMeshInstance::SetMesh(CMesh* mesh)
+{
+    CMeshInstance_SetMesh(this, mesh);
+}
+
+MH_DefineFunc(CMeshInstance_InitInstanceForRender, 0x001edd98, TOC0, void, CMeshInstance*, u32, u32, CVector<void*>*, CVector<void*>*);
+void CMeshInstance::InitInstanceForRender(u32 first_bone_index, u32 num_bones, CVector<void*>* decals, CVector<void*>* eyetoy)
+{
+    CMeshInstance_InitInstanceForRender(this, first_bone_index, num_bones, decals, eyetoy);
+}
+
+MH_DefineFunc(PRenderMesh_DMACullBones, 0x00045b9c, TOC0, void, const PRenderMesh*);
+void PRenderMesh::DMACullBones() const
+{
+    PRenderMesh_DMACullBones(this);
+}
+
+void PRenderMesh::SetupRendering() const
+{
+    if (!Mesh || !Mesh->IsLoaded()) return;
+
+    u32 first_bone_index = *(u32*)(((char*)MeshInstance) + 0x14c);
+
+    const CThing* thing = GetThing();
+    if (Mesh->GetGUID() == 73728 || Mesh->GetGUID() == 73733 || Mesh->GetGUID() == 73739)
+    {
+        const m44& wpos = thing->GetPPos()->Rend.WorldPosition;
+        int input_count = thing->GetPSwitch()->InputCount;
+
+
+
+        const float spacing = 61.8731f;
+        float delta = spacing + (input_count - 2) * (spacing * 0.25f);
+        
+        HugeBoneArray[first_bone_index + 1] = wpos * m44::translation(v3(0.0f, delta, 0.0f)) * Mesh->mesh.Bones[1].InvSkinPoseMatrix;
+        HugeBoneArray[first_bone_index + 2] = wpos * m44::translation(v3(0.0f, -delta, 0.0f)) * Mesh->mesh.Bones[2].InvSkinPoseMatrix;
     }
 }
 
@@ -1329,6 +1728,7 @@ namespace LogicSystemNativeFunctions
             GET_PREFIX(TIMER)
             GET_PREFIX(DIRECTION)
             GET_PREFIX(SIGN_SPLIT)
+            GET_PREFIX(SELECTOR)
         }
 
         #undef GET_PREFIX
@@ -1360,6 +1760,10 @@ namespace LogicSystemNativeFunctions
 
 void InitLogicSystemHooks()
 {
+    HugePortArray = (CMeshInstance*)CAllocatorMMAligned128::Malloc(gOtherBucket, sizeof(CMeshInstance) * MAX_RENDER_PORTS);
+    for (int i = 0; i < MAX_RENDER_PORTS; ++i)
+        new (HugePortArray + i) CMeshInstance();
+
     LogicSystemNativeFunctions::Register();
 
     MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
@@ -1391,4 +1795,13 @@ void InitLogicSystemHooks()
     MH_PokeBranch(0x0034f264, &_popit_init_extra_data_hook);
     MH_PokeBranch(0x0034b4f4, &_popit_destroy_extra_data_hook);
     MH_PokeBranch(0x001df8f4, &_render_wire_hook);
+
+    // MH_PokeBranch(0x0004e670, &_bone_thing_hook);
+    MH_PokeBranch(0x0003ecb4, &_render_mesh_setup_rendering_hook);
+
+    MH_PokeCall(0x001e9f3c, OnSceneGraphStartFrame);
+    MH_PokeCall(0x00014040, OnSceneGraphStartFrame);
+
+    MH_PokeHook(0x001c0fac, AddPortsToBuckets);
+    MH_PokeHook(0x001c719c, GatherPortsForDrawing);
 }

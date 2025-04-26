@@ -28,6 +28,8 @@
 #include "PartCheckpoint.h"
 #include "PartPhysicsJoint.h"
 
+#include <PartMicrochip.h>
+
 #include "hack_thingptr.h"
 
 enum EObjectType
@@ -200,6 +202,8 @@ enum EObjectType
     OBJECT_MESH_GENERATED_DCCOMICS_INVISIBLE,
     OBJECT_MESH_GENERATED_DCCOMICS_SPACE,
     OBJECT_POWERUP_CAPE_COSTUME,
+    OBJECT_SWITCH_SCRIPTED,
+    OBJECT_TARGET_SCRIPTED,
     NUM_OBJECT_TYPES
 };
 
@@ -209,10 +213,11 @@ class PPos;
 
 class CCustomThingData {
 public:
-    inline CCustomThingData() : Microchip(), InputList()
+    inline CCustomThingData() : Microchip(), PartMicrochip(), InputList()
     {}
 public:
     CThing* Microchip;
+    PMicrochip* PartMicrochip;
     CVector<CSwitchOutput*> InputList;
 };
 
@@ -230,14 +235,19 @@ public:
     void OnFinishSave();
     ReflectReturn OnLoad();
     void OnFixup();
+
+    void Deflate();
+    void Inflate();
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
     void RemovePart(EPartType type);
 
-    CSwitchOutput* GetInput(int port);
+    CSwitchOutput* GetInput(int port) const;
     void SetInput(CSwitchOutput* input, int port);
-    inline int GetNumInputs() const 
+    void RemoveInput(int port);
+    
+    inline int GetInputSize() const 
     {
         if (CustomThingData == NULL) return 0;
         return CustomThingData->InputList.size();
@@ -267,6 +277,10 @@ public:
     inline PEffector* GetPEffector() const { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
     inline PEmitter* GetPEmitter() const { return static_cast<PEmitter*>(Parts[PART_TYPE_EMITTER]); }
     inline PCheckpoint* GetPCheckpoint() const { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
+    inline PMicrochip* GetPMicrochip() const
+    {
+        return CustomThingData == NULL ? NULL : CustomThingData->PartMicrochip;
+    }
     inline CPart* GetPart(EPartType part) const { return Parts[part]; }
 public:
     CThingPtr* FirstPtr;
@@ -290,7 +304,10 @@ private:
 public:
     u8 ObjectType;
     u8 Behaviour;
+    u16 Flags;
     CCustomThingData* CustomThingData;
+
+    // flags & 2 == stamping
 };
 
 extern float (*GetWorldAngle)(CThing* thing);

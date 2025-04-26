@@ -23,6 +23,7 @@
 #include <ResourceCharacterSettings.h>
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
+#include <PartMicrochip.h>
 #include <PartGeneratedMesh.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
@@ -55,7 +56,13 @@ extern "C" uintptr_t _explosion_particle_and_sound_hook;
 extern "C" uintptr_t _explosion_ignore_yellowhead_hook;
 
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
+#define ADD_THING_UID(name) if (r.IsGatherVariables()) { ret = Add(r, d.name, #name); } else { ret = Add(r, *((ThingResolvable*)&d.name), #name); } if (ret != REFLECT_OK) return ret;
 #define ADD_ARRAY_ELEMENT(name, index) ret = Add(r, d.name[index], #name "_" #index); if (ret != REFLECT_OK) return ret;
+union ThingResolvable
+{
+    CThing* Thing;
+    u32 ThingUID;
+};
 
 void RMaterial::InitializeExtraData()
 {
@@ -121,6 +128,22 @@ void RSyncedProfile::InitializeExtraData()
 }
 
 template<typename R>
+ReflectReturn Reflect(R& r, ThingResolvable& d)
+{
+    if (r.GetSaving())
+    {
+        CThing* thing = d.Thing;
+        u32 uid = thing != NULL ? thing->UID : 0;
+        return Reflect(r, uid);
+    }
+
+    if (r.GetLoading())
+        return Reflect(r, d.ThingUID);
+    
+    return REFLECT_INVALID;
+}
+
+template<typename R>
 ReflectReturn Reflect(R& r, CSwitchSignal& d);
 
 template<typename R>
@@ -129,6 +152,38 @@ ReflectReturn Reflect(R& r, CCompactSwitchOutput& d)
     ReflectReturn ret;
     ADD(Activation);
     ADD(Ports);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CCompactComponent& d)
+{
+    ReflectReturn ret;
+    ADD_THING_UID(Thing);
+    ADD(X);
+    ADD(Y);
+    ADD(Angle);
+    ADD(ScaleX);
+    ADD(ScaleY);
+    ADD(Flipped);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, PMicrochip& d)
+{
+    ReflectReturn ret;
+    ADD_THING_UID(CircuitBoardThing);
+    ADD(HideInPlayMode);
+    ADD(WiresVisible);
+    ADD(LastTouched);
+    ADD(Offset);
+    ADD(Name);
+    ADD(Components);
+    ADD(CircuitBoardSizeX);
+    ADD(CircuitBoardSizeY);
+    ADD(KeepVisualVertical);
+    ADD(BroadcastType);
     return ret;
 }
 
@@ -736,6 +791,15 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
                 DebugLog("gfxm: <%f, %f>\n", mesh->TextureAnimationSpeed, mesh->TextureAnimationSpeedOff);
                 break;
             }
+            case 0x4d434850: /* MCHP */
+            {
+                PMicrochip* microchip = new PMicrochip();
+                microchip->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
+                if ((ret = Reflect(r, microchip)) != REFLECT_OK) return ret;
+                thing->CustomThingData->PartMicrochip = microchip;
+
+                break;
+            }
             case 0x4c4f4743: /* LOGC */
             {
                 PSwitch* part_switch = thing->GetPSwitch();
@@ -849,6 +913,17 @@ ReflectReturn PScriptName::WriteAlearData()
     if ((ret = Reflect(r, flags)) != REFLECT_OK) return ret;
 
     r.SetCompressionFlags(flags & 7);
+
+    PMicrochip* microchip = thing->GetPMicrochip();
+    if (microchip != NULL)
+    {
+        u32 magic = 0x4d434850;
+
+        // dont want to use compression for this
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+        if ((ret = Reflect(r, *microchip)) != REFLECT_OK) return ret;
+    }
 
     PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData())
@@ -991,12 +1066,14 @@ enum
     E_KEY_ALWAYS_ON = 78675,
     E_KEY_SWITCH_BASE = 42511,
     E_KEY_SIGN_SPLIT = 77755,
-    E_KEY_DIRECTION = 73736
+    E_KEY_DIRECTION = 73736,
+    E_KEY_SELECTOR = 73812
 };
 
 void CThing::OnFixup()
 {
     DebugLog("fixing loading thing...\n");
+    DebugLog("world ptr: %08x\n", World);
 
     UpdateObjectType();
 
@@ -1016,6 +1093,7 @@ void CThing::OnFixup()
 
         switch (part_switch->Type)
         {
+            case SWITCH_TYPE_SELECTOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SELECTOR, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_AND: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_AND_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_OR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_OR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_XOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_XOR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
@@ -1024,6 +1102,15 @@ void CThing::OnFixup()
             case SWITCH_TYPE_SIGN_SPLIT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SIGN_SPLIT, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_DIRECTION: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_DIRECTION, 0, STREAM_PRIORITY_DEFAULT); break;
         }
+
+        if (part_switch->Type == SWITCH_TYPE_SELECTOR)
+        {
+            part_render_mesh->BoneThings.clear();
+            part_render_mesh->BoneThings.push_back(this);
+        }
+        
+        if (part_switch->Type == SWITCH_TYPE_AND || part_switch->Type == SWITCH_TYPE_OR || part_switch->Type == SWITCH_TYPE_XOR)
+            GetPRenderMesh()->BoneThings.try_resize(3);
 
         PScript* part_script = GetPScript();
         if (part_script == NULL)

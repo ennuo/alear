@@ -275,6 +275,19 @@ ReflectReturn Reflect(R& r, MMString<char>& d)
     return r.ReadWrite((void*)d.begin(), size * sizeof(char));
 }
 
+template <typename R>
+ReflectReturn Reflect(R& r, MMString<wchar_t>& d)
+{
+    ReflectReturn res;
+    s32 size = d.size();
+    res = Reflect(r, size);
+    if (res != REFLECT_OK) return res;
+
+    // game technically calls begin which calls operator[0], but its the same as c_str
+    d.resize(size, '\0');
+    return r.ReadWrite((void*)d.begin(), size * sizeof(wchar_t));
+}
+
 template <typename D>
 ReflectReturn Add(CReflectionLoadVector& r, D& d, char* c)
 {
