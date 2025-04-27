@@ -30,6 +30,7 @@ void MainThreadUpdate();
 extern char* gSyncDatabasePath;
 extern char* gSyncCachePath;
 extern char* gSyncPublishPath;
+extern char* gSyncDatabaseOverridePath;
 
 extern char gDownloadingFilename[256];
 extern int gDownloadPercentage;

@@ -34,6 +34,7 @@
 #include <System.h>
 
 char* gSyncDatabasePath = "gamedata/alear/sync/alrs.map";
+char* gSyncDatabaseOverridePath = "gamedata/alear/sync/override.map";
 char* gSyncCachePath = "gamedata/alear/sync/alrs.farc";
 char* gSyncPublishPath = "gamedata/alear/sync/publish";
 
@@ -824,14 +825,14 @@ void AlearSyncThreadFunc(u64 arg)
 
                     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
                     
-                    // The first database is always the sync database
-                    old_database = FileDB::DBs[0];
+                    // The second database is always the sync database
+                    old_database = FileDB::DBs[1];
 
                     // Load the sync map again!
                     CFilePath syncfp(FPR_GAMEDATA, gSyncDatabasePath);
                     new_database= CFileDB::Construct(syncfp);
                     new_database->Load();
-                    FileDB::DBs[0] = new_database;
+                    FileDB::DBs[1] = new_database;
                 }
 
                 // if ((file.Flags & E_UNLOCK_RESOURCE_SYSTEM) != 0)
