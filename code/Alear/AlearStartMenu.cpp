@@ -683,6 +683,7 @@ bool IsValidDatabase(CFileDB* database)
     const char* system_paths[] = 
     {
         "/gamedata/alear/boot.map",
+        gSyncDatabaseOverridePath,
         gSyncDatabasePath,
         "/output/brg_patch.map",
         "/output/blurayguids.map",

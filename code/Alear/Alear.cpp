@@ -49,8 +49,11 @@ bool AlearEpilogue()
     DebugLog("FileDB::DBs:\n");
     {
         CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
-        for (int i = 1; i < FileDB::DBs.size(); ++i)
+        for (int i = 0; i < FileDB::DBs.size(); ++i)
         {
+            // skip sync database
+            if (i == 1) continue;
+
             gFileWatcher->AddFile(FileDB::DBs[i]->Path, OnDatabaseFileChanged);
             DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
         }
@@ -222,6 +225,9 @@ void AlearSetupDatabase()
     InitSyncCache();
 
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
+
+    CFilePath syncofp(FPR_GAMEDATA, gSyncDatabaseOverridePath);
+    FileDB::DBs.push_back(CFileDB::Construct(syncofp));
 
     CFilePath syncfp(FPR_GAMEDATA, gSyncDatabasePath);
     gSyncDatabase = CFileDB::Construct(syncfp);
