@@ -1067,7 +1067,8 @@ enum
     E_KEY_SWITCH_BASE = 42511,
     E_KEY_SIGN_SPLIT = 77755,
     E_KEY_DIRECTION = 73736,
-    E_KEY_SELECTOR = 73812
+    E_KEY_SELECTOR = 73812,
+    E_KEY_ANGLE = 73932
 };
 
 void CThing::OnFixup()
@@ -1101,6 +1102,7 @@ void CThing::OnFixup()
             case SWITCH_TYPE_ALWAYS_ON: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ALWAYS_ON, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_SIGN_SPLIT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SIGN_SPLIT, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_DIRECTION: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_DIRECTION, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_ANGLE: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ANGLE, 0, STREAM_PRIORITY_DEFAULT); break;
         }
 
         if (part_switch->Type == SWITCH_TYPE_SELECTOR)

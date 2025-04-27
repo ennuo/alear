@@ -182,6 +182,17 @@ public:
 
         return *this;
     }
+    
+    CTweakSetting& SetupTimer()
+    {
+        Widget = TWEAK_WIDGET_MEASURER;
+        Icon = MEASURER_HOURGLASS;
+        Conversion = 1.0f / 30.0f;
+        StepSize = 0.1f;
+        StepSizeDPad = 1.0f;
+        MinValue = 0.0f;
+        MaxValue = 86400.0f;
+    }
 
     CTweakSetting& SetupFraction()
     {
@@ -417,6 +428,7 @@ namespace TweakSettingNativeFunctions
         {
             case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT: return setting.GameToFixed(thing->GetPSwitch()->SelectorState);
             case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED: return thing->GetPSwitch()->Inverted;
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE: return setting.GameToFixed(thing->GetPSwitch()->AngleRange);
             case E_GOOEY_NETWORK_ACTION_SWITCH_VISIBILITY:
             {
                 PSwitch* part_switch = thing->GetPSwitch();
@@ -700,6 +712,13 @@ bool InitTweakSettings()
         .SetIcon(CAROUSEL_OR_GATE_OUTPUT)
         .SetDebugToolTip(L"Output Value");
 
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE)
+        .SetupAngleRange()
+        .SetIcon(sensor_icons, 1)
+        .SetIcon(MEASURER_ANGLE_RANGE)
+        .SetConversion(2.0f)
+        .SetDebugToolTip(L"Trigger Angle Range");
+
     
 
     
@@ -730,6 +749,16 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
     switch (action.Action)
     {
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL) 
+                part_switch->AngleRange = setting.FixedToGame(action.Value);
+            break;
+        }
+
         case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED:
         {
             CThing* thing = world->GetThingByUID(action.ThingUID);
@@ -1139,6 +1168,7 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_OR_GATE_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_SELECTOR_OUTPUT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);

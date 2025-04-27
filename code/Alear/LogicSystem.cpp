@@ -888,9 +888,10 @@ void PSwitch::Update()
             else if (Outputs[1]->Activation.Ternary)
                 activation = 2.0f / 3.0f;
         }
-
-        if (Type == SWITCH_TYPE_SELECTOR)
+        else if (Type == SWITCH_TYPE_SELECTOR)
             activation = InputCount / 10.0f;
+        else if (Type == SWITCH_TYPE_ANGLE)
+            activation = AngleRange / 180.0f;
         
         part_render_mesh->EditorColour = v4(activation);
     }
@@ -1729,6 +1730,7 @@ namespace LogicSystemNativeFunctions
             GET_PREFIX(DIRECTION)
             GET_PREFIX(SIGN_SPLIT)
             GET_PREFIX(SELECTOR)
+            GET_PREFIX(ANGLE)
         }
 
         #undef GET_PREFIX
