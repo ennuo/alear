@@ -57,6 +57,7 @@ public:
 
     void ResetToDefaultGlobalSettings(EGlobalSettingsType type);
     void ClearGlobalSettingUID(EGlobalSettingsType type);
+    void InitBackdropCuller();
     
     void UpgradeAllScripts();
     float GetWaterLevelWorldYCoords() const;

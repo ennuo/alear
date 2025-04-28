@@ -619,6 +619,8 @@ void OnBaseProfileLoadFinished(CBaseProfile* prf)
     //     OnLocalProfileLoadFinished((RLocalProfile*)prf);
 }
 
+AUDIO_GROUP gStingerGroup;
+
 FMOD_RESULT LoadAllEventProjects()
 {
     for (int i = 0; i < CAudio::gFMODFileSize; ++i)
@@ -627,8 +629,6 @@ FMOD_RESULT LoadAllEventProjects()
         CFileDBRow* row = FileDB::FindByGUID(file.Key);
         if (row == NULL) continue;
 
-        DebugLog("audiophile: %s\n", row->FilePathX);
-
         if (strstr(row->FilePathX, ".fev") == NULL) continue;
         CFilePath fp(FPR_GAMEDATA, row->FilePathX);
 
@@ -636,9 +636,15 @@ FMOD_RESULT LoadAllEventProjects()
         FMOD_RESULT result = CAudio::EventSystem->load(fp.c_str(), NULL, &project);
         DebugLog("loaded fev at %s, errno=%08x\n", row->FilePathX, result);
 
+        
+
         if (result != FMOD_OK) 
             return result;
     }
+
+    FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
+    if (result != FMOD_OK) return result;
+    gStingerGroup.Frame = gGraphicsFrameNum;
 
     return FMOD_OK;
 }
@@ -1025,8 +1031,24 @@ void AttachRenderJointHooks()
     MH_PokeHook(0x0003e3a0, GetRenderJointMesh);
 }
 
+void OnBackdropChange(PWorld* world)
+{
+    world->InitBackdropCuller();
+    
+    const char* stinger = NULL;
+    switch (world->Backdrop->GetPRef()->Plan.GetGUID().guid)
+    {
+        default: 
+            stinger = "sting_japanese_zen"; break;
+    }
+    
+    if (stinger != NULL)
+        CAudio::PlaySample(gStingerGroup, stinger, world->GetThing(), -10000.0f, -10000.0f);
+}
+
 void InitSharedHooks()
 {
+    MH_PokeCall(0x0007c710, OnBackdropChange);
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
     AttachRenderJointHooks();
@@ -1093,7 +1115,7 @@ void InitSharedHooks()
     MH_PokeBranch(0x00380180, &_custom_item_grid_hook);
 
     // Allow fevs in audiophiles rlst
-    // MH_PokeBranch(0x001a4a98, &_custom_event_projects_hook);
+    MH_PokeBranch(0x001a4a98, &_custom_event_projects_hook);
 
     // woohoo weehee
     MH_PokeBranch(0x0034df5c, &_popit_close_hook);

@@ -2,6 +2,12 @@
 
 #include "hook.h"
 
+MH_DefineFunc(PWorld_InitBackdropCuller, 0x00032754, TOC0, void, PWorld*);
+void PWorld::InitBackdropCuller()
+{
+    PWorld_InitBackdropCuller(this);
+}
+
 MH_DefineFunc(PWorld_ClearGlobalSettingUID, 0x00026084, TOC0, void, PWorld*, EGlobalSettingsType);
 void PWorld::ClearGlobalSettingUID(EGlobalSettingsType type)
 {
