@@ -123,6 +123,7 @@ extern CConfigBool gForceLoadEditable;
 extern CConfigBool gForceMeshScaling;
 
 extern CConfigBool gUseIceAccessibility;
+extern CConfigBool gPlayBackgroundStings;
 
 extern bool gPauseGameSim;
 extern float gFarDist;

@@ -1033,17 +1033,78 @@ void AttachRenderJointHooks()
 
 void OnBackdropChange(PWorld* world)
 {
-    world->InitBackdropCuller();
+    if(gPlayBackgroundStings) {
+        //CAudio::StopSample(CFModAudioHandle);
+
+        world->InitBackdropCuller();
+        
+        const char* stinger = NULL;
+        switch (world->Backdrop->GetPRef()->Plan.GetGUID().guid)
+        {
+            default: 
+                stinger = NULL; break;
+            case 31968:
+                stinger = "sting_empty_world"; break;
+            case 31964:
+                stinger = "sting_english_garden"; break;
+            case 32026:
+                stinger = "sting_english_seaside"; break;
+            case 33684:
+                stinger = "sting_african_savannah"; break;
+            case 31967:
+                stinger = "sting_mexico_graveyard"; break;
+            case 31966:
+                stinger = "sting_mexico_desert"; break;
+            case 33371:
+                stinger = "sting_american_midwest"; break;
+            case 34409:
+                stinger = "sting_american_newyork"; break;
+            case 31970:
+                stinger = "sting_japanese_window"; break;
+            case 31965:
+                stinger = "sting_japanese_zen"; break;
+            case 32025:
+                stinger = "sting_indian_jungle"; break;
+            case 34408:
+                stinger = "sting_russian_siberia"; break;
+            case 32845:
+                stinger = "sting_russian_theatre"; break;
+            case 52330:
+                stinger = "sting_moon"; break;
+            case 66082:
+                stinger = "sting_001_mgs"; break;
+            case 69625:
+                stinger = "sting_001_mpcave"; break;
+            case 74443:
+                stinger = "sting_001_history"; break;
+            case 79106:
+                stinger = "sting_001_incredibles"; break;
+            case 79094:
+                stinger = "sting_002_pirates"; break;
+            case 92664:
+                stinger = "sting_002_marvel"; break;
+            case 80117:
+                stinger = "sting_002_prehistoric"; break;
+            case 92663:
+                stinger = "sting_002_ff7"; break;
+            case 96503:
+                stinger = "LBP2/sting_davinci"; break;
+            case 89577:
+                stinger = "LBP2/sting_victoria"; break;
+            case 89648:
+                stinger = "LBP2/sting_clive"; break;
+            case 83041:
+                stinger = "LBP2/sting_avalon"; break;
+            case 89967:
+                stinger = "LBP2/sting_eve"; break;
+            case 94369:
+                stinger = "LBP2/sting_cosmos"; break;
+        }
     
-    const char* stinger = NULL;
-    switch (world->Backdrop->GetPRef()->Plan.GetGUID().guid)
-    {
-        default: 
-            stinger = "sting_japanese_zen"; break;
+        if (stinger != NULL) {
+            CAudio::PlaySample(gStingerGroup, stinger, world->GetThing(), -10000.0f, -10000.0f);
+        }
     }
-    
-    if (stinger != NULL)
-        CAudio::PlaySample(gStingerGroup, stinger, world->GetThing(), -10000.0f, -10000.0f);
 }
 
 void InitSharedHooks()
