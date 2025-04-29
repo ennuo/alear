@@ -14,4 +14,16 @@ namespace CAudio
     {
         return PlaySample_3D_Internal(group, name, param1, pos3d, param2);
     }
+
+    MH_DefineFunc(StopSample_Internal, 0x001a30cc, TOC0, AUDIO_RESULT, AUDIO_HANDLE&);
+    AUDIO_RESULT StopSample(AUDIO_HANDLE& h)
+    {
+        return StopSample_Internal(h);
+    }
+
+    MH_DefineFunc(GetCurrMusicGuid_Internal, 0x0019bdf8, TOC0, CGUID);
+    CGUID GetCurrMusicGuid()
+    {
+        return GetCurrMusicGuid_Internal();
+    }
 };

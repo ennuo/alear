@@ -17,6 +17,7 @@ public:
 
 typedef CAudio::CFModAudioHandle AUDIO_HANDLE;
 typedef FModWrapper<FMOD::EventGroup> AUDIO_GROUP;
+typedef FMOD_RESULT AUDIO_RESULT;
 class CThing;
 
 
@@ -24,6 +25,9 @@ namespace CAudio
 {
     AUDIO_HANDLE PlaySample(AUDIO_GROUP& group, char const* name, float param1, v2 const* pos3d, float param2);
     AUDIO_HANDLE PlaySample(AUDIO_GROUP& group, char const* name, CThing* thing, float param1, float param2);
+    AUDIO_RESULT StopSample(AUDIO_HANDLE& h);
+    CGUID GetCurrMusicGuid();
+
     extern AUDIO_GROUP gSFX;
 
     extern FMOD::System* System;
