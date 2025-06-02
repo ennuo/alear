@@ -12,6 +12,7 @@
 class CThing;
 class CMesh;
 class CMorphWeightInstance;
+class CPrimitive;
 
 class CDecal {
 public:
@@ -51,8 +52,8 @@ public:
     CMesh* Mesh;
     CP<RTexture> InstanceTexture;
     u32 InstanceTextureRemap;
-    u32 InstanceTextureApplyIdx;
-    CVector<void*>* InstancePrimitives;
+    CVector<CPrimitive>* InstancePrimitives;
+        u32 InstanceTextureApplyIdx;
     CMorphWeightInstance* InstanceMorphWeights;
     u32 SPUOutputOffset_Pos;
     u32 SPUOutputOffset_Nor;

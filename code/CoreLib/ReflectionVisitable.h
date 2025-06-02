@@ -3,6 +3,9 @@
 
 class CReflectionVisitable {
 public:
+    inline CReflectionVisitable() : VisitationStamp(), Visited()
+    {}
+public:
     u32 VisitationStamp;
     void* Visited;
 };

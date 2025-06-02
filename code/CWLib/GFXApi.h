@@ -19,6 +19,9 @@ namespace NGfx
     extern CTGVertex* tgVtxCur;
     extern CTGVertex* tgVtxEnd;
     extern bool gTgUseNormals;
+    extern u32 gCurDynamicNormalPool;
+
+    ESimpleMemPool GetCurDynamicNormalPool();
     
     extern void(*BindTexture)(u32 index, CellGcmTexture* texture, CGCMTextureState* settings);
     extern void*(*tgStart)(u32 numverts, u32 vertexstride);

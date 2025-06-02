@@ -87,6 +87,7 @@ extern "C" uintptr_t _hack_gather_character_settings_hook;
 
 extern "C" uintptr_t _bone_thing_hook;
 extern "C" uintptr_t _render_mesh_setup_rendering_hook;
+extern "C" uintptr_t _draw_call_hook;
 
 #define PORT_ALLOWED_TO_APPLY_SYNCED_UPDATES (0x000138f4)
 #define PORT_RGAME_RUN_FRAME (0x000b12a4)

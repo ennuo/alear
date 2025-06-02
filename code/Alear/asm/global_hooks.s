@@ -667,3 +667,8 @@ create_hook render_mesh_setup_rendering_hook, 0x0003ecb8
     call _ZNK11PRenderMesh14SetupRenderingEv
     ret
 
+create_hook draw_call_hook, 0x001f7f6c
+    mr %r3, %r22
+    call _Z27OnPreBindDrawCallPrimitivesP13CMeshInstance
+    rlwinm %r0, %r25, 0x0, 0x18, 0x18
+    ret

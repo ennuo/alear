@@ -997,6 +997,8 @@ void AttachRenderJointHooks()
 
 void InitSharedHooks()
 {
+    MH_PokeBranch(0x001f7f68, &_draw_call_hook);
+    
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
     AttachRenderJointHooks();

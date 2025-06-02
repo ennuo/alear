@@ -83,8 +83,10 @@ public:
 	}
 public:
 	bool operator!() const { return !Ref; }
-	bool operator==(T* rhs) const { return Ref == rhs.Ref; }
-	bool operator!=(T* rhs) const { return Ref != rhs.Ref; }
+	bool operator==(const CP<T>& rhs) const { return Ref == rhs.Ref; }
+	bool operator!=(const CP<T>& rhs) const { return Ref != rhs.Ref; }
+	bool operator==(const T* rhs) const { return Ref == rhs; }
+	bool operator!=(const T* rhs) const { return Ref != rhs; }
 public:
 	void CopyFrom(T* ptr)
 	{

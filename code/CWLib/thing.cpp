@@ -18,12 +18,46 @@ CThing::~CThing()
 MH_DefineFunc(CThing_AddPart, 0x00020770, TOC0, void, CThing*, EPartType);
 void CThing::AddPart(EPartType type)
 {
+    if (type == PART_TYPE_MATERIAL_OVERRIDE)
+    {
+        PMaterialOverride*& part = CustomThingData->PartMaterialOverride;
+        if (part != NULL) return;
+
+        part = new PMaterialOverride();
+        part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(this);
+
+        return;
+    }
+
+    if (type == PART_TYPE_MICROCHIP)
+    {
+        PMicrochip*& part = CustomThingData->PartMicrochip;
+        if (part != NULL) return;
+        
+        part = new PMicrochip();
+        part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(this);
+
+        return;
+    }
+
     CThing_AddPart(this, type);
 }
 
 MH_DefineFunc(CThing_RemovePart, 0x000216a4, TOC0, void, CThing*, EPartType);
 void CThing::RemovePart(EPartType type)
 {
+    if (type == PART_TYPE_MATERIAL_OVERRIDE && CustomThingData->PartMaterialOverride != NULL)
+    {
+        delete CustomThingData->PartMaterialOverride;
+        CustomThingData->PartMaterialOverride = NULL;
+    }
+
+    if (type == PART_TYPE_MICROCHIP && CustomThingData->PartMicrochip != NULL)
+    {
+        delete CustomThingData->PartMicrochip;
+        CustomThingData->PartMicrochip = NULL;
+    }
+    
     CThing_RemovePart(this, type);
 }
 
@@ -76,6 +110,11 @@ void CThing::DestroyExtraData()
             if (input == NULL) continue;
             input->RemoveTarget(this, i);
         }
+
+        if (CustomThingData->PartMicrochip != NULL)
+            delete CustomThingData->PartMicrochip;
+        if (CustomThingData->PartMaterialOverride != NULL)
+            delete CustomThingData->PartMaterialOverride;
         
         delete CustomThingData;
     }

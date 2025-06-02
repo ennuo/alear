@@ -7,6 +7,8 @@
 class CThing;
 class CPart : public CReflectionVisitable {
 public:
+    inline CPart() : CReflectionVisitable(), Thing() {}
+public:
     CThing* GetThing() const { return Thing; }
     void SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(CThing* thing) { Thing = thing; }
 private:

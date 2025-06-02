@@ -20,6 +20,7 @@
 #include <ResourceSystem.h>
 #include <ResourceGfxMaterial.h>
 #include <ResourceGFXTexture.h>
+#include <ResourceGFXMesh.h>
 #include <ResourceCharacterSettings.h>
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
@@ -152,6 +153,30 @@ ReflectReturn Reflect(R& r, CCompactSwitchOutput& d)
     ReflectReturn ret;
     ADD(Activation);
     ADD(Ports);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRegionOverride& d)
+{
+    ReflectReturn ret;
+    ADD(Region);
+    ADD(MaterialPlan);
+    ADD(Material);
+    ADD(UVScale);
+    ADD(Color);
+    ADD(Brightness);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, PMaterialOverride& d)
+{
+    ReflectReturn ret;
+    ADD(Overrides);
+    ADD(Mesh);
+    ADD(Color);
+    ADD(Brightness);
     return ret;
 }
 
@@ -800,6 +825,15 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
                 break;
             }
+            case 0x4d544f56: /* MTOV */
+            {
+                PMaterialOverride* part = new PMaterialOverride();
+                part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
+                if ((ret = Reflect(r, part)) != REFLECT_OK) return ret;
+                thing->CustomThingData->PartMaterialOverride = part;
+                
+                break;
+            }
             case 0x4c4f4743: /* LOGC */
             {
                 PSwitch* part_switch = thing->GetPSwitch();
@@ -914,6 +948,16 @@ ReflectReturn PScriptName::WriteAlearData()
 
     r.SetCompressionFlags(flags & 7);
 
+    PMaterialOverride* part_override = thing->GetPMaterialOverride();
+    if (part_override != NULL)
+    {
+        u32 magic = 0x4d544f56;
+
+        // dont want to use compression for this
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, *part_override)) != REFLECT_OK) return ret;
+    }
+
     PMicrochip* microchip = thing->GetPMicrochip();
     if (microchip != NULL)
     {
@@ -1013,6 +1057,8 @@ ReflectReturn PScriptName::WriteAlearData()
 
 bool CThing::HasCustomPartData()
 {
+    if (GetPMicrochip() != NULL || GetPMaterialOverride() != NULL) return true;
+
     PYellowHead* yellowhead = GetPYellowHead();
     if (yellowhead != NULL && yellowhead->Poppet != NULL) return true;
     
@@ -1073,8 +1119,8 @@ enum
 
 void CThing::OnFixup()
 {
-    DebugLog("fixing loading thing...\n");
-    DebugLog("world ptr: %08x\n", World);
+    // DebugLog("fixing loading thing...\n");
+    // DebugLog("world ptr: %08x\n", World);
 
     UpdateObjectType();
 
@@ -1140,6 +1186,22 @@ void CThing::OnFixup()
             }
         }
     }
+
+    CP<RMesh> mesh = LoadResourceByKey<RMesh>(10173, 0, STREAM_PRIORITY_DEFAULT);
+    PRenderMesh* part_render_mesh = GetPRenderMesh();
+    if (part_render_mesh != NULL && part_render_mesh->Mesh == mesh)
+    {
+        AddPart(PART_TYPE_MATERIAL_OVERRIDE);
+        PMaterialOverride* part_override = GetPMaterialOverride();
+        part_override->Mesh = mesh;
+        
+        CRegionOverride region;
+        region.Material = LoadResourceByKey<RGfxMaterial>(10803, 0, STREAM_PRIORITY_DEFAULT);
+        region.Region = 0;
+
+        part_override->Overrides.push_back(region);
+    }
+
 }
 
 #include "AlearConfig.h"
@@ -1147,7 +1209,7 @@ const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
 
 ReflectReturn CThing::OnLoad()
 {
-    DebugLog("finished loading thing...\n");
+    // DebugLog("finished loading thing...\n");
     ReflectReturn ret = REFLECT_OK;
 
     if (gLoadDefaultMaterial)
@@ -1221,7 +1283,7 @@ ReflectReturn CThing::OnLoad()
 
     if (part_switch != NULL)
         part_switch->OnPartLoaded();
-
+    
     return REFLECT_OK;
 }
 
