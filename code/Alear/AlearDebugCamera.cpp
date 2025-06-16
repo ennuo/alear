@@ -56,14 +56,20 @@ bool gDisableDOF = true;
 bool gDisableFog = false;
 bool gShowOutlines = false;
 bool gRenderOnlyPopit = false;
-
+bool gCinemachineDisableYellowHead = true;
 
 CGooeyNodeManager* gCameraGooey;
 
 bool ShouldInterceptInput()
 {
     if (gView.DebugCameraActive)
+    {
+        if (gCinemachineDisableYellowHead)
+            return true;
+        
         return gCameraMenu != MENU_PLAYBACK;
+    }
+
     return false;
 }
 

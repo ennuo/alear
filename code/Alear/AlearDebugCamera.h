@@ -9,6 +9,7 @@
 extern bool gShowCameraHelper;
 extern bool gShowOutlines;
 extern bool gRenderOnlyPopit;
+extern bool gCinemachineDisableYellowHead;
 
 void InitCameraHooks();
 void UpdateDebugCameraNotInUse();

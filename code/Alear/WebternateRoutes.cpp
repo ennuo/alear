@@ -29,6 +29,12 @@ public:
 public:
     virtual ~MMOTextStreamA() = 0;
 public:
+
+    inline MMOTextStreamA& operator<<(bool v)
+    {
+        return *this << (v ? "true" : "false");
+    }
+
     inline MMOTextStreamA& operator<<(int v)
     {
         char fmt[64];
@@ -287,6 +293,13 @@ public:
     }
 };
 
+void DoBooleanResponse(bool& b, const char* name, const char* key, const char* value)
+{
+    if (strcmp(key, name) != 0) return;
+    if (strcmp(value, "toggle") == 0) b = !b;
+    else b = strcmp(value, "true") == 0;
+}
+
 class CGameVarsEndpoint : public CRoute {
 public:
     inline CGameVarsEndpoint(CWebternate* owner) : CRoute(owner) {}
@@ -294,13 +307,6 @@ public:
     const char* GetHref() { return "api/gamevars"; }
     const char* GetContentType() { return "application/json"; }
     bool IsPage() { return false; }
-
-    void DoBooleanResponse(bool& b, const char* name, const char* key, const char* value)
-    {
-        if (strcmp(key, name) != 0) return;
-        if (strcmp(value, "toggle") == 0) b = !b;
-        else b = strcmp(value, "true") == 0;
-    }
 
     void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
     {
@@ -340,16 +346,28 @@ public:
     void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
     {
         EPostOrGet method = (EPostOrGet)(body.Begin == NULL);
-        
-        if (method == E_HTTP_GET)
-        {
-            stream << "{";
-                stream << "\"pos\":" << GetCameraPosition() << ",";
-                stream << "\"foc\":" << GetCameraFocus();
-            stream << "}";
 
-            return;
+        if (method == E_HTTP_POST)
+        {
+            const char* key = NULL;
+            const char* value = NULL;
+
+            typename ParameterMap::iterator it = parameters.find("key");
+            if (it != parameters.end()) key = it->second.c_str();
+            else return;
+
+            it = parameters.find("value");
+            if (it != parameters.end()) value = it->second.c_str();
+            else return;
+
+            DoBooleanResponse(gCinemachineDisableYellowHead, "intercept", key, value);
         }
+
+        stream << "{";
+            stream << "\"pos\":" << GetCameraPosition() << ",";
+            stream << "\"foc\":" << GetCameraFocus() << ",";
+            stream << "\"intercept\":" << gCinemachineDisableYellowHead;
+        stream << "}";
     }
 };
 
