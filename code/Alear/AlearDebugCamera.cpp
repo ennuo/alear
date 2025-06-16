@@ -60,6 +60,13 @@ bool gRenderOnlyPopit = false;
 
 CGooeyNodeManager* gCameraGooey;
 
+bool ShouldInterceptInput()
+{
+    if (gView.DebugCameraActive)
+        return gCameraMenu != MENU_PLAYBACK;
+    return false;
+}
+
 void UpdateDebugCameraNotInUse()
 {
     #ifdef __CINEMACHINE__

@@ -669,3 +669,8 @@ EyeVectors:
     ba 0x00359508
 NoWeirdVectorAssignmentExit:
     ba 0x0035910c
+
+create_hook debug_camera_input_hook, 0x0014e0f4
+    call _Z20ShouldInterceptInputv
+    cmpwi %cr7, %r3, 0x0
+    ret

@@ -82,7 +82,7 @@ extern "C" uintptr_t _can_scale_guid_list_hook;
 extern "C" uintptr_t _get_outline_guid_hook;
 
 extern "C" uintptr_t _hack_gather_character_settings_hook;
-
+extern "C" uintptr_t _debug_camera_input_hook;
 
 #define PORT_ALLOWED_TO_APPLY_SYNCED_UPDATES (0x000138f4)
 #define PORT_RGAME_RUN_FRAME (0x000b12a4)

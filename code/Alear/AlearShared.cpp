@@ -1107,6 +1107,8 @@ void OnBackdropChange(PWorld* world)
 
 void InitSharedHooks()
 {
+    MH_PokeBranch(0x0014e0ec, &_debug_camera_input_hook);
+
     MH_PokeCall(0x0007c710, OnBackdropChange);
     AttachPoppetInterfaceExtensionHooks();
     AttachIceHooks();
