@@ -43,9 +43,9 @@ private:
 private:
     void Steam(f32 size);
     void DeathSmoke(f32 size);
-    void Burnilate(bool was_frozen);
-    void Gasify();
-    void Electrify();
+    //void Burnilate(bool was_frozen);
+    //void Gasify();
+    //void Electrify();
     void DoBarge(bool mirror, f32 walk_vel);
 public:
     int FramesSinceExploded;
@@ -314,7 +314,12 @@ public:
 private:
     char _Pad4[0xC];
 public:
-    s32 YANIM_DEATH_ICE_INTO;
+    int YANIM_DEATH_ICE_FROZEN;
+    int YANIM_DEATH_ICE_IDLE;
+    int YANIM_DEATH_ICE_WALK;
+    int YANIM_DEATH_ICE_INTO;
+    int YANIM_DEATH_ICE_LOOP;
+    int YANIM_DEATH_ICE_OUTOF;
     s32 ThawFrame;
     s32 ShiverFrame;
     bool WasFrozen;

@@ -375,8 +375,8 @@ class CAurienPage : public CRoute {
 public:
     inline CAurienPage(CWebternate* owner) : CRoute(owner) {}
 public:
-    const char* GetHref() { return "aurien"; }
-    const char* GetTitle() { return "Old Man Requests"; }
+    const char* GetHref() { return "machinima"; }
+    const char* GetTitle() { return "Machinima"; }
     void Write(MMOTextStreamA& stream, ParameterMap& parameters, TextRange<char>& body)
     {
         EPostOrGet method = (EPostOrGet)(body.Begin == NULL);

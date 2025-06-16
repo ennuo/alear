@@ -5,19 +5,24 @@
 #include <AnimBank.h>
 #include <SackBoyAnim.h>
 #include <PartCreature.h>
+#include <PartYellowHead.h>
 #include <thing.h>
 #include <ResourceGFXMesh.h>
 #include <MMAudio.h>
 #include <cell/DebugLog.h>
 #include "hook.h"
 
+#include <Powerup.h>
+
 using namespace ScriptyStuff;
 
 static s32 YANIM_DEATH_ICE_FROZEN;
 static s32 YANIM_DEATH_ICE_IDLE;
 static s32 YANIM_DEATH_ICE_WALK;
+static s32 YANIM_DEATH_ICE_INTO;
 static s32 YANIM_DEATH_ICE_LOOP;
 static s32 YANIM_DEATH_ICE_OUTOF;
+int FADE_LENGTH = 450;
 
 StaticCP<RMesh> FrozenMesh;
 StaticCP<RMesh> IceCubeMesh;
@@ -28,18 +33,19 @@ float clamp(float d, float min, float max)
     return t > max ? max : t;
 }
 
+#define CONDITIONAL_LOAD(name, guid) { int index = LoadAnim(ab, guid); if (gCachedAnimLoad) sb->name = index; }
+
 void CacheIceAnims(CSackBoyAnim* sb, CAnimBank* ab)
 {
-    YANIM_DEATH_ICE_FROZEN = LoadAnim(ab, 18625);
-    YANIM_DEATH_ICE_IDLE = LoadAnim(ab, 18587);
-    YANIM_DEATH_ICE_WALK = LoadAnim(ab, 19633);
-    
-    int index = LoadAnim(ab, 18626);
-    if (gCachedAnimLoad) sb->YANIM_DEATH_ICE_INTO = index;
-
-    YANIM_DEATH_ICE_LOOP = LoadAnim(ab, 18627);
-    YANIM_DEATH_ICE_OUTOF = LoadAnim(ab, 18616);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_FROZEN, 18625);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_IDLE, 18587);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_WALK, 19633);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_INTO, 18626);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_LOOP, 18627);
+    CONDITIONAL_LOAD(YANIM_DEATH_ICE_OUTOF, 18616);
 }
+
+#undef CONDITIONAL_LOAD
 
 void CSackBoyAnim::FreezeSolid()
 {
@@ -50,38 +56,72 @@ void CSackBoyAnim::FreezeSolid()
 
     rend->SnapshotCostume();
     rend->SetEffectMesh(IceCubeMesh);
-    rend->SetMesh(FrozenMesh);
 
-    const int m = 1;
-    int clusters = GetClusterCount(Thing, m);
-    for (int i = 0; i < clusters; ++i)
+    const int m0 = 0;
+    int clusters0 = GetClusterCount(Thing, m0);
+    for (int i = 0; i < clusters0; ++i)
     {
-        SetBlendClusterRigidity(Thing, m, i, 1.0f);
-        SetSoftPhysClusterEffect(Thing, m, i, 0.0f);
+        SetBlendClusterRigidity(Thing, m0, i, 1.0f);
+        SetSoftPhysClusterEffect(Thing, m0, i, 0.0f);
     }
 
+    const int m1 = 1;
+    int clusters1 = GetClusterCount(Thing, m1);
+    for (int i = 0; i < clusters1; ++i)
+    {
+        SetBlendClusterRigidity(Thing, m1, i, 1.0f);
+        SetSoftPhysClusterEffect(Thing, m1, i, 0.0f);
+    }
     
     rend->SetSoftbodySim(true);
+}
+
+bool CanFloat(PCreature* creature)
+{
+    if (creature->State == STATE_FROZEN)
+    {
+        return creature->Fork->AmountBodySubmerged > 0.001f || creature->Fork->AmountHeadSubmerged > creature->Config->AmountSubmergedToNotBreath;
+    }
+    
+    return creature->Fork->IsSwimming;
 }
 
 void CSackBoyAnim::FreezeThaw()
 {
     CRenderYellowHead* rend = GetRenderYellowHead();
 
-    RestoreMesh(Thing);
     SetEffectMesh(IceCubeMesh);
-
     
     rend->SetSoftbodySim(false);
 
     ThawFrame = 0;
+    
+    // Disable costume pieces when frozen/dying
+    // Apply skin to the frozen mesh
+    //PCostume* costume = rend->GetYellowThing()->GetPCostume();
+    //costume.
 
-    const int m = 1;
-    int clusters = GetClusterCount(Thing, m);
-    for (int i = 0; i < clusters; ++i)
+    PCostume* costume = rend->GetYellowThing()->GetPCostume();
+    //CP<RGfxMaterial> gfxmaterial = costume->GetCurrentMaterial();
+    //CResourceDescriptor<RPlan> materialplan = costume->GetCurrentMaterialPlan();
+    //costume->SetMaterial(gfxmaterial, materialplan);
+    
+    const int m0 = 0;
+    int clusters0 = GetClusterCount(Thing, m0);
+    for (int i = 0; i < clusters0; ++i)
     {
-        SetBlendClusterRigidity(Thing, m, i, 0.0f);
-        SetSoftPhysClusterEffect(Thing, m, i, 1.0f);
+		printf("cluster %d:\n", i);
+        SetBlendClusterRigidity(Thing, m0, i, 0.0f);
+        SetSoftPhysCollision(Thing, m0, true, true, true, true, true);
+        SetSoftPhysClusterEffect(Thing, m0, i, 1.0f);
+    }
+
+    const int m1 = 1;
+    int clusters1 = GetClusterCount(Thing, m1);
+    for (int i = 0; i < clusters1; ++i)
+    {
+        SetBlendClusterRigidity(Thing, m1, i, 0.0f);
+        SetSoftPhysClusterEffect(Thing, m1, i, 1.0f);
     }
 }
 
@@ -98,12 +138,14 @@ void CSackBoyAnim::DoThawAnims()
         CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/ice_break_free", Thing, -10000.0f, -10000.0f);
     }
 
-    const int FADE_FRAME = 150;
-    const int FADE_LENGTH = 150;
+    const int FADE_FRAME = 50;
 
     if (ThawFrame == FADE_FRAME)
     {
         DebugLog("CSackBoyAnim::DoThawAnims -> Starting fade animation for thaw animation!\n");
+        // Check if submerged when breaking free
+        if(CanFloat(Thing->GetPCreature())) { FADE_LENGTH = 250; }
+        else { FADE_LENGTH = 450; }
     }
 
     if (ThawFrame > FADE_FRAME)
@@ -139,6 +181,8 @@ int CSackBoyAnim::UpdateFreezeIdleState(int last_idle)
         ShiverFrame++;
 
         // Check for walk speed
+        //if(Thing->GetPCreature().) 
+        //    return YANIM_DEATH_ICE_IDLE;
         return YANIM_DEATH_ICE_IDLE;
     }
 

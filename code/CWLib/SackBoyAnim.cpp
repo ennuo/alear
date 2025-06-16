@@ -134,6 +134,7 @@ void CSackBoyAnim::Steam(f32 size)
 }
 
 // Taken from sackboyanim.ff
+/*
 void CSackBoyAnim::Burnilate(bool was_frozen)
 {
     PCreature* creature = Thing->GetPCreature();
@@ -143,7 +144,8 @@ void CSackBoyAnim::Burnilate(bool was_frozen)
     if(was_frozen) 
     {
         RestoreMesh(Thing);
-        SetEffectMesh(NULL);
+        SetEffectMesh(BurnMesh);
+        //SetEffectMesh(NULL);
         Steam(2.5f);
     }
     else
@@ -158,7 +160,8 @@ void CSackBoyAnim::Burnilate(bool was_frozen)
             SetBlendClusterRigidity(Thing, 1, i, 0.000937f);
     }
 }
-
+*/
+/*
 // Taken from sackboyanim.ff
 void CSackBoyAnim::Gasify()
 {
@@ -169,7 +172,7 @@ void CSackBoyAnim::Gasify()
     if(creature->StateTimer - 1 > 1)
         render_yellow_head->SetMesh(NULL);
 }
-
+*/
 // Taken from sackboyanim.ff
 /*
 void CSackBoyAnim::Electrify()
@@ -349,9 +352,17 @@ void CSackBoyAnim::DoDeathAnims()
             if (creature_state == STATE_DEAD)
             {
                 IsFrozen = false;
-                anim = YANIM_DEATH;
-                render_yellow_head->SetIgnoreBodyAng(true);
-                render_yellow_head->SetSoftbodySim(false);
+                anim = YANIM_DEATH_ICE_FROZEN;
+                render_yellow_head->SetIgnoreBodyAng(false);
+                render_yellow_head->SetSoftbodySim(true);
+                
+                const int m0 = 0;
+                int clusters0 = GetClusterCount(Thing, m0);
+                for (int i = 0; i < clusters0; ++i)
+                {
+                    SetBlendClusterRigidity(Thing, m0, i, 0.0f);
+                    SetSoftPhysClusterEffect(Thing, m0, i, 1.0f);
+                }
 
                 if (WasFrozen)
                 {

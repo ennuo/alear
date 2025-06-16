@@ -927,11 +927,13 @@ void ResetLethalTimers(PShape* shape)
     
     if (type == LETHAL_NOT) return;
 
-    if (type == LETHAL_ELECTRIC) 
+    if (type == LETHAL_ELECTRIC || LETHAL_BULLET) 
         shape->ElectricFrame = 1;
-    else if (type == LETHAL_FIRE || type == LETHAL_ICE)
-        shape->FireFrame = 1;
-    else if (type >= LETHAL_POISON_GAS && type <= LETHAL_POISON_GAS6)
+    else if (type < 4) {
+        if (type == LETHAL_FIRE || type == LETHAL_ICE)
+            shape->FireFrame = 1;
+    }
+    else if (type - LETHAL_POISON_GAS < 6)
         shape->GasFrame = 1;
 }
 
