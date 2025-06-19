@@ -1194,7 +1194,7 @@ void InitSharedHooks()
     // MH_Poke32(0x008137c4, *((u32*)&v)); // SCREEN_MIN_Y
     // MH_Poke32(0x0091e430, *((u32*)&v)); // min thing pos y
 
-    MH_PokeBranch(0xc2cf8, &_popit_alphabetical_hook);
+    // MH_PokeBranch(0xc2cf8, &_popit_alphabetical_hook);
 
     MH_PokeBranch(0x003428d4, &_popit_draw_cursor_hook);
     // MH_Poke32(0x0034c850, 0x60000000); // disable draw for bloom
