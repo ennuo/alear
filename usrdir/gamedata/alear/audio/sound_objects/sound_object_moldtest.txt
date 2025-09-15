@@ -1,0 +1,2 @@
+/mldtest/sfx/spots/male_scream
+SOUND_NAME_PABLO

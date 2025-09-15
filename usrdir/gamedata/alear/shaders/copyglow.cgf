@@ -1,0 +1,9 @@
+sampler2D tex_glow: TEXUNIT0;
+
+void main(
+    float2 iUV: TEXCOORD0,
+    out half4 fragColor: COLOR0
+) {
+    float2 scr_coord = float2((floor(iUV.x * 1280.0) * 0.00078125) + 0.000390625, iUV.y);
+    fragColor = tex2D(tex_glow, scr_coord);
+}

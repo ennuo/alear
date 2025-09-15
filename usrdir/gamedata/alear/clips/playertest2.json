@@ -1,0 +1,13 @@
+{
+    "name": "player lookat",
+    "looped": true,
+    "shots":
+    [
+        {
+            "shot_type": "OFFSET",
+            "target_type": "PLAYER",
+            "position": [350.0, 400.0, 200.0],
+            "hold_time": 100000.0
+        }
+    ]
+}

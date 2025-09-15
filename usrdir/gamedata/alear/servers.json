@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Refresh",
+        "http": "http://refresh.jvyden.xyz:2095/lbp",
+        "secure": "http://refresh.jvyden.xyz:2095/lbp",
+        "digest": "CustomServerDigest"
+    },
+    {
+        "name": "Sefirah",
+        "http": "http://sefirah.local:10060/lbp",
+        "secure": "http://sefirah.local:10060/lbp",
+        "digest": "CustomServerDigest"
+    }
+]

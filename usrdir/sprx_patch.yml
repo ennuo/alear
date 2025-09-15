@@ -1,0 +1,44 @@
+PPU-b7d59e2bd332611fa249066dc6646983aad0a02d:
+  "Alear SPRX":
+    Games:
+      "LittleBigPlanet Debug":
+        LBP1DEBUG: [ All ]
+    Author: "ennuo"
+    Patch Version: 1.0
+    Patch:
+      - [ utf8, 0x008fd5c8, /app_home/alear.sprx ] # ALEAR_PRX
+      # lbp1/v2/injprx 
+      - [ be32, 0x0001d830, 0xf821ff01 ] # stdu r1, -0x100(r1)
+      - [ be32, 0x0001d834, 0x7c0802a6 ] # mflr r0
+      - [ be32, 0x0001d838, 0xf8010110 ] # std r0, 0x110(r1)
+      - [ be32, 0x0001d83c, 0x3c60008f ] # lis r3, $ALEAR_PRX@h
+      - [ be32, 0x0001d840, 0x6063d5c8 ] # ori r3, r3, $ALEAR_PRX@l
+      - [ be32, 0x0001d844, 0x38800000 ] # li r4, 0
+      - [ be32, 0x0001d848, 0x38a00000 ] # li r5, 0
+      - [ be32, 0x0001d84c, 0x396001e0 ] # li r11, $_sys_prx_load_module
+      - [ be32, 0x0001d850, 0x44000002 ] # sc
+      - [ be32, 0x0001d854, 0x39600028 ] # li r11, 0x28
+      - [ be32, 0x0001d858, 0xf9610040 ] # std r11, PRX_OPT_STACK(r1)
+      - [ be32, 0x0001d85c, 0x39600001 ] # li r11, 0x1,
+      - [ be32, 0x0001d860, 0xf9610048 ] # std r11, PRX_OPT_STACK + 0x8(r1)
+      - [ be32, 0x0001d864, 0x3960ffff ] # li r11, -1
+      - [ be32, 0x0001d868, 0xf9610050 ] # std r11, PRX_OPT_STACK + 0x10(r1)
+      - [ be32, 0x0001d86c, 0x78630020 ] # rldicl r3, r3, 0x0, 0x20
+      - [ be32, 0x0001d870, 0x38800000 ] # li r4, 0
+      - [ be32, 0x0001d874, 0x38a10040 ] # addi r5, r1, PRX_OPT_STACK
+      - [ be32, 0x0001d878, 0x396001e1 ] # li r11, $_sys_prx_start_module
+      - [ be32, 0x0001d87c, 0x44000002 ] # sc
+      - [ be32, 0x0001d880, 0xe9610050 ] # ld r11, PRX_OPT_STACK + 0x10(r1)
+      - [ be32, 0x0001d884, 0x2c2bffff ] # cmpdi r11, -1
+      - [ be32, 0x0001d888, 0x41820020 ] # beq Epilogue
+      - [ be32, 0x0001d88c, 0x79690020 ] # rldicl r9, r11, 0x0, 0x20
+      - [ be32, 0x0001d890, 0xf8410028 ] # std r2, 0x28(r1)
+      - [ be32, 0x0001d894, 0x80090000 ] # lwz r0, 0x0(r9)
+      - [ be32, 0x0001d898, 0x80490004 ] # lwz r2, 0x4(r9)
+      - [ be32, 0x0001d89c, 0x7c0903a6 ] # mtctr r0
+      - [ be32, 0x0001d8a0, 0x4e800421 ] # bctrl
+      - [ be32, 0x0001d8a4, 0xe8410028 ] # ld r2, 0x28(r1)
+      - [ be32, 0x0001d8a8, 0xe8010110 ] # ld r0, 0x110(r1)
+      - [ be32, 0x0001d8ac, 0x7c0803a6 ] # mtlr r0
+      - [ be32, 0x0001d8b0, 0x38210100 ] # addi r1, r1, 0x100
+      - [ be32, 0x0001d8b4, 0x4e800020 ] # blr

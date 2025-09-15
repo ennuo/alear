@@ -1,0 +1,5 @@
+{
+    "syncServerEnabled": false,
+    "syncServerAddress": "127.0.0.1",
+    "syncServerPort": 16723
+}

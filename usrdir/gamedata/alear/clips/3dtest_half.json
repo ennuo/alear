@@ -1,0 +1,30 @@
+{
+    "name": "3D Orbit Half-Arc",
+    "looped": true,
+    "shots":
+    [
+        {
+            "shot_type": "ORBIT_3D",
+            "focus": [-18375.042969, 1863.740723, -400],
+            "hold_time": 1.466,
+            "orbit":
+            {
+                "radius": 600.0,
+                "period": 3.0,
+                "angle_offset": 0.0
+            }
+        },
+        {
+            "shot_type": "ORBIT_3D",
+            "focus": [-18375.042969, 1863.740723, -400],
+            "hold_time": 1.466,
+            "orbit":
+            {
+                "radius": 600.0,
+                "period": 3.0,
+                "angle_offset": 180.0,
+                "flipped": true
+            }
+        }
+    ]
+}

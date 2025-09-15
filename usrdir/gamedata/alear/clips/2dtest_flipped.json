@@ -1,0 +1,20 @@
+{
+    "name": "2D Orbit Test (Flipped)",
+    "looped": true,
+    "shots":
+    [
+        {
+            "shot_type": "ORBIT_2D",
+            "focus": [-18375.042969, 1863.740723, -400],
+            "hold_time": 2.966,
+            "orbit":
+            {
+                "distance": 400.0,
+                "radius": 600.0,
+                "period": 3.0,
+                "angle_offset": 90.0,
+                "flipped": true
+            }
+        }
+    ]
+}
