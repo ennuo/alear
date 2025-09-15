@@ -18,12 +18,3 @@ endif()
 # if (NOT "${SCE_PS3_VERSION}" MATCHES "${REQUIRED_PS3_VERSION}")
 # 	message(WARNING "Expected PS3 SCE version: ${REQUIRED_PS3_VERSION}")
 # endif()
-
-# Set standard PS3 environment variables
-set(PS3 1)
-set(__PS3__ 1)
-set(SN_TARGET_PS3 1)
-
-# Some common tools that might be used
-set(MAKE_FSELF "${PS3_SDK}/host-win32/bin/make_fself.exe")
-set(PRX_STRIP "${PS3_SDK}/host-win32/bin/ppu-lv2-prx-strip.exe")

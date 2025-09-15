@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
+
+
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ppu.cmake")
+add_link_options(-mprx)
+
 project(alear VERSION 1.1.2 LANGUAGES CXX ASM)
 
 set(CMAKE_C_EXTENSIONS OFF)
@@ -10,7 +15,8 @@ set(CMAKE_BUILD_TYPE "Debug")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin> CACHE INTERNAL "")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
-include(ppu)
+
+
 
 file(GLOB_RECURSE SRC_FILES 
     "${PROJECT_SOURCE_DIR}/code/PrxLib/**.cpp"
