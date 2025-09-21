@@ -267,8 +267,20 @@ void AlearSetupDatabase()
 
 #include <gooey/GooeyImage.h>
 
+typedef void (*func_ptr) (void);
+extern func_ptr __CTOR_LIST__[];
+extern func_ptr __CTOR_END__[];
+
 void AlearStartup()
 {
+    // moving static constructors here because
+    // some shit uses memory allocations and sprx patcher
+    // runs before all preinit
+    __SIZE_TYPE__ nptrs = ((__SIZE_TYPE__)__CTOR_END__ - (__SIZE_TYPE__)__CTOR_LIST__) / sizeof(__SIZE_TYPE__);
+    for (unsigned i = 0; i < nptrs; ++i)
+        __CTOR_LIST__[i]();
+    
+
     DebugLog("Alear version v%f build date: " __DATE__ " time: " __TIME__ "\n", mmalex::sqrtf(ALEAR_VERSION));
 
     DebugLog("Injecting init steps into startup...\n");
@@ -327,6 +339,13 @@ void AlearStartup()
     
     DebugLog("Module has been initialized!\n");
 }
+
+void AlearStartupBootstrap()
+{
+    // replace AddInitSteps with our own startup function
+    MH_PokeHook(0x0001d830, AlearStartup);
+}
+
 
 void AlearShutdown()
 {

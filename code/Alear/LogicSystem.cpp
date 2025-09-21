@@ -436,8 +436,8 @@ void InitLogicSystemHooks()
 {
     InitializeSwitchDefinitions();
 
-    MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
-    MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
+    // MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
+    // MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
 
     // replace stb with stw for collating raycast so it copies additional fields
     MH_Poke32(0x00356aa0, 0x815f004c /* lwz %r10, 0x4c(%r31) */);
