@@ -115,32 +115,169 @@ _custom_poppet_message_hook:
     ld %r2, 0x28(%r1)
 
     ba 0x0034fa40
+    
+.global _custom_render_marquee_hook
+_custom_render_marquee_hook:
+    mr %r3, %r30
 
+    call _Z14ToolHasMarqueeP7CPoppet
+    cmpwi %cr7, %r3, 0
+    beq %cr7, RenderNotHandled
+    
+RenderHandled:
+    # branch to render
+    ba 0x003545f8
+
+RenderNotHandled:
+    # branch back to original instruction
+    ba 0x0035464c
+
+.global _custom_update_marquee_hook
+_custom_update_marquee_hook:
+    mr %r3, %r30
+
+    call _Z14ToolHasMarqueeP7CPoppet
+    cmpwi %cr7, %r3, 0
+    beq %cr7, UpdateNotHandled
+    
+UpdateHandled:
+    # branch to 
+    ba 0x0034b5e4
+
+UpdateNotHandled:
+    # branch back to original instruction
+    ba 0x0034b5a4
+
+# This hook looks like it's set up wrong
+.global _custom_marquee_selection_hook
+_custom_marquee_selection_hook:
+    cmpwi %cr7, %r3, 0x1c
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x1e
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x1f
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x30
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x0
+    ba 0x0035194c
+    
+SelectMarquee:
+    ba 0x00351950
+
+.global _custom_marquee_action_hook
+_custom_marquee_action_hook:
+    mr %r3, %r30
+
+    call _Z19HandleMarqueeActionP7CPoppet
+    cmpwi %cr7, %r3, 0
+    beq %cr7, MarqueeActionNotHandled
+    
+MarqueeActionHandled:
+    # branch to clear marquee
+    ba 0x003518f8
+
+MarqueeActionNotHandled:
+    # branch back to original instruction
+    ba 0x00351954
+    
+.global _disable_gas_tweak_hook
+_disable_gas_tweak_hook:
+    ba 0x0034fe20
+
+# this hook SUCKS
 .global _custom_pick_object_action_hook
 _custom_pick_object_action_hook:
     cmpwi %cr7, %r3, 0x30
-    bne %cr7, NotACustomSubMode
-
-    mr %r3, %r26
-    mr %r4, %r27
-
-    std %r2, 0x28(%r1)
-    lis %r5, _Z12SetUnphysicsP7CPoppetP6CThing@h      
-    ori %r5, %r5, _Z12SetUnphysicsP7CPoppetP6CThing@l
-    lwz %r2, 0x4(%r5)
-    bl ._Z12SetUnphysicsP7CPoppetP6CThing
-    ld %r2, 0x28(%r1)
-
-    li %r9, 0x0
-    ba 0x00351738
-
-NotACustomSubMode:
+    beq %cr7, UnphysicsPickObject
+    cmpwi %cr7, %r3, 0x27
+    beq %cr7, EyedropperPickObject
+    cmpwi %cr7, %r3, 0x28
+    beq %cr7, DotToDotPickObject
     cmpwi %cr7, %r3, 0x1c
     ba 0x003516e4
 
+UnphysicsPickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z12SetUnphysicsP7CPoppetP6CThing
+
+    ba 0x00351738
+    
+EyedropperPickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+
+    ba 0x00351738
+    
+DotToDotPickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+
+    ba 0x00351738
+    
+UVEditPickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    
+    ba 0x00351738
+
+StickerWashPickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    
+    ba 0x00351738
+    
+SliceNDicePickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    
+    ba 0x00351738
+    
+GluePickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    
+    ba 0x00351738
+    
+PlanTakePickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    
+    ba 0x00351738
+
 .global _fixup_custom_pick_object_select_hook
 _fixup_custom_pick_object_select_hook:
+    cmpwi %cr7, %r27, 0x27
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x28
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x2c
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x2d
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x2e
+    beq %cr7, EarlyReturn
     cmpwi %cr7, %r27, 0x30
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x32
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x33
     beq %cr7, EarlyReturn
     cmpwi %cr7, %r27, 0x1c
     ba 0x00352104

@@ -38,6 +38,13 @@ extern "C" uintptr_t _global_artist_hook;
 extern "C" uintptr_t _global_pref_hook;
 extern "C" uintptr_t _custom_tool_type_hook;
 extern "C" uintptr_t _custom_poppet_message_hook;
+
+extern "C" uintptr_t _custom_render_marquee_hook;
+extern "C" uintptr_t _custom_update_marquee_hook;
+extern "C" uintptr_t _custom_marquee_selection_hook;
+extern "C" uintptr_t _custom_marquee_action_hook;
+
+extern "C" uintptr_t _disable_gas_tweak_hook;
 extern "C" uintptr_t _custom_pick_object_action_hook;
 
 extern "C" uintptr_t _popit_draw_cursor_hook;

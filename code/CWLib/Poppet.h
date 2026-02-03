@@ -33,7 +33,7 @@ class CPoppet : public CReflectionVisitable {
 friend void CustomRaycastAgainstSwitches(CPoppet* poppet);
 public:
     void EyedropperPick(CThing* thing);
-    void EyedropperDrop(CThing* thing);
+    void EyedropperPickMesh(CThing* thing);
 
     void ClearHiddenList();
     void InitializeExtraData();
@@ -52,6 +52,9 @@ public:
     void PushMode(EPoppetMode mode, EPoppetSubMode submode);
     void SendPoppetMessage(EPoppetMessageType message);
     void SetDangerType(CThing* thing);
+    bool FloodFill(CThing* thing);
+    void Backup();
+    void ClearMarquee();
 private:
     RaycastJobResult m_raycastJobResult;
     CRaycastResults m_raycastOnSwitchConnector;

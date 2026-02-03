@@ -24,6 +24,7 @@ CConfigBool gLoadDefaultMaterial(L"Load", L"Use Fallback Graphics Materials", fa
 CConfigBool gForceLoadEditable(L"Load", L"Force Editable On Load", false);
 
 CConfigBool gForceMeshScaling(L"Debug", L"Force Mesh Scaling", false);
+CConfigBool gAllowEyedroppingMeshes(L"Debug", L"Allow Eyedropping Meshes", false);
 
 CConfigBool gUseIceAccessibility(L"Accessibility", L"Ice Shake Mode", false);
 CConfigBool gPlayBackgroundStings(L"Accessibility", L"Play Background Stings", true);

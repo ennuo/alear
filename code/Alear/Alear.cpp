@@ -41,6 +41,7 @@ extern "C" void _gfxbind_hook_naked();
 extern void InitGooeyNetworkHooks();
 extern bool InitTweakSettings();
 extern void LoadSackboyPolygon();
+extern void LoadBallPolygon();
 
 bool AlearCheckPatch();
 
@@ -63,6 +64,7 @@ bool AlearEpilogue()
     LoadRecordingShaders();
     LoadPostProcessingShaders();
     LoadSackboyPolygon();
+    LoadBallPolygon();
     
     return true;
 }

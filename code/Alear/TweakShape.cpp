@@ -219,13 +219,6 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
     if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
-    PShape* shape = thing->GetPShape();
-    if (shape != NULL)
-    {
-        if (shape->LethalType >= LETHAL_POISON_GAS && shape->LethalType <= LETHAL_POISON_GAS6)
-            return true;
-    }
-
     return IsTweakShapeScriptAvailable();
 }
 
@@ -370,21 +363,29 @@ namespace TweakShapeNativeFunctions
                 poppet->SetDangerType(thing);
                 break;
             }
-            case TOOL_SHAPE_ICE:
-            {
-                poppet->DangerMode = LETHAL_ICE;
-                poppet->SetDangerType(thing);
-                break;
-            }
             case TOOL_SHAPE_BURNINATE:
             {
                 poppet->DangerMode = LETHAL_FIRE;
                 poppet->SetDangerType(thing);
                 break;
             }
-            case TOOL_SHAPE_CRUSH:
+            case TOOL_SHAPE_ICE:
             {
-                poppet->DangerMode = LETHAL_CRUSH;
+                poppet->DangerMode = LETHAL_ICE;
+                poppet->SetDangerType(thing);
+                break;
+            }
+            case TOOL_SHAPE_GAS:
+            {
+                ELethalType lethal_type = thing->GetPShape()->LethalType;
+                if(lethal_type > 6 && lethal_type < 12) { poppet->DangerMode = lethal_type; }
+                else { poppet->DangerMode = LETHAL_POISON_GAS; }
+                poppet->SetDangerType(thing);
+                break;
+            }
+            case TOOL_SHAPE_SPIKE:
+            {
+                poppet->DangerMode = LETHAL_SPIKE;
                 poppet->SetDangerType(thing);
                 break;
             }
@@ -394,9 +395,9 @@ namespace TweakShapeNativeFunctions
                 poppet->SetDangerType(thing);
                 break;   
             }
-            case TOOL_SHAPE_SPIKE:
+            case TOOL_SHAPE_CRUSH:
             {
-                poppet->DangerMode = LETHAL_SPIKE;
+                poppet->DangerMode = LETHAL_CRUSH;
                 poppet->SetDangerType(thing);
                 break;
             }
@@ -404,6 +405,18 @@ namespace TweakShapeNativeFunctions
             {
                 if(thing->GetPGeneratedMesh())
                     poppet->EyedropperPick(thing);
+                break;
+            }
+            case TOOL_SHAPE_FLOOD_FILL:
+            {
+                if(thing->GetPGeneratedMesh())
+                    poppet->PushMode(MODE_MENU, SUBMODE_CHOOSE_MATERIAL);
+                break;
+            }
+            case TOOL_SHAPE_VERTEX_EDIT:
+            {
+                if(thing->GetPShape())
+                    poppet->PushMode(MODE_EDIT, SUBMODE_EDIT_VERTS);
                 break;
             }
             case TOOL_SHAPE_TAKE_PLAN:

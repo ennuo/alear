@@ -1,5 +1,6 @@
 #include "AlearHooks.h"
 #include "AlearShared.h"
+#include "AlearConfig.h"
 
 #include <GuidHash.h>
 
@@ -11,8 +12,13 @@
 #include <PartYellowHead.h>
 #include <ResourceGame.h>
 #include <ResourceGFXTexture.h>
+#include <ResourceGFXMesh.h>
+#include <ResourcePlan.h>
+#include <ResourceBevel.h>
+#include <ResourceMaterial.h>
 #include <ResourceSystem.h>
 #include <Poppet.h>
+#include <fmod.h>
 
 #include <thing.h>
 #include <GFXApi.h>
@@ -34,14 +40,15 @@ enum ECursorSprite {
     CURSOR_UV_EDIT,
     CURSOR_GLUE,
     CURSOR_STICKER_CUTTER,
-    CURSOR_UNPHYSICS,
+    CURSOR_STICKER_SCRUBBER,
     CURSOR_EYEDROPPER,
     CURSOR_PAINTBRUSH,
     CURSOR_SPRAYCAN,
     CURSOR_STANDARD,
     CURSOR_MARQUEE,
     CURSOR_PHOTO_MARQUEE,
-    CURSOR_CAPTURE_MARQUEE
+    CURSOR_CAPTURE_MARQUEE,
+    CURSOR_UNPHYSICS
 };
 
 bool IsLethalCursor(u32 sprite)
@@ -63,29 +70,34 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
     EPoppetSubMode submode = poppet->GetSubMode();
 
     if (submode == SUBMODE_GAS_TWEAK) return CURSOR_GAS;
+    if (submode == SUBMODE_PLASMA_TWEAK) return CURSOR_PLASMA;
     if (mode != MODE_CURSOR) return CURSOR_STANDARD;
 
     switch (submode)
     {
-        case SUBMODE_GRAB_PLAN: return CURSOR_CAPTURE_MARQUEE;
+        case SUBMODE_GRAB_PLAN: 
+        case SUBMODE_GRAB_PLAN_MARQUEE: 
+            return CURSOR_CAPTURE_MARQUEE;
         case SUBMODE_GRAB_PHOTO: return CURSOR_PHOTO_MARQUEE;
-
-        case SUBMODE_EDIT_VERTS: return CURSOR_VERTEX_EDIT;
-
+        case SUBMODE_EDIT_VERTS:
+        case SUBMODE_OBJECT_EDIT_BASIC:
+            return CURSOR_VERTEX_EDIT;
+        case SUBMODE_SLICE_N_DICE:
+        case SUBMODE_OBJECT_EDIT_SLICE_N_DICE:
+            return CURSOR_STICKER_CUTTER;
+        case SUBMODE_STICKER_SCRUBBER: return CURSOR_UNPHYSICS;
+        case SUBMODE_STICKER_CUTTER: return CURSOR_STICKER_CUTTER;
         case SUBMODE_PICK_DECORATIONS: return CURSOR_STICKER_PICK;
-
-
-        case SUBMODE_FLOOD_FILL:
-            return CURSOR_FLOOD_FILL;
-
-        case SUBMODE_UNPHYSICS:
-            return CURSOR_UNPHYSICS;
-
-        case SUBMODE_EYEDROPPER:
-            return CURSOR_EYEDROPPER;
-            
-        case SUBMODE_DOT_TO_DOT:
-            return CURSOR_DOT_TO_DOT;
+        case SUBMODE_FLOOD_FILL: return CURSOR_FLOOD_FILL;
+        case SUBMODE_ADVANCED_GLUE: return CURSOR_GLUE;
+        case SUBMODE_EDIT_UVS: return CURSOR_UV_EDIT;
+        case SUBMODE_UNPHYSICS: return CURSOR_UNPHYSICS;
+        case SUBMODE_EYEDROPPER: return CURSOR_EYEDROPPER;
+        case SUBMODE_DOT_TO_DOT: return CURSOR_DOT_TO_DOT;
+        case SUBMODE_PAINT_SCRIBBLE:
+        case SUBMODE_PAINT_LINES:
+            return CURSOR_PAINTBRUSH;
+        case SUBMODE_PAINT_SPRAY: return CURSOR_SPRAYCAN;
         
         case SUBMODE_DANGER:
         {
@@ -196,61 +208,67 @@ void FixupCursorSpriteRect(CPoppet* poppet)
 
 void CPoppet::EyedropperPick(CThing* thing)
 {
-    CPoppet* poppet;
-    CResourceDescriptor<RPlan> guid(31701u);
+    //PushMode(MODE_NORMAL, SUBMODE_CHOOSE_MATERIAL);
+    PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
     CResourceDescriptor<RPlan> body_guid(thing->PlanGUID);
     CResourceDescriptor<RPlan> gfx_guid(thing->GetPGeneratedMesh()->PlanGUID);
+    PGeneratedMesh* generated_mesh = thing->GetPGeneratedMesh();
+    PShape* shape = thing->GetPShape();
     if(thing->GetPGeneratedMesh()->PlanGUID) 
     {
-        DebugLog("Checking if we can floodfill GFX\n");
-        poppet->FloodFillMaterialPlan = gfx_guid;
+        FloodFillMaterialPlan = gfx_guid;
     }
     else if(thing->PlanGUID)
     {
-        DebugLog("Checking if we can floodfill BODY\n");
-        poppet->FloodFillMaterialPlan = body_guid;
+        FloodFillMaterialPlan = body_guid;
     }
-    else
-    {
-        DebugLog("Checking if we can floodfill DEFAULT\n");
-        poppet->FloodFillMaterialPlan = guid;
-    }
-    CP<RMaterial>& physics_material = thing->GetPShape()->MMaterial;
-    if(physics_material)
-    {
-        DebugLog("PHYSICS MATERIAL: \n");
-        poppet->FloodFillPhysicsMaterial = physics_material;
-    }
-    //u32 sound_enum = thing->GetPShape()->SoundEnumOverride;
-    if(thing->GetPShape()->SoundEnumOverride)
-    {
-        DebugLog("SOUND ENUM: \n");
-        poppet->FloodFillSoundEnumOverride = thing->GetPShape()->SoundEnumOverride;
-    }
-    CP<RGfxMaterial>& gfx_material = thing->GetPGeneratedMesh()->GfxMaterial;
-    if(gfx_material)
-    {
-        DebugLog("GFX MATERIAL: \n");
-        poppet->FloodFillGfxMaterial = gfx_material;
-    }
+    CP<RMaterial>& physics_material = shape->MMaterial;
+    FloodFillPhysicsMaterial = physics_material;
+    CP<RGfxMaterial>& gmat = generated_mesh->GfxMaterial;
+    FloodFillGfxMaterial = gmat;
     CP<RBevel>& bevel = thing->GetPGeneratedMesh()->Bevel;
-    if(bevel)
-    {
-        DebugLog("BEVEL: \n");
-        poppet->FloodFillBevel = bevel;
-    }
-    float bevel_size = thing->GetPShape()->BevelSize;
-    if(bevel_size)
-    {
-        DebugLog("BEVEL SIZE: \n");
-        poppet->FloodFillBevelSize = bevel_size;
-    }
-    //poppet->PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
+    FloodFillBevel = bevel;
+    float bevel_size = shape->BevelSize;
+    FloodFillBevelSize = bevel_size;
+    u32 sound_enum = shape->SoundEnumOverride;
+    FloodFillSoundEnumOverride = sound_enum;
 }
 
-void CPoppet::EyedropperDrop(CThing* thing)
+void CPoppet::EyedropperPickMesh(CThing* thing)
 {
-
+    //PushMode(MODE_NORMAL, SUBMODE_CHOOSE_MATERIAL);
+    PushMode(MODE_CURSOR, SUBMODE_FLOOD_FILL);
+    CResourceDescriptor<RPlan> body_guid(thing->PlanGUID);
+    PRenderMesh* render_mesh = thing->GetPRenderMesh();
+    if (render_mesh != NULL)
+    {
+        CP<RMesh>& mesh = render_mesh->Mesh;
+        if (!mesh || !mesh->IsLoaded()) return;
+        CVector<CPrimitive>& primitives = mesh->mesh.Primitives;
+        for (CPrimitive* it = primitives.begin(); it != primitives.end(); ++it)
+        {
+            CPrimitive& primitive = *it;
+            CP<RGfxMaterial>& gmat = primitive.Material;
+            if (!gmat || !gmat->IsLoaded()) return;
+            FloodFillGfxMaterial = gmat;
+        }
+    }
+    if(thing->PlanGUID)
+    {
+        FloodFillMaterialPlan = body_guid;
+    }
+    CP<RBevel> bevel;
+    FloodFillBevel = bevel;
+    PShape* shape = thing->GetPShape();
+    if(shape)
+    {
+        CP<RMaterial>& physics_material = shape->MMaterial;
+        FloodFillPhysicsMaterial = physics_material;
+        float bevel_size = shape->BevelSize;
+        FloodFillBevelSize = bevel_size;
+        u32 sound_enum = shape->SoundEnumOverride;
+        FloodFillSoundEnumOverride = sound_enum;
+    }
 }
 
 bool IsThingFady(CThing* thing)
@@ -300,6 +318,81 @@ bool SetUnphysics(CPoppet* poppet, CThing* thing)
     shape->SetCollidableGame(!shape->CollidableGame);
     shape->SetCollidablePoppet(true);
     
+    return true;
+}
+
+bool EyedropperPickObject(CPoppet* poppet, CThing* thing)
+{
+    if (thing == NULL) return false;
+    PRenderMesh* render_mesh = thing->GetPRenderMesh();
+    v2 pos3d = *(v2*)(((char*)poppet) + 0x180);
+    if(gAllowEyedroppingMeshes && render_mesh != NULL) {
+        poppet->EyedropperPickMesh(thing); 
+    }
+    else 
+    {
+        PShape* shape = thing->GetPShape();
+        if (shape == NULL) return false;
+        PGeneratedMesh* generated_mesh = thing->GetPGeneratedMesh();
+        if (generated_mesh == NULL) return false;
+        poppet->EyedropperPick(thing);
+        //CAudio::PlaySample(CAudio::gSFX, "character/accessories/smelly_stuff/select", thing, -10000.0f, -10000.0f);
+    }
+    
+    return true;
+}
+
+// Marquee selectable
+bool ToolHasMarquee(CPoppet* poppet)
+{
+    EPoppetSubMode submode = poppet->GetSubMode();
+    switch (submode)
+    {
+        case SUBMODE_NONE:
+        case SUBMODE_DANGER:
+        case SUBMODE_FLOOD_FILL:
+        case SUBMODE_STICKER_CUTTER:
+        case SUBMODE_STICKER_SCRUBBER:
+        case SUBMODE_UNPHYSICS:
+        case SUBMODE_ADVANCED_GLUE:
+        case SUBMODE_GRAB_PLAN_MARQUEE:
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+// Marquee action
+bool HandleMarqueeAction(CPoppet* poppet)
+{
+    poppet->Backup();
+    CVector<CThingPtr>& things = *(CVector<CThingPtr>*)(((char*)poppet) + 0x170); 
+    EPoppetSubMode submode = poppet->GetSubMode();
+    v2 pos3d = *(v2*)(((char*)poppet) + 0x180);
+    switch (submode)
+    {
+        case SUBMODE_FLOOD_FILL:
+            for (int i = 0; i < things.size(); ++i)
+            {
+                if(poppet->FloodFill(things[i])) { CAudio::PlaySample(CAudio::gSFX, "poppet/floodfill", things[i], -10000.0f, -10000.0f); }
+            }
+            break;
+        case SUBMODE_DANGER:
+            for (int i = 0; i < things.size(); ++i)
+            {
+                poppet->SetDangerType(things[i]);
+            }
+            break;
+        case SUBMODE_UNPHYSICS:
+            for (int i = 0; i < things.size(); ++i)
+            {
+                SetUnphysics(poppet, things[i]);
+            }
+            break;
+        default:
+            return false;
+    }
     return true;
 }
 
@@ -357,7 +450,6 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
         }
         case TOOL_EYEDROPPER:
         {
-            //poppet->EyedropperPick();
             poppet->SendPoppetMessage(E_POPPET_EYEDROPPER_MESSAGE);
             break;
         }

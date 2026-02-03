@@ -22,6 +22,10 @@ float gSackboyThickness;
 CRawVector<v2, CAllocatorMMAligned128> gSackboyPolygon;
 CRawVector<unsigned int> gSackboyLoops;
 
+float gBallThickness;
+CRawVector<v2, CAllocatorMMAligned128> gBallPolygon;
+CRawVector<unsigned int> gBallLoops;
+
 void LoadSackboyPolygon()
 {
     CP<RLevel> level = LoadResourceByKey<RLevel>(8571, 0, STREAM_PRIORITY_DEFAULT);
@@ -33,6 +37,19 @@ void LoadSackboyPolygon()
     gSackboyThickness = shape->Thickness;
     gSackboyPolygon = shape->Polygon;
     gSackboyLoops = shape->Loops;
+}
+
+void LoadBallPolygon()
+{
+    CP<RLevel> level = LoadResourceByKey<RLevel>(26111, 0, STREAM_PRIORITY_DEFAULT);
+    level->BlockUntilLoaded();
+
+    CThing* socket = level->WorldThing->GetPWorld()->GetThingByUID(0x1513);
+    PShape* shape = socket->GetPShape();
+
+    gBallThickness = shape->Thickness;
+    gBallPolygon = shape->Polygon;
+    gBallLoops = shape->Loops;
 }
 
 MH_DefineFunc(ForceSum, 0x00043980, TOC0, void, PShape const* shape, unsigned int n, v2& sum, float& length_sum, float min_vel_length);
@@ -144,14 +161,12 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/power_glove/object_release", thing, -10000.0f, -10000.0f);
 
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
-
-            rend->SetMesh(LoadResourceByKey<RMesh>(1087, 0, STREAM_PRIORITY_DEFAULT));
             
             rend->SetDissolving(false);
             //shape->EditorColour = v4(1.0, 1.0, 1.0, 1.0);
             //shape->EditorColourTint = v4(1.0, 1.0, 1.0, 1.0);
             // Set character lethal type to none
-            // shape->LethalType = LETHAL_NOT;
+            thing->GetPShape()->LethalType = LETHAL_NOT;
 
             break;
         }
@@ -189,6 +204,42 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/expand", thing, -10000.0f, -10000.0f);
 
             // Set creature MeshScale to 1.0f
+            creature.Config = LoadResourceByKey<RCharacterSettings>(8389, 0, STREAM_PRIORITY_DEFAULT);
+                creature.SpeedModifier = 1.0f;
+                creature.JumpModifier = 1.0f;
+                creature.StrengthModifier = 1.0f;
+                
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+                CRawVector<v2, CAllocatorMMAligned128> vertices = gSackboyPolygon;
+                shape->SetPolygon(vertices, gSackboyLoops);
+            }
+
+            break;
+        }
+        
+        case STATE_BALL:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "poppet/camerazone_angle_exit", thing, -10000.0f, -10000.0f);
+
+            // Reset creature config
+            creature.Config = LoadResourceByKey<RCharacterSettings>(8389, 0, STREAM_PRIORITY_DEFAULT);
+
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+
+                shape->Thickness = gSackboyThickness;
+
+                CRawVector<v2, CAllocatorMMAligned128> vertices = gSackboyPolygon;
+                shape->SetPolygon(vertices, gSackboyLoops);
+
+                shape->OldMMaterial = NULL;
+                CP<RMaterial> yellowhead = LoadResourceByKey<RMaterial>(8390, 0, STREAM_PRIORITY_DEFAULT);
+                yellowhead->BlockUntilLoaded();
+                shape->SetMaterial(yellowhead);
+            }
 
             break;
         }
@@ -251,6 +302,10 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             
             CResourceDescriptor<RPlan> desc(71445);
             costume->SetPowerup(mesh, desc);
+            
+            creature.SpeedModifier = 1.5f;
+            creature.JumpModifier = 1.5f;
+            creature.StrengthModifier = 1.0f;
 
             // Going to write something to call here that will
             // 1. Play equip animation
@@ -307,9 +362,8 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
 
             CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
 
-            rend->SnapshotCostume();
-            rend->SetMesh(LoadResourceByKey<RMesh>(2000004, 0, STREAM_PRIORITY_DEFAULT));
             rend->SetDissolving(true);
+            thing->GetPShape()->LethalType = LETHAL_BULLET;
 
             break;
         }
@@ -348,6 +402,57 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             CAudio::PlaySample(CAudio::gSFX, "gameplay/lbp2/dissolve_effects/shrink", thing, -10000.0f, -10000.0f);
 
             // Set creature MeshScale to 0.5f
+            creature.Config = LoadResourceByKey<RCharacterSettings>(2473373737, 0, STREAM_PRIORITY_DEFAULT);
+                creature.SpeedModifier = 1.0f;
+                creature.JumpModifier = 0.9f;
+                creature.StrengthModifier = 0.9f;
+                
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+                CRawVector<v2, CAllocatorMMAligned128> vertices = gSackboyPolygon;
+                for (v2* it = vertices.begin(); it != vertices.end(); ++it)
+                {
+                    v4& v = *(v4*)it;
+                    v -= v4(0.0, 70.1665, 0.0, 0.0);
+                    v = Vectormath::Aos::mulPerElem(v, v4(0.5, 0.5, 0.0, 0.0));
+                }
+
+                shape->SetPolygon(vertices, gSackboyLoops);
+            }
+
+            break;
+        }
+        
+        case STATE_BALL:
+        {
+            CAudio::PlaySample(CAudio::gSFX, "poppet/camerazone_angle_enter", thing, -10000.0f, -10000.0f);
+
+            // Set creature config
+            creature.Config = LoadResourceByKey<RCharacterSettings>(2535106570, 0, STREAM_PRIORITY_DEFAULT);
+
+            // Set creature shape as circle
+            PShape* shape = thing->GetPShape();
+            if (shape != NULL)
+            {
+                shape->Thickness = gBallThickness;
+
+                CRawVector<v2, CAllocatorMMAligned128> vertices = gBallPolygon;
+                for (v2* it = vertices.begin(); it != vertices.end(); ++it)
+                {
+                    v4& v = *(v4*)it;
+                    v -= v4(0.0, -35.08325, 0.0, 0.0);
+                    v = Vectormath::Aos::mulPerElem(v, v4(1.0, 1.0, 0.0, 0.0));
+                }
+
+                shape->SetPolygon(vertices, gBallLoops);
+
+                shape->OldMMaterial = shape->MMaterial;
+
+                CP<RMaterial> ball = LoadResourceByKey<RMaterial>(20560, 0, STREAM_PRIORITY_DEFAULT);
+                ball->BlockUntilLoaded();
+                shape->SetMaterial(ball);
+            }
 
             break;
         }
@@ -362,9 +467,9 @@ bool CanSwim(PCreature& creature)
         state == STATE_GUN ||
         state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
-        state == STATE_DIVER_SUIT ||
         state == STATE_SWIMMING_FINS ||
-        state == STATE_MINI_SUIT;
+        state == STATE_MINI_SUIT ||
+        state == STATE_BALL;
 }
 
 bool IsPowerupState(PCreature* creature)
@@ -380,7 +485,8 @@ bool IsPowerupState(PCreature* creature)
         state == STATE_GAS_MASK ||
         state == STATE_INVINCIBLE ||
         state == STATE_DIVER_SUIT ||
-        state == STATE_MINI_SUIT;
+        state == STATE_MINI_SUIT ||
+        state == STATE_BALL;
 }
 
 bool IsPlayableState(PCreature& creature)
@@ -396,7 +502,8 @@ bool IsPlayableState(PCreature& creature)
         state == STATE_INVINCIBLE ||
         state == STATE_SWIMMING_FINS ||
         state == STATE_DIVER_SUIT ||
-        state == STATE_MINI_SUIT;
+        state == STATE_MINI_SUIT ||
+        state == STATE_BALL;
 };
 
 bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
@@ -463,7 +570,10 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
     if (state == STATE_GAS_MASK && lethal == LETHAL_POISON_GAS) return false;
 
     // Invincible is not invulnerable to gas
-    if (state == STATE_INVINCIBLE && lethal != LETHAL_POISON_GAS) return false;
+    if (state == STATE_INVINCIBLE) return false;
+
+    // Ball is invincible to everything
+    if (state == STATE_BALL) return false;
     
     // Diving suit is invulnerable to drowning
     if (state == STATE_DIVER_SUIT && lethal == LETHAL_DROWNED) return false;
@@ -701,6 +811,18 @@ void CollectMiniSuit(CThing* player)
 
     part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_MINI_SUIT);
+}
+
+void CollectBall(CThing* player)
+{
+    PCreature* part_creature;
+    // Return if invalid
+    //if(CheckPowerup(*player, *part_creature)) return;
+    if (player == NULL || (part_creature = player->GetPCreature()) == NULL) return;
+    if (!IsPlayableState(*part_creature)) return;
+
+    part_creature->CanDropPowerup = true;
+    part_creature->SetState(STATE_BALL);
 }
 
 void CollectInvincible(CThing* player)
@@ -1082,25 +1204,20 @@ void OnCreatureStateUpdate(PCreature& creature)
         }
 
         case STATE_INVINCIBLE:
-        {
-            CAudio::PlaySample(CAudio::gSFX, "gameplay/special_objects/laser_loop", creature.GetThing(), -10000.0f, -10000.0f);
-            
-            PShape* shape = creature.GetThing()->GetPShape();
-            if (shape != NULL)
-            {
+        {            
+            //PShape* shape = creature.GetThing()->GetPShape();
+            //if (shape != NULL)
+            //{
                 // Cycle editor colour here with hue shift
                 
-                CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
+                //CRenderYellowHead* rend = thing->GetPYellowHead()->GetRenderYellowHead();
                 //rend->EffectMesh->EditorColour = v4();
-            }
-
-            //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_INVINCIBLE, (const wchar_t*)NULL))
-            //    creature.SetState(STATE_NORMAL_);
+            //}
             // Invincibility timeout
-            //if (creature.StateTimer > 120)
-            //    creature.SetState(STATE_NORMAL_);
-            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GRAPPLE, L"BP_REMOVE_INVINCIBLE"))
+            if (creature.StateTimer > 360)
                 creature.SetState(STATE_NORMAL_);
+            //if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_GRAPPLE, L"BP_REMOVE_INVINCIBLE"))
+            //    creature.SetState(STATE_NORMAL_);
                 
             break;
         }
@@ -1161,6 +1278,14 @@ void OnCreatureStateUpdate(PCreature& creature)
                 
             break;
         }
+
+        case STATE_BALL:
+        {
+            if (thing != NULL && input->IsJustClicked(BUTTON_CONFIG_REMOVE_BALL, L"BP_REMOVE_BALL"))
+                creature.SetState(STATE_NORMAL_);
+                
+            break;
+        }
     }
 }
 
@@ -1198,5 +1323,6 @@ void AlearInitCreatureHook()
     RegisterNativeFunction("TriggerCollectSwimmingFins", "CollectSwimmingFins__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectSwimmingFins>);
     RegisterNativeFunction("TriggerCollectDiverSuit", "CollectDiverSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectDiverSuit>);
     RegisterNativeFunction("TriggerCollectMiniSuit", "CollectMiniSuit__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectMiniSuit>);
+    RegisterNativeFunction("TriggerCollectBall", "CollectBall__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectBall>);
     RegisterNativeFunction("TriggerCollectInvincible", "CollectInvincible__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<CollectInvincible>);
 }

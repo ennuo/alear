@@ -20,10 +20,28 @@ MH_DefineFunc(CPoppet_PushMode, 0x0034dd08, TOC1, void, CPoppet*, EPoppetMode, E
 MH_DefineFunc(CPoppet_SendPoppetMessage, 0x0033fee0, TOC1, void, CPoppet*, EPoppetMessageType);
 MH_DefineFunc(CPoppet_RenderUI, 0x0034584c, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppet_SetDangerType, 0x003482e0, TOC1, void, CPoppet*, CThing*);
+MH_DefineFunc(CPoppet_FloodFill, 0x003401d8, TOC1, bool, CPoppet*, CThing*);
+MH_DefineFunc(CPoppet_Backup, 0x0034b844, TOC1, void, CPoppet*);
+MH_DefineFunc(CPoppet_ClearMarquee, 0x004077a0, TOC1, void, CPoppet*);
 
 void CPoppet::SetDangerType(CThing* thing)
 {
     CPoppet_SetDangerType(this, thing);
+}
+
+bool CPoppet::FloodFill(CThing* thing)
+{
+    return CPoppet_FloodFill(this, thing);
+}
+
+void CPoppet::Backup()
+{
+    CPoppet_Backup(this);
+}
+
+void CPoppet::ClearMarquee()
+{
+    CPoppet_ClearMarquee(this);
 }
 
 void CPoppet::RenderUI()

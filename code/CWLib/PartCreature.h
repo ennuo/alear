@@ -29,7 +29,8 @@ enum EState
     STATE_GAUNTLETS = 14,
     STATE_INVINCIBLE = 15,
     STATE_MINI_SUIT = 16,
-    STATE_SWIMMING_FINS = 17
+    STATE_SWIMMING_FINS = 17,
+    STATE_BALL = 18
 };
 
 struct NearestObjectInfo {
