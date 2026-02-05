@@ -429,6 +429,7 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
         
         case STATE_BALL:
         {
+            creature.SetScubaGear(false);
             CAudio::PlaySample(CAudio::gSFX, "poppet/camerazone_angle_enter", thing, -10000.0f, -10000.0f);
 
             // Set creature config
@@ -706,9 +707,9 @@ void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
 
     // I don't know what I fucked up here this time, but this crashes
     // I had it working at one point too
-    //part_creature->SpeedModifier = part_script->GetValue<float>("SpeedModifier", 1.25f);
-    //part_creature->JumpModifier = part_script->GetValue<float>("JumpModifier", 1.25f);
-    //part_creature->StrengthModifier = part_script->GetValue<float>("StrengthModifier", 1.0f);
+    part_creature->SpeedModifier = speed;
+    part_creature->JumpModifier = jump;
+    part_creature->StrengthModifier = strength;
 
     part_creature->CanDropPowerup = true;
     part_creature->SetState(STATE_BOOTS);

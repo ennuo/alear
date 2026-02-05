@@ -157,7 +157,15 @@ _custom_marquee_selection_hook:
     beq %cr7, SelectMarquee
     cmpwi %cr7, %r3, 0x1f
     beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x2c
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x2d
+    beq %cr7, SelectMarquee
     cmpwi %cr7, %r3, 0x30
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x32
+    beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x35
     beq %cr7, SelectMarquee
     cmpwi %cr7, %r3, 0x0
     ba 0x0035194c
@@ -188,12 +196,14 @@ _disable_gas_tweak_hook:
 # this hook SUCKS
 .global _custom_pick_object_action_hook
 _custom_pick_object_action_hook:
-    cmpwi %cr7, %r3, 0x30
-    beq %cr7, UnphysicsPickObject
     cmpwi %cr7, %r3, 0x27
     beq %cr7, EyedropperPickObject
     cmpwi %cr7, %r3, 0x28
     beq %cr7, DotToDotPickObject
+    cmpwi %cr7, %r3, 0x2d
+    beq %cr7, StickerWashPickObject
+    cmpwi %cr7, %r3, 0x30
+    beq %cr7, UnphysicsPickObject
     cmpwi %cr7, %r3, 0x1c
     ba 0x003516e4
 
@@ -233,7 +243,7 @@ StickerWashPickObject:
     mr %r3, %r26
     mr %r4, %r27
 
-    call _Z20EyedropperPickObjectP7CPoppetP6CThing
+    call _Z13ClearStickersP7CPoppetP6CThing
     
     ba 0x00351738
     
