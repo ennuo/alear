@@ -80,6 +80,7 @@ static EButtonPrompts gButtonPrompts[] =
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_SWIMMING_FINS
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_MINI_SUIT
     BP_CIRCLE, // BUTTON_CONFIG_REMOVE_BALL
+    BP_CIRCLE, // BUTTON_CONFIG_REMOVE_HAIRDRYER
 
     BP_LAST, // BUTTON_CONFIG_POPPET_TOGGLE_VISIBILITY
     BP_LAST, // BUTTON_CONFIG_POPPET_HIDE,
@@ -119,6 +120,7 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
         case BUTTON_CONFIG_REMOVE_SWIMMING_FINS:
         case BUTTON_CONFIG_REMOVE_MINI_SUIT:
         case BUTTON_CONFIG_REMOVE_BALL:
+        case BUTTON_CONFIG_REMOVE_HAIRDRYER:
             return (buttons & PAD_BUTTON_CIRCLE) != 0;
         case BUTTON_CONFIG_POPPET_SWITCH_STAMP_MODE:
             return (buttons & PAD_BUTTON_L3) != 0;
@@ -172,6 +174,7 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_REMOVE_SWIMMING_FINS:
         case BUTTON_CONFIG_REMOVE_MINI_SUIT:
         case BUTTON_CONFIG_REMOVE_BALL:
+        case BUTTON_CONFIG_REMOVE_HAIRDRYER:
             return INPUT_SACKBOY;
 
         case BUTTON_CONFIG_PODCOMPUTER_SELECT:

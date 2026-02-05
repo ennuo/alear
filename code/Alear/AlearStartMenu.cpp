@@ -1217,10 +1217,12 @@ namespace AlearOptNativeFunctions
 
 #include <Hash.h>
 #include "TweakShape.h"
+#include "DrawFluids.h"
 extern "C" void _alear_levelupdate_hook();
 void InitAlearOptUiHooks()
 {
     AlearOptNativeFunctions::Register();
     TweakShapeNativeFunctions::Register();
+    DrawFluidsNativeFunctions::Register();
     MH_Poke32(0x00015874, B(&_alear_levelupdate_hook, 0x00015874));
 }

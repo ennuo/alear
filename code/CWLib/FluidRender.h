@@ -1,9 +1,12 @@
 #ifndef FLUIDRENDER_H
 #define FLUIDRENDER_H
 
-//class CFluidRender : public CFluidRender {
-//public:
-//    void AddFluidBlob(v4, v4, u32, v4, v4, u32, float);
-//};
+
+class CFluidRender {
+public:
+    static void AddPaintSplatBits(m44 pos, v4 color);
+    static void AddExplosionBits(m44 pos);
+    static void AddFluidBlob(v4 pos, v4 vel, u32 player, v4 c, v4 d, u32 color_frame, float color_radius);
+};
 
 #endif // FLUIDRENDER_H

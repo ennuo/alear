@@ -43,12 +43,12 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
 
         case TOOL_STICKER_PICK:
         {
-            return (type & (E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_EYETOY)) != 0;
+            return (type & (E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_PAINT | E_TYPE_EYETOY)) != 0;
         }
 
         case TOOL_DECORATION_TAKE_PHOTO:
         {
-            return (type & (E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_EYETOY)) != 0;
+            return (type & (E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_PAINT | E_TYPE_EYETOY)) != 0;
         }
 
         case TOOL_DELETE_COMMUNITY_STICKERS:
@@ -78,8 +78,9 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         }
         
         case TOOL_STICKER_WASH:
+        case TOOL_STICKER_CUTTER:
         {
-            return (type & E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_EYETOY) != 0 && edit;
+            return (type & (E_TYPE_TOOL | E_TYPE_STICKER | E_TYPE_DECORATION | E_TYPE_USER_STICKER | E_TYPE_PAINT | E_TYPE_EYETOY)) != 0 && edit;
         }
 
         case TOOL_SHAPE_ELECTRIFY:
@@ -92,7 +93,11 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_SHAPE_DROWNED:
         case TOOL_SHAPE_SPIKE:
         case TOOL_UNPHYSICS:
+        case TOOL_UV_EDIT:
+        case TOOL_GLUE:
+        case TOOL_CURSOR:
         case TOOL_SHAPE_VERTEX_EDIT:
+        case TOOL_SLICE_N_DICE:
         {
             return (type & E_TYPE_TOOL) != 0 && edit;
         }
@@ -105,7 +110,7 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         
         case TOOL_EYEDROPPER:
         {
-            return (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_MATERIAL)) != 0 && (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_MATERIAL)) != 0 && edit;
+            return (type & (E_TYPE_TOOL | E_TYPE_PRIMITIVE_MATERIAL)) != 0 && edit;
         }
 
         default: return false;
@@ -125,7 +130,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
 
         if (tool != TOOL_NOT_A_TOOL)
         {
-            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS || tool == TOOL_UNPHYSICS) return false;
+            if (tool == TOOL_DELETE_COMMUNITY_OBJECTS || tool == TOOL_DELETE_COMMUNITY_STICKERS) return false;
             return true;
         }
 

@@ -71,6 +71,7 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
 
     if (submode == SUBMODE_GAS_TWEAK) return CURSOR_GAS;
     if (submode == SUBMODE_PLASMA_TWEAK) return CURSOR_PLASMA;
+    if (submode == SUBMODE_OBJECT_EDIT_BASIC) return CURSOR_SMALL;
     if (mode != MODE_CURSOR) return CURSOR_STANDARD;
 
     switch (submode)
@@ -79,13 +80,11 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
         case SUBMODE_GRAB_PLAN_MARQUEE: 
             return CURSOR_CAPTURE_MARQUEE;
         case SUBMODE_GRAB_PHOTO: return CURSOR_PHOTO_MARQUEE;
-        case SUBMODE_EDIT_VERTS:
-        case SUBMODE_OBJECT_EDIT_BASIC:
-            return CURSOR_VERTEX_EDIT;
+        case SUBMODE_EDIT_VERTS: return CURSOR_VERTEX_EDIT;
         case SUBMODE_SLICE_N_DICE:
         case SUBMODE_OBJECT_EDIT_SLICE_N_DICE:
-            return CURSOR_STICKER_CUTTER;
-        case SUBMODE_STICKER_SCRUBBER: return CURSOR_UNPHYSICS;
+            return CURSOR_VERTEX_EDIT;
+        case SUBMODE_STICKER_SCRUBBER: return CURSOR_STICKER_SCRUBBER;
         case SUBMODE_STICKER_CUTTER: return CURSOR_STICKER_CUTTER;
         case SUBMODE_PICK_DECORATIONS: return CURSOR_STICKER_PICK;
         case SUBMODE_FLOOD_FILL: return CURSOR_FLOOD_FILL;
@@ -321,6 +320,16 @@ bool SetUnphysics(CPoppet* poppet, CThing* thing)
     return true;
 }
 
+bool ClearStickers(CPoppet* poppet, CThing* thing)
+{
+    if (thing == NULL) return false;
+    PStickers* stickers = thing->GetPStickers();
+    if (stickers == NULL) return true;
+    thing->RemovePart(PART_TYPE_STICKERS);
+    
+    return true;
+}
+
 bool EyedropperPickObject(CPoppet* poppet, CThing* thing)
 {
     if (thing == NULL) return false;
@@ -384,6 +393,12 @@ bool HandleMarqueeAction(CPoppet* poppet)
                 poppet->SetDangerType(things[i]);
             }
             break;
+        case SUBMODE_STICKER_SCRUBBER:
+            for (int i = 0; i < things.size(); ++i)
+            {
+                ClearStickers(poppet, things[i]);
+            }
+            break;
         case SUBMODE_UNPHYSICS:
             for (int i = 0; i < things.size(); ++i)
             {
@@ -396,10 +411,50 @@ bool HandleMarqueeAction(CPoppet* poppet)
     return true;
 }
 
+// Pick object action
+/*
+bool HandlePickObjectAction(CPoppet* poppet, CThing* thing)
+{
+    EPoppetSubMode submode = poppet->GetSubMode();
+    switch (submode)
+    {
+        case SUBMODE_DANGER:
+            poppet->SetDangerType(thing);
+            break;
+        case SUBMODE_EYEDROPPER:
+            EyedropperPickObject(poppet, thing);
+            break;
+        case SUBMODE_STICKER_CUTTER:
+            break;
+        case SUBMODE_STICKER_SCRUBBER:
+            break;
+        case SUBMODE_SLICE_N_DICE:
+            break;
+        case SUBMODE_UNPHYSICS:
+            SetUnphysics(poppet, thing);
+            break;
+        case SUBMODE_ADVANCED_GLUE:
+            break;
+        case SUBMODE_EDIT_UVS:
+            break;
+        case SUBMODE_GRAB_PLAN_MARQUEE:
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+*/
+
 void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
 {
     switch (msg)
     {
+        case E_POPPET_PLASMA_TWEAK_MESSAGE:
+        {
+            poppet->PushMode(MODE_TWEAK, SUBMODE_PLASMA_TWEAK);
+            break;
+        }
         case E_POPPET_UNPHYSICS_MESSAGE:
         {
             DebugLog("RECV: E_POPPET_UNPHYSICS_MESSAGE\n");
@@ -415,6 +470,36 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
         {
             poppet->PushMode(MODE_CURSOR, SUBMODE_DOT_TO_DOT);
             return;
+        }
+        case E_POPPET_STICKER_SCRUBBER_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_STICKER_SCRUBBER);
+            break;
+        }
+        case E_POPPET_STICKER_CUTTER_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_STICKER_CUTTER);
+            break;
+        }
+        case E_POPPET_SLICE_N_DICE_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_SLICE_N_DICE);
+            break;
+        }
+        case E_POPPET_UV_EDIT_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_EDIT_UVS);
+            break;
+        }
+        case E_POPPET_ADVANCED_GLUE_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_ADVANCED_GLUE);
+            break;
+        }
+        case E_POPPET_PLAN_MARQUEE_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_GRAB_PLAN_MARQUEE);
+            break;
         }
     }
 }
@@ -448,6 +533,12 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             poppet->SendPoppetDangerMessage(LETHAL_BULLET);
             break;
         }
+        case TOOL_UNPHYSICS:
+        {
+            DebugLog("SEND: E_POPPET_UNPHYSICS_MESSAGE\n");
+            poppet->SendPoppetMessage(E_POPPET_UNPHYSICS_MESSAGE);
+            break;
+        }
         case TOOL_EYEDROPPER:
         {
             poppet->SendPoppetMessage(E_POPPET_EYEDROPPER_MESSAGE);
@@ -458,15 +549,55 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             poppet->SendPoppetMessage(E_POPPET_DOT_TO_DOT_MESSAGE);
             break;
         }
-        case TOOL_UNPHYSICS:
+        case TOOL_STICKER_WASH:
         {
-            DebugLog("SEND: E_POPPET_UNPHYSICS_MESSAGE\n");
-            poppet->SendPoppetMessage(E_POPPET_UNPHYSICS_MESSAGE);
+            poppet->SendPoppetMessage(E_POPPET_STICKER_SCRUBBER_MESSAGE);
+            break;
+        }
+        case TOOL_STICKER_CUTTER:
+        {
+            poppet->SendPoppetMessage(E_POPPET_STICKER_CUTTER_MESSAGE);
+            break;
+        }
+        case TOOL_SLICE_N_DICE:
+        {
+            poppet->SendPoppetMessage(E_POPPET_SLICE_N_DICE_MESSAGE);
+            break;
+        }
+        case TOOL_UV_EDIT:
+        {
+            poppet->SendPoppetMessage(E_POPPET_UV_EDIT_MESSAGE);
+            break;
+        }
+        case TOOL_GLUE:
+        {
+            poppet->SendPoppetMessage(E_POPPET_ADVANCED_GLUE_MESSAGE);
+            break;
+        }
+        case TOOL_CURSOR:
+        {
+            poppet->SendPoppetMessage(E_POPPET_CURSOR_MESSAGE);
+            break;
+        }
+
+        case TOOL_MESH_CAPTURE:
+        {
+            poppet->SendPoppetMessage(E_POPPET_MESH_CAPTURE_MESSAGE);
+            break;
+        }
+        case TOOL_EXPLOSION:
+        {
+            poppet->SendPoppetMessage(E_POPPET_EXPLOSION_MESSAGE);
+            break;
+        }
+        case TOOL_GENEALOGY:
+        {
+            poppet->SendPoppetMessage(E_POPPET_GENEALOGY_MESSAGE);
             break;
         }
         case TOOL_POPIT_GRADIENT:
         {
-            //poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE)
+            //poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE);
             break;
         }
     }
@@ -497,9 +628,22 @@ void AttachCustomPoppetMessages()
         TABLE[i] = target;
     }
 
+    TABLE[E_POPPET_PLASMA_TWEAK_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+
     TABLE[E_POPPET_UNPHYSICS_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_EYEDROPPER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_DOT_TO_DOT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_STICKER_SCRUBBER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_STICKER_CUTTER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_SLICE_N_DICE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_UV_EDIT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_ADVANCED_GLUE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_PLAN_MARQUEE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    
+    TABLE[E_POPPET_MESH_CAPTURE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_EXPLOSION_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_GENEALOGY_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_GRADIENT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092afb4, (u32)TABLE);
@@ -525,15 +669,25 @@ void AttachCustomToolTypes()
         TABLE[i] = target;
     }
 
+    TABLE[TOOL_CURSOR] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_UNPHYSICS] = (u32)&_custom_tool_type_hook - (u32)TABLE;
-    TABLE[TOOL_SHAPE_PLASMA] = (u32)&_custom_tool_type_hook - (u32)TABLE;
-    TABLE[TOOL_SHAPE_DROWNED] = (u32)&_custom_tool_type_hook - (u32)TABLE;
-    TABLE[TOOL_SHAPE_SPIKE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
-    TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_SHAPE_ICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_PLASMA] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_SPIKE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_DROWNED] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SHAPE_CRUSH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_EYEDROPPER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_DOT_TO_DOT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_STICKER_WASH] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_STICKER_CUTTER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_SLICE_N_DICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_UV_EDIT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_GLUE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+
+    TABLE[TOOL_MESH_CAPTURE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_EXPLOSION] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_GENEALOGY] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_POPIT_GRADIENT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);

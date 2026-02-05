@@ -616,6 +616,14 @@ bool InitTweakSettings()
         .SetDebugSuffix(L"s")
         .SetDebugToolTip(L"Spawn Delay")
         .SetConversion(1.0 / 30.0);
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_AMMO_COUNT)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(0.0, 300.0f)
+        .SetSteps(1.0f, 10.0f)
+        .SetDebugSuffix(L"s")
+        .SetDebugToolTip(L"Spawn Delay")
+        .SetConversion(1.0 / 30.0);
 
     // visual style
         // Entrance
