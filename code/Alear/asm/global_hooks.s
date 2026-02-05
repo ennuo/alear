@@ -811,3 +811,9 @@ create_hook debug_camera_input_hook, 0x0014e0f4
     call _Z20ShouldInterceptInputv
     cmpwi %cr7, %r3, 0x0
     ret
+
+create_hook draw_call_hook, 0x001f7f6c 
+    mr %r3, %r22 
+    call _Z27OnPreBindDrawCallPrimitivesP13CMeshInstance 
+    rlwinm %r0, %r25, 0x0, 0x18, 0x18 
+    ret 

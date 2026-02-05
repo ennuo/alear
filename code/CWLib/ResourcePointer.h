@@ -36,6 +36,8 @@ public:
 
 		if (Ref)
 			Ref->AddWeakRef();
+
+		return *this;
 	}
 
 	WR<T>& operator=(WR<T> const& rhs) 
@@ -50,6 +52,8 @@ public:
 
 		if (Ref)
 			Ref->AddWeakRef();
+
+		return *this;
 	}
 public:
 	bool operator!() const { return !Ref; }

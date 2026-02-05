@@ -70,6 +70,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     $<$<COMPILE_LANGUAGE:C,CXX>:
         #-Wall
         #-Wextra
+        -Wreturn-type
         -O3
         -fno-exceptions
         -fno-strict-aliasing

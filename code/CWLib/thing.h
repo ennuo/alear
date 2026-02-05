@@ -28,6 +28,8 @@
 #include "PartCheckpoint.h"
 #include "PartPhysicsJoint.h"
 
+#include <PartMaterialOverride.h>
+
 #include "hack_thingptr.h"
 
 
@@ -42,6 +44,7 @@ public:
     }
 public:
     CThing* Microchip;
+    PMaterialOverride* PartMaterialOverride;
 };
 
 class CThing : public CReflectionVisitable {
@@ -85,6 +88,16 @@ public:
     inline PEffector* GetPEffector() const { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
     inline PEmitter* GetPEmitter() const { return static_cast<PEmitter*>(Parts[PART_TYPE_EMITTER]); }
     inline PCheckpoint* GetPCheckpoint() const { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
+    inline PMaterialOverride* GetPMaterialOverride() const
+    {
+        return CustomThingData == NULL ? NULL : CustomThingData->PartMaterialOverride;
+    }
+
+    inline CPart* GetPart(EPartType part) const
+    {
+        if (part == PART_TYPE_MATERIAL_OVERRIDE) return GetPMaterialOverride();
+        return Parts[part];
+    }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

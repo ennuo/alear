@@ -8,6 +8,8 @@
 template <typename T>
 class CBaseVector {
 public:
+	typedef T* iterator;
+public:
 	inline CBaseVector() 
 	{
 		this->Data = NULL;
@@ -25,12 +27,52 @@ public:
 	inline T& operator[](int index) const { return this->Data[index]; }
 	inline T& front() const { return this->Data[0]; }
 	inline T& back() const { return this->Data[this->Size - 1]; }
-	
+
+	inline bool operator==(const CBaseVector<T>& rhs) const 
+	{
+		if (this == &rhs) return true;
+		if (rhs.Size != Size) return false;
+		return memcmp(Data, rhs.Data, Size) == 0;
+	}
+
+	inline bool operator!=(const CBaseVector<T>& rhs) const 
+	{
+		if (this == &rhs) return false;
+		if (rhs.Size != Size) return true;
+		return memcmp(Data, rhs.Data, Size) != 0;
+	}
+
 	inline u32& GetSizeForSerialisation() { return Size; }
 protected:
 	T* Data;
 	u32 Size;
 	u32 MaxSize;
+};
+
+template <typename T>
+class CFixedVector : public CBaseVector<T> {
+public:
+	inline CFixedVector() : CBaseVector<T>() {}
+	inline CFixedVector(T* data, u32 size) : CBaseVector<T>()
+	{
+		this->Data = data;
+		this->Size = size;
+		this->MaxSize = size;
+	}
+
+	inline CFixedVector(const CFixedVector<T>& rhs) : CBaseVector<T>()
+	{
+		*this = rhs;
+	}
+
+	inline CFixedVector<T>& operator=(CFixedVector<T> const& rhs)
+	{
+		this->Data = rhs.Data;
+		this->Size = rhs.Size;
+		this->MaxSize = rhs.MaxSize;
+
+		return *this;
+	}
 };
 
 /* vector.h: 101 */
@@ -72,12 +114,28 @@ public:
 template <typename T, typename Allocator = CAllocatorMM>
 class CParasiticVector : public CBaseVectorPolicy<T, Allocator> {
 public:
-	inline CParasiticVector() : CBaseVectorPolicy<T, Allocator>() {}
-	inline CParasiticVector(T* data, u32 size, u32 max_size)
+    CParasiticVector() : CBaseVectorPolicy<T, Allocator>() {}
+    CParasiticVector(T* data, u32 size, u32 max_size)
+    {
+        this->Data = data;
+        this->Size = size;
+        this->MaxSize = max_size;
+    }
+
+	CParasiticVector(CParasiticVector const& vec) : CBaseVectorPolicy<T, Allocator>()
 	{
-		this->Data = data;
-		this->Size = size;
-		this->MaxSize = max_size;
+		*this = vec;
+	}
+
+	CParasiticVector& operator=(const CParasiticVector& vec)
+	{
+		if (&vec == this) return *this;
+
+        this->Data = vec.Data;
+        this->Size = vec.Size;
+        this->MaxSize = vec.MaxSize;
+
+		return *this;
 	}
 };
 
@@ -86,9 +144,9 @@ template <typename T, typename Allocator = CAllocatorMM>
 class CRawVector : public CBaseVectorPolicy<T, Allocator> {
 public:
 	inline CRawVector() : CBaseVectorPolicy<T, Allocator>() {}
-	inline CRawVector(u32 capacity) 
+	inline CRawVector(u32 capacity) : CBaseVectorPolicy<T, Allocator>()
 	{
-		this->try_reserve(capacity);
+		try_reserve(capacity);
 	}
 
 	inline CRawVector(CRawVector<T, Allocator> const& vec) : CBaseVectorPolicy<T, Allocator>()
@@ -96,23 +154,19 @@ public:
 		*this = vec;
 	}
 
-	inline ~CRawVector() 
+	inline ~CRawVector()
 	{
 		Allocator::Free(gVectorBucket, this->Data);
 	}
 
-	inline CRawVector<T, Allocator>& operator=(CRawVector<T, Allocator> const& vec)
+	inline CRawVector<T, Allocator>& operator=(const CRawVector<T, Allocator>& vec)
 	{
-		this->clear();
+		if (&vec == this) return *this;
 		
-		if (vec.Data != NULL)
-		{
-			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
+		resize(vec.Size);
+		if (vec.Size != 0)
 			memcpy(this->Data, vec.Data, vec.Size * sizeof(T));
-			this->Size = vec.Size;
-			this->MaxSize = vec.Size;
-		}
-
+		
 		return *this;
 	}
 
@@ -124,12 +178,68 @@ public:
 		this->Data[0] = element;
 		this->Size++;
 	}
-	
+
 	inline void push_back(T const& element) 
 	{
 		if (this->Size == this->MaxSize)
 			this->try_reserve(this->Size + 1);
 		this->Data[this->Size++] = element;
+	}
+
+	inline T pop_back()
+	{
+		T& element = this->back();
+		this->Size--;
+		return element;
+	}
+
+	inline T* insert(T* it, T const& element)
+	{
+		int index = it - this->Data;
+
+		if (this->Size == this->MaxSize)
+		{
+			u32 newsize = Allocator::ResizePolicy(this->Size, this->Size + 1, sizeof(T));
+			T* data = (T*)Allocator::Malloc(gVectorBucket, newsize * sizeof(T));
+			if (data == NULL) return NULL;
+
+			memcpy(data, this->Data, index * sizeof(T));
+			data[index] = element;
+			memcpy(data + index + 1, it, (this->Size - index) * sizeof(T));
+
+			Allocator::Free(gVectorBucket, this->Data);
+			this->Data = data;
+			this->Size++;
+
+			return this->Data + index;
+		}
+
+		T t = element;
+		memmove(it + 1, it, (size_t)((this->Data + this->Size) - it) * sizeof(T));
+		*it = t;
+
+		this->Size++;
+		return it;
+	}
+
+	inline T* insert(T* it, const T* begin, const T* end)
+	{
+		const u32 count = end - begin;
+		const u32 index = it - this->Data;
+
+		this->resize(this->size() + count * sizeof(T));
+		if (it != this->end())
+		{
+			memmove(
+				this->Data + index + count,
+				this->Data + index,
+				(this->Size - index) * sizeof(T)
+			);
+		}
+		
+		memmove(this->Data + index, begin, count * sizeof(T));
+
+		return this->Data + index;
 	}
 
 	inline T* erase(T* i) 
@@ -162,14 +272,31 @@ public:
 		return AllocBehaviour<Allocator>::Resize((void**)&this->Data, this->MaxSize, this->Size, new_size, sizeof(T));
 	}
 
+	void resize(u32 new_size) { try_resize(new_size); }
+	void reserve(u32 new_max_size) { try_reserve(new_max_size); }
+
+	void swap(CRawVector<T, Allocator>& rhs)
+	{
+		T* data = rhs.Data;
+		u32 size = rhs.Size;
+		u32 max_size = rhs.MaxSize;
+
+		rhs.Data = this->Data;
+		rhs.Size = this->Size;
+		rhs.MaxSize = this->MaxSize;
+
+		this->Data = data;
+		this->Size = size;
+		this->MaxSize = max_size;
+	}
 };
 
 /* vector.h: 386 */
 template <typename T, typename Allocator = CAllocatorMM>
-class CVector : public CBaseVectorPolicy<T> {
+class CVector : public CBaseVectorPolicy<T, Allocator> {
 public:
 	inline CVector() : CBaseVectorPolicy<T, Allocator>() {}
-	inline CVector(u32 capacity) {
+	inline CVector(u32 capacity) : CBaseVectorPolicy<T, Allocator>() {
 		this->try_reserve(capacity);
 	}
 
@@ -180,28 +307,34 @@ public:
 
 	inline CVector<T, Allocator>& operator=(CVector<T, Allocator> const& vec)
 	{
-		if (this->Data != NULL) this->clear();
+		if (this == &vec) return *this;
 
-		if (vec.Data != NULL)
-		{
-			this->Data = (T*)Allocator::Malloc(gVectorBucket, vec.Size * sizeof(T));
-			memcpy(this->Data, vec.Data, vec.Size * sizeof(T));
-			this->Size = vec.Size;
-			this->MaxSize = vec.Size;
-		}
+		for (int i = 0; i < this->Size; ++i)
+			(this->Data + i)->~T();
+		
+		this->Size = 0;
+		reserve(vec.Size);
+		this->Size = vec.Size;
 
+		for (int i = 0; i < this->Size; ++i)
+			new (this->Data + i) T(vec[i]);
+		
 		return *this;
 	}
 
 	inline ~CVector() 
 	{
-		if (this->Size != 0)
-		{
-			for (unsigned int i = 0; i < this->Size; ++i)
-				(&this->Data[i])->~T();
-		}
-
+		for (unsigned int i = 0; i < this->Size; ++i)
+			(this->Data + i)->~T();
 		Allocator::Free(gVectorBucket, this->Data);
+	}
+
+	inline T pop_back()
+	{
+		T element = this->back();
+		(this->Data + this->Size - 1)->~T();
+		this->Size--;
+		return element;
 	}
 
 	inline void push_back(T const& element) 
@@ -212,34 +345,69 @@ public:
 		this->Data[this->Size++] = element;
 	}
 
-	inline T* erase(T* i) 
+	inline T* insert(T* it, T const& element)
 	{
-		unsigned int return_index = i - this->Data;
-		unsigned int index = return_index;
+		int index = it - this->Data;
 
-		while (index < this->Size - 1)
+		if (this->Size == this->MaxSize)
 		{
-			T& prev = this->Data[index];
-			T& next = this->Data[++index];
+			u32 newsize = Allocator::ResizePolicy(this->Size, this->Size + 1, sizeof(T));
+			T* data = (T*)Allocator::Malloc(gVectorBucket, newsize * sizeof(T));
+			if (data == NULL) return NULL;
+
+			for (int i = 0; i < index; ++i)
+			{
+				new (data + i) T(this->Data[i]);
+				(this->Data + i)->~T();
+			}
+
+			new (data + index) T(element);
+
+			for (int i = index; i < this->Size; ++i)
+			{
+				new (data + i + 1) T(this->Data[i]);
+				(this->Data + i)->~T();
+			}
+
+			Allocator::Free(gVectorBucket, this->Data);
+			this->Data = data;
+			this->MaxSize = newsize;
+		}
+		else
+		{
+			for (int i = index; i < this->Size; ++i)
+			{
+				new (this->Data + i + 1) T(this->Data[i]);
+				(this->Data + i)->~T();
+			}
 			
-			(&prev)->~T();
-			new (&prev) T();
-			prev = next;
+			new (this->Data + index) T(element);
 		}
 
+		this->Size++;
+		return this->Data + index;
+	}
+
+	inline T* erase(T* it) 
+	{
+		int index = it - this->Data;
+
+		(this->Data + index)->~T();
+		for (int i = index + 1; i < this->Size; ++i)
+		{
+			new (this->Data + i - 1) T(this->Data[i]);
+			(this->Data + i)->~T();
+		}
 		
 		this->Size--;
-		return this->Data + return_index;
+		return this->Data + index;
 	}
 
 	inline void clear()
 	{
-		if (this->Size != 0)
-		{
-			for (unsigned int i = 0; i < this->Size; ++i)
-				(&this->Data[i])->~T();
-		}
-
+		for (unsigned int i = 0; i < this->Size; ++i)
+			(this->Data + i)->~T();
+		
 		Allocator::Free(gVectorBucket, this->Data);
 		this->Data = NULL;
 		this->Size = 0;
@@ -254,18 +422,14 @@ public:
 			T* data = (T*) Allocator::Malloc(gVectorBucket, count * sizeof(T));
 			if (data != NULL) 
 			{
-				if (this->Size != 0) 
+				for (u32 i = 0; i < this->Size; ++i)
 				{
-					for (u32 i = 0; i < this->Size; ++i)
-					{
-						T& old = this->Data[i];
-						new (&data[i]) T();
-						data[i] = old;
-						(&old)->~T();
-					}
-
-					Allocator::Free(gVectorBucket, this->Data);
+					new (data + i) T(this->Data[i]);
+					(this->Data + i)->~T();
 				}
+
+				Allocator::Free(gVectorBucket, this->Data);
+
 				this->MaxSize = new_max_size;
 				this->Data = data;
 				return true;
@@ -276,10 +440,15 @@ public:
 		return true;
 	}
 
+	inline void resize(u32 new_size) { try_resize(new_size); }
+	inline void reserve(u32 new_max_size) { try_reserve(new_max_size); }
+	
 	bool try_resize(u32 new_size) 
 	{
 		if (try_reserve(new_size)) 
 		{
+			for (int i = new_size; i < this->Size; ++i)
+				(this->Data + i)->~T();
 			for (int i = this->Size; i < new_size; ++i)
 				new (this->Data + i) T();
 			this->Size = new_size;

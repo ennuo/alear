@@ -239,6 +239,7 @@ ReflectReturn Reflect(R& r, s32& h)
         h = (u32)(h << 1) ^ (h >> 31);
         ReflectReturn res = ReflectCompressedInt(r, h);
         h = (s32)(h >> 1) ^ (u32)(-(s32)(h & 1));
+        return res;
     }
     else return r.ReadWrite((void*)&h, sizeof(u32));
 }
@@ -273,6 +274,19 @@ ReflectReturn Reflect(R& r, MMString<char>& d)
     d.resize(size, '\0');
     return r.ReadWrite((void*)d.begin(), size * sizeof(char));
 }
+
+template <typename R> 
+ReflectReturn Reflect(R& r, MMString<wchar_t>& d) 
+{ 
+    ReflectReturn res; 
+    s32 size = d.size(); 
+    res = Reflect(r, size); 
+    if (res != REFLECT_OK) return res; 
+
+    // game technically calls begin which calls operator[0], but its the same as c_str 
+    d.resize(size, '\0'); 
+    return r.ReadWrite((void*)d.begin(), size * sizeof(wchar_t)); 
+} 
 
 template <typename D>
 ReflectReturn Add(CReflectionLoadVector& r, D& d, char* c)

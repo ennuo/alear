@@ -9,13 +9,17 @@ typedef void (*RemoveRefFunc)(void*);
 
 /* refcount.h: 13 */
 class CBaseCounted {
-protected:
-	virtual ~CBaseCounted() {}
 public:
-	int AddRef() const { return cellAtomicIncr32((uint32_t*) &RefCount); }
-	int Release() const { return cellAtomicDecr32((uint32_t*) &RefCount); }
+	int AddRef();
+	int Release();
 	int GetRefCount() const { return RefCount; }
-
+	CBaseCounted() : RefCount() {}
+protected:
+	virtual ~CBaseCounted() = 0;
+private:
+	CBaseCounted(const CBaseCounted&);
+	CBaseCounted& operator=(const CBaseCounted&);
+private:
 	volatile int RefCount;
 };
 
@@ -39,9 +43,9 @@ public:
 public:
 	CP() : Ref(NULL) {}
 
-	CP(T* ptr) { this->CopyFrom(ptr); }
+	CP(T* ptr) : Ref(NULL) { this->CopyFrom(ptr); }
 
-	CP(const CP<T>& rhs) { this->CopyFrom(rhs.Ref); }
+	CP(const CP<T>& rhs) : Ref(NULL) { this->CopyFrom(rhs.Ref); }
 
 	~CP() 
 	{
@@ -50,42 +54,35 @@ public:
 			delete Ref;
 	}
 public:
-	CP<T>& operator=(T const* rhs)
+	CP<T>& operator=(T* rhs)
 	{
-		if (Ref) 
-		{
-			if ((Ref->Release() - 1) == 0)
-				delete Ref;
-		}
-
-		Ref = (T*)rhs;
-
-		if (Ref)
-			Ref->AddRef();
+		CopyFrom(rhs);
+		return *this;
 	}
 
 	CP<T>& operator=(CP<T> const& rhs) 
 	{
-		if (Ref) 
+		CopyFrom(rhs.Ref);
+		return *this;
+	}
+public:
+	bool operator!() const { return !Ref; }
+	bool operator==(const T* rhs) const { return Ref == rhs; }
+	bool operator!=(const T* rhs) const { return Ref != rhs; }
+	bool operator==(const CP<T>& rhs) const { return Ref == rhs.Ref; }
+	bool operator!=(const CP<T>& rhs) const { return Ref != rhs.Ref; }
+public:
+	void CopyFrom(T* ptr)
+	{
+		if (Ref == ptr) return;
+		if (ptr != NULL) ptr->AddRef();
+		if (Ref != NULL)
 		{
 			if ((Ref->Release() - 1) == 0)
 				delete Ref;
 		}
 
-		Ref = rhs.Ref;
-
-		if (Ref)
-			Ref->AddRef();
-	}
-public:
-	bool operator!() const { return !Ref; }
-	bool operator==(T* rhs) const { return Ref == rhs.Ref; }
-	bool operator!=(T* rhs) const { return Ref != rhs.Ref; }
-public:
-	void CopyFrom(T* ptr)
-	{
 		Ref = ptr;
-		if (ptr != NULL) ptr->AddRef();
 	}
 protected:
     T* Ref;
@@ -113,40 +110,24 @@ public:
 		gStaticCPHead = (StaticCPForm*)this;
 	}
 
-	StaticCP(T* ptr) { this->CopyFrom(ptr); }
-	StaticCP(const StaticCP<T>& rhs) { this->CopyFrom(rhs.Ref); }
+	StaticCP(T* ptr) : CP<T>(ptr) {}
+	StaticCP(const StaticCP<T>& rhs) : CP<T>(rhs.Ref) {}
 	
 	static void RemoveRef(void* ptr)
 	{
 		(*(StaticCP<T>*)ptr) = (T*)NULL;
 	}
 public:
-	StaticCP<T>& operator=(T const* rhs)
+	StaticCP<T>& operator=(T* rhs)
 	{
-		if (this->Ref) 
-		{
-			if ((this->Ref->Release() - 1) == 0)
-				delete this->Ref;
-		}
-
-		this->Ref = (T*)rhs;
-
-		if (this->Ref)
-			this->Ref->AddRef();
+		this->CopyFrom(rhs);
+		return *this;
 	}
 
 	StaticCP<T>& operator=(StaticCP<T> const& rhs) 
 	{
-		if (this->Ref) 
-		{
-			if ((this->Ref->Release() - 1) == 0)
-				delete this->Ref;
-		}
-
-		this->Ref = rhs.Ref;
-
-		if (this->Ref)
-			this->Ref->AddRef();
+		this->CopyFrom(rhs.Ref);
+		return *this;
 	}
 public:
     RemoveRefFunc RemoveRefPtr;

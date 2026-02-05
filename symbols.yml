@@ -67,3 +67,5 @@ gPipelineBindings: 0x009cfec8
 gGamePartyData: 0x009756bc
 gSomePadHasInputIntercepted: 0x009dc51f
 gNamedPolygons: 0x009d99a0
+gUniqueThingsOnCamera: 0x00974494 
+_ZN4NGfx21gCurDynamicNormalPoolE: 0x009cdfb4

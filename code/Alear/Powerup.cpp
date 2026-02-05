@@ -44,12 +44,15 @@ void LoadBallPolygon()
     CP<RLevel> level = LoadResourceByKey<RLevel>(26111, 0, STREAM_PRIORITY_DEFAULT);
     level->BlockUntilLoaded();
 
-    CThing* socket = level->WorldThing->GetPWorld()->GetThingByUID(0x1513);
-    PShape* shape = socket->GetPShape();
+    if (level->IsLoaded())
+    {
+        CThing* socket = level->WorldThing->GetPWorld()->GetThingByUID(0x1513);
+        PShape* shape = socket->GetPShape();
 
-    gBallThickness = shape->Thickness;
-    gBallPolygon = shape->Polygon;
-    gBallLoops = shape->Loops;
+        gBallThickness = shape->Thickness;
+        gBallPolygon = shape->Polygon;
+        gBallLoops = shape->Loops;
+    }
 }
 
 MH_DefineFunc(ForceSum, 0x00043980, TOC0, void, PShape const* shape, unsigned int n, v2& sum, float& length_sum, float min_vel_length);

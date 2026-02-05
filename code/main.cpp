@@ -26,3 +26,8 @@ extern "C" int _stop()
     AlearShutdown();
     return SYS_PRX_STOP_OK;
 }
+
+extern "C" void __cxa_pure_virtual()
+{
+
+}

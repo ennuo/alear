@@ -20,6 +20,7 @@
 #include <ResourceSystem.h>
 #include <ResourceGfxMaterial.h>
 #include <ResourceGFXTexture.h>
+#include <ResourceGFXMesh.h>
 #include <ResourceCharacterSettings.h>
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
@@ -119,6 +120,29 @@ void RSyncedProfile::InitializeExtraData()
     AnimationStyle = "sackboy";
 }
 
+template<typename R>
+ReflectReturn Reflect(R& r, CRegionOverride& d)
+{
+    ReflectReturn ret;
+    ADD(Region);
+    ADD(MaterialPlan);
+    ADD(Material);
+    ADD(UVScale);
+    ADD(Color);
+    ADD(Brightness);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, PMaterialOverride& d)
+{
+    ReflectReturn ret;
+    ADD(Overrides);
+    ADD(Mesh);
+    ADD(Color);
+    ADD(Brightness);
+    return ret;
+}
 template <typename R>
 ReflectReturn OnSerializeExtraData(R& r, RMaterial& d)
 {
@@ -651,7 +675,7 @@ private:
 ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 {
     ReflectReturn ret = REFLECT_OK;
-    CScopedPart _scoped_part(PART_TYPE_SCRIPT);
+    CScopedPart _scoped_part(PART_TYPE_SCRIPT_NAME);
 
     const char* s = Name.c_str();
     int name_len = StringLength(s);
@@ -694,7 +718,10 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
     if (version >= ALEAR_BR1_LATEST_PLUS_ONE) return REFLECT_FORMAT_TOO_NEW;
 
-    while (r.GetVecLeft() > 0)
+    // fucked up in earlier versions, so one byte was missing from data,
+    // but that only causes texture animations to be slightly inaccurate,
+    // so this is a good enough fix to prevent those levels from breaking.
+    while (r.GetVecLeft() >= 4)
     {
         u32 chunk;
         if ((ret = r.ReadWrite(&chunk, sizeof(u32))) != REFLECT_OK) return ret;
@@ -716,6 +743,15 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
                 DebugLog("gfxm: <%f, %f>\n", mesh->TextureAnimationSpeed, mesh->TextureAnimationSpeedOff);
                 break;
+            }
+            case 0x4d544f56: /* MTOV */ 
+            { 
+                PMaterialOverride* part = new PMaterialOverride();
+                part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
+                if ((ret = Reflect(r, part)) != REFLECT_OK) return ret;
+                thing->CustomThingData->PartMaterialOverride = part;
+
+                break; 
             }
             // case 0x4c414e44: /* LAND */
             // {
@@ -763,6 +799,16 @@ ReflectReturn PScriptName::WriteAlearData()
 
     r.SetCompressionFlags(flags & 7);
 
+    PMaterialOverride* part_override = thing->GetPMaterialOverride(); 
+    if (part_override != NULL) 
+    { 
+        u32 magic = 0x4d544f56; 
+
+        // dont want to use compression for this 
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret; 
+        if ((ret = Reflect(r, *part_override)) != REFLECT_OK) return ret; 
+    }
+
     PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData())
     {
@@ -795,7 +841,7 @@ ReflectReturn PScriptName::WriteAlearData()
     if (name_len != Name.size()) Name.resize(name_len, '\0');
 
     // Append our own data after the null terminator of the script name.
-    Name.resize(name_len + vec.size(), '\0');
+    Name.resize(name_len + vec.size() + 1, '\0');
     memcpy(Name.begin() + name_len + 1, vec.begin(), vec.size());
 
     return REFLECT_OK;
@@ -803,6 +849,8 @@ ReflectReturn PScriptName::WriteAlearData()
 
 bool CThing::HasCustomPartData()
 {
+    if (GetPMaterialOverride() != NULL) return true;
+
     PGeneratedMesh* mesh = GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData()) return true;
     // PShape* shape = GetPShape();

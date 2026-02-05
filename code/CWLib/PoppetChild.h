@@ -12,8 +12,8 @@ public:
 public:
     PWorld* GetWorld();
 public:
-    inline CPoppet* GetParent() { return Parent; }
-    inline CThing* GetPlayer() { return PlayerThing; }
+    inline CPoppet* GetParent() const { return Parent; } 
+    inline CThing* GetPlayer() const { return PlayerThing; } 
 public:
     virtual ~CPoppetChild();
     virtual void SetParent(CPoppet* poppet);

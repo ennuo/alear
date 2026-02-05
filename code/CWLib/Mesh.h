@@ -53,7 +53,7 @@ public:
 class CPrimitive {
 public:
     CP<RGfxMaterial> Material;
-    void* TextureAlternatives; // CP<RTextureList> never used dont care
+    CP<RGfxMaterial> TextureAlternatives; // CP<RTextureList> never used dont care
     u32 MinVert;
     u32 MaxVert;
     u32 FirstIndex;

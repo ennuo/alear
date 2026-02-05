@@ -4,19 +4,32 @@
 #include <vector.h>
 #include <refcount.h>
 
+#include "ResourceDescriptor.h"
 #include "Part.h"
 #include "ResourceGFXMesh.h"
 
 #include "hack_thingptr.h"
 
+class CMeshInstance;
 class PRenderMesh : public CPart {
-private:
-    //char Pad[0x54];
-    char Pad[0x48];
 public:
+    void SetupRendering() const;
+    void DMACullBones() const;
+public:
+    u16 HandyIndex;
+    u16 FrustVisible;
+    v4 EditorColour;
+    v4 EditorColourTint;
+    CP<RAnim> Anim;
+    float AnimPos;
+    float AnimPosOld;
+    float AnimSpeed;
+    float LoopStart;
+    float LoopEnd;
+    CThingPtr SpriteLightThing;
     CVector<CThingPtr> BoneThings;
     CP<RMesh> Mesh;
-    void* MeshInstance;
+    CMeshInstance* MeshInstance;
 private:
     char Pad2[0x12];
 public:

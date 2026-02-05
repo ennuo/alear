@@ -107,12 +107,16 @@ ReflectReturn Reflect(R& r, CPoppetOutlineConfig& d)
 // and we only need the CReflectionLoadVector version
 
 MH_DefineFunc(ReflectResourceCP_CReflectionLoadVector, 0x006e8ce8, TOC1, ReflectReturn, CReflectionLoadVector&, CP<CResource>*, EResourceType);
-template<typename R, typename D>
-ReflectReturn Reflect(R& r, CP<D>& d)
-{
-    if (r.IsGatherVariables() || r.GetSaving()) return REFLECT_NOT_IMPLEMENTED;
-    ReflectResourceCP_CReflectionLoadVector(r, (CP<CResource>*)&d, GetResourceType<D>());
-}
+template<typename R, typename D> 
+ReflectReturn Reflect(R& r, CP<D>& d) 
+{ 
+    if (r.IsGatherVariables()) return REFLECT_NOT_IMPLEMENTED; 
+
+    if (r.GetLoading()) 
+        return ReflectResourceCP_CReflectionLoadVector((CReflectionLoadVector&)r, (CP<CResource>*)&d, GetResourceType<D>()); 
+
+    return REFLECT_NOT_IMPLEMENTED; 
+} 
 
 
 template<typename R, typename D>
@@ -123,7 +127,13 @@ ReflectReturn Reflect(R& r, CResourceDescriptor<D>& d)
 
 template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CP<RTexture>& d);
 template ReflectReturn Reflect<CReflectionLoadVector, RPlan>(CReflectionLoadVector& r, CP<RPlan>& d);
+template ReflectReturn Reflect<CReflectionLoadVector, RGfxMaterial>(CReflectionLoadVector& r, CP<RGfxMaterial>& d); 
+template ReflectReturn Reflect<CReflectionLoadVector, RMesh>(CReflectionLoadVector& r, CP<RMesh>& d); 
 
+template ReflectReturn Reflect<CReflectionSaveVector, RTexture>(CReflectionSaveVector& r, CP<RTexture>& d); 
+template ReflectReturn Reflect<CReflectionSaveVector, RPlan>(CReflectionSaveVector& r, CP<RPlan>& d); 
+template ReflectReturn Reflect<CReflectionSaveVector, RGfxMaterial>(CReflectionSaveVector& r, CP<RGfxMaterial>& d); 
+template ReflectReturn Reflect<CReflectionSaveVector, RMesh>(CReflectionSaveVector& r, CP<RMesh>& d); 
 
 template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadVector& r, CResourceDescriptor<RTexture>& d);
 template ReflectReturn Reflect<CReflectionLoadVector, RPlan>(CReflectionLoadVector& r, CResourceDescriptor<RPlan>& d);
