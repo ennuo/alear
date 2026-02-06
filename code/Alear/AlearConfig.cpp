@@ -40,7 +40,7 @@ void CConfigOption::AddToRegistry()
 
     CConfigOption* opt = it->second;
     while (opt->Next != NULL)
-        opt->Next = opt->Next;
+        opt = opt->Next;
     opt->Next = this;
 }
 
