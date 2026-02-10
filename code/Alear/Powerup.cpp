@@ -305,10 +305,6 @@ void OnStateChange(PCreature& creature, EState old_state, EState new_state)
             
             CResourceDescriptor<RPlan> desc(71445);
             costume->SetPowerup(mesh, desc);
-            
-            creature.SpeedModifier = 1.5f;
-            creature.JumpModifier = 1.5f;
-            creature.StrengthModifier = 1.0f;
 
             // Going to write something to call here that will
             // 1. Play equip animation
@@ -705,8 +701,6 @@ void CollectBoots(CThing* player, f32 speed, f32 jump, f32 strength)
         submerged = 0.3f;
     if(part_creature->Fork->AmountBodySubmerged > submerged) return;
 
-    // I don't know what I fucked up here this time, but this crashes
-    // I had it working at one point too
     part_creature->SpeedModifier = speed;
     part_creature->JumpModifier = jump;
     part_creature->StrengthModifier = strength;

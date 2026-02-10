@@ -1,5 +1,7 @@
 #include "AlearHooks.h"
 #include "CheckpointStyles.h"
+#include "ExplosiveStyles.h"
+#include "MiscMeshStyles.h"
 
 #include <GooeyNetworkAction.h>
 #include <PlayerNumber.inl>
@@ -27,6 +29,8 @@
 const u32 E_KEY_TWEAK_SETTINGS_SCRIPT = 3311245350ul;
 const u32 E_KEY_GLOBAL_SETTINGS_SDF = 3930801866ul;
 const u32 E_KEY_PARAM_ANIMATIONS_SDF = 2295497740ul;
+const u32 E_KEY_CHECKPOINT_TYPE_SDF = 3926674768ul;
+const u32 E_KEY_EXPLOSIVE_STYLE_SDF = 4049006123ul;
 
 enum ETweakWidget {
     TWEAK_WIDGET_MEASURER,
@@ -449,6 +453,16 @@ namespace TweakSettingNativeFunctions
                 float speed = mesh != NULL ? mesh->TextureAnimationSpeed : 0.0f;
                 return setting.GameToFixed(speed);
             }
+            case E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED:
+            {
+                PRenderMesh* mesh = thing->GetPRenderMesh();
+                CP<RAnim> anim = mesh->Anim;
+                float speed = anim != NULL ? mesh->AnimSpeed : 0.0f;
+                return setting.GameToFixed(speed);
+            }
+            
+            case E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE: return GetExplosiveStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE: return GetLevelKeyStyle(thing);
         }
 
         return 0;
@@ -499,6 +513,7 @@ bool InitTweakSettings()
 
     CIconConfig global_settings_texture(E_KEY_GLOBAL_SETTINGS_SDF, 4, 4);
     CIconConfig paramanim_texture(E_KEY_PARAM_ANIMATIONS_SDF, 1, 2);
+    CIconConfig explosive_style_texture(E_KEY_EXPLOSIVE_STYLE_SDF, 2, 4);
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LIGHTING)
         .SetupLighting()
@@ -596,7 +611,13 @@ bool InitTweakSettings()
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SHAPE_ANIMATION_SPEED)
         .SetupFraction()
         .SetIcon(paramanim_texture, 1)
-        .SetMinMax(0.0f, 200.0f)
+        .SetMinMax(-200.0f, 200.0f)
+        .SetDebugToolTip(L"Animation Speed");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED)
+        .SetupFraction()
+        .SetIcon(paramanim_texture, 1)
+        .SetMinMax(-200.0f, 200.0f)
         .SetDebugToolTip(L"Animation Speed");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE)
@@ -624,6 +645,17 @@ bool InitTweakSettings()
         .SetDebugSuffix(L"s")
         .SetDebugToolTip(L"Spawn Delay")
         .SetConversion(1.0 / 30.0);
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_EXPLOSIVE_STYLE)
+        .SetIcon(explosive_style_texture, 0)
+        .SetDebugToolTip(L"Explosive Type");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_LEVEL_KEY_STYLE)
+        .SetDebugToolTip(L"Visual Style");
 
     // visual style
         // Entrance
@@ -795,6 +827,40 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             break;
         }
 
+        case E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED:
+        {
+            float speed = setting.FixedToGame(action.Value);
+            DebugLog("E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED: %08x (%f)\n", (u32)action.Value, speed);
+
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PRenderMesh* mesh = thing->GetPRenderMesh();
+                if (mesh != NULL)
+                    mesh->AnimSpeed = speed;
+            }
+
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE:
+        {
+            DebugLog("explosive style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetExplosiveStyle(thing, GetExplosiveType(thing), action.Value);
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE:
+        {
+            DebugLog("level key style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetLevelKeyStyle(thing, action.Value);
+            break;
+        }
+
         case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE:
         {
             world->IsTutorialLevel = (bool)action.Value;
@@ -821,12 +887,37 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 
         case CAROUSEL_CHECKPOINT:
         {
-            CIconConfig icon(3926674768ul, 2, 2);
+            CIconConfig icon(E_KEY_CHECKPOINT_TYPE_SDF, 2, 2);
 
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Entrance", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Single-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Double-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Infinite-Lives Checkpoint", v4(1.0)));
+
+            break;
+        }
+        
+        case CAROUSEL_EXPLOSIVE_STYLE:
+        {
+            CIconConfig icon(E_KEY_EXPLOSIVE_STYLE_SDF, 2, 4);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Burn", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Shock", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Freeze", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Stun", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Launch", v4(1.0)));
+
+            break;
+        }
+
+        case CAROUSEL_LEVEL_KEY_STYLE:
+        {
+            CIconConfig icon(3391025295ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Gemstones", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Brass", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Gold Foil", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Gold Foil", v4(1.0)));
 
             break;
         }
@@ -857,6 +948,8 @@ void AttachCarouselHooks()
 
     TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_EXPLOSIVE_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_LEVEL_KEY_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00929f10, (u32)TABLE);
@@ -910,6 +1003,12 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_TINT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_MURKINESS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_WATER_BITS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    
+    TABLE[E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED_OFF] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    
+    TABLE[E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);

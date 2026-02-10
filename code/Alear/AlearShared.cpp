@@ -76,65 +76,6 @@
 #include <sm64/avatar.h>
 #endif
 
-void DumpMeshToFile(CThing* thing)
-{
-    PGeneratedMesh* generated = thing->GetPGeneratedMesh();
-    PPos* part_pos = thing->GetPPos();
-    if (generated == NULL || part_pos == NULL) return;
-
-    const CMesh* mesh = generated->SharedMesh;
-
-    char path[CELL_FS_MAX_FS_FILE_NAME_LENGTH];
-    sprintf(path, "output/meshgen/%d_glb", thing->UID);
-    CFilePath fp(FPR_GAMEDATA, path);
-
-    FileHandle fd;
-    FileOpen(fp, &fd, OPEN_WRITE);
-
-    MMString<char> gltf;
-    gltf.reserve(10000); // reserve a reasonable amount of space for all the strcat bullshit
-
-    float* vertices = (float*)((char*)mesh->SourceGeometry.GetCachedAddress() + mesh->SourceStreamOffsets[0]);
-    float* uv = ((float*)mesh->AttributeData.GetCachedAddress());
-
-    u16* indices = (u16*)(mesh->Indices.GetCachedAddress());
-    CRawVector<u16> triangles((mesh->NumVerts - 2) * 3);
-    triangles.push_back(indices[0]);
-    triangles.push_back(indices[1]);
-    triangles.push_back(indices[2]);
-    for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
-    {
-        if (indices[i] == 65535)
-        {
-            if (i + 3 >= mesh->NumIndices) break;
-
-            triangles.push_back(indices[i + 1]);
-            triangles.push_back(indices[i + 2]);
-            triangles.push_back(indices[i + 3]);
-
-            i += 3;
-            j = 0;
-            continue;
-        }
-
-        if ((j & 1) != 0)
-        {
-            triangles.push_back(indices[i - 2]);
-            triangles.push_back(indices[i]);
-            triangles.push_back(indices[i - 1]);
-        }
-        else
-        {
-            triangles.push_back(indices[i - 2]);
-            triangles.push_back(indices[i - 1]);
-            triangles.push_back(indices[i]);
-        }
-    }
-
-
-    FileClose(&fd);
-}
-
 void RenderShapeOutlines()
 {
     EPlayerNumber leader = gNetworkManager.InputManager.GetLocalLeadersPlayerNumber();
@@ -226,23 +167,46 @@ void OnUpdateLevel()
         EPoppetMode mode = poppet->GetMode();
         EPoppetSubMode submode = poppet->GetSubMode();
 
-        // if (poppet->GetMode() == MODE_CURSOR && submode == SUBMODE_NONE || submode == SUBMODE_SWITCH_CONNECTOR || submode == SUBMODE_DANGER)
-        // {
-        //     if (hover != NULL)
-        //     {
-        //         PShape* shape = hover->GetPShape();
-        //         if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, (const wchar_t*)NULL))
-        //             poppet->HiddenList.push_back(hover);
-        //     }
+        bool edit = gGame->EditMode;
+        if ((poppet->GetMode() == MODE_CURSOR && 
+                submode == SUBMODE_NONE ||
+                submode == SUBMODE_EDIT_VERTS || 
+                submode == SUBMODE_SWITCH_CONNECTOR || 
+                submode == SUBMODE_DANGER || 
+                submode == SUBMODE_FLOOD_FILL || 
+                submode == SUBMODE_EYEDROPPER || 
+                submode == SUBMODE_DOT_TO_DOT || 
+                submode == SUBMODE_STICKER_CUTTER || 
+                submode == SUBMODE_STICKER_SCRUBBER || 
+                submode == SUBMODE_SLICE_N_DICE || 
+                submode == SUBMODE_UNPHYSICS || 
+                submode == SUBMODE_ADVANCED_GLUE || 
+                submode == SUBMODE_EDIT_UVS || 
+                submode == SUBMODE_MESH_CAPTURE) ||
+            (poppet->GetMode() == MODE_CURSOR && submode == SUBMODE_PICK_DECORATIONS && edit))
+        {
+            if (hover != NULL)
+            {
+                PShape* shape = hover->GetPShape();
+                if (shape != NULL && input->IsJustClicked(BUTTON_CONFIG_POPPET_HIDE, L"BP_HIDE"))
+                {
+                    poppet->HiddenList.push_back(hover);
+                    CAudio::PlaySample(CAudio::gSFX, "poppet/layer_hide", hover, -10000.0f, -10000.0f);
+                }
+            }
 
-        //     if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, (const wchar_t*)NULL))
-        //         poppet->ClearHiddenList();
-        // }
+            if (poppet->HiddenList.size() != 0 && input->IsJustClicked(BUTTON_CONFIG_POPPET_SHOW, L"BP_SHOW"))
+            {
+                poppet->ClearHiddenList();
+                v2 pos3d = *(v2*)(((char*)poppet) + 0x180);
+                CAudio::PlaySample(CAudio::gSFX, "poppet/layer_unhide", -10000.0f, &pos3d, -10000.0f);
+            }
+        }
         
-        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI, L"BP_HIDE_TETHER"))
+        if (gCanHidePopit && input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI, L"BP_HIDE_TETHER"))
             poppet->ShowTether = !poppet->ShowTether;
 
-        if (input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI, L"BP_HIDE_POPPET_UI"))
+        if (gCanHidePopit && input->IsJustClicked(BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI, L"BP_HIDE_POPPET_UI"))
             poppet->HidePoppetGooey = !poppet->HidePoppetGooey;
 
         if (hover != NULL && 
@@ -851,7 +815,6 @@ CP<CResource> TextureFromResource(CP<CResource>& res)
     return NULL;
 }
 
-// Why doesn't this work?
 bool CustomIsStickerPlaceable(void* edit, CRaycastResults const& results)
 {
     if (results.SwitchConnector) return false;
@@ -1136,8 +1099,8 @@ void InitSharedHooks()
     // MH_Poke32(0x00211730, 0x60000000);
     // MH_Poke32(0x00211700, 0x60000000);
 
-    // MH_InitHook((void*)0x001ddb60, (void*)&CustomPreRaycastPrepare);
-    // MH_InitHook((void*)0x0035d1a8, (void*)&CustomIsStickerPlaceable);
+    MH_InitHook((void*)0x001ddb60, (void*)&CustomPreRaycastPrepare);
+    MH_InitHook((void*)0x0035d1a8, (void*)&CustomIsStickerPlaceable);
 
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
     MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);

@@ -75,6 +75,7 @@ ReflectReturn Reflect(R& r, CRenderJoint& d)
     ReflectReturn ret;
     ADD(Mesh);    
     ADD(InactiveMesh);
+    ADD(PatternMesh);
     return ret;
 }
 

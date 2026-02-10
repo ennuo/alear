@@ -112,7 +112,7 @@ void CPoppetInventory::TakePlan(CVector<CThingPtr> const& things)
 
 bool CanScaleMesh(CGUID mesh_guid)
 {
-    if (gForceMeshScaling) return true;
+    if (gAllowMeshScaling) return true;
 
     DebugLog("Checking if we can scale g%08x\n", mesh_guid.guid);
 

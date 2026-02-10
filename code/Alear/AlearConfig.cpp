@@ -16,18 +16,24 @@ void OnSetRenderDistanceToggle();
 bool gPauseGameSim;
 
 ConfigMap gConfigMap;
-CConfigBool gUsePopitGradients(L"Popit", L"Gradient", true);
-CConfigBool gUseDivergenceCheck(L"Game", L"Divergence Check", true);
-CConfigFloat gRenderDistance(L"Render", L"Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
+CConfigBool gUsePopitGradients(L"Popit", L"Interface - Use Popit Color Gradient", true);
+CConfigBool gCanCollapseCategories(L"Popit", L"Interface - Can Collapse Categories", true);
+CConfigBool gCanHidePopit(L"Popit", L"Interface - Can Hide Tether & UI", false);
+CConfigBool gUseCustomCursors(L"Popit", L"Visual - Use Unique Cursor Sprites", true);
+CConfigBool gColorCustomCursors(L"Popit", L"Visual - Use Player Color Cursor Sprites", false);
+CConfigBool gAllowDebugTooltypes(L"Popit", L"Function - Allow Debug Tooltypes", true);
+CConfigBool gAllowMeshScaling(L"Popit", L"Function - Allow Mesh Scaling", false);
+CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Meshes", false);
 
-CConfigBool gLoadDefaultMaterial(L"Load", L"Use Fallback Graphics Materials", false);
-CConfigBool gForceLoadEditable(L"Load", L"Force Editable On Load", false);
+CConfigBool gPlayBackgroundStings(L"Loading", L"Audio - Play Background Stings", true);
+CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
+CConfigBool gLoadDefaultMaterial(L"Loading", L"Visual - Use Fallback Graphics Materials", false);
+CConfigBool gForceLoadEditable(L"Loading", L"Function - Force Editable On Load", false);
 
-CConfigBool gForceMeshScaling(L"Debug", L"Force Mesh Scaling", false);
-CConfigBool gAllowEyedroppingMeshes(L"Debug", L"Allow Eyedropping Meshes", false);
+CConfigFloat gRenderDistance(L"Render", L"Visual - Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
-CConfigBool gUseIceAccessibility(L"Accessibility", L"Ice Shake Mode", false);
-CConfigBool gPlayBackgroundStings(L"Accessibility", L"Play Background Stings", true);
+CConfigBool gUseDivergenceCheck(L"Gameplay", L"Divergence Check", true);
+CConfigBool gUseIceAccessibility(L"Gameplay", L"Ice Shake Mode", false);
 
 void CConfigOption::AddToRegistry()
 {
@@ -40,7 +46,7 @@ void CConfigOption::AddToRegistry()
 
     CConfigOption* opt = it->second;
     while (opt->Next != NULL)
-        opt->Next = opt->Next;
+        opt = opt->Next;
     opt->Next = this;
 }
 

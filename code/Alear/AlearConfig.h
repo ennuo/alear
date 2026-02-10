@@ -117,11 +117,17 @@ extern ConfigMap gConfigMap;
 
 extern CConfigBool gUseDivergenceCheck;
 extern CConfigBool gUsePopitGradients;
+extern CConfigBool gUseCustomCursors;
+extern CConfigBool gColorCustomCursors;
 extern CConfigBool gHideMSPF;
 extern CConfigBool gLoadDefaultMaterial;
 extern CConfigBool gForceLoadEditable;
-extern CConfigBool gForceMeshScaling;
+extern CConfigBool gAllowMeshScaling;
 extern CConfigBool gAllowEyedroppingMeshes;
+extern CConfigBool gAllowDebugTooltypes;
+extern CConfigBool gCanCollapseCategories;
+extern CConfigBool gCanHidePopit;
+extern CConfigBool gUseAlternateJointMeshes;
 
 extern CConfigBool gUseIceAccessibility;
 extern CConfigBool gPlayBackgroundStings;

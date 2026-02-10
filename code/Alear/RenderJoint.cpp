@@ -1,5 +1,6 @@
 #include "RenderJoint.h"
 #include "AlearSerialization.h"
+#include "AlearConfig.h"
 
 #include <vector.h>
 
@@ -29,6 +30,7 @@ void CRenderJoint::LoadMeshResources()
 {
     if (Mesh != 0) MeshResource = LoadResourceByKey<RMesh>(Mesh, 0, STREAM_PRIORITY_DEFAULT);
     if (InactiveMesh != 0) InactiveMeshResource = LoadResourceByKey<RMesh>(InactiveMesh, 0, STREAM_PRIORITY_DEFAULT);
+    if (PatternMesh != 0) PatternMeshResource = LoadResourceByKey<RMesh>(PatternMesh, 0, STREAM_PRIORITY_DEFAULT);
 }
 
 bool LoadJointMeshes()
@@ -62,8 +64,8 @@ bool LoadJointMeshes()
         gRenderJoints[i] = joints.Joints[i];
 
         CRenderJoint& joint = gRenderJoints[i];
-        if (joint.InactiveMesh == 0)
-            joint.InactiveMesh = joint.Mesh;
+        if (!gUseAlternateJointMeshes || joint.InactiveMesh == 0) { joint.InactiveMesh = joint.Mesh; }
+        if (!gUseAlternateJointMeshes || joint.PatternMesh == 0) { joint.PatternMesh = joint.Mesh; }
         
         joint.LoadMeshResources();
     }
@@ -73,6 +75,7 @@ bool LoadJointMeshes()
 
 CP<RMesh> GetRenderJointMesh(PJoint* joint)
 {
+    if (joint->Type == JOINT_TYPE_MOTOR && joint->AnimationPattern != 1) LoadResourceByKey<RMesh>(21704, 0, STREAM_PRIORITY_DEFAULT);
     if (joint->Type == JOINT_TYPE_LEGACY)
     {
         if (!joint->Settings || !joint->Settings->IsLoaded()) return NULL;

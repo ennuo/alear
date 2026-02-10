@@ -41,6 +41,20 @@ public:
     float AAngleOffset;
     float BAngleOffset;
     CP<RJoint> Settings;
+    u32 LastRenderFrameNum;
+    v2 AContactGlobalOld;
+    v2 BContactGlobalOld;
+    v2 AContactGlobalNew;
+    v2 BContactGlobalNew;
+    v2 SlideDir;
+    bool Stiff;
+    float Strength;
+    u32 AnimationPattern;
+    float AnimationRange;
+    float AnimationTime;
+    float AnimationPhase;
+    float AnimationSpeed;
+    float AnimationPause;
 
     // there's a bunch more, but i only really care about these fields.
 public:

@@ -1,4 +1,5 @@
 #include "AlearShared.h"
+#include "AlearConfig.h"
 
 #include <hook.h>
 #include <refcount.h>
@@ -219,6 +220,7 @@ void CustomDoPoppetSection(
 
     bool is_hidden = false;
     bool can_hide = category_id != gFunctionCategoryID;
+    if(!gCanCollapseCategories) { can_hide = false; }
 
     if (can_hide)
     {
@@ -235,9 +237,13 @@ void CustomDoPoppetSection(
     bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
     bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
 
-    if (!settings.IsPlayerColourPage && !backgrounds && !sound_objects)
-    // if (!hide_section_titles)
+    if (settings.IsPlayerColourPage || backgrounds || sound_objects)
     {
+        is_hidden = false;
+    }
+    //if (!settings.IsPlayerColourPage && !backgrounds && !sound_objects)
+    // if (!hide_section_titles)
+    //{
         // float height = is_hidden ? 2.0f : 24.0f;
         float height = 24.0f;
         manager->SetFrameBorders(0.0f, height, 0.0f, height);
@@ -282,7 +288,7 @@ void CustomDoPoppetSection(
         }
 
         manager->DoBreak();
-    }
+    //}
 
     first_section_break = false;
 

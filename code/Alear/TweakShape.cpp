@@ -18,9 +18,12 @@
 #include <poppet/ScriptObjectPoppet.h>
 
 #include "CheckpointStyles.h"
+#include "ExplosiveStyles.h"
+#include "MiscMeshStyles.h"
 
 const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
+const u32 E_TWEAK_EXPLOSIVE_SCRIPT = 3549987402u;
 
 const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
 const u32 E_LAMS_TWEAKABLE_MESH = MakeLamsKeyID("TWEAKABLE_MESH", "_NAME");
@@ -28,8 +31,7 @@ const u32 E_LAMS_TWEAKABLE_DECAL = MakeLamsKeyID("TWEAKABLE_DECAL", "_NAME");
 
 StaticCP<RScript> gTweakShapeScript;
 StaticCP<RScript> gTweakCheckpointScript;
-
-
+StaticCP<RScript> gTweakExplosiveScript;
 
 struct SCheckpointStyle {
     CGUID Mesh[NUM_CHECKPOINT_TYPES];
@@ -61,6 +63,56 @@ SCheckpointStyle gCheckpointStyles[] =
         { 119221, 119217, 119220, 120941 },
         10716
     }
+};
+
+struct SExplosiveStyle {
+    CGUID Mesh[NUM_EXPLOSIVE_TYPES];
+    CGUID Material[NUM_EXPLOSIVE_TYPES];
+};
+
+SExplosiveStyle gExplosiveStyles[] =
+{
+    // Default
+    {
+        { 34064, 34066 },
+        { 35546, 35545 }
+    },
+
+    // Shock
+    {
+        { 3039519250u, 3211308833u },
+        { 35546, 35545 }
+    },
+
+    // Freeze
+    {
+        { 2361610045u, 2252254037u },
+        { 35546, 35545 }
+    },
+
+    // Stun
+    {
+        { 4216187055u, 3090086945u },
+        { 35546, 35545 }
+    },
+    
+    // Launch
+    {
+        { 2303256371u, 3063072232u },
+        { 35546, 35545 }
+    }
+};
+
+CGUID gLevelKeyStyles[] =
+{
+    // Gemstones
+    3763,
+    // Brass
+    44681,
+    // Foil
+    44679,
+    // Null
+    44679
 };
 
 CGUID GetMeshGUID(CThing* thing)
@@ -149,7 +201,7 @@ s32 GetCheckpointStyle(CThing* thing)
     if (!guid) return 0;
 
     for (int i = 0; i < ARRAY_LENGTH(gCheckpointStyles); ++i)
-    for (int j = 0; j < NUM_CHECKPOINT_TYPES; ++j)
+    for (int j = 0; j < NUM_CHECKPOINT_STYLES; ++j)
     {
         if (gCheckpointStyles[i].Mesh[j] == guid)
             return i;
@@ -173,6 +225,104 @@ bool IsCheckpointMesh(CThing* thing)
     return false;
 }
 
+s32 GetExplosiveType(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gExplosiveStyles); ++i)
+    for (int j = 0; j < NUM_EXPLOSIVE_TYPES; ++j)
+    {
+        if (gExplosiveStyles[i].Mesh[j] == guid)
+            return j;
+    }
+
+    return EXPLOSIVE_BANGER;
+}
+
+void SetExplosiveStyle(CThing* thing, s32 type_index, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    SExplosiveStyle& style = gExplosiveStyles[style_index];
+    u32 mesh_key = style.Mesh[type_index];
+    u32 mat_key = style.Material[type_index];
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+        shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+s32 GetExplosiveStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gExplosiveStyles); ++i)
+    for (int j = 0; j < NUM_EXPLOSIVE_STYLES; ++j)
+    {
+        if (gExplosiveStyles[i].Mesh[j] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+bool IsExplosiveMesh(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return false;
+
+    for (int i = 0; i < ARRAY_LENGTH(gExplosiveStyles); ++i)
+    for (int j = 0; j < NUM_EXPLOSIVE_STYLES; ++j)
+    {
+        if (gExplosiveStyles[i].Mesh[j] == guid)
+            return true;
+    }
+
+    return false;
+}
+
+bool IsTweakExplosiveScriptAvailable()
+{
+    if (gTweakExplosiveScript.GetRef() == NULL)
+    {
+        *((CP<RScript>*)&gTweakExplosiveScript) = LoadResourceByKey<RScript>(E_TWEAK_EXPLOSIVE_SCRIPT, 0, STREAM_PRIORITY_DEFAULT);
+        gTweakExplosiveScript->BlockUntilLoaded();
+    }
+    
+    return gTweakExplosiveScript->IsLoaded();
+}
+
+void SetLevelKeyStyle(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    u32 mesh_key = gLevelKeyStyles[style_index];
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+s32 GetLevelKeyStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gLevelKeyStyles); ++i)
+    {
+        if (gLevelKeyStyles[i] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
 bool IsTweakCheckpointScriptAvailable()
 {
     if (gTweakCheckpointScript.GetRef() == NULL)
@@ -183,7 +333,6 @@ bool IsTweakCheckpointScriptAvailable()
     
     return gTweakCheckpointScript->IsLoaded();
 }
-
 
 bool IsTweakShapeScriptAvailable()
 {
@@ -216,6 +365,7 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
     if (CPoppetGooey_CanTweak(gooey, thing)) return true;
 
     if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
+    if (IsExplosiveMesh(thing)) return IsTweakExplosiveScriptAvailable();
 
     if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
@@ -224,16 +374,19 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
 void OnStartTweaking(CThing* thing)
 {
-    bool is_shape_tweak = ShouldAttachShapeTweak(thing);
-    bool is_checkpoint_tweak = IsCheckpointMesh(thing);
-
-    if (!is_shape_tweak && !is_checkpoint_tweak) return;
-
+    StaticCP<RScript> set_script;
+    if(IsCheckpointMesh(thing))
+        set_script = gTweakCheckpointScript;
+    else if(IsExplosiveMesh(thing))
+        set_script = gTweakExplosiveScript;
+    else if(ShouldAttachShapeTweak(thing))
+        set_script = gTweakShapeScript;
+    else
+        return;
     if (thing->GetPScript() == NULL)
         thing->AddPart(PART_TYPE_SCRIPT);
-    
     PScript* script = thing->GetPScript();
-    script->SetScript(is_checkpoint_tweak ? gTweakCheckpointScript : gTweakShapeScript);
+    script->SetScript(set_script);
 }
 
 void OnStopTweaking(CThing* thing)
@@ -243,7 +396,9 @@ void OnStopTweaking(CThing* thing)
     if (part == NULL) return;
     CP<RScript>& script = part->ScriptInstance.Script;
     if (script.GetRef() == NULL || !script->IsLoaded()) return;
-    if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT || script->GetGUID() == E_TWEAK_CHECKPOINT_SCRIPT)
+    if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT || 
+        script->GetGUID() == E_TWEAK_CHECKPOINT_SCRIPT || 
+        script->GetGUID() == E_TWEAK_EXPLOSIVE_SCRIPT)
         thing->RemovePart(PART_TYPE_SCRIPT);
 }
 
@@ -335,6 +490,16 @@ namespace TweakShapeNativeFunctions
         }
 
         return false;
+    }
+    
+    bool UsesMeshAnimations(CThing* thing)
+    {
+        if (thing == NULL) return false;
+        PRenderMesh* mesh = thing->GetPRenderMesh();
+        if (mesh == NULL) return false;
+        CP<RAnim>& anim = mesh->Anim;
+        if (!anim) return false;
+        return true;
     }
 
     void PerformToolAction(CThing* thing, CScriptObjectPoppet* so_poppet, EToolType tool)
@@ -443,6 +608,7 @@ namespace TweakShapeNativeFunctions
 
         RegisterNativeFunction("TweakShape", "UsesPlayerDefinedColour__Q5Thing", true, NVirtualMachine::CNativeFunction1<bool, CThing*>::Call<UsesPlayerDefinedColour>);
         RegisterNativeFunction("TweakShape", "UsesParameterAnimations__Q5Thing", true, NVirtualMachine::CNativeFunction1<bool, CThing*>::Call<UsesParameterAnimations>);
+        RegisterNativeFunction("TweakShape", "UsesMeshAnimations__Q5Thing", true, NVirtualMachine::CNativeFunction1<bool, CThing*>::Call<UsesMeshAnimations>);
         RegisterNativeFunction("TweakShape", "PerformToolAction__Q5ThingQ6Poppeti", true, NVirtualMachine::CNativeFunction3V<CThing*, CScriptObjectPoppet*, EToolType>::Call<PerformToolAction>);
         RegisterNativeFunction("TweakShape", "GetTextureAnimationSpeed__Q5Thing", true, NVirtualMachine::CNativeFunction1<float, CThing*>::Call<GetTextureAnimationSpeed>);
     }

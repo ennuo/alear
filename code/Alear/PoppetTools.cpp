@@ -5,6 +5,7 @@
 #include <GuidHash.h>
 
 #include <cell/DebugLog.h>
+#include <cell/fs/cell_fs_file_api.h>
 #include <refcount.h>
 
 #include <PoppetEnums.inl>
@@ -32,8 +33,8 @@ enum ECursorSprite {
     CURSOR_PLASMA,
     CURSOR_SPIKE,
     CURSOR_DROWNED,
-    CURSOR_SMALL,
     CURSOR_VERTEX_EDIT,
+    CURSOR_SLICE_N_DICE,
     CURSOR_DOT_TO_DOT,
     CURSOR_STICKER_PICK,
     CURSOR_FLOOD_FILL,
@@ -45,10 +46,17 @@ enum ECursorSprite {
     CURSOR_PAINTBRUSH,
     CURSOR_SPRAYCAN,
     CURSOR_STANDARD,
-    CURSOR_MARQUEE,
+    CURSOR_STANDARD_MARQUEE,
     CURSOR_PHOTO_MARQUEE,
     CURSOR_CAPTURE_MARQUEE,
-    CURSOR_UNPHYSICS
+    CURSOR_CROSSHAIRS,
+    CURSOR_RESIZE,
+    CURSOR_ROTATE,
+    CURSOR_28,
+    CURSOR_UNPHYSICS,
+    CURSOR_MESH_CAPTURE,
+    CURSOR_31,
+    CURSOR_32
 };
 
 bool IsLethalCursor(u32 sprite)
@@ -68,22 +76,33 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
 {
     EPoppetMode mode = poppet->GetMode();
     EPoppetSubMode submode = poppet->GetSubMode();
+    if (mode != MODE_CURSOR) return CURSOR_STANDARD;
+    if(!gUseCustomCursors)
+    {
+        switch (submode)
+        {
+            case SUBMODE_GRAB_PHOTO:
+            case SUBMODE_GRAB_PLAN:
+                return CURSOR_STANDARD_MARQUEE;
+            default:
+                return CURSOR_STANDARD;
+        }
+    }
 
     if (submode == SUBMODE_GAS_TWEAK) return CURSOR_GAS;
     if (submode == SUBMODE_PLASMA_TWEAK) return CURSOR_PLASMA;
-    if (submode == SUBMODE_OBJECT_EDIT_BASIC) return CURSOR_SMALL;
-    if (mode != MODE_CURSOR) return CURSOR_STANDARD;
-
     switch (submode)
     {
+        case SUBMODE_RESIZE: return CURSOR_RESIZE;
+        case SUBMODE_ROTATE: return CURSOR_ROTATE;
         case SUBMODE_GRAB_PLAN: 
-        case SUBMODE_GRAB_PLAN_MARQUEE: 
+        case SUBMODE_GRAB_PLAN_MARQUEE:
             return CURSOR_CAPTURE_MARQUEE;
         case SUBMODE_GRAB_PHOTO: return CURSOR_PHOTO_MARQUEE;
         case SUBMODE_EDIT_VERTS: return CURSOR_VERTEX_EDIT;
         case SUBMODE_SLICE_N_DICE:
         case SUBMODE_OBJECT_EDIT_SLICE_N_DICE:
-            return CURSOR_VERTEX_EDIT;
+            return CURSOR_SLICE_N_DICE;
         case SUBMODE_STICKER_SCRUBBER: return CURSOR_STICKER_SCRUBBER;
         case SUBMODE_STICKER_CUTTER: return CURSOR_STICKER_CUTTER;
         case SUBMODE_PICK_DECORATIONS: return CURSOR_STICKER_PICK;
@@ -97,6 +116,7 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
         case SUBMODE_PAINT_LINES:
             return CURSOR_PAINTBRUSH;
         case SUBMODE_PAINT_SPRAY: return CURSOR_SPRAYCAN;
+        case SUBMODE_MESH_CAPTURE: return CURSOR_MESH_CAPTURE;
         
         case SUBMODE_DANGER:
         {
@@ -120,6 +140,11 @@ ECursorSprite GetCursorSprite(CPoppet* poppet)
 
                 default: return CURSOR_UNLETHAL;
             }
+        }
+        
+        case SUBMODE_OBJECT_EDIT_BASIC:
+        {
+            
         }
 
         default:
@@ -163,13 +188,13 @@ void FixupCursorSpriteRect(CPoppet* poppet)
 
     c32 color = poppet->PlayerThing->GetPYellowHead()->GetColour(PLAYER_COLOUR_PRIMARY);
     
-    color = c32::White;
-    if (bloom && icon_index != CURSOR_STANDARD)
+    if(!gColorCustomCursors) { color = c32::White; }
+    if (bloom && !(icon_index == CURSOR_STANDARD || icon_index == CURSOR_STANDARD_MARQUEE))
     {
         color = HalfBright(color);
     }
 
-    color = ReplaceA(color, 136);
+    if(!gColorCustomCursors) { color = ReplaceA(color, 136); }
 
     u32 bits = color.AsGPUCol();
 
@@ -178,9 +203,12 @@ void FixupCursorSpriteRect(CPoppet* poppet)
     vtx[2].col = bits;
     vtx[3].col = bits;
 
+    const v4 STANDARD_CURSOR_SCALE(1.0f, 1.0f, 1.0f, 1.0f);
+
     const v4 LETHAL_CURSOR_OFFSET(0.0f, 22.5f, 0.0f, 0.0f);
     const v4 FLOOD_FILL_CURSOR_OFFSET(15.0f, 17.5f, 0.0f, 0.0f);
-    const v4 EYEDROPPER_CURSOR_OFFSET(26.0f, 25.0f, 0.0f, 0.0f);
+    const v4 EYEDROPPER_CURSOR_OFFSET(25.0f, 25.0f, 0.0f, 0.0f);
+    const v4 STICKER_SCRUBBER_CURSOR_OFFSET(10.0f, 5.0f, 0.0f, 0.0f);
 
     if (icon_index == CURSOR_FLOOD_FILL)
     {
@@ -195,6 +223,13 @@ void FixupCursorSpriteRect(CPoppet* poppet)
         vtx[1].pos += EYEDROPPER_CURSOR_OFFSET;
         vtx[2].pos += EYEDROPPER_CURSOR_OFFSET;
         vtx[3].pos += EYEDROPPER_CURSOR_OFFSET;
+    }
+    if (icon_index == CURSOR_STICKER_SCRUBBER)
+    {
+        vtx[0].pos += STICKER_SCRUBBER_CURSOR_OFFSET;
+        vtx[1].pos += STICKER_SCRUBBER_CURSOR_OFFSET;
+        vtx[2].pos += STICKER_SCRUBBER_CURSOR_OFFSET;
+        vtx[3].pos += STICKER_SCRUBBER_CURSOR_OFFSET;
     }
     else if (IsLethalCursor(icon_index))
     {
@@ -308,6 +343,65 @@ bool IsThingFady(CThing* thing)
     return false;
 }
 
+bool DumpMeshToFile(CPoppet* poppet, CThing* thing)
+{
+    PGeneratedMesh* generated = thing->GetPGeneratedMesh();
+    PPos* part_pos = thing->GetPPos();
+    if (generated == NULL || part_pos == NULL) return false;
+
+    const CMesh* mesh = generated->SharedMesh;
+
+    char path[CELL_FS_MAX_FS_FILE_NAME_LENGTH];
+    sprintf(path, "output/meshgen/%d_glb", thing->UID);
+    CFilePath fp(FPR_GAMEDATA, path);
+
+    FileHandle fd;
+    FileOpen(fp, &fd, OPEN_WRITE);
+
+    MMString<char> gltf;
+    gltf.reserve(10000); // reserve a reasonable amount of space for all the strcat bullshit
+
+    float* vertices = (float*)((char*)mesh->SourceGeometry.GetCachedAddress() + mesh->SourceStreamOffsets[0]);
+    float* uv = ((float*)mesh->AttributeData.GetCachedAddress());
+
+    u16* indices = (u16*)(mesh->Indices.GetCachedAddress());
+    CRawVector<u16> triangles((mesh->NumVerts - 2) * 3);
+    triangles.push_back(indices[0]);
+    triangles.push_back(indices[1]);
+    triangles.push_back(indices[2]);
+    for (int i = 3, j = 1; i < mesh->NumIndices; ++i, ++j)
+    {
+        if (indices[i] == 65535)
+        {
+            if (i + 3 >= mesh->NumIndices) break;
+
+            triangles.push_back(indices[i + 1]);
+            triangles.push_back(indices[i + 2]);
+            triangles.push_back(indices[i + 3]);
+
+            i += 3;
+            j = 0;
+            continue;
+        }
+
+        if ((j & 1) != 0)
+        {
+            triangles.push_back(indices[i - 2]);
+            triangles.push_back(indices[i]);
+            triangles.push_back(indices[i - 1]);
+        }
+        else
+        {
+            triangles.push_back(indices[i - 2]);
+            triangles.push_back(indices[i - 1]);
+            triangles.push_back(indices[i]);
+        }
+    }
+
+    FileClose(&fd);
+    return true;
+}
+
 bool SetUnphysics(CPoppet* poppet, CThing* thing)
 {
     if (thing == NULL) return false;
@@ -365,6 +459,7 @@ bool ToolHasMarquee(CPoppet* poppet)
         case SUBMODE_UNPHYSICS:
         case SUBMODE_ADVANCED_GLUE:
         case SUBMODE_GRAB_PLAN_MARQUEE:
+        case SUBMODE_MESH_CAPTURE:
             break;
         default:
             return false;
@@ -403,6 +498,12 @@ bool HandleMarqueeAction(CPoppet* poppet)
             for (int i = 0; i < things.size(); ++i)
             {
                 SetUnphysics(poppet, things[i]);
+            }
+            break;
+        case SUBMODE_MESH_CAPTURE:
+            for (int i = 0; i < things.size(); ++i)
+            {
+                DumpMeshToFile(poppet, things[i]);
             }
             break;
         default:
@@ -501,6 +602,27 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
             poppet->PushMode(MODE_CURSOR, SUBMODE_GRAB_PLAN_MARQUEE);
             break;
         }
+        case E_POPPET_RANDOM_STICKER_MESSAGE:
+        {
+            break;
+        }
+        case E_POPPET_RANDOM_DECORATION_MESSAGE:
+        {
+            break;
+        }
+        case E_POPPET_RANDOM_MATERIAL_MESSAGE:
+        {
+            break;
+        }
+        case E_POPPET_RANDOM_OBJECT_MESSAGE:
+        {
+            break;
+        }
+        case E_POPPET_MESH_CAPTURE_MESSAGE:
+        {
+            poppet->PushMode(MODE_CURSOR, SUBMODE_MESH_CAPTURE);
+            break;
+        }
     }
 }
 
@@ -580,6 +702,27 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             break;
         }
 
+        case TOOL_RANDOM_STICKER:
+        {
+            poppet->SendPoppetMessage(E_POPPET_RANDOM_STICKER_MESSAGE);
+            break;
+        }
+        case TOOL_RANDOM_DECORATION:
+        {
+            poppet->SendPoppetMessage(E_POPPET_RANDOM_DECORATION_MESSAGE);
+            break;
+        }
+        case TOOL_RANDOM_MATERIAL:
+        {
+            poppet->SendPoppetMessage(E_POPPET_RANDOM_MATERIAL_MESSAGE);
+            break;
+        }
+        case TOOL_RANDOM_OBJECT:
+        {
+            poppet->SendPoppetMessage(E_POPPET_RANDOM_OBJECT_MESSAGE);
+            break;
+        }
+
         case TOOL_MESH_CAPTURE:
         {
             poppet->SendPoppetMessage(E_POPPET_MESH_CAPTURE_MESSAGE);
@@ -601,6 +744,22 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             break;
         }
     }
+}
+
+bool HandleToolPickSound(CPoppet* poppet, CThing* thing)
+{
+    EPoppetSubMode submode = poppet->GetSubMode();
+    switch (submode)
+    {
+        case SUBMODE_UNPHYSICS:
+        case SUBMODE_STICKER_CUTTER:
+        case SUBMODE_MESH_CAPTURE:
+            CAudio::PlaySample(CAudio::gSFX, "poppet/placeglue", thing, -10000.0f, -10000.0f);
+            break;
+        default:
+            return false;
+    }
+    return true;
 }
 
 void LoadCursorSprites()
@@ -628,8 +787,6 @@ void AttachCustomPoppetMessages()
         TABLE[i] = target;
     }
 
-    TABLE[E_POPPET_PLASMA_TWEAK_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
-
     TABLE[E_POPPET_UNPHYSICS_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_EYEDROPPER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_DOT_TO_DOT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
@@ -639,6 +796,12 @@ void AttachCustomPoppetMessages()
     TABLE[E_POPPET_UV_EDIT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_ADVANCED_GLUE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_PLAN_MARQUEE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_PLASMA_TWEAK_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    
+    TABLE[E_POPPET_RANDOM_STICKER_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_RANDOM_DECORATION_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_RANDOM_MATERIAL_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_RANDOM_OBJECT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     
     TABLE[E_POPPET_MESH_CAPTURE_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_EXPLOSION_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
@@ -683,6 +846,11 @@ void AttachCustomToolTypes()
     TABLE[TOOL_SLICE_N_DICE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_UV_EDIT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_GLUE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+
+    TABLE[TOOL_RANDOM_STICKER] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_RANDOM_DECORATION] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_RANDOM_MATERIAL] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_RANDOM_OBJECT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     TABLE[TOOL_MESH_CAPTURE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_EXPLOSION] = (u32)&_custom_tool_type_hook - (u32)TABLE;

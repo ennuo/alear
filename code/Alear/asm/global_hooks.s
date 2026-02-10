@@ -167,6 +167,8 @@ _custom_marquee_selection_hook:
     beq %cr7, SelectMarquee
     cmpwi %cr7, %r3, 0x35
     beq %cr7, SelectMarquee
+    cmpwi %cr7, %r3, 0x36
+    beq %cr7, SelectMarquee
     cmpwi %cr7, %r3, 0x0
     ba 0x0035194c
     
@@ -204,6 +206,8 @@ _custom_pick_object_action_hook:
     beq %cr7, StickerWashPickObject
     cmpwi %cr7, %r3, 0x30
     beq %cr7, UnphysicsPickObject
+    cmpwi %cr7, %r3, 0x36
+    beq %cr7, MeshCapturePickObject
     cmpwi %cr7, %r3, 0x1c
     ba 0x003516e4
 
@@ -271,6 +275,14 @@ PlanTakePickObject:
     
     ba 0x00351738
 
+MeshCapturePickObject:
+    mr %r3, %r26
+    mr %r4, %r27
+
+    call _Z14DumpMeshToFileP7CPoppetP6CThing
+    
+    ba 0x00351738
+    
 .global _fixup_custom_pick_object_select_hook
 _fixup_custom_pick_object_select_hook:
     cmpwi %cr7, %r27, 0x27
@@ -288,6 +300,8 @@ _fixup_custom_pick_object_select_hook:
     cmpwi %cr7, %r27, 0x32
     beq %cr7, EarlyReturn
     cmpwi %cr7, %r27, 0x33
+    beq %cr7, EarlyReturn
+    cmpwi %cr7, %r27, 0x36
     beq %cr7, EarlyReturn
     cmpwi %cr7, %r27, 0x1c
     ba 0x00352104

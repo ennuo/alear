@@ -11,10 +11,10 @@ class RMesh;
 
 class CRenderJoint {
 public:
-    CRenderJoint() : Mesh(0), InactiveMesh(0), MeshResource(NULL), InactiveMeshResource(NULL)
+    CRenderJoint() : Mesh(0), InactiveMesh(0), PatternMesh(0), MeshResource(NULL), InactiveMeshResource(NULL), PatternMeshResource(NULL)
     {}
 
-    CRenderJoint(const CRenderJoint& joint) : Mesh(0), InactiveMesh(0), MeshResource(NULL), InactiveMeshResource(NULL)
+    CRenderJoint(const CRenderJoint& joint) : Mesh(0), InactiveMesh(0), PatternMesh(0), MeshResource(NULL), InactiveMeshResource(NULL), PatternMeshResource(NULL)
     {
         *this = joint;
     }
@@ -23,22 +23,27 @@ public:
     {
         Mesh = rhs.Mesh;
         InactiveMesh = rhs.InactiveMesh;
+        PatternMesh = rhs.PatternMesh;
         MeshResource = rhs.MeshResource;
         InactiveMeshResource = rhs.InactiveMeshResource;
+        PatternMeshResource = rhs.PatternMeshResource;
 
         return *this;
     }
 public:
     inline const CP<RMesh>& GetMeshResource() const { return MeshResource; }
     inline const CP<RMesh>& GetInactiveMeshResource() const { return InactiveMeshResource; }
+    inline const CP<RMesh>& GetPatternMeshResource() const { return PatternMeshResource; }
 public:
     void LoadMeshResources();
 public:
     u32 Mesh;
     u32 InactiveMesh;
+    u32 PatternMesh;
 private:
     CP<RMesh> MeshResource;
     CP<RMesh> InactiveMeshResource;
+    CP<RMesh> PatternMeshResource;
 };
 
 class CRenderJoints {
