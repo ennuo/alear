@@ -30,5 +30,6 @@ s32 GetExplosiveStyle(CThing* thing);
 
 void SetExplosiveStyle(CThing* thing, s32 type_index, s32 style_index);
 
+extern bool InitializeExplosiveStyles();
 
 #endif // EXPLOSIVE_STYLES_H

@@ -21,11 +21,11 @@ public:
     float MaxForce;
     float MaxVel;
     float MaxAngVel;
-
-    bool IgnoreYellowHead;
-    bool DisableExplosionCSG;
-    bool DisableExplosionParticles;
     
+    bool IgnoreYellowHead;
+    bool DisableExplosionParticles;
+    u8 CsgType;
+
     const char* ExplosionSound;
 };
 
@@ -34,6 +34,9 @@ public:
 // so we're just going to use the function pointer.
 void GetExplosionInfo(CThing* thing, ExplosionInfo& info);
 const char* GetExplosionSound(CThing* thing);
+
+
+void AttachExplosionHooks();
 
 extern void (*ApplyRadialForce)(ExplosionInfo const& info);
 

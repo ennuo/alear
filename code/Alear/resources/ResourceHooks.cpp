@@ -27,8 +27,11 @@
 #include <PartGeneratedMesh.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <ResourceSettingsFluid.h>
 #include <hook.h>
 #include <ppcasm.h>
+
+#include <ExplosiveStyles.h>
 
 extern "C" uintptr_t _reflectextradata_load;
 extern "C" uintptr_t _reflectextradata_save;
@@ -50,28 +53,18 @@ extern "C" uintptr_t _reflectresource_extra_fdepend_rtype_synced_profile;
 extern "C" uintptr_t _initextradata_localprofile;
 extern "C" uintptr_t _initextradata_syncedprofile;
 
-extern "C" uintptr_t _radial_explosion_hook;
-extern "C" uintptr_t _explosion_particle_and_sound_hook;
-extern "C" uintptr_t _explosion_ignore_yellowhead_hook;
 
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
 #define ADD_ARRAY_ELEMENT(name, index) ret = Add(r, d.name[index], #name "_" #index); if (ret != REFLECT_OK) return ret;
 
 void RMaterial::InitializeExtraData()
 {
-    ExplosionIgnoresPlayer = false;
-    DisableExplosionCSG = false;
-    DisableExplosionParticles = false;
-    new (&ScorchMarkTexture) CP<RTexture>();
-
-    // remember to deallocate this at some point
-    new (&ExplosionSound) MMString<char>();
+    ExplosionType = EXPLOSIVE_STYLE_STANDARD;
 }
 
 void RMaterial::DestroyExtraData()
 {
-    ScorchMarkTexture.~CP();
-    ExplosionSound.~MMString();
+
 }
 
 void RPlan::InitializeExtraData()
@@ -151,13 +144,9 @@ ReflectReturn OnSerializeExtraData(R& r, RMaterial& d)
     if (r.GetSaving()) return REFLECT_NOT_IMPLEMENTED;
     if (r.GetCustomVersion() >= ALEAR_EXPLOSIVES)
     {
-        ADD(ExplosionIgnoresPlayer);
-        ADD(DisableExplosionCSG);
-        ADD(DisableExplosionParticles);
-        ADD(ScorchMarkTexture);
-        ADD(ExplosionSound);
+        ADD(ExplosionType);
     }
-
+    
     return ret;
 }
 
@@ -1001,10 +990,6 @@ void InitResourceHooks()
 
     MH_PokeBranch(0x003c76bc, &_reflectextradata_load);
     MH_PokeBranch(0x003c7aac, &_reflectextradata_save);
-
-    MH_PokeBranch(0x00211730, &_radial_explosion_hook);
-    MH_PokeBranch(0x00211760, &_explosion_particle_and_sound_hook);
-    MH_PokeBranch(0x0020f070, &_explosion_ignore_yellowhead_hook);
 
     MH_InitHook((void*)0x00087850, (void*)&GetPreferredSerialisationType);
     // MH_PokeBranch(0x00087850, &_get_serialisationtype_hook);

@@ -42,6 +42,7 @@ extern void InitGooeyNetworkHooks();
 extern bool InitTweakSettings();
 extern void LoadSackboyPolygon();
 extern void LoadBallPolygon();
+extern bool InitializeExplosiveStyles();
 
 bool AlearCheckPatch();
 
@@ -65,6 +66,7 @@ bool AlearEpilogue()
     LoadPostProcessingShaders();
     LoadSackboyPolygon();
     LoadBallPolygon();
+    InitializeExplosiveStyles();
     
     return true;
 }
@@ -284,8 +286,8 @@ void AlearStartup()
     // Setup all our hooks
     InitSharedHooks();
     InitLogicSystemHooks();
+    AttachExplosionHooks();
     MH_InitHook((void*)0x0057d548, (void*)&AlearSetupDatabase);
-    MH_InitHook((void*)0x00211510, (void*)&GetExplosionInfo);
     MH_Poke32(0x000997c8, B(&_gfxbind_hook_naked, 0x000997c8));
     AlearInitVMHook();
     AlearInitPortalHook();

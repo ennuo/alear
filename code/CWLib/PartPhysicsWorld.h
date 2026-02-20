@@ -61,6 +61,13 @@ public:
     
     void UpgradeAllScripts();
     float GetWaterLevelWorldYCoords() const;
+
+
+    inline CVector<CThingPtr>& GetNearExplodedThings()
+    {
+        return *(CVector<CThingPtr>*)(((char*)this) + 0x514);
+    }
+
 public:
     u32 ThingUIDCounter;
     CRawVector<CThing*> Things;

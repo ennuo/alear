@@ -1,6 +1,13 @@
-.set DisableExplosionCSG, 0x2d
-.set DisableExplosionParticles, 0x2e
+.include "asm/macros/fnptr.s"
+
+.set IgnoreYellowHead, 0x2c
+.set DisableExplosionParticles, 0x2d
+.set CsgType, 0x2e
 .set ExplosionSound, 0x30
+
+.set EXPLOSIVE_CSG_DISABLED, 0x0
+.set EXPLOSIVE_CSG_ADD, 0x1
+.set EXPLOSIVE_CSG_CUT, 0x2
 
 .global _radial_explosion_hook
 _radial_explosion_hook:
@@ -13,9 +20,9 @@ _radial_explosion_hook:
     lwz %r0, ExplosionSound(%r28)
     stw %r0, 0x70(%r1)
 
-    lbz %r0, DisableExplosionCSG(%r28)
-    cmpwi %cr7, %r0, 0
-    beq %cr7, DoExplosionCSG
+    lbz %r0, CsgType(%r28)
+    cmpwi %cr7, %r0, EXPLOSIVE_CSG_DISABLED
+    bne %cr7, DoExplosionCSG
 
     bla DeleteThingAndJoints
     ba ExitRadialExplosionHook
@@ -34,6 +41,9 @@ _explosion_particle_and_sound_hook:
     b GetExplosiveSound
 DoExplosionParticles:
     bla AddExplosionBits
+    # mr %r4, %r3 # move pos into second argument register
+    # mr %r3, %r29 # move thing into first
+    # call _Z19zz_AddExplosionBitsPK6CThingN10Vectormath3Aos7Matrix4E
 GetExplosiveSound:
     lwz %r4, 0x1880(%r2) # CAudio::gSFX
     li %r0, 0xa0
@@ -43,7 +53,6 @@ GetExplosiveSound:
 
 .global _explosion_ignore_yellowhead_hook
 _explosion_ignore_yellowhead_hook:
-.set IgnoreYellowHead, 0x2c
     cmpwi %cr7, %r0, 0x1
     beq %cr7, SkipYellowHead
 

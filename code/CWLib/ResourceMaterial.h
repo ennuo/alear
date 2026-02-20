@@ -3,9 +3,10 @@
 
 #include <MMString.h>
 
-#include "Resource.h"
-#include "CompactCollision.h"
-#include "ResourceGFXTexture.h"
+#include <Resource.h>
+#include <CompactCollision.h>
+#include <ResourceGFXTexture.h>
+#include <ResourceSettingsFluid.h>
 
 class RMaterial : public CResource {
 public:
@@ -32,12 +33,7 @@ public:
     float ExplosionMaxForce;
     bool Bullet;
     bool CuttableByExplosion;
-
-    bool ExplosionIgnoresPlayer;
-    bool DisableExplosionCSG;
-    bool DisableExplosionParticles;
-    CP<RTexture> ScorchMarkTexture;
-    MMString<char> ExplosionSound;
+    int ExplosionType;
 };
 
 #endif // RESOURCE_MATERIAL_H

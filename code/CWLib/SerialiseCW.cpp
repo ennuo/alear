@@ -130,6 +130,7 @@ template ReflectReturn Reflect<CReflectionLoadVector, RTexture>(CReflectionLoadV
 template ReflectReturn Reflect<CReflectionLoadVector, RPlan>(CReflectionLoadVector& r, CP<RPlan>& d);
 template ReflectReturn Reflect<CReflectionLoadVector, RGfxMaterial>(CReflectionLoadVector& r, CP<RGfxMaterial>& d); 
 template ReflectReturn Reflect<CReflectionLoadVector, RMesh>(CReflectionLoadVector& r, CP<RMesh>& d); 
+template ReflectReturn Reflect<CReflectionLoadVector, RFluidSettings>(CReflectionLoadVector& r, CP<RFluidSettings>& d);
 
 template ReflectReturn Reflect<CReflectionSaveVector, RTexture>(CReflectionSaveVector& r, CP<RTexture>& d); 
 template ReflectReturn Reflect<CReflectionSaveVector, RPlan>(CReflectionSaveVector& r, CP<RPlan>& d); 
