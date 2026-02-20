@@ -26,16 +26,27 @@ enum EExplosiveCsgType
 
 class CExplosionParams {
 public:
-    inline CExplosionParams() : IgnoresPlayer(),
-    CsgType(EXPLOSIVE_CSG_CUT), DisableParticles(), DisableScorches(),
-    ScorchMarkTexture(), BitsMesh(),FluidSettings(), Sound()
+    inline CExplosionParams() : Style(), Flags(), CsgType(EXPLOSIVE_CSG_CUT),
+    ScorchMarkTexture(), BitsMesh(),FluidSettings(), Sound(), LethalType(LETHAL_FIRE)
     {
 
     }
 public:
     inline CExplosionParams& SetIgnoresPlayer()
     {
-        IgnoresPlayer = true;
+        Flags |= kExplosionFlags_DontAffectPlayer;
+        return *this;
+    }
+
+    inline CExplosionParams& SetDontKillPlayer()
+    {
+        Flags |= kExplosionFlags_DontKillPlayer;
+        return *this;
+    }
+
+    inline CExplosionParams& SetLethalType(ELethalType type)
+    {
+        LethalType = type;
         return *this;
     }
 
@@ -47,7 +58,9 @@ public:
 
     inline CExplosionParams& SetDisableParticles()
     {
-        DisableParticles = true;
+        Flags |= kExplosionFlags_DisableFluidBlobs;
+        Flags |= kExplosionFlags_DisableGlassShatter;
+
         return *this;
     }
 
@@ -77,9 +90,9 @@ public:
 
 
 public:
-    bool IgnoresPlayer;
-    bool DisableParticles;
-    bool DisableScorches;
+    EExplosiveStyle Style;
+    int Flags;
+    ELethalType LethalType;
     int CsgType;
     StaticCP<RTexture> ScorchMarkTexture;
     StaticCP<RMesh> BitsMesh;
@@ -203,7 +216,7 @@ void zz_AddToNearExplodedThingList(PWorld* world, const CThing* thing, v2 const&
     CExplosionParams* params = GetExplosionParams(thing);
     if (!params) params = &GetExplosionParams(EXPLOSIVE_STYLE_STANDARD);
 
-    if (params->DisableScorches) return;
+    if ((params->Flags & kExplosionFlags_DisableScorchMarks) != 0) return;
 
     PWorld_AddToNearExplodedThingList(world, thing, a, b);
     
@@ -250,6 +263,30 @@ void zz_PerformExplosiveCSG(const PYellowHead* player, CThing* n, CVector<CThing
         NPoppetUtils::ObjectAdd(player, n, objects, csg_state);
 }
 
+void zz_OnPlayerHit(const CThing* player, const ExplosionInfo& info, v2 lethal_force)
+{
+    PCreature* part_creature = player->GetPCreature();
+    const CExplosionParams& params = GetExplosionParams(info.ExplosionStyle);
+    if ((params.Flags & kExplosionFlags_DontKillPlayer) == 0)
+    {
+        if (part_creature->GetState() == STATE_DEAD) return;
+        part_creature->TypeOfLethalThingTouched = info.LethalType;
+        part_creature->LethalForce = lethal_force;
+        part_creature->SetState(STATE_DEAD);
+        return;
+    }
+
+    switch (info.ExplosionStyle)
+    {
+        case EXPLOSIVE_STYLE_ICE:
+        {
+            part_creature->TypeOfLethalThingTouched = LETHAL_ICE;
+            part_creature->SetState(STATE_FROZEN);
+            break;
+        }
+    }
+}
+
 MH_DefineFunc(ApplyRadialForce, 0x0020f630, TOC0, void, ExplosionInfo const& info);
 
 void GetExplosionInfo(CThing* thing, ExplosionInfo& info)
@@ -273,34 +310,66 @@ void GetExplosionInfo(CThing* thing, ExplosionInfo& info)
     info.MaxForce = material->ExplosionMaxForce;
     info.MaxVel = material->ExplosionMaxVel;
     info.MaxAngVel = material->ExplosionMaxAngVel;
-    info.IgnoreYellowHead = params.IgnoresPlayer;
+    info.Flags = params.Flags;
+    info.LethalType = params.LethalType;
     info.CsgType = params.CsgType;
-    info.DisableExplosionParticles = params.DisableParticles;
+    info.ExplosionStyle = params.Style;
+
     if (!params.Sound.empty())
         info.ExplosionSound = params.Sound.c_str();
 }
 
 bool InitializeExplosiveStyles()
-{
+{   
     GetExplosionParams(EXPLOSIVE_STYLE_SHOCK)
         .SetDisableParticles()
-        .SetCSG(EXPLOSIVE_CSG_ADD)
+        .SetCSG(EXPLOSIVE_CSG_DISABLED)
+        .SetLethalType(LETHAL_ELECTRIC)
         .SetSound("gameplay/lethal/electricity_explode");
+    
+    GetExplosionParams(EXPLOSIVE_STYLE_ICE)
+        .SetDontKillPlayer()
+        .SetFluidSettings(2365181022u)
+        .SetScorchTexture(3728560712u)
+        .SetBitsMesh(2925987700u)
+        .SetCSG(EXPLOSIVE_CSG_CUT)
+        .SetSound("gameplay/lethal/ice_break_free");
+    
+    GetExplosionParams(EXPLOSIVE_STYLE_STUN)
+        .SetDontKillPlayer()
+        .SetFluidSettings(2728552044u)
+        .SetBitsMesh(4109350355u)
+        .SetCSG(EXPLOSIVE_CSG_DISABLED)
+        .SetSound("gameplay/lethal/fire_touch_stun");
+    
+    GetExplosionParams(EXPLOSIVE_STYLE_LAUNCH)
+        .SetDontKillPlayer()
+        .SetDisableParticles()
+        .SetCSG(EXPLOSIVE_CSG_DISABLED)
+        .SetSound("gameplay/lethal/electricity_eye_pop");
+    
+    GetExplosionParams(EXPLOSIVE_STYLE_ADD)
+        .SetDisableParticles()
+        .SetCSG(EXPLOSIVE_CSG_ADD)
+        .SetSound("gameplay/lethal/death_explosion");
 
     return true;
 }
 
 extern "C" uintptr_t _radial_explosion_hook;
 extern "C" uintptr_t _explosion_particle_and_sound_hook;
-extern "C" uintptr_t _explosion_ignore_yellowhead_hook;
+extern "C" uintptr_t _explosion_yellowhead_handler_hook;
 
 void AttachExplosionHooks()
 {
+    for (int i = 0; i < NUM_EXPLOSIVE_STYLES; ++i)
+        gExplosionParams[i].Style = (EExplosiveStyle)i;
+
     MH_PokeCall(0x00211700, zz_AddToNearExplodedThingList);
     MH_PokeHook(0x000309e0, zz_ProcessNearExplodedThingList);
     MH_InitHook((void*)0x00211510, (void*)&GetExplosionInfo);
     MH_PokeBranch(0x00211730, &_radial_explosion_hook);
     MH_PokeBranch(0x00211760, &_explosion_particle_and_sound_hook);
-    MH_PokeBranch(0x0020f070, &_explosion_ignore_yellowhead_hook);
+    MH_PokeBranch(0x0020f0f0, &_explosion_yellowhead_handler_hook);
     MH_PokeCall(0x00210f04, zz_PerformExplosiveCSG);
 }

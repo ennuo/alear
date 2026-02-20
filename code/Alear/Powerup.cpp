@@ -1149,8 +1149,8 @@ void OnCreatureStateUpdate(PCreature& creature)
                 ExplosionInfo info;
                 GetExplosionInfo(thing, info);
                 info.Center = info.Center + v4(0.0f, -50.0f, 0.0f, 0.0f);
-                info.IgnoreYellowHead = true;
-
+                info.Flags = kExplosionFlags_DontAffectPlayer | kExplosionFlags_DontKillPlayer;
+                
                 info.OuterRadius = 250.0f;
                 info.InnerRadius = 250.0f;
                 info.MaxVel = 100.0f;
