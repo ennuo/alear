@@ -13,6 +13,10 @@
 #include <ResourceSystem.h>
 #include <algorithm>
 
+class CCsgState {
+
+};
+
 enum EExplosiveCsgType
 {
     EXPLOSIVE_CSG_DISABLED,
@@ -229,6 +233,23 @@ void zz_AddExplosionBits(const CThing* thing, m44 pos)
     CFluidRender::AddExplosionBits(pos);
 }
 
+namespace NPoppetUtils
+{
+    MH_DefineFunc(ObjectSubtract, 0x003a3ef0, TOC1, void, const PYellowHead*, CThing*, CVector<CThingPtr>& objects, CCsgState&, bool);
+    MH_DefineFunc(ObjectAdd, 0x003a33f8, TOC1, void, const PYellowHead*, CThing*, CVector<CThingPtr>& objects, CCsgState&);
+}
+
+void zz_PerformExplosiveCSG(const PYellowHead* player, CThing* n, CVector<CThingPtr>& objects, CCsgState& csg_state)
+{
+    CExplosionParams* params = GetExplosionParams(n);
+    if (!params) params = &GetExplosionParams(EXPLOSIVE_STYLE_STANDARD);
+
+    if (params->CsgType == EXPLOSIVE_CSG_CUT)
+        NPoppetUtils::ObjectSubtract(player, n, objects, csg_state, true);
+    else if (params->CsgType == EXPLOSIVE_CSG_ADD)
+        NPoppetUtils::ObjectAdd(player, n, objects, csg_state);
+}
+
 MH_DefineFunc(ApplyRadialForce, 0x0020f630, TOC0, void, ExplosionInfo const& info);
 
 void GetExplosionInfo(CThing* thing, ExplosionInfo& info)
@@ -263,7 +284,7 @@ bool InitializeExplosiveStyles()
 {
     GetExplosionParams(EXPLOSIVE_STYLE_SHOCK)
         .SetDisableParticles()
-        .SetCSG(EXPLOSIVE_CSG_DISABLED)
+        .SetCSG(EXPLOSIVE_CSG_ADD)
         .SetSound("gameplay/lethal/electricity_explode");
 
     return true;
@@ -281,4 +302,5 @@ void AttachExplosionHooks()
     MH_PokeBranch(0x00211730, &_radial_explosion_hook);
     MH_PokeBranch(0x00211760, &_explosion_particle_and_sound_hook);
     MH_PokeBranch(0x0020f070, &_explosion_ignore_yellowhead_hook);
+    MH_PokeCall(0x00210f04, zz_PerformExplosiveCSG);
 }
