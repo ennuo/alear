@@ -5,7 +5,9 @@ class CThing;
 class CThingPtr {
 public:
     CThingPtr();
+    CThingPtr(const CThingPtr& rhs);
     CThingPtr(CThing* thing);
+    CThingPtr(const CThingPtr* rhs);
     ~CThingPtr();
     void Unset();
     void Set(CThing* thing);

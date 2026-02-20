@@ -8,12 +8,11 @@ CThingPtr::~CThingPtr()
 
 void CThingPtr::Unset()
 {
-    if (Thing != NULL)
-    {
-        if (Next != NULL) Next->Prev = Prev;
-        if (Prev == NULL) Thing->FirstPtr = Next;
-        else Prev->Next = Next;
-    }
+    if (Thing == NULL) return;
+
+    if (Next != NULL) Next->Prev = Prev;
+    if (Prev != NULL) Prev->Next = Next;
+    else Thing->FirstPtr = Next;
 
     Thing = NULL;
     Next = NULL;
@@ -25,8 +24,8 @@ void CThingPtr::Set(CThing* thing)
     Thing = thing;
     if (Thing != NULL)
     {
-        Next = Thing->FirstPtr;
-        Thing->FirstPtr = this;
+        Next = thing->FirstPtr;
+        thing->FirstPtr = this;
         if (Next != NULL) Next->Prev = this;
         Prev = NULL;
     }
@@ -40,6 +39,17 @@ void CThingPtr::Set(CThing* thing)
 CThingPtr::CThingPtr() : Thing(NULL), Next(NULL), Prev(NULL)
 {
 
+}
+
+CThingPtr::CThingPtr(const CThingPtr& rhs) : Thing(NULL), Next(NULL), Prev(NULL)
+{
+    Set(rhs.Thing);
+}
+
+CThingPtr::CThingPtr(const CThingPtr* rhs) : Thing(NULL), Next(NULL), Prev(NULL)
+{
+    if (rhs)
+        Set(rhs->Thing);
 }
 
 CThingPtr::CThingPtr(CThing* thing) : Thing(NULL), Next(NULL), Prev(NULL)

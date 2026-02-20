@@ -223,7 +223,7 @@ public:
         LocalBuffer[0] = 0;
     }
 
-    inline bool empty()
+    inline bool empty() const
     {
         return size() == 0;
     }

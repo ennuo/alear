@@ -22,7 +22,7 @@ T* AllocateNewResource(u32 flags)
 }
 
 template<typename T>
-CP<T> LoadResourceByKey(int key, u32 flags, CStreamPriority stream_priority_override)
+CP<T> LoadResourceByKey(int key, u32 flags = 0, CStreamPriority stream_priority_override = STREAM_PRIORITY_DEFAULT)
 {
     if (gTestSuiteResourcesDisabled) return NULL;
     CResourceDescriptorBase desc(GetResourceType<T>(), key);
@@ -31,7 +31,7 @@ CP<T> LoadResourceByKey(int key, u32 flags, CStreamPriority stream_priority_over
 }
 
 template<typename T>
-CP<T> LoadResource(CResourceDescriptor<T> const& desc, u32 flags, CStreamPriority stream_priority_override, bool can_create)
+CP<T> LoadResource(CResourceDescriptor<T> const& desc, u32 flags = 0, CStreamPriority stream_priority_override = STREAM_PRIORITY_DEFAULT, bool can_create = false)
 {
     CP<CResource> resource = LoadResource(desc, stream_priority_override, flags, false);
     return CP<T>((T*)resource.GetRef());

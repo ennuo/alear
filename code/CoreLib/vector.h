@@ -6,6 +6,27 @@
 #include <new>
 
 template <typename T>
+class CReverseIterator {
+public:
+	inline CReverseIterator(T* ptr) : Ptr(ptr)
+	{
+
+	}
+public:
+	inline T& operator*() { return *Ptr; }
+	inline T* operator->() { return Ptr; }
+	inline T* operator++() { return *Ptr--; }
+	inline T* operator++(int inc) { return *(Ptr - inc); }
+	inline bool operator!=(const CReverseIterator& rhs) const
+	{
+		return rhs.Ptr != Ptr;
+	}
+protected:
+	T* Ptr;
+};
+
+
+template <typename T>
 class CBaseVector {
 public:
 	typedef T* iterator;
@@ -24,6 +45,10 @@ public:
 
 	inline T* begin() const { return Data; }
 	inline T* end() const { return Data + Size; }
+
+	inline CReverseIterator<T> rbegin() { return Data + Size - 1; }
+	inline CReverseIterator<T> rend() { return Data - 1; }
+	
 	inline T& operator[](int index) const { return this->Data[index]; }
 	inline T& front() const { return this->Data[0]; }
 	inline T& back() const { return this->Data[this->Size - 1]; }
@@ -445,17 +470,16 @@ public:
 	
 	bool try_resize(u32 new_size) 
 	{
-		if (try_reserve(new_size)) 
-		{
-			for (int i = new_size; i < this->Size; ++i)
-				(this->Data + i)->~T();
-			for (int i = this->Size; i < new_size; ++i)
-				new (this->Data + i) T();
-			this->Size = new_size;
-			return true;
-		}
+		if (!try_reserve(new_size)) return false;
 
-		return false;
+		for (int i = new_size; i < this->Size; ++i)
+			(this->Data + i)->~T();
+		
+		for (int i = this->Size; i < new_size; ++i)
+			new (this->Data + i) T();
+		
+		this->Size = new_size;
+		return true;
 	}
 };
 
