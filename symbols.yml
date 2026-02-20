@@ -71,4 +71,5 @@ gUniqueThingsOnCamera: 0x00974494
 _ZN4NGfx21gCurDynamicNormalPoolE: 0x009cdfb4
 ScorchTex: 0x009cd5a4
 FluidSettings: 0x009cd3d8
+ExplosionMesh: 0x009cd450
 gStartTime: 0x00a20640

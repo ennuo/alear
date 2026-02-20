@@ -161,6 +161,7 @@ struct SNearExplodedThingInfo
 CRawVector<SNearExplodedThingInfo> gNearExplodedThings(16);
 extern StaticCP<RTexture> ScorchTex;
 extern StaticCP<RFluidSettings> FluidSettings;
+extern StaticCP<RMesh> ExplosionMesh;
 
 MH_DefineFunc(SplatterScorchyStickers, 0x001c7038, TOC0, void, CThing*);
 void zz_ProcessNearExplodedThingList(PWorld* world)
@@ -212,11 +213,18 @@ void zz_AddToNearExplodedThingList(PWorld* world, const CThing* thing, v2 const&
 void zz_AddExplosionBits(const CThing* thing, m44 pos)
 {
     CScopedVariable<CP<RFluidSettings> > _scoped_fluid_settings;
+    CScopedVariable<CP<RMesh> > _scoped_explosion_mesh;
+
     CP<RMaterial> material;
 
     CExplosionParams* params = GetExplosionParams(thing);
-    if (params && params->FluidSettings)
-        _scoped_fluid_settings.Set(FluidSettings, params->FluidSettings);
+    if (params)
+    {
+        if (params->FluidSettings)
+            _scoped_fluid_settings.Set(FluidSettings, params->FluidSettings);
+        if (params->BitsMesh)
+            _scoped_explosion_mesh.Set(ExplosionMesh, params->BitsMesh);
+    }
     
     CFluidRender::AddExplosionBits(pos);
 }

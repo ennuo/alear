@@ -40,10 +40,10 @@ _explosion_particle_and_sound_hook:
     beq %cr7, DoExplosionParticles
     b GetExplosiveSound
 DoExplosionParticles:
-    bla AddExplosionBits
-    # mr %r4, %r3 # move pos into second argument register
-    # mr %r3, %r29 # move thing into first
-    # call _Z19zz_AddExplosionBitsPK6CThingN10Vectormath3Aos7Matrix4E
+    # bla AddExplosionBits
+    mr %r4, %r3 # move pos into second argument register
+    mr %r3, %r29 # move thing into first
+    call _Z19zz_AddExplosionBitsPK6CThingN10Vectormath3Aos7Matrix4E
 GetExplosiveSound:
     lwz %r4, 0x1880(%r2) # CAudio::gSFX
     li %r0, 0xa0
