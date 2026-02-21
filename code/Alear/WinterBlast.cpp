@@ -24,7 +24,6 @@ static s32 YANIM_DEATH_ICE_LOOP;
 static s32 YANIM_DEATH_ICE_OUTOF;
 int FADE_LENGTH = 450;
 
-StaticCP<RMesh> FrozenMesh;
 StaticCP<RMesh> IceCubeMesh;
 
 float clamp(float d, float min, float max) 
@@ -196,7 +195,6 @@ void CSackBoyAnim::InitIceData()
     WasFrozen = false;
     CrossedZero = false;
 
-    *((CP<RMesh>*)&FrozenMesh) = LoadResourceByKey<RMesh>(19954u, 0, STREAM_PRIORITY_DEFAULT);
     *((CP<RMesh>*)&IceCubeMesh) = LoadResourceByKey<RMesh>(21490u, 0, STREAM_PRIORITY_DEFAULT);
 }
 

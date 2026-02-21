@@ -989,6 +989,10 @@ void AttachIceHooks()
     MH_PokeHook(0x00024754, Hack_AvoidsObstacle);
 
     MH_PokeHook(0x000f2334, REIMPL_CSackBoyAnim_DoDeathAnims);
+    MH_PokeMemberHook(0x000f1d40, CSackBoyAnim::Burnilate);
+    MH_PokeMemberHook(0x000f2198, CSackBoyAnim::Gasify);
+    MH_PokeMemberHook(0x000f172c, CSackBoyAnim::DeathSmoke);
+    MH_PokeMemberHook(0x000f16ac, CSackBoyAnim::Steam);
 }
 
 void AttachRenderJointHooks()

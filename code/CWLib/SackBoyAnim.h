@@ -24,6 +24,7 @@ public:
     void InitIceData();
     void OnFreeze();
     void OnThaw();
+    void InitExtraAnimData();
 public:
     void LoadAnims(CAnimBank* ab, bool cached);
     CRenderYellowHead* GetRenderYellowHead() const;
@@ -40,11 +41,11 @@ private:
     
     int UpdateFreezeIdleState(int last_idle);
     void OnLateAnimUpdate();
-private:
+public:
     void Steam(f32 size);
     void DeathSmoke(f32 size);
-    //void Burnilate(bool was_frozen);
-    //void Gasify();
+    void Burnilate(bool was_frozen);
+    void Gasify();
     //void Electrify();
     void DoBarge(bool mirror, f32 walk_vel);
 public:
