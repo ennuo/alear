@@ -8,7 +8,7 @@ const float PRNG_INV_DENOM = 6.10388815402985E-5;
 
 class CRandomStream {
 public:
-    CRandomStream(u32 seed) : r0(seed)
+    CRandomStream(u32 seed = 42) : r0(seed)
     {
         
     }
@@ -39,5 +39,3 @@ public:
 private:
     u32 r0;
 };
-
-#endif // RANDOM_STREAM_H
