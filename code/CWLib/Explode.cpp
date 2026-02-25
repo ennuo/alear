@@ -284,6 +284,20 @@ void zz_OnPlayerHit(const CThing* player, const ExplosionInfo& info, v2 lethal_f
             part_creature->SetState(STATE_FROZEN);
             break;
         }
+        case EXPLOSIVE_STYLE_STUN:
+        {
+            part_creature->TypeOfLethalThingTouched = LETHAL_FIRE;
+            part_creature->SetState(STATE_STUNNED);
+            break;
+        }
+        case EXPLOSIVE_STYLE_LAUNCH:
+        {
+            break;
+        }
+        case EXPLOSIVE_STYLE_ADD:
+        {
+            break;
+        }
     }
 }
 

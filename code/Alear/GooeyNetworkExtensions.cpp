@@ -906,6 +906,7 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Freeze", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Stun", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Launch", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"Add", v4(1.0)));
 
             break;
         }

@@ -19,11 +19,11 @@ namespace DrawFluidsNativeFunctions
         CFluidRender* fluid_render;
         fluid_render->AddExplosionBits(pos);
     }
-    void TriggerFluidBlob(v4 pos, v4 vel, u32 player, v4 c, v4 d, u32 color_frame, f32 color_radius)
+    void TriggerFluidBlob(v4 position, v4 velocity, u32 player, v4 color, v4 density, u32 color_frame, f32 color_radius)
     {
         DebugLog("FLUID RENDERED!!!");
         CFluidRender* fluid_render;
-        fluid_render->AddFluidBlob(pos, vel, player, c, d, color_frame, color_radius);
+        fluid_render->AddFluidBlob(position, velocity, player, color, density, color_frame, color_radius);
     }
     void TriggerFlameParticle(v2 a, v2 b, f32 c)
     {

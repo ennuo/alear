@@ -237,6 +237,7 @@ void OnInitializeSackboyAnims(CSackBoyAnim& sb)
         // data could cause problems there, but cached load is always from an allocated
         // instance, so we actually have the space.
         sb.InitIceData();
+        sb.InitExtraAnimData();
 
         CThing* thing = sb.Thing;
         if (thing == NULL) return;

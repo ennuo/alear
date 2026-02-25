@@ -1,11 +1,18 @@
 #include "SackBoyAnim.h"
+#include "FluidRender.h"
 
 #include "thing.h"
 #include "RenderYellowHead.h"
 
 #include <hook.h>
+#include <ResourceGame.h>
+#include <ResourceSystem.h>
 
 using namespace ScriptyStuff;
+
+StaticCP<RMesh> BurntBodyMesh;
+StaticCP<RMesh> FrozenBodyMesh;
+
 extern float clamp(float d, float min, float max);
 
 void FixMeshSpheresToNotMessUpOtherObjects(RMesh* mesh)
@@ -94,7 +101,6 @@ void CSackBoyAnim::Explode()
     FramesSinceExploded = 0;
 }
 
-// Taken from sackboyanim.ff
 /*
 void CSackBoyAnim::OnDeath(bool suicide, bool was_frozen)
 {
@@ -102,39 +108,93 @@ void CSackBoyAnim::OnDeath(bool suicide, bool was_frozen)
     PYellowHead* yellowhead = Thing->GetPYellowHead();
     CRenderYellowHead* render_yellow_head = yellowhead->GetRenderYellowHead();
 
-    if(GetTypeOfLethalThingTouched(thing) == LETHAL_FIRE)
+    if(creature->GetTypeOfLethalThingTouched() == LETHAL_FIRE)
         Burnilate(was_frozen);
     if(!suicide)
-        if(GetTypeOfLethalThingTouched(thing) == LETHAL_NOT)
+    {
+        if(!World->IsScoreLocked())
+            Game->AlterPlayerScore(yellowhead->PlayerNumber, Game->GetPlayerScore() * -0.050000);
+    }
+        if(creature->GetTypeOfLethalThingTouched() == LETHAL_NOT)
 
         
-    CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/death_explosion", thing, -10000.0f, -10000.0f);
-    Explode()
-
-    if(!IsScoreLocked(World))
-        AlterPlayerScore(PlayerNumber, GetPlayerScore * -0.050000);
+    CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/death_explosion", Thing, -10000.0f, -10000.0f);
+    Explode();
 }
 */
 
-void CSackBoyAnim::DeathSmoke(f32 size)
+void CSackBoyAnim::Steam(float size)
 {
     PCreature* creature = Thing->GetPCreature();
-    //creature->GetForceOfLethalThingTouched()
-    //posw = size
-        //CFluidRender::AddFluidBlob(v4(1.0, 1.0, 1.0, 1.0), v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
+    v4 lethal_force = creature->GetForceOfLethalThingTouched();
+    float smoke_col = 1.0f;
+    float smoke_dens = 100.0f;
+    
+    for (int layer = 0; layer < 3; layer++)
+    {
+        v4 pos = Thing->GetPPos()->Fork->WorldPosition.getCol3();
+        pos.setW(size);
+        pos.setZ(layer * -200.0f);
+        
+        smoke_col = smoke_col * 0.75f;
+
+        CFluidRender* fluid_render;
+        fluid_render->AddFluidBlob(
+            pos, //position
+            v4(
+                lethal_force.getX(), 
+                lethal_force.getY() + 2.0f, 
+                0.0f, 0.0f
+            ) * (((0.5 * layer) + 1.0) * 4.0f), //velocity
+            4294967295u, //player
+            v4(smoke_col, smoke_col, smoke_col, 2.0f), //color
+            v4(smoke_dens, 0.0f, 0.0f, 0.0f), //density
+            30, //color_frame
+            5.0f //color_radius
+        );
+    }
 }
 
-// Unfinished because I don't know where to call AddFluidBlob
-void CSackBoyAnim::Steam(f32 size)
-{
-    PCreature* creature = Thing->GetPCreature();
-    //creature->GetForceOfLethalThingTouched()
-    //posw = size
-        //CFluidRender::AddFluidBlob(v4(1.0, 1.0, 1.0, 1.0), v4(0.0, 0.0, 0.0, 0.0), 4294967295, v4(1.0, 1.0, 1.0, 1.0), v4(1.0, 0.0, 0.0, 0.0), 1, 1.0);
-}
-
-// Taken from sackboyanim.ff
 /*
+MH_DefineFunc(CSackBoyAnim_DeathSmoke, 0x000f172c, TOC0, void, CSackBoyAnim*, float);
+void CSackBoyAnim::DeathSmoke(float size)
+{
+    CSackBoyAnim_DeathSmoke(this, size);
+}
+*/
+
+void CSackBoyAnim::DeathSmoke(float size)
+{
+    PCreature* creature = Thing->GetPCreature();
+    v4 lethal_force = creature->GetForceOfLethalThingTouched();
+    float smoke_col = 0.125f;
+    float smoke_dens = 100.0f;
+    
+    for (int layer = 0; layer < 3; layer++)
+    {
+        v4 pos = Thing->GetPPos()->Fork->WorldPosition.getCol3();
+        pos.setW(size);
+        pos.setZ(layer * -200.0f);
+        
+        smoke_col = smoke_col * 0.75f;
+
+        CFluidRender* fluid_render;
+        fluid_render->AddFluidBlob(
+            pos, //position
+            v4(
+                lethal_force.getX(), 
+                lethal_force.getY() + 2.0f, 
+                0.0f, 0.0f
+            ) * (((0.5 * layer) + 1.0) * 4.0f), //velocity
+            4294967295u, //player
+            v4(smoke_col, smoke_col, smoke_col, 2.0f), //color
+            v4(smoke_dens, 0.0f, 0.0f, 0.0f), //density
+            30, //color_frame
+            5.0f //color_radius
+        );
+    }
+}
+
 void CSackBoyAnim::Burnilate(bool was_frozen)
 {
     PCreature* creature = Thing->GetPCreature();
@@ -144,8 +204,8 @@ void CSackBoyAnim::Burnilate(bool was_frozen)
     if(was_frozen) 
     {
         RestoreMesh(Thing);
-        SetEffectMesh(BurnMesh);
-        //SetEffectMesh(NULL);
+        SetEffectMesh(NULL);
+        render_yellow_head->SetMesh(NULL);
         Steam(2.5f);
     }
     else
@@ -160,19 +220,21 @@ void CSackBoyAnim::Burnilate(bool was_frozen)
             SetBlendClusterRigidity(Thing, 1, i, 0.000937f);
     }
 }
-*/
-/*
-// Taken from sackboyanim.ff
+
 void CSackBoyAnim::Gasify()
 {
     PCreature* creature = Thing->GetPCreature();
     PYellowHead* yellowhead = Thing->GetPYellowHead();
     CRenderYellowHead* render_yellow_head = yellowhead->GetRenderYellowHead();
 
-    if(creature->StateTimer - 1 > 1)
-        render_yellow_head->SetMesh(NULL);
+    float ground_dist = creature->Fork->GroundDistance;
+    if (ground_dist > 40 && !ground_dist <= 20)
+    {
+        if(creature->StateTimer - 1 > 1)
+            render_yellow_head->SetMesh(NULL);
+    }
 }
-*/
+
 // Taken from sackboyanim.ff
 /*
 void CSackBoyAnim::Electrify()
@@ -232,9 +294,11 @@ void CSackBoyAnim::DoDeathAnims()
     if (WasNormal)
     {
         DeathFlip = 0;
-        //if (part_creature->GetForceOfLethalThingTouched().getX() < 0.0f && lethal_type == LETHAL_ELECTRIC)
-        if (part_creature->GetForceOfLethalThingTouched().getX() < 0.0f && lethal_type == LETHAL_ELECTRIC)
-            DeathFlip = 1;
+        if(lethal_type == LETHAL_ELECTRIC || lethal_type - LETHAL_POISON_GAS < 6)
+        {
+            if (part_creature->GetForceOfLethalThingTouched().getX() < 0.0f)
+                DeathFlip = 1;
+        }
     }
 
     switch (lethal_type)
@@ -244,9 +308,19 @@ void CSackBoyAnim::DoDeathAnims()
             anim = YANIM_DEATH_GAS_INTO;
             if (DeathFrame == 0)
                 CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/gas_death", thing, -10000.0f, -10000.0f);
-            render_yellow_head->SetDissolving(DeathFrame < 2);
-            // Longer gas death animation (for fun)
-            //render_yellow_head->SetDissolving(DeathFrame >= GetNumFrames(anim));
+            float ground_dist = part_creature->Fork->GroundDistance;
+            if (ground_dist > 40 && !ground_dist <= 20)
+            {
+                render_yellow_head->SetDissolving(true);
+            }
+            else
+            {
+                IsFrozen = false;
+                if(DeathFrame >= GetNumFrames(anim) - 5)
+                {
+                    render_yellow_head->SetDissolving(true);
+                }
+            }
             break;
         }
         case LETHAL_ELECTRIC:
@@ -293,15 +367,6 @@ void CSackBoyAnim::DoDeathAnims()
         }
         case LETHAL_CRUSH:
         {
-            // I'd like to trigger the "stun" animation here
-            /*
-            if (creature_state == STATE_STUNNED)
-            {
-                anim = YANIM_DEATH_FIRE_STUN_T_L;
-                loop = true;
-                IsFrozen = false;
-            }
-            */
             render_yellow_head->SetIgnoreBodyAng(true);
             if (DeathFrame == 0)
                 CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/squashed_splat", thing, -10000.0f, -10000.0f);
@@ -345,7 +410,6 @@ void CSackBoyAnim::DoDeathAnims()
         case LETHAL_ICE:
         {
             anim = YANIM_DEATH_ICE_INTO;
-            //IsFrozen = true;
             if (DeathFrame == 0 && creature_state != STATE_FROZEN)
                 VelAtFreeze = OldVel;
 
@@ -354,14 +418,16 @@ void CSackBoyAnim::DoDeathAnims()
                 IsFrozen = false;
                 anim = YANIM_DEATH_ICE_FROZEN;
                 render_yellow_head->SetIgnoreBodyAng(false);
+                render_yellow_head->SnapshotCostume();
+                render_yellow_head->SetMesh(FrozenBodyMesh);
                 render_yellow_head->SetSoftbodySim(true);
                 
                 const int m0 = 0;
                 int clusters0 = GetClusterCount(Thing, m0);
                 for (int i = 0; i < clusters0; ++i)
                 {
-                    SetBlendClusterRigidity(Thing, m0, i, 0.0f);
-                    SetSoftPhysClusterEffect(Thing, m0, i, 1.0f);
+                    SetBlendClusterRigidity(Thing, m0, i, 1.0f);
+                    SetSoftPhysClusterEffect(Thing, m0, i, 0.0f);
                 }
 
                 if (WasFrozen)
@@ -396,4 +462,11 @@ void CSackBoyAnim::DoDeathAnims()
 
     WasFrozen = creature_state == STATE_FROZEN;
     DeathFrame++;
+}
+
+void CSackBoyAnim::InitExtraAnimData()
+{
+    //*((CP<RMesh>*)&BurntBodyMesh) = LoadResourceByKey<RMesh>(26641u, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RMesh>*)&BurntBodyMesh) = LoadResourceByKey<RMesh>(19954u, 0, STREAM_PRIORITY_DEFAULT);
+    *((CP<RMesh>*)&FrozenBodyMesh) = LoadResourceByKey<RMesh>(19954u, 0, STREAM_PRIORITY_DEFAULT);
 }
