@@ -58,7 +58,7 @@ public:
     CRawVector<CFAT> FAT;
 };
 
-extern CFartRO* (*MakeROCache)(CFilePath& farc_file, bool enabled, bool secure);
+extern CFartRO* (*MakeROCache)(const CFilePath& farc_file, bool enabled, bool secure);
 extern bool (*IncorporateFartRO)(CFartRO* cache);
 
 #endif // FART_READ_ONLY_H

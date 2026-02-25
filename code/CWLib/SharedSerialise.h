@@ -1,13 +1,19 @@
-#ifndef SHARED_SERIALISE_H
-#define SHARED_SERIALISE_H
+#pragma once
 
-#include "SerialiseEnums.h"
+#include <ResourceDescriptor.h>
+#include <SerialiseEnums.h>
+
+// template <typename R>
+// ReflectReturn ReflectDescriptor(R& r, CResourceDescriptorBase& d, bool cp, bool type) // 23
+// {
+//     return REFLECT_NOT_IMPLEMENTED;
+// }
+
+
 
 template <typename R, typename D>
-ReflectReturn ReflectEnumAsU8(R& r, D* d)
+ReflectReturn ReflectEnumAsU8(R& r, D* d) // 196
 {
     u8 b = d;
     return Reflect<R>(r, d);
 }
-
-#endif // SHARED_SERIALISE_H

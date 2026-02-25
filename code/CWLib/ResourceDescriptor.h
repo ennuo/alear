@@ -164,8 +164,8 @@ public:
 public:
     inline bool IsValid() const { return Valid; }
     inline bool HasGUID() const { return (bool)GUID; }
-    inline CGUID& GetGUID() { return GUID; }
-    inline CHash& GetHash() { return Hash; }
+    inline const CGUID& GetGUID() const { return GUID; }
+    inline const CHash& GetHash() const { return Hash; }
     inline EResourceType GetType() const { return (EResourceType)Type; }
 protected:
     CGUID GUID;

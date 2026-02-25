@@ -1,5 +1,4 @@
-#ifndef SHA1_H
-#define SHA1_H
+#pragma once
 
 enum ESHA1Result {
     SHA1_SUCCESS,
@@ -32,4 +31,4 @@ private:
     SHA1_CONTEXT Context;
 };
 
-#endif // SHA1_H
+void SHA1(const uint8_t* buf, unsigned int len, uint8_t* digest);

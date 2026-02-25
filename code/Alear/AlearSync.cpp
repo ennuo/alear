@@ -780,7 +780,7 @@ void AlearSyncThreadFunc(u64 arg)
                     gDownloadInfo.TotalBytes = file.FileSize;
                     StringCopy<char, 256>(gDownloadInfo.Filename, file.Filename);
 
-                    char hex[HASH_HEX_STRING_LENGTH];
+                    char hex[CHash::kHashHexStringSize];
                     file.FileHash.ConvertToHex(hex);
                     DebugLogChF(DC_MOLD, "Downloading \"%s\" (h%s) [FileSize]=0x%08x\n", file.Filename, hex, file.FileSize);
 
@@ -790,7 +790,7 @@ void AlearSyncThreadFunc(u64 arg)
                         CHash computed;
                         if (!WriteStreamedFile(fp, file.FileSize, computed, gDownloadInfo)) break;
 
-                        char chex[HASH_HEX_STRING_LENGTH];
+                        char chex[CHash::kHashHexStringSize];
                         computed.ConvertToHex(chex);
 
                         DebugLogChF(DC_MOLD, "Downloaded %s, computed SHA1 is %s\n", file.Filename, chex);
