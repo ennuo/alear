@@ -1,8 +1,11 @@
-#ifndef PART_SWITCH_H
-#define PART_SWITCH_H
+#pragma once
 
 #include <vector.h>
+#include <refcount.h>
+#include <MMString.h>
+#include <ReflectionVisitable.h>
 
+#include "ResourceDescriptor.h"
 #include "Part.h"
 #include "PlayerNumber.inl"
 
@@ -130,60 +133,160 @@ enum ESwitchType
     NUM_SWITCH_TYPES
 };
 
+class ConnectorPointList {
+public:
+    inline ConnectorPointList() : Points(), Initialized() {}
+public:
+    v2 Points[8];
+    bool Initialized;
+};
+
 class CSwitchSignal {
 public:
     inline CSwitchSignal() :
-    Activation(0.0f), Ternary(0), Player(E_PLAYER_NUMBER_NONE)
+    Analogue(0.0f), Ternary(0), Player(E_PLAYER_NUMBER_NONE)
+    {}
+
+    inline CSwitchSignal(float analogue) : Analogue(analogue), Ternary(0), Player(E_PLAYER_NUMBER_NONE)
     {}
 public:
-    float Activation;
+    float Analogue;
     int Ternary;
-    EPlayerNumber Player;
+    int Player;
 };
 
 class CSwitchTarget {
 public:
-    inline CSwitchTarget() : Target(), Port()
+    inline CSwitchTarget() : Thing(), Port()
     {}
+    
+    inline CSwitchTarget(const CThingPtr& target, int port) : Thing(target), Port(port) 
+    {}
+
+    inline CSwitchTarget(const CSwitchTarget& target)
+    {
+        *this = target;
+    }
+
+    inline CSwitchTarget& operator=(CSwitchTarget const& rhs) 
+    { 
+        Thing = rhs.Thing;
+        Port = rhs.Port;
+        return *this;
+    }
 public:
-    CThingPtr Target;
+    CThingPtr Thing;
     int Port;
 };
 
-class CSwitchOutput {
+class PSwitch;
+class CSwitchOutput : public CReflectionVisitable {
 public:
-    inline CSwitchOutput() : Activation(), TargetList(), PortThing()
+    inline CSwitchOutput() : CReflectionVisitable(), Activation(), TargetList(), Owner(), Port(), UserDefinedName()
     {}
+
+    ~CSwitchOutput();
+public:
+    bool AddTarget(CThing* thing, int port);
+    bool RemoveTarget(CThing* thing, int port);
+    int GetTargetIndex(CThing* thing, int port);
 public:
     CSwitchSignal Activation;
     CVector<CSwitchTarget> TargetList;
-    CThingPtr PortThing;
+    PSwitch* Owner;
+    int Port;
+    const wchar_t* UserDefinedName;
+};
+
+class CCompactSwitchOutput {
+public:
+    inline CCompactSwitchOutput() : Activation(), Ports() {}
+    inline CCompactSwitchOutput(CSwitchOutput* output) : Activation(output->Activation), Ports()
+    {
+        Ports.try_resize(output->TargetList.size());
+        for (int i = 0; i < output->TargetList.size(); ++i)
+            Ports[i] = output->TargetList[i].Port;
+    }
+public:
+    CSwitchSignal Activation;
+    CVector<u32> Ports; 
 };
 
 class PSwitch : public CPart {
 public:
     void InitializeExtraData();
     void DestroyExtraData();
+    void OnPartLoaded();
+    void GenerateLegacyData();
+    void ClearLegacyData();
 public:
-    bool RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit);
+    void Update();
+    void SetInputCount(int size);
+    void RemoveOutput(int port);
+    const CSwitchSignal& GetActivation(int port);
+    CSwitchSignal GetActivationFromInput(int port);
+    CSwitchSignal GetNewActivation(int port);
+    int RemapTernary(float activation, int, int port);
+    CSwitchSignal GetNewActivationButton(bool);
 public:
     CVector<CThingPtr> TargetList;
-private:
-    char Pad[0x144];
-public:
+    CVector<CThingPtr> EditorHackTargetList;
+    CVector<v4> ConnectorPos;
+    CVector<bool> ConnectorGrabbed;
+    CVector<ConnectorPointList> ConnectorPoints;
+    CResourceDescriptor<RPlan> RefSticker;
+    CThingPtr ReferenceThing;
+    v4 PortPosOffset;
+    v4 LooseConnectorPos;
+    v4 LooseConnectorBaseOffset;
+    bool LooseConnectorGrabbed;
+    ConnectorPointList LooseConnectorPoints;
+    bool HideConnectors;
+    bool Initialised;
+    bool Registered;
+    bool Inverted;
+    float Radius;
+    int ColorIndex;
     int BehaviourOld;
     int Type;
+    bool HideInPlayMode;
+    bool RequireAll;
+    float DeprecatedManualActivation;
+    union
+    {
+        float PlatformVisualFactor;
+        float TimerCount;
+    };
+    float OldActivation;
+    int ActivationHoldTime;
+    union
+    {
+        int BulletsRequired;
+        int InputCount;
+    };
+    union
+    {
+        int BulletsDetected;
+        int SelectorState;
+    };
+    int BulletPlayerNumber;
+    u32 BulletRefreshTime;
+    float Activation;
+    float unk1;
+    float unk2;
+    bool ValueChange;
+    float LightActivation;
+    float AngleRange;
+    int LayerType;
 private:
-    char Pad2[0x18];
+    char Pad[0xc];
 public:
-    int BulletsRequired;
-    int BulletsDetected;
-private:
-    char Pad3[0x20];
-public:
-    int UpdateFrame;
+    CVector<CSwitchOutput*> Outputs;
+    CSwitchSignal ManualActivation;
+    bool CrappyOldLBP1Switch;
     int Behaviour;
-    CVector<CSwitchOutput> Outputs;
+    int OutputType;
+    bool PlaySwitchAudio;
+    bool DetectUnspawnedPlayers;
+    bool ResetWhenFull;
 };
-
-#endif // PART_SWITCH_H

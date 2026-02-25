@@ -65,6 +65,7 @@ extern "C" uintptr_t _on_reflect_finish_save_thing_hook;
 extern "C" uintptr_t _on_fixup_thing_hook;
 
 extern "C" uintptr_t _initextradata_part_generatedmesh;
+extern "C" uintptr_t _initextradata_part_switch;
 
 extern "C" uintptr_t _custom_gooey_network_action_hook;
 extern "C" uintptr_t _gooey_carousel_type_hook;

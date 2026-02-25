@@ -459,6 +459,13 @@ _on_reflect_finish_save_thing_hook:
     mr %r3, %r26
     ba 0x0076cf38
 
+.global _initextradata_part_switch
+_initextradata_part_switch:
+    mr %r3, %r27
+    call _ZN7PSwitch19InitializeExtraDataEv
+    ld %r0, 0x100(%r1)
+    ba 0x0005e6ac
+
 .global _initextradata_part_generatedmesh
 _initextradata_part_generatedmesh:
     mr %r3, %r28

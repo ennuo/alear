@@ -149,11 +149,11 @@ void RenderSwitchDebug()
 }
 
 
-MH_DefineFunc(PSwitch_RaycastConnector, 0x0004d764, TOC0, bool, PSwitch*, v4, v4, float&, CThing*&);
-bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
-{
-    return PSwitch_RaycastConnector(this, start, dir, t, hit);
-}
+// MH_DefineFunc(PSwitch_RaycastConnector, 0x0004d764, TOC0, bool, PSwitch*, v4, v4, float&, CThing*&);
+// bool PSwitch::RaycastConnector(v4 start, v4 dir, float& t, CThing*& hit)
+// {
+//     return PSwitch_RaycastConnector(this, start, dir, t, hit);
+// }
 
 void CPoppet::InitializeExtraData()
 {
@@ -170,138 +170,98 @@ void CPoppet::DestroyExtraData()
     HiddenList.~CVector();
 }
 
+CSwitchOutput* CThing::GetInput(int port) const
+{
+    if (port < 0 || CustomThingData->InputList.size() <= port) return NULL;
+    return CustomThingData->InputList[port];
+}
+
+void CThing::SetInput(CSwitchOutput* input, int port)
+{
+    CVector<CSwitchOutput*>& inputs = CustomThingData->InputList;
+    if (inputs.size() <= port)
+        inputs.try_resize(port + 1);
+    inputs[port] = input;
+}
+
+void CThing::RemoveInput(int port)
+{
+    CSwitchOutput* input = GetInput(port);
+    if (input != NULL)
+        input->RemoveTarget(this, port);
+    
+    for (int i = port + 1; i < CustomThingData->InputList.size(); ++i)
+    {
+        input = GetInput(i);
+        if (input != NULL)
+        {
+            input->RemoveTarget(this, port);
+            input->AddTarget(this, port - 1);
+        }
+    }
+}
+
+int CSwitchOutput::GetTargetIndex(CThing* thing, int port)
+{
+    for (int i = 0; i < TargetList.size(); ++i)
+    {
+        CSwitchTarget& target = TargetList[i];
+        if (target.Thing == thing && target.Port == port)
+            return i;
+    }
+
+    return -1;
+}
+
+bool CSwitchOutput::AddTarget(CThing* thing, int port)
+{
+    if (thing == NULL) return false;
+
+    CSwitchOutput* input = thing->GetInput(port);
+    if (input != NULL)
+        input->RemoveTarget(thing, port);
+
+    TargetList.push_back(CSwitchTarget(thing, port));
+    thing->SetInput(this, port);
+
+    return true;
+}
+
+bool CSwitchOutput::RemoveTarget(CThing* thing, int port)
+{
+    if (thing == NULL) return false;
+
+    int index = GetTargetIndex(thing, port);
+    if (index == -1) return false;
+
+    thing->SetInput(NULL, port);
+    TargetList.erase(TargetList.begin() + index);
+
+    return true;
+}
+
+CSwitchOutput::~CSwitchOutput()
+{
+    for (CSwitchTarget* target = TargetList.begin(); target != TargetList.end(); ++target)
+        target->Thing->SetInput(NULL, target->Port);
+}
+
 void PSwitch::InitializeExtraData()
 {
     new (&Outputs) CVector<CSwitchOutput>();
+    new (&ManualActivation) CSwitchSignal();
     Behaviour = 0;
-    UpdateFrame = 0;
+    OutputType = 0;
+    CrappyOldLBP1Switch = true;
+    PlaySwitchAudio = true;
 }
 
 void PSwitch::DestroyExtraData()
 {
+    for (int i = 0; i < Outputs.size(); ++i)
+        delete Outputs[i];
+    
     Outputs.~CVector();
-}
-
-void CustomRaycastAgainstSwitches(CPoppet* poppet)
-{
-    poppet->m_bestTFromPSwitches = 1.0e+20f;
-    poppet->m_havePSwitchHit = false;
-
-    if (poppet->GetSubMode() != SUBMODE_NONE) return;
-
-    PWorld* world = gGame->GetWorld();
-    CThing* ignored = poppet->GetThingToIgnore();
-
-    CRaycastResults& raycast = poppet->m_raycastResultFromPSwitches;
-    raycast.HitPort = -1;
-    raycast.RefPort = -1;
-
-    float t;
-    CThing* hit;
-
-    for (PSwitch** it = world->ListPSwitch.begin(); it != world->ListPSwitch.end(); ++it)
-    {
-        PSwitch* sw = (*it);
-        CThing* thing = sw->GetThing();
-
-        if (thing == ignored) continue;
-
-        if (sw->Type == SWITCH_TYPE_AND)
-        {
-            CSwitchDefinition& def = gSwitchDefinitions[sw->Type];
-
-            m44& wpos = thing->GetPPos()->Game.WorldPosition;
-
-
-            v4 input_offsets[] =
-            {
-                wpos * def.GetInputPortOffset(0, def.NumInputs),
-                wpos * def.GetInputPortOffset(1, def.NumInputs)
-            };
-
-            v4 output_offsets[] =
-            {
-                wpos * def.GetOutputPortOffset(0, def.NumOutputs)
-            };
-
-            for (int i = 0; i < def.NumOutputs; ++i)
-            {
-                v4& port_offset = output_offsets[i];
-                if (!NPoppetUtils::RaySphereIntersect(port_offset, def.OutputPortRadius, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
-                if (t >= 1.0e+20f) continue;
-
-                DebugLog("hitting output port %d on AND gate!!!\n", i);
-
-                raycast.SwitchConnector = true;
-                raycast.HitThing = thing;
-                raycast.RefThing = thing;
-
-                poppet->m_bestTFromPSwitches = t;
-                poppet->m_havePSwitchHit = true;
-
-                raycast.BaryU = 0.0f;
-                raycast.BaryV = 0.0f;
-                raycast.Normal = v4(0.0f, 0.0f, 1.0f, 0.0f);
-                raycast.TriIndex = 0;
-                raycast.OnCostumePiece = -1;
-                raycast.DecorationIdx = -1;
-
-                raycast.HitPort = i;
-            }
-
-            for (int i = 0; i < def.NumInputs; ++i)
-            {
-                v4& port_offset = input_offsets[i];
-                if (!NPoppetUtils::RaySphereIntersect(port_offset, def.InputPortRadius, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
-                if (t >= 1.0e+20f) continue;
-
-                DebugLog("hitting input port %d on AND gate!!!\n", i);
-
-                raycast.SwitchConnector = false;
-                raycast.HitThing = thing;
-                raycast.RefThing = thing;
-                
-                poppet->m_bestTFromPSwitches = t;
-                poppet->m_havePSwitchHit = true;
-
-                raycast.BaryU = 0.0f;
-                raycast.BaryV = 0.0f;
-                raycast.Normal = v4(0.0f, 0.0f, 1.0f, 0.0f);
-                raycast.TriIndex = 0;
-                raycast.OnCostumePiece = -1;
-                raycast.DecorationIdx = -1;
-
-                raycast.RefPort = i;
-            }
-
-            // input ports are a sphere with a radius of 20
-                // at x = -60
-                // y = -35 / 35
-
-            continue;
-        }
-
-        if (!sw->RaycastConnector(poppet->m_rayStart, poppet->m_rayDir, t, hit)) continue;
-        if (t >= 1.0e+20f) continue;
-
-        raycast.SwitchConnector = true;
-
-        raycast.HitThing = hit;
-        raycast.RefThing = thing;
-
-        poppet->m_bestTFromPSwitches = t;
-        poppet->m_havePSwitchHit = true;
-
-        raycast.BaryU = 0.0f;
-        raycast.BaryV = 0.0f;
-        raycast.Normal = v4(0.0f, 0.0f, 1.0f, 0.0f);
-        raycast.TriIndex = 0;
-        raycast.OnCostumePiece = -1;
-        raycast.DecorationIdx = -1;
-
-        raycast.HitPort = 0;
-        raycast.RefPort = 0;
-    }
 }
 
 #define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
@@ -324,9 +284,70 @@ ReflectReturn Reflect(R& r, CRaycastResults& d)
     return ret;
 }
 
+template<typename R>
+ReflectReturn Reflect(R& r, CSwitchSignal& d)
+{
+    ReflectReturn ret;
+    ADD(Analogue);
+    ADD(Ternary);
+    ADD(Player);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CSwitchTarget& d)
+{
+    ReflectReturn ret;
+    ADD(Thing);
+    ADD(Port);
+    return ret;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CSwitchOutput& d)
+{
+    ReflectReturn ret;
+    ADD(Activation);
+    ADD(TargetList);
+    return ret;
+}
+
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CRaycastResults& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchSignal& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchTarget& d);
+template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchOutput& d);
+
+template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CSwitchSignal& d);
+template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CSwitchSignal& d);
+
+ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
+{
+    ReflectReturn ret;
+    ADD(Inverted);
+    ADD(Radius);
+    ADD(ColorIndex);
+    ADD(CrappyOldLBP1Switch);
+    ADD(BehaviourOld);
+    ADD(Outputs);
+    ADD(HideInPlayMode);
+    ADD(Type);
+    ADD(ReferenceThing);
+    ADD(ManualActivation);
+    ADD(ActivationHoldTime);
+    ADD(RequireAll);
+    ADD(BulletsRequired);
+    ADD(BulletsDetected);
+    ADD(BulletRefreshTime);
+    ADD(ResetWhenFull);
+    ADD(Behaviour);
+    ADD(HideConnectors);
+    ADD(DetectUnspawnedPlayers);
+    ADD(PlaySwitchAudio);
+    return ret;
+}
 
 #undef ADD
+
 
 ReflectReturn GatherPoppetRaycastVariables(CGatherVariables& r, CRaycastResults& d)
 {
@@ -337,12 +358,16 @@ extern "C" uintptr_t _raycast_hook;
 extern "C" uintptr_t _popit_destroy_extra_data_hook;
 extern "C" uintptr_t _popit_init_extra_data_hook;
 
+void OnPartSwitchDestructor(PSwitch* sw)
+{
+    sw->DestroyExtraData();
+}
+
 void InitLogicSystemHooks()
 {
-    InitializeSwitchDefinitions();
-
-    MH_InitHook((void*)0x00353370, (void*)&CustomRaycastAgainstSwitches);
     MH_InitHook((void*)0x007716e8, (void*)&GatherPoppetRaycastVariables);
+
+    MH_PokeCall(0x0004632c, OnPartSwitchDestructor);
 
     // replace stb with stw for collating raycast so it copies additional fields
     MH_Poke32(0x00356aa0, 0x815f004c /* lwz %r10, 0x4c(%r31) */);

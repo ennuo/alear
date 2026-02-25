@@ -123,6 +123,23 @@ void CThing::SetWorld(PWorld* world, u32 preferred_uid)
     CThing_SetWorld(this, world, preferred_uid);
 }
 
+void CThing::Deflate()
+{
+    switch (ObjectType)
+    {
+        case OBJECT_SWITCH_SELECTOR:
+        case OBJECT_SWITCH_AND:
+        case OBJECT_SWITCH_OR:
+        case OBJECT_SWITCH_XOR:
+        case OBJECT_SWITCH_NOT:
+        case OBJECT_SWITCH_ALWAYS_ON:
+        case OBJECT_SWITCH_SIGN_SPLIT:
+        case OBJECT_SWITCH_DIRECTION:
+            RemovePart(PART_TYPE_RENDER_MESH);
+            break;
+    }
+}
+
 void CThing::InitializeExtraData()
 {
     CustomThingData = new CCustomThingData();
@@ -133,6 +150,13 @@ void CThing::DestroyExtraData()
 {
     if (CustomThingData != NULL)
     {
+        for (int i = 0; i < CustomThingData->InputList.size(); ++i)
+        {
+            CSwitchOutput* input = CustomThingData->InputList[i];
+            if (input == NULL) continue;
+            input->RemoveTarget(this, i);
+        }
+
         if (CustomThingData->PartMaterialOverride != NULL)
             delete CustomThingData->PartMaterialOverride;
 

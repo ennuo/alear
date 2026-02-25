@@ -14,6 +14,7 @@
 #include <ResourceTranslationTable.h>
 #include <ResourceSystem.h>
 #include <PartPhysicsWorld.h>
+#include <PartEnemy.h>
 #include <thing.h>
 #include <mmalex.h>
 

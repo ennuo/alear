@@ -45,13 +45,12 @@ class PPos;
 
 class CCustomThingData {
 public:
-    inline CCustomThingData()
-    {
-        memset(this, 0, sizeof(CCustomThingData));
-    }
+    inline CCustomThingData() : Microchip(), PartMaterialOverride(), InputList()
+    {}
 public:
     CThing* Microchip;
     PMaterialOverride* PartMaterialOverride;
+    CVector<CSwitchOutput*> InputList;
 };
 
 class CThing : public CReflectionVisitable {
@@ -69,11 +68,24 @@ public:
     ReflectReturn OnLoad();
     void OnFixup();
 
-    void UpdateObjectType();
+    void Deflate();
+    void Inflate();
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
     void RemovePart(EPartType type);
+
+    CSwitchOutput* GetInput(int port) const;
+    void SetInput(CSwitchOutput* input, int port);
+    void RemoveInput(int port);
+    
+    inline int GetInputSize() const 
+    {
+        if (CustomThingData == NULL) return 0;
+        return CustomThingData->InputList.size();
+    }
+
+    void UpdateObjectType();
 public:
 #define PART_MACRO(name, type) inline name* Get##name() const { return (name*)Parts[type]; }
     #include "PartList.h"

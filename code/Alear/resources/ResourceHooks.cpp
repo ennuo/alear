@@ -604,6 +604,9 @@ void AttachCustomRevisionHooks()
     MH_Poke32(0x00020f30, LI(4, sizeof(PCreature)));
     MH_Poke32(0x0073ba14, LI(4, sizeof(PCreature)));
 
+    MH_Poke32(0x00021438, LI(4, sizeof(PSwitch)));
+    MH_Poke32(0x0073c53c, LI(4, sizeof(PSwitch)));
+
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);
     MH_PokeBranch(0x000af44c, &_initextradata_syncedprofile);
@@ -892,10 +895,86 @@ void CThing::OnFinishSave()
     }
 }
 
+enum
+{
+    E_KEY_AND_GATE = 73728,
+    E_KEY_OR_GATE = 73733,
+    E_KEY_XOR_GATE = 73739,
+    E_KEY_NOT_GATE = 73718,
+    E_KEY_ALWAYS_ON = 78675,
+    E_KEY_SWITCH_BASE = 42511,
+    E_KEY_SIGN_SPLIT = 77755,
+    E_KEY_DIRECTION = 73736,
+    E_KEY_SELECTOR = 73812,
+    E_KEY_ANGLE = 73932
+};
+
 void CThing::OnFixup()
 {
-    MMLog("fixing loaded thing...\n");
     UpdateObjectType();
+
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+    {
+        // fixup model
+        PRenderMesh* part_render_mesh = GetPRenderMesh();
+        if (part_render_mesh == NULL)
+        {
+            AddPart(PART_TYPE_RENDER_MESH);
+            part_render_mesh = GetPRenderMesh();
+
+            part_render_mesh->BoneThings.clear();
+            part_render_mesh->BoneThings.push_back(this);
+        }
+
+        switch (part_switch->Type)
+        {
+            case SWITCH_TYPE_SELECTOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SELECTOR, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_AND: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_AND_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_OR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_OR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_XOR: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_XOR_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_NOT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_NOT_GATE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_ALWAYS_ON: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ALWAYS_ON, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_SIGN_SPLIT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SIGN_SPLIT, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_DIRECTION: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_DIRECTION, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_ANGLE: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ANGLE, 0, STREAM_PRIORITY_DEFAULT); break;
+        }
+
+        if (part_switch->Type == SWITCH_TYPE_SELECTOR)
+        {
+            part_render_mesh->BoneThings.clear();
+            part_render_mesh->BoneThings.push_back(this);
+        }
+        
+        if (part_switch->Type == SWITCH_TYPE_AND || part_switch->Type == SWITCH_TYPE_OR || part_switch->Type == SWITCH_TYPE_XOR)
+            GetPRenderMesh()->BoneThings.try_resize(3);
+
+        PScript* part_script = GetPScript();
+        if (part_script == NULL)
+        {
+            AddPart(PART_TYPE_SCRIPT);
+            CP<RScript> script = LoadResourceByKey<RScript>(E_KEY_SWITCH_BASE, 0, STREAM_PRIORITY_DEFAULT);
+            script->BlockUntilLoaded();
+            GetPScript()->SetScript(script);
+        }
+
+        RMesh* mesh = part_render_mesh->Mesh;
+        if (mesh != NULL)
+        {
+            mesh->BlockUntilLoaded();
+            GetPPos()->AnimHash = mesh->mesh.Bones.front().AnimHash;
+        }
+
+        for (int i = 0; i < part_switch->Outputs.size(); ++i)
+        {
+            CSwitchOutput* output = part_switch->Outputs[i];
+            for (int j = 0; j < output->TargetList.size(); ++j)
+            {
+                CSwitchTarget& target = output->TargetList[j];
+                target.Thing->SetInput(output, target.Port);
+            }
+        }
+    }
 }
 
 #include "AlearConfig.h"
@@ -1012,4 +1091,5 @@ void InitResourceHooks()
     MH_PokeBranch(0x0076cf34, &_on_reflect_finish_save_thing_hook);
     MH_PokeBranch(0x003c4224, &_on_fixup_thing_hook);
     MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
+    MH_PokeBranch(0x0005e6a8, &_initextradata_part_switch);
 }
