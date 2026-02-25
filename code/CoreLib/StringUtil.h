@@ -52,14 +52,15 @@ size_t FormatString(wchar_t dst[size], wchar_t* format, ...)
 
 
 /* StringUtil.h: 84 */
-template <unsigned int size>
-size_t FormatString(char dst[size], char* format, ...)
+template <u32 size>
+inline size_t FormatString(char (&dst)[size], const char* format, ...)
 {
 	va_list args;
-    va_start(args, format);
-	size_t len = FormatStringVarArg(dst, size, format, args);
+	va_start(args, format);
+	size_t len = vsnprintf(dst, size, format, args);
 	va_end(args);
 	return len;
 }
+
 
 #endif // STRING_UTIL_H

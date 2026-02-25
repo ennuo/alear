@@ -1,6 +1,5 @@
 #include <sys/timer.h>
-
-#include "thread.h"
+#include <cell/thread.h>
 
 THREAD CreatePPUThread(THREADPROC threadproc, uint64_t thread_arg, const char* name, int priority, int stacksize, bool joinable) 
 {
@@ -55,14 +54,17 @@ void ThreadSleep(int ms)
         sys_ppu_thread_yield();
         return;
     }
+    
     sys_timer_usleep(ms * 1000);
 }
 
-void ThreadSleepUS(int us) {
+void ThreadSleepUS(int us) 
+{
     if (us == 0) 
     {
         sys_ppu_thread_yield();
         return;
     }
+
     sys_timer_usleep(us);
 }

@@ -400,7 +400,7 @@ void ReloadModifiedResources(CFileDB* database, CFileDB* old_database)
         }
     }
 
-    char hash[HASH_HEX_STRING_LENGTH];
+    char hash[CHash::kHashHexStringSize];
     DebugLog("Reloading %d GUIDs:\n", relinker.size());
     for (int i = 0; i < relinker.size(); ++i)
     {
@@ -448,7 +448,7 @@ void ReloadModifiedResources(CFileDB* database, CFileDB* old_database)
 void PrintLoadedResources()
 {
     CCSLock _the_lock(gResourceCS, __FILE__, __LINE__);
-    char hash[HASH_HEX_STRING_LENGTH];
+    char hash[CHash::kHashHexStringSize];
 
     DebugLog("Printing resource list...\n");
     for (int i = 0; i < gResourceArray.size(); ++i)

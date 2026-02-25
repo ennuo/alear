@@ -1,7 +1,7 @@
 #include "FartRO.h"
 #include <hook.h>
 
-MH_DefineFunc(MakeROCache, 0x000869ac, TOC0, CFartRO*, CFilePath& farc_file, bool enabled, bool secure);
+MH_DefineFunc(MakeROCache, 0x000869ac, TOC0, CFartRO*, const CFilePath& farc_file, bool enabled, bool secure);
 
 MH_DefineFunc(CFartRO_CloseCache, 0x00085790, TOC0, void, CFartRO*, bool);
 void CFartRO::CloseCache(bool updating)

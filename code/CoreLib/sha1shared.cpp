@@ -20,7 +20,7 @@ sha1_init( SHA1_CONTEXT *hd )
  * Transform the message X which consists of 16 32-bit-words
  */
 static void
-transform( SHA1_CONTEXT *hd, unsigned char *data )
+transform( SHA1_CONTEXT *hd, const unsigned char *data )
 {
     u32 a,b,c,d,e,tm;
     u32 x[16];
@@ -149,7 +149,7 @@ transform( SHA1_CONTEXT *hd, unsigned char *data )
  * of INBUF with length INLEN.
  */
 static void
-sha1_write( SHA1_CONTEXT *hd, unsigned char *inbuf, size_t inlen)
+sha1_write( SHA1_CONTEXT *hd, const unsigned char *inbuf, size_t inlen)
 {
     if( hd->count == 64 ) { /* flush the buffer */
 	transform( hd, hd->buf );
@@ -284,4 +284,13 @@ ESHA1Result CSHA1Context::Result(uint8_t* message_digest)
 
     memcpy(message_digest, Context.buf, 0x14);
     return SHA1_SUCCESS;
+}
+
+void SHA1(const uint8_t* buf, unsigned int len, uint8_t* digest)
+{
+    SHA1_CONTEXT ctx;
+    sha1_init(&ctx);
+    sha1_write(&ctx, buf, len);
+    sha1_final(&ctx);
+    memcpy(digest, ctx.buf, 0x14);
 }

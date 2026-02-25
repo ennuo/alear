@@ -43,6 +43,7 @@ extern bool InitTweakSettings();
 extern void LoadSackboyPolygon();
 extern void LoadBallPolygon();
 extern bool InitializeExplosiveStyles();
+extern void AttachWebternateHooks();
 
 bool AlearCheckPatch();
 
@@ -301,6 +302,7 @@ void AlearStartup()
     InitPinHooks();
     InitOutfitHooks();
     InitAlearOptUiHooks();
+    AttachWebternateHooks();
     if (gEnableFHD) AlearHookHD();
     AttachNetworkingHooks();
 

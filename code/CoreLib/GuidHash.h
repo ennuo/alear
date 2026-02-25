@@ -1,24 +1,20 @@
-#ifndef GUID_HASH_H
-#define GUID_HASH_H
+#pragma once
 
-#include <string.h>
+#include <vector.h>
 
-// ALL OF THIS NEEDS TO BE CLEANED UP !!!!
-
-/* GuidHash.h: 22 */
 class CGUID {
 public:
-	static CGUID ZERO;
-	
-	inline CGUID(const int& value) { guid = (u32)value; }
-	inline CGUID(const u32& value) { guid = value; }
+	static CGUID Zero;
+public:
+    inline CGUID() : guid() {}
+    inline CGUID(int value) : guid(value) {}
+public:
+	inline void Clear() { guid = 0; }
+public:
+	operator int() const { return guid; }
 	operator u32() const { return guid; }
-
-	u32 guid;
-
-	inline CGUID() { guid = 0; }
-	inline void Clear() { guid = 0; };
 	inline operator bool() const { return guid != 0; }
+	
 	inline bool operator !() const { return guid == 0; }
 	inline int Compare(CGUID const& rhs) { return rhs.guid - guid; }
 	inline bool operator==(CGUID const& rhs) const { return guid == rhs.guid; }
@@ -28,47 +24,57 @@ public:
 	inline bool operator>(CGUID const& rhs) const { return guid > rhs.guid; }
 	inline bool operator>=(CGUID const& rhs) const { return guid >= rhs.guid; }
 
-	inline bool operator==(u32 rhs) const { return guid == rhs; }
 	inline bool operator==(int rhs) const { return guid == rhs; }
+	inline bool operator!=(int rhs) const { return guid != rhs; }
+	inline bool operator<(int rhs) const { return guid < rhs; }
+	inline bool operator<=(int rhs) const { return guid <= rhs; }
+	inline bool operator>(int rhs) const { return guid > rhs; }
+
+	inline bool operator==(u32 rhs) const { return guid == rhs; }
+	inline bool operator!=(u32 rhs) const { return guid != rhs; }
+	inline bool operator<(u32 rhs) const { return guid < rhs; }
+	inline bool operator<=(u32 rhs) const { return guid <= rhs; }
+	inline bool operator>(u32 rhs) const { return guid > rhs; }
+
+public:
+    u32 guid;
 };
 
 
-const u32 HASH_HEX_STRING_LENGTH = 41;
-const u32 HASH_BUF_LENGTH = 20;
-
-
-/* GuidHash.h: 72 */
-class CHash {
-private:
-    u8 Bytes[HASH_BUF_LENGTH];
+class CHash { // 72
 public:
-	static CHash ZERO;
-	static CHash EMPTY_STRING;
-
-	inline CHash()
-	{
-		Clear();
-	}
+	static const u32 kHashBufSize = 20;
+	static const u32 kHashHexStringSize = (kHashBufSize * 2) + 1;
+	static CHash Zero;
+public:
+	inline CHash() { Clear(); }
+	CHash(const uint8_t* in, size_t len);
+	CHash(const char* in, size_t len);
+	CHash(const ByteArray&);
+public:
+	inline void* GetBuf() { return Bytes; }
+public:
+	void ConvertToHex(char(&)[CHash::kHashHexStringSize]) const;
+public:
+	inline void Clear() { memset(Bytes, 0, kHashBufSize); }
+	inline int Compare(CHash const& b) const { return memcmp(Bytes, b.Bytes, kHashBufSize); }
+	inline bool IsSet() const { return memcmp(Bytes, Zero.Bytes, kHashBufSize) != 0; }
+public:
+	inline operator bool() const { return IsSet(); }
 	
-	// CHash(u8* hash) { memcpy(Bytes, hash, 0x14); }
-	// CHash(u8* data, size_t size);
-	// CHash(const char* hex, size_t size);
-	// CHash(ByteArray* data);
-
-	inline void Clear() { memset(Bytes, 0, 0x14); }
-	inline void* GetBuf() { return (void*)&Bytes; }
-
-	inline int Compare(CHash const& b) const { return memcmp(Bytes, b.Bytes, HASH_BUF_LENGTH); }
 	inline bool operator<(CHash const& rhs) const { return Compare(rhs) < 0; }
 	inline bool operator>(CHash const& rhs) const { return Compare(rhs) > 0; }
-	inline bool operator !() const { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) == 0; }
+	inline bool operator !() const { return !IsSet(); }
 	inline bool operator==(CHash const& rhs) const { return Compare(rhs) == 0; }
 	inline bool operator!=(CHash const& rhs) const { return Compare(rhs) != 0; }
-
-	void ConvertToHex(char(&)[HASH_HEX_STRING_LENGTH]) const;
-	
-	inline bool IsSet() const { return memcmp(Bytes, ZERO.Bytes, HASH_BUF_LENGTH) != 0; }
+private:
+	uint8_t Bytes[kHashBufSize];
 };
 
-
-#endif
+class StringifyHash {
+public:
+	inline StringifyHash(const CHash& hash) { hash.ConvertToHex(Buffer); }
+	inline const char* c_str() const { return Buffer; }
+private:
+	char Buffer[CHash::CHash::kHashHexStringSize];
+};

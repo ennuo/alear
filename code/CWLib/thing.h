@@ -29,12 +29,19 @@
 #include "PartPhysicsJoint.h"
 
 #include <PartMaterialOverride.h>
+#include <PartList.h>
 
 #include "hack_thingptr.h"
 
+enum EObjectType
+{
+    #include <ThingObjectType.inl>
+    NUM_OBJECT_TYPES
+};
 
 class PBody : public CPart {};
 class PPos;
+
 
 class CCustomThingData {
 public:
@@ -59,38 +66,26 @@ public:
     
     void OnStartSave();
     void OnFinishSave();
-        
     ReflectReturn OnLoad();
+    void OnFixup();
+
+    void UpdateObjectType();
 public:
     void SetWorld(PWorld* world, u32 preferred_uid);
     void AddPart(EPartType type);
     void RemovePart(EPartType type);
 public:
-    inline PBody* GetPBody() const { return static_cast<PBody*>(Parts[PART_TYPE_BODY]); }
-    inline PJoint* GetPJoint() const { return static_cast<PJoint*>(Parts[PART_TYPE_JOINT]); }
-    inline PRenderMesh* GetPRenderMesh() const { return static_cast<PRenderMesh*>(Parts[PART_TYPE_RENDER_MESH]); }
-    inline PPos* GetPPos() const { return static_cast<PPos*>(Parts[PART_TYPE_POS]); }
-    inline PShape* GetPShape() const { return static_cast<PShape*>(Parts[PART_TYPE_SHAPE]); }
-    inline PGeneratedMesh* GetPGeneratedMesh() const { return static_cast<PGeneratedMesh*>(Parts[PART_TYPE_GENERATED_MESH]); }
-    inline PWorld* GetPWorld() const { return static_cast<PWorld*>(Parts[PART_TYPE_WORLD]); }
-    inline PYellowHead* GetPYellowHead() const { return static_cast<PYellowHead*>(Parts[PART_TYPE_YELLOW_HEAD]); }
-    inline PCreature* GetPCreature() const { return static_cast<PCreature*>(Parts[PART_TYPE_CREATURE]); }
-    inline PCostume* GetPCostume() const { return static_cast<PCostume*>(Parts[PART_TYPE_COSTUME]); }
-    inline PGroup* GetPGroup() const { return static_cast<PGroup*>(Parts[PART_TYPE_GROUP]); }
-    inline PLevelSettings* GetPLevelSettings() const { return static_cast<PLevelSettings*>(Parts[PART_TYPE_LEVEL_SETTINGS]); }
-    inline PGameplayData* GetPGameplayData() const { return static_cast<PGameplayData*>(Parts[PART_TYPE_GAMEPLAY_DATA]); }
-    inline PScriptName* GetPScriptName() const { return static_cast<PScriptName*>(Parts[PART_TYPE_SCRIPT_NAME]); }
-    inline PSwitch* GetPSwitch() const { return static_cast<PSwitch*>(Parts[PART_TYPE_SWITCH]); }
-    inline PScript* GetPScript() const { return static_cast<PScript*>(Parts[PART_TYPE_SCRIPT]); }
-    inline PRef* GetPRef() const { return static_cast<PRef*>(Parts[PART_TYPE_REF]); }
-    inline PStickers* GetPStickers() const { return static_cast<PStickers*>(Parts[PART_TYPE_STICKERS]); }
-    inline PDecorations* GetPDecorations() const { return static_cast<PDecorations*>(Parts[PART_TYPE_DECORATIONS]); }
-    inline PEffector* GetPEffector() const { return static_cast<PEffector*>(Parts[PART_TYPE_EFFECTOR]); }
-    inline PEmitter* GetPEmitter() const { return static_cast<PEmitter*>(Parts[PART_TYPE_EMITTER]); }
-    inline PCheckpoint* GetPCheckpoint() const { return static_cast<PCheckpoint*>(Parts[PART_TYPE_CHECKPOINT]); }
+#define PART_MACRO(name, type) inline name* Get##name() const { return (name*)Parts[type]; }
+    #include "PartList.h"
+#undef PART_MACRO
     inline PMaterialOverride* GetPMaterialOverride() const
     {
         return CustomThingData == NULL ? NULL : CustomThingData->PartMaterialOverride;
+    }
+
+    inline bool HasPart(EPartType part) const
+    {
+        return GetPart(part) != NULL;
     }
 
     inline CPart* GetPart(EPartType part) const
@@ -115,6 +110,10 @@ public:
     u16 CreatedBy;
     u16 ChangedBy;
     bool Stamping;
+private:
+    char Pad[0x7];
+public:
+    u8 ObjectType;
     CCustomThingData* CustomThingData;
 };
 
