@@ -230,7 +230,7 @@ void CSackBoyAnim::Gasify()
     float ground_dist = creature->Fork->GroundDistance;
     if (ground_dist > 40 && !ground_dist <= 20)
     {
-        if(creature->StateTimer - 1 > 1)
+        if(creature->StateTimer - 1 > 0)
             render_yellow_head->SetMesh(NULL);
     }
 }
@@ -305,22 +305,26 @@ void CSackBoyAnim::DoDeathAnims()
     {
         case LETHAL_POISON_GAS:
         {
-            anim = YANIM_DEATH_GAS_INTO;
-            if (DeathFrame == 0)
-                CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/gas_death", thing, -10000.0f, -10000.0f);
             float ground_dist = part_creature->Fork->GroundDistance;
             if (ground_dist > 40 && !ground_dist <= 20)
             {
+                IsFrozen = true;
                 render_yellow_head->SetDissolving(true);
             }
             else
             {
                 IsFrozen = false;
-                if(DeathFrame >= GetNumFrames(anim) - 5)
+                anim = YANIM_DEATH_GAS_INTO;
+                VelAtFreeze = OldVel;
+                if(DeathFrame >= GetNumFrames(anim) - 6)
                 {
                     render_yellow_head->SetDissolving(true);
                 }
             }
+            if (DeathFrame == 0)
+                CAudio::PlaySample(CAudio::gSFX, "gameplay/lethal/gas_death", thing, -10000.0f, -10000.0f);
+            if (DeathFrame == 1)
+                SetExternalForce(Thing, 1, VelAtFreeze);
             break;
         }
         case LETHAL_ELECTRIC:

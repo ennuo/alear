@@ -1,4 +1,5 @@
 #include "AlearHooks.h"
+#include "AlearConfig.h"
 #include "CheckpointStyles.h"
 #include "ExplosiveStyles.h"
 #include "MiscMeshStyles.h"
@@ -31,6 +32,7 @@ const u32 E_KEY_GLOBAL_SETTINGS_SDF = 3930801866ul;
 const u32 E_KEY_PARAM_ANIMATIONS_SDF = 2295497740ul;
 const u32 E_KEY_CHECKPOINT_TYPE_SDF = 3926674768ul;
 const u32 E_KEY_EXPLOSIVE_STYLE_SDF = 4049006123ul;
+const u32 E_KEY_INTERACTION_MODE_SDF = 3410918115ul;
 
 enum ETweakWidget {
     TWEAK_WIDGET_MEASURER,
@@ -463,6 +465,22 @@ namespace TweakSettingNativeFunctions
             
             case E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE: return GetExplosiveStyle(thing);
             case E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE: return GetLevelKeyStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE: return GetMagicEyeStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_MAGIC_EYE_AWARENESS_RADIUS:
+            {
+                PEnemy* enemy = thing->GetPEnemy();
+                float radius = enemy->Radius;
+                return setting.GameToFixed(radius);
+            }
+            case E_GOOEY_NETWORK_ACTION_LEVER_SWITCH_STYLE: return GetLeverSwitchStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_BOUNCE_PAD_STYLE: return GetBouncePadStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE: return GetSpikePlateStyle(thing);
+            case E_GOOEY_NETWORK_ACTION_INTERACTION_MODE:
+            {
+                PShape* shape = thing->GetPShape();
+                u8 interact_play_mode = shape->InteractPlayMode;
+                return interact_play_mode;
+            }
         }
 
         return 0;
@@ -476,11 +494,23 @@ namespace TweakSettingNativeFunctions
         return wrapper->Manager->StylesheetScalingFactor;
     }
 
+    bool UseLegacyKeyColors()
+    {
+        return gUseLegacyKeyColors;
+    }
+
+    bool UseNewKeyColorSelection()
+    {
+        return gUseNewKeyColorSelection;
+    }
+
     void Register()
     {
         RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
         RegisterNativeFunction("TweakSetting", "GetFixedTweakData__ii", true, NVirtualMachine::CNativeFunction2<u32, EGooeyNetworkAction, u32>::Call<GetFixedTweakData>);
         RegisterNativeFunction("Gooey", "GetStylesheetScalingFactor__", false, NVirtualMachine::CNativeFunction1<f32, CScriptObjectGooey*>::Call<GetStylesheetScalingFactor>);
+        RegisterNativeFunction("PlayerColour", "UseLegacyKeyColors__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseLegacyKeyColors>);
+        RegisterNativeFunction("PlayerColour", "UseNewKeyColorSelection__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseNewKeyColorSelection>);
     }
 }
 
@@ -514,6 +544,7 @@ bool InitTweakSettings()
     CIconConfig global_settings_texture(E_KEY_GLOBAL_SETTINGS_SDF, 4, 4);
     CIconConfig paramanim_texture(E_KEY_PARAM_ANIMATIONS_SDF, 1, 2);
     CIconConfig explosive_style_texture(E_KEY_EXPLOSIVE_STYLE_SDF, 2, 4);
+    CIconConfig interaction_mode_texture(E_KEY_INTERACTION_MODE_SDF, 2, 2);
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LIGHTING)
         .SetupLighting()
@@ -656,6 +687,44 @@ bool InitTweakSettings()
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
         .SetIcon(CAROUSEL_LEVEL_KEY_STYLE)
         .SetDebugToolTip(L"Visual Style");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_MAGIC_EYE_STYLE)
+        .SetToolTip("ENEMY_AWARENESS_RADIUS");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MAGIC_EYE_AWARENESS_RADIUS)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(0.0, 2000.0f)
+        .SetSteps(1.0f, 10.0f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"Awareness Radius");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LEVER_SWITCH_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_MESH_STYLE)
+        .SetDebugToolTip(L"Visual Style");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_BOUNCE_PAD_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_MESH_STYLE)
+        .SetDebugToolTip(L"Visual Style");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_MESH_STYLE)
+        .SetDebugToolTip(L"Visual Style");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCHKEY_TWEAK_VISIBLE)
+        .SetupYesNo()
+        .SetIcon(global_settings_texture, 15)
+        .SetToolTip("HIDE_IN_PLAY_MODE");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_INTERACTION_MODE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_INTERACTION_MODE)
+        .SetIcon(interaction_mode_texture, 0)
+        .SetDebugToolTip(L"INTERACTION_MODE");
 
     // visual style
         // Entrance
@@ -860,6 +929,71 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
                 SetLevelKeyStyle(thing, action.Value);
             break;
         }
+        
+        case E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE:
+        {
+            DebugLog("level key style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetMagicEyeStyle(thing, action.Value);
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_MAGIC_EYE_AWARENESS_RADIUS:
+        {
+            float radius = setting.FixedToGame(action.Value);
+            DebugLog("E_GOOEY_NETWORK_ACTION_MAGIC_EYE_AWARENESS_RADIUS: %08x (%f)\n", (u32)action.Value, radius);
+
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PEnemy* enemy = thing->GetPEnemy();
+                if (enemy != NULL)
+                    enemy->Radius = radius;
+            }
+
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_LEVER_SWITCH_STYLE:
+        {
+            DebugLog("level key style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetLeverSwitchStyle(thing, GetLeverSwitchType(thing), action.Value);
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_BOUNCE_PAD_STYLE:
+        {
+            DebugLog("level key style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetBouncePadStyle(thing, action.Value);
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE:
+        {
+            DebugLog("level key style uid=%d, index=%d\n", action.ThingUID, action.Value);
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+                SetSpikePlateStyle(thing, GetSpikePlateType(thing), action.Value);
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_INTERACTION_MODE:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PShape* shape = thing->GetPShape();
+                if (shape != NULL)
+                    shape->InteractPlayMode = action.Value;
+            }
+
+            break;
+        }
 
         case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE:
         {
@@ -922,6 +1056,28 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 
             break;
         }
+        
+        case CAROUSEL_MAGIC_EYE_STYLE:
+        {
+            CIconConfig icon(3391025295ul, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Normal", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Cute", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Evil", v4(1.0)));
+
+            break;
+        }
+        
+        case CAROUSEL_INTERACTION_MODE:
+        {
+            CIconConfig icon(E_KEY_INTERACTION_MODE_SDF, 2, 2);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Not Interactable", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Can Select", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Can Edit", v4(1.0)));
+
+            break;
+        }
     }
 }
 
@@ -951,6 +1107,8 @@ void AttachCarouselHooks()
     TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_EXPLOSIVE_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_LEVEL_KEY_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_MAGIC_EYE_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_INTERACTION_MODE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00929f10, (u32)TABLE);
@@ -1010,6 +1168,12 @@ void AttachGooeyNetworkHooks()
     
     TABLE[E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MAGIC_EYE_AWARENESS_RADIUS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LEVER_SWITCH_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_BOUNCE_PAD_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_INTERACTION_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);

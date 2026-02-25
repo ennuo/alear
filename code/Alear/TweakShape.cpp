@@ -24,6 +24,7 @@
 const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 const u32 E_TWEAK_EXPLOSIVE_SCRIPT = 3549987402u;
+const u32 E_TWEAK_MAGIC_EYE_SCRIPT = 34681;
 
 const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
 const u32 E_LAMS_TWEAKABLE_MESH = MakeLamsKeyID("TWEAKABLE_MESH", "_NAME");
@@ -32,10 +33,11 @@ const u32 E_LAMS_TWEAKABLE_DECAL = MakeLamsKeyID("TWEAKABLE_DECAL", "_NAME");
 StaticCP<RScript> gTweakShapeScript;
 StaticCP<RScript> gTweakCheckpointScript;
 StaticCP<RScript> gTweakExplosiveScript;
+StaticCP<RScript> gTweakMagicEyeScript;
 
 struct SCheckpointStyle {
     CGUID Mesh[NUM_CHECKPOINT_TYPES];
-    CGUID Material;
+    u32 SoundEnum;
 };
 
 SCheckpointStyle gCheckpointStyles[] =
@@ -43,25 +45,25 @@ SCheckpointStyle gCheckpointStyles[] =
     // Cardboard
     {
         { 122175, 120921, 120915, 120935 },
-        10724
+        6
     },
 
     // Wood
     {
         { 31238, 11668, 55455, 68386 },
-        10717
+        3
     },
 
     // Plastic
     {
         { 119228, 119230, 119227, 120939 },
-        10718
+        24
     },
 
     // Chrome
     {
         { 119221, 119217, 119220, 120941 },
-        10716
+        32
     }
 };
 
@@ -121,6 +123,109 @@ CGUID gLevelKeyStyles[] =
     44679
 };
 
+CGUID gMagicEyeStyles[] =
+{
+    // Normal
+    31054,
+    // Cute
+    31054,
+    // Evil
+    31054
+};
+
+CGUID gMagicMouthStyles[] =
+{
+    // Normal
+    22542
+};
+
+struct SLeverSwitchStyle {
+    CGUID Mesh[NUM_LEVER_SWITCH_TYPES];
+    u32 SoundEnum;
+};
+
+SLeverSwitchStyle gLeverSwitchStyles[] =
+{
+    // Cardboard
+    {
+        { 21936, 21940 },
+        6
+    },
+    // Wood
+    {
+        { 21935, 21939 },
+        3
+    },
+    // Plastic
+    {
+        { 21935, 21939 },
+        24
+    },
+    // Chrome
+    {
+        { 21935, 21939 },
+        32
+    }
+};
+
+struct SBouncePadStyle {
+    CGUID Mesh;
+    u32 SoundEnum;
+};
+
+SBouncePadStyle gBouncePadStyles[] =
+{
+    // Cardboard
+    {
+        77780,
+        6
+    },
+    // Wood
+    {
+        77780,
+        3
+    },
+    // Plastic
+    {
+        77780,
+        24
+    },
+    // Chrome
+    {
+        77780,
+        32
+    }
+};
+
+struct SSpikePlateStyle {
+    CGUID Mesh[NUM_SPIKE_PLATE_TYPES];
+    u32 SoundEnum;
+};
+
+SSpikePlateStyle gSpikePlateStyles[] =
+{
+    // Cardboard
+    {
+        { 29972, 29975 },
+        6
+    },
+    // Wood
+    {
+        { 29972, 29975 },
+        3
+    },
+    // Plastic
+    {
+        { 29972, 29975 },
+        24
+    },
+    // Chrome
+    {
+        { 29972, 29975 },
+        32
+    }
+};
+
 CGUID GetMeshGUID(CThing* thing)
 {
     if (thing == NULL) return 0;
@@ -171,14 +276,14 @@ void SetCheckpointStyle(CThing* thing, s32 type_index, s32 style_index)
     
     SCheckpointStyle& style = gCheckpointStyles[style_index];
     u32 mesh_key = style.Mesh[type_index];
-    u32 mat_key = style.Material;
+    u32 sound_enum = style.SoundEnum;
 
     if (mesh != NULL)
         mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
     
     PShape* shape = thing->GetPShape();
     if (shape != NULL)
-        shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
+        shape->SoundEnumOverride = sound_enum;
 
     PCheckpoint* checkpoint = FindPartCheckpoint(thing);
     if (checkpoint == NULL) return;
@@ -329,6 +434,183 @@ s32 GetLevelKeyStyle(CThing* thing)
     return 0;
 }
 
+void SetMagicEyeStyle(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    u32 mesh_key = gMagicEyeStyles[style_index];
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+}
+
+s32 GetMagicEyeStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gMagicEyeStyles); ++i)
+    {
+        if (gMagicEyeStyles[i] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+bool IsMagicEyeMesh(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return false;
+
+    for (int i = 0; i < ARRAY_LENGTH(gMagicEyeStyles); ++i)
+    for (int j = 0; j < NUM_MAGIC_EYE_STYLES; ++j)
+    {
+        if (gMagicEyeStyles[i] == guid)
+            return true;
+    }
+
+    return false;
+}
+
+bool IsTweakMagicEyeScriptAvailable()
+{
+    if (gTweakMagicEyeScript.GetRef() == NULL)
+    {
+        *((CP<RScript>*)&gTweakMagicEyeScript) = LoadResourceByKey<RScript>(E_TWEAK_MAGIC_EYE_SCRIPT, 0, STREAM_PRIORITY_DEFAULT);
+        gTweakMagicEyeScript->BlockUntilLoaded();
+    }
+    
+    return gTweakMagicEyeScript->IsLoaded();
+}
+
+void SetLeverSwitchStyle(CThing* thing, s32 type_index, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    SLeverSwitchStyle& style = gLeverSwitchStyles[style_index];
+    u32 mesh_key = style.Mesh[type_index];
+    u32 sound_enum = style.SoundEnum;
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+        shape->SoundEnumOverride = sound_enum;
+}
+
+s32 GetLeverSwitchStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gLeverSwitchStyles); ++i)
+    for (int j = 0; j < NUM_LEVER_SWITCH_STYLES; ++j)
+    {
+        if (gLeverSwitchStyles[i].Mesh[j] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+s32 GetLeverSwitchType(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gLeverSwitchStyles); ++i)
+    for (int j = 0; j < NUM_LEVER_SWITCH_TYPES; ++j)
+    {
+        if (gLeverSwitchStyles[i].Mesh[j] == guid)
+            return j;
+    }
+
+    return LEVER_SWITCH_TRINARY;
+}
+
+void SetBouncePadStyle(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    SBouncePadStyle& style = gBouncePadStyles[style_index];
+    u32 mesh_key = style.Mesh;
+    u32 sound_enum = style.SoundEnum;
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+        shape->SoundEnumOverride = sound_enum;
+}
+
+s32 GetBouncePadStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gLeverSwitchStyles); ++i)
+    for (int j = 0; j < NUM_BOUNCE_PAD_STYLES; ++j)
+    {
+        if (gBouncePadStyles[i].Mesh == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+void SetSpikePlateStyle(CThing* thing, s32 type_index, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    SSpikePlateStyle& style = gSpikePlateStyles[style_index];
+    u32 mesh_key = style.Mesh[type_index];
+    u32 sound_enum = style.SoundEnum;
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+        shape->SoundEnumOverride = sound_enum;
+}
+
+s32 GetSpikePlateStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gSpikePlateStyles); ++i)
+    for (int j = 0; j < NUM_SPIKE_PLATE_STYLES; ++j)
+    {
+        if (gSpikePlateStyles[i].Mesh[j] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+s32 GetSpikePlateType(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gSpikePlateStyles); ++i)
+    for (int j = 0; j < NUM_SPIKE_PLATE_TYPES; ++j)
+    {
+        if (gSpikePlateStyles[i].Mesh[j] == guid)
+            return j;
+    }
+
+    return SPIKE_PLATE_LARGE;
+}
+
 bool IsTweakCheckpointScriptAvailable()
 {
     if (gTweakCheckpointScript.GetRef() == NULL)
@@ -372,6 +654,7 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
     if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
     if (IsExplosiveMesh(thing)) return IsTweakExplosiveScriptAvailable();
+    if (IsMagicEyeMesh(thing)) return IsTweakMagicEyeScriptAvailable();
 
     if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
@@ -385,6 +668,8 @@ void OnStartTweaking(CThing* thing)
         set_script = gTweakCheckpointScript;
     else if(IsExplosiveMesh(thing))
         set_script = gTweakExplosiveScript;
+    else if(IsMagicEyeMesh(thing))
+        set_script = gTweakMagicEyeScript;
     else if(ShouldAttachShapeTweak(thing))
         set_script = gTweakShapeScript;
     else
@@ -404,7 +689,8 @@ void OnStopTweaking(CThing* thing)
     if (script.GetRef() == NULL || !script->IsLoaded()) return;
     if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT || 
         script->GetGUID() == E_TWEAK_CHECKPOINT_SCRIPT || 
-        script->GetGUID() == E_TWEAK_EXPLOSIVE_SCRIPT)
+        script->GetGUID() == E_TWEAK_EXPLOSIVE_SCRIPT || 
+        script->GetGUID() == E_TWEAK_MAGIC_EYE_SCRIPT)
         thing->RemovePart(PART_TYPE_SCRIPT);
 }
 

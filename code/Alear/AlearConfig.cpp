@@ -25,6 +25,9 @@ CConfigBool gAllowDebugTooltypes(L"Popit", L"Function - Allow Debug Tooltypes", 
 CConfigBool gAllowMeshScaling(L"Popit", L"Function - Allow Mesh Scaling", false);
 CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Meshes", false);
 
+CConfigBool gUseLegacyKeyColors(L"Tools", L"Gadgets - Use Legacy Key Colors", true);
+CConfigBool gUseNewKeyColorSelection(L"Tools", L"Gadgets - Use New Key Color Selection", true);
+
 CConfigBool gPlayBackgroundStings(L"Loading", L"Audio - Play Background Stings", true);
 CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
 CConfigBool gLoadDefaultMaterial(L"Loading", L"Visual - Use Fallback Graphics Materials", false);
