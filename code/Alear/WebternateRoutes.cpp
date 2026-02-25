@@ -14,59 +14,11 @@
 #include <map>
 #include <HTTPClient.h>
 
-class MMOTextStreamA {
-public:
-    struct AsHex {
-        AsHex(u32 value) { Value = value; }
-        u32 Value;
-    };
-
-    struct FmtInt {
-        FmtInt(const char* format, u32 value) { Format = format; Value = value; }
-        const char* Format;
-        u32 Value;
-    };
-public:
-    virtual ~MMOTextStreamA() = 0;
-public:
-
-    inline MMOTextStreamA& operator<<(bool v)
-    {
-        return *this << (v ? "true" : "false");
-    }
-
-    inline MMOTextStreamA& operator<<(int v)
-    {
-        char fmt[64];
-        FormatString<64>(fmt, "%d", v);
-        return *this << fmt;
-    }
-
-    inline MMOTextStreamA& operator<<(v4 v)
-    {
-        char fmt[256];
-        FormatString<256>(fmt, "[%f, %f, %f]", v.getX().getAsFloat(), v.getY().getAsFloat(), v.getZ().getAsFloat());
-        return *this << fmt;
-    }
-
-    inline MMOTextStreamA& operator<<(char const* s)
-    {
-        OutputString(s);
-        return *this;
-    }
-
-    inline MMOTextStreamA& operator<<(MMString<char>& s)
-    {
-        OutputString(s.c_str());
-        return *this;
-    }
-public:
-    virtual void OutputData(const void* data, u32 len) = 0;
-private:
-    virtual void OutputString(const char* s) = 0;
-    virtual void OutputString(const wchar_t* s) = 0;
-    virtual void OutputString(const tchar_t* s) = 0;
-};
+#include <ResourceGame.h>
+#include <ResourceLevel.h>
+#include <thing.h>
+#include <PartPhysicsWorld.h>
+#include <TextStream.h>
 
 struct SCompareIgnoreCase {
 	bool operator()(const MMString<char>& a, const MMString<char>& b) const
@@ -422,6 +374,60 @@ public:
     }
 };
 
+const char* gObjectTypeNames[NUM_OBJECT_TYPES] =
+{
+#define ENUM_MACRO(name) #name,
+    #include <ThingObjectType.inl>
+#undef ENUM_MACRO
+};
+
+const char* GetObjectTypeName(const CThing* thing)
+{
+    EObjectType type = OBJECT_UNKNOWN;
+    if (thing) type = (EObjectType)thing->ObjectType;
+    if (type < OBJECT_UNKNOWN || type >= NUM_OBJECT_TYPES)
+        type = OBJECT_UNKNOWN;
+    return gObjectTypeNames[type];
+}
+
+void WebternateThingsPage(CRoute* route, MMOTextStreamA& stream)
+{
+    stream << "<h1>Things</h1>";
+    
+    PWorld* world = gGame->GetWorld();
+    CVector<CThingPtr> things;
+    if (world != NULL)
+    {
+        things.reserve(world->Things.size());
+        for (u32 i = 0; i < world->Things.size(); ++i)
+            things.push_back(world->Things[i]);
+    }
+
+    stream << "<table><tr>";
+    stream << "<th>Object</th><th>Parts</th></tr>";
+
+    for (u32 i = 0; i < things.size(); ++i)
+    {
+        const CThing* thing = things[i];
+        if (!thing) continue;
+
+        stream << "<tr><td><a href=\"things?uid=" << thing->UID << "\">" 
+        << GetObjectTypeName(thing) << " (" << thing->UID << ")</a></td>";
+        stream << "<td>";
+
+        #define PART_MACRO(name, type) \
+        if (thing->HasPart(type)) \
+        { \
+            stream << " " #name; \
+        }
+        #include <PartList.h>
+        #undef PART_MACRO
+
+        stream << "</td>";
+        stream << "</tr>";
+    }
+}
+
 
 void OnWebternateSetup(CWebternate* webternate)
 {
@@ -432,4 +438,9 @@ void OnWebternateSetup(CWebternate* webternate)
     webternate->AddRoute(new CCinemachineEndpoint(webternate));
     webternate->AddRoute(new CInventoryEndpoint(webternate));
     webternate->AddRoute(new CFaviconEndpoint(webternate));
+}
+
+void AttachWebternateHooks()
+{
+    MH_PokeHook(0x006827a4, WebternateThingsPage);
 }

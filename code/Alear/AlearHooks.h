@@ -62,6 +62,7 @@ extern "C" uintptr_t _gmat_player_colour_hook;
 extern "C" uintptr_t _on_reflect_load_thing_hook;
 extern "C" uintptr_t _on_reflect_start_save_thing_hook;
 extern "C" uintptr_t _on_reflect_finish_save_thing_hook;
+extern "C" uintptr_t _on_fixup_thing_hook;
 
 extern "C" uintptr_t _initextradata_part_generatedmesh;
 

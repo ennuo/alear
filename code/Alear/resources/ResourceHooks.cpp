@@ -25,6 +25,7 @@
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
 #include <PartGeneratedMesh.h>
+#include <PartSwitch.h>
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
 #include <ResourceSettingsFluid.h>
@@ -891,6 +892,12 @@ void CThing::OnFinishSave()
     }
 }
 
+void CThing::OnFixup()
+{
+    MMLog("fixing loaded thing...\n");
+    UpdateObjectType();
+}
+
 #include "AlearConfig.h"
 const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
 ReflectReturn CThing::OnLoad()
@@ -1003,5 +1010,6 @@ void InitResourceHooks()
     MH_PokeBranch(0x00770954, &_on_reflect_load_thing_hook);
     MH_PokeBranch(0x0076cf28, &_on_reflect_start_save_thing_hook);
     MH_PokeBranch(0x0076cf34, &_on_reflect_finish_save_thing_hook);
+    MH_PokeBranch(0x003c4224, &_on_fixup_thing_hook);
     MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
 }

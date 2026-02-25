@@ -473,6 +473,12 @@ _initextradata_part_generatedmesh:
     ld %r0, 0xb0(%r1)
     ba 0x00031f10
 
+create_hook on_fixup_thing_hook, 0x003c4228
+    mr %r3, %r28
+    call _ZN6CThing7OnFixupEv
+    rldicl %r9, %r28, 0x0, 0x20
+    ret
+
 .global _custom_gooey_network_action_hook
 _custom_gooey_network_action_hook:
     mr %r3, %r31
