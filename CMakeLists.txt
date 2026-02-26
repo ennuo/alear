@@ -27,6 +27,7 @@ file(GLOB_RECURSE SRC_FILES
 )
 
 set(ENABLE_LIBSM64 0)
+set(ENABLE_NEW_LOGIC_SYSTEM 0)
 set(ENABLE_CINEMACHINE 1)
 
 set(SM64_SRC_FILES "")
@@ -110,6 +111,10 @@ endif()
 if (ENABLE_LIBSM64)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC __SM64__=1)
     target_link_libraries(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCE_DIR}/sdk/libsm64/libsm64.a)
+endif()
+
+if (ENABLE_NEW_LOGIC_SYSTEM)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC __NEW_LOGIC_SYSTEM__=1)
 endif()
 
 # Create the sprx

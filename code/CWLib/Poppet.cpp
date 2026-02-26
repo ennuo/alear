@@ -17,12 +17,25 @@ MH_DefineFunc(CPoppet_GetLocalProfile, 0x0033e9f0, TOC1, const CP<RLocalProfile>
 MH_DefineFunc(CPoppet_GetThingToIgnore, 0x00352f1c, TOC1, CThing*, CPoppet*);
 MH_DefineFunc(CPoppet_SendPoppetDangerMessage, 0x0033fc1c, TOC1, void, CPoppet*, ELethalType);
 MH_DefineFunc(CPoppet_PushMode, 0x0034dd08, TOC1, void, CPoppet*, EPoppetMode, EPoppetSubMode);
+MH_DefineFunc(CPoppet_PopMode, 0x0034d1a4, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppet_SendPoppetMessage, 0x0033fee0, TOC1, void, CPoppet*, EPoppetMessageType);
 MH_DefineFunc(CPoppet_RenderUI, 0x0034584c, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppet_SetDangerType, 0x003482e0, TOC1, void, CPoppet*, CThing*);
 MH_DefineFunc(CPoppet_FloodFill, 0x003401d8, TOC1, bool, CPoppet*, CThing*);
 MH_DefineFunc(CPoppet_Backup, 0x0034b844, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppet_ClearMarquee, 0x004077a0, TOC1, void, CPoppet*);
+MH_DefineFunc(CPoppetEditState_PlayPoppetEditSound, 0x003668cc, TOC1, AUDIO_HANDLE, CPoppetEditState*, const char*, float, float);
+MH_DefineFunc(CPoppetEditState_SetCursorHoverObject, 0x00365b58, TOC1, void, CPoppetEditState*, CThing*, int);
+
+AUDIO_HANDLE CPoppetEditState::PlayPoppetEditSound(const char* name, float param1, float param2)
+{
+    return CPoppetEditState_PlayPoppetEditSound(this, name, param1, param2);
+}
+
+void CPoppetEditState::SetCursorHoverObject(CThing* hover, int decoration_idx)
+{
+    return CPoppetEditState_SetCursorHoverObject(this, hover, decoration_idx);
+}
 
 void CPoppet::SetDangerType(CThing* thing)
 {
@@ -97,6 +110,11 @@ void CPoppet::SendPoppetDangerMessage(ELethalType lethal_type)
 void CPoppet::PushMode(EPoppetMode mode, EPoppetSubMode submode)
 {
     return CPoppet_PushMode(this, mode, submode);
+}
+
+void CPoppet::PopMode()
+{
+    CPoppet_PopMode(this);
 }
 
 void CPoppet::SendPoppetMessage(EPoppetMessageType message)

@@ -142,6 +142,8 @@ void CThing::Deflate()
 
 void CThing::InitializeExtraData()
 {
+    Behaviour = 0;
+    Flags = 0;
     CustomThingData = new CCustomThingData();
     ObjectType = OBJECT_UNKNOWN;
 }
@@ -350,8 +352,8 @@ EObjectType GetObjectType(CThing* thing)
                     return OBJECT_MESH_GENERATED_PIXELATE;
                 default:
                 {
-                    // basically every mesh is tweakable right now anyway
-                    return OBJECT_MESH_GENERATED_TWEAKABLE;
+                    // todo: check if color tweakable
+                    return OBJECT_MESH_GENERATED;
                 }
             }
         }
@@ -360,7 +362,7 @@ EObjectType GetObjectType(CThing* thing)
     }
 
     if (part_render_mesh)
-        return OBJECT_MESH_TWEAKABLE;
+        return OBJECT_MESH;
 
     if (thing->HasPart(PART_TYPE_POS))
         return OBJECT_BONE;

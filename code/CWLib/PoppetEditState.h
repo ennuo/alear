@@ -36,6 +36,13 @@ enum {
     BUTTON_HOLD_DELETE
 };
 public:
+    AUDIO_HANDLE PlayPoppetEditSound(const char* name, float param1, float param2);
+    void SetCursorHoverObject(CThing* hover, int decoration_idx);
+public:
+    void ClearSwitchConnector();
+    void UpdateSwitchConnector();
+    bool SetSwitchConnector(CThing* switch_thing, CThing* connector_thing);
+public:
     CStickerInfo Sticker;
     CDecorationInfo Decoration;
     CThingPtr CursorDummy;
@@ -53,6 +60,13 @@ public:
     int ButtonHoldFrame;
     CThingPtr ButtonHoldThing;
     bool JustPlacedLongJointEnd;
+
+    // This field is custom, we're just sneaking it in
+    // the padding in-between fields so we don't have to actually
+    // allocate anything extra.
+    u8 SwitchConnectorPort;
+    u8 SwitchConnectorRefPort;
+
     AUDIO_HANDLE GluingSound;
     CRawVector<v2,CAllocatorMMAligned128> OverridePolygon; // 0x260
     CRawVector<unsigned int> OverrideLoops; // 0x26c

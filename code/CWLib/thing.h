@@ -126,6 +126,8 @@ private:
     char Pad[0x7];
 public:
     u8 ObjectType;
+    u8 Behaviour;
+    u16 Flags;
     CCustomThingData* CustomThingData;
 };
 

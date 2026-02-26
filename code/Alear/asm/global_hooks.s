@@ -849,6 +849,11 @@ create_hook debug_camera_input_hook, 0x0014e0f4
     cmpwi %cr7, %r3, 0x0
     ret
 
+create_hook render_mesh_setup_rendering_hook, 0x0003ecb8
+    mr %r3, %r31
+    call _ZNK11PRenderMesh14SetupRenderingEv
+    ret
+
 create_hook draw_call_hook, 0x001f7f6c 
     mr %r3, %r22 
     call _Z27OnPreBindDrawCallPrimitivesP13CMeshInstance 

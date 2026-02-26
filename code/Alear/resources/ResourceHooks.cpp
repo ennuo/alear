@@ -115,6 +115,18 @@ void RSyncedProfile::InitializeExtraData()
 }
 
 template<typename R>
+ReflectReturn Reflect(R& r, CSwitchSignal& d);
+
+template<typename R>
+ReflectReturn Reflect(R& r, CCompactSwitchOutput& d)
+{
+    ReflectReturn ret;
+    ADD(Activation);
+    ADD(Ports);
+    return ret;
+}
+
+template<typename R>
 ReflectReturn Reflect(R& r, CRegionOverride& d)
 {
     ReflectReturn ret;
@@ -746,6 +758,49 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
                 break; 
             }
+#ifdef __NEW_LOGIC_SYSTEM__
+            case 0x4c4f4743: /* LOGC */
+            {
+                PSwitch* part_switch = thing->GetPSwitch();
+                if (part_switch == NULL) return REFLECT_UNINITIALISED;
+
+                CVector<CCompactSwitchOutput> outputs;
+
+                if ((ret = Reflect(r, outputs)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->ManualActivation)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->CrappyOldLBP1Switch)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->Behaviour)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->OutputType)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->PlaySwitchAudio)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->DetectUnspawnedPlayers)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, part_switch->ResetWhenFull)) != REFLECT_OK) return ret;
+
+                DebugLog("loaded logic component with %d outputs\n", outputs.size());
+
+                CThingPtr* it = part_switch->TargetList.begin();
+                
+                part_switch->Outputs.try_resize(outputs.size());
+                for (int i = 0; i < outputs.size(); ++i)
+                {
+                    CCompactSwitchOutput& compact = outputs[i];
+                    CSwitchOutput* output = new CSwitchOutput();
+                    output->Owner = part_switch;
+                    output->Port = i;
+
+                    output->Activation = compact.Activation;
+                    for (int j = 0; j < compact.Ports.size(); ++j, ++it)
+                    {
+                        if (*it == NULL) continue;
+                        output->TargetList.push_back(CSwitchTarget(*it, compact.Ports[j]));
+                    }
+
+                    part_switch->Outputs[i] = output;
+                }
+
+                break;
+            }
+#endif
+
             // case 0x4c414e44: /* LAND */
             // {
             //     PShape* shape = thing->GetPShape();
@@ -814,6 +869,30 @@ ReflectReturn PScriptName::WriteAlearData()
         if ((ret = Reflect(r, mesh->TextureAnimationSpeedOff)) != REFLECT_OK) return ret;
     }
 
+#ifdef __NEW_LOGIC_SYSTEM__
+    PSwitch* part_switch = thing->GetPSwitch();
+    if (part_switch != NULL)
+    {
+        u32 magic = 0x4c4f4743;
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret;
+
+        CVector<CCompactSwitchOutput> outputs(part_switch->Outputs.size());
+        for (int i = 0; i < part_switch->Outputs.size(); ++i)
+            outputs.push_back(CCompactSwitchOutput(part_switch->Outputs[i]));
+
+        DebugLog("writing logic component with %d outputs\n", outputs.size());
+        
+        if ((ret = Reflect(r, outputs)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->ManualActivation)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->CrappyOldLBP1Switch)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->Behaviour)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->OutputType)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->PlaySwitchAudio)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->DetectUnspawnedPlayers)) != REFLECT_OK) return ret;
+        if ((ret = Reflect(r, part_switch->ResetWhenFull)) != REFLECT_OK) return ret;
+    }
+#endif
+
     // PShape* shape = thing->GetPShape();
     // if (shape != NULL && shape->HasCustomData())
     // {
@@ -842,6 +921,10 @@ ReflectReturn PScriptName::WriteAlearData()
 
 bool CThing::HasCustomPartData()
 {
+#ifdef __NEW_LOGIC_SYSTEM__
+    if (GetPSwitch() != NULL) return true;
+#endif
+
     if (GetPMaterialOverride() != NULL) return true;
 
     PGeneratedMesh* mesh = GetPGeneratedMesh();
@@ -854,34 +937,25 @@ bool CThing::HasCustomPartData()
 
 void CThing::OnStartSave()
 {
-    // PWorld* world = GetPWorld();
-    // if (world != NULL)
-    // {
-    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
-    //     {
-    //         CThing* thing = *it;
-    //         if (thing == this || thing == NULL) continue;
-    //         thing->OnStartSave();
-    //     }
-    // }
+#ifdef __NEW_LOGIC_SYSTEM__
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+        part_switch->GenerateLegacyData();
+#endif
 
     if (!HasCustomPartData()) return;
+
     AddPart(PART_TYPE_SCRIPT_NAME);
     GetPScriptName()->WriteAlearData();
 }
 
 void CThing::OnFinishSave()
 {
-    // PWorld* world = GetPWorld();
-    // if (world != NULL)
-    // {
-    //     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
-    //     {
-    //         CThing* thing = *it;
-    //         if (thing == this || thing == NULL) continue;
-    //         thing->OnFinishSave();
-    //     }
-    // }
+#ifdef __NEW_LOGIC_SYSTEM__
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+        part_switch->ClearLegacyData();
+#endif
 
     PScriptName* part = GetPScriptName();
     if (part != NULL)
@@ -913,6 +987,7 @@ void CThing::OnFixup()
 {
     UpdateObjectType();
 
+#ifdef __NEW_LOGIC_SYSTEM__
     PSwitch* part_switch = GetPSwitch();
     if (part_switch != NULL)
     {
@@ -975,12 +1050,15 @@ void CThing::OnFixup()
             }
         }
     }
+#endif
 }
 
 #include "AlearConfig.h"
 const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
 ReflectReturn CThing::OnLoad()
 {
+    ReflectReturn ret = REFLECT_OK;
+
     if (gLoadDefaultMaterial)
     {
         PGeneratedMesh* mesh = GetPGeneratedMesh();
@@ -1049,10 +1127,32 @@ ReflectReturn CThing::OnLoad()
     //     brightness_off = 0.0f;
     // }
 
-
+    // Alear data will fixup the behaviors, but by default,
+    // we'll copy the old behavior to all our targets.
+#ifdef __NEW_LOGIC_SYSTEM__
+    PSwitch* part_switch = GetPSwitch();
+    if (part_switch != NULL)
+    {
+        // The outputs haven't been fixed up yet, so everything should still be in the target list.
+        for (CThingPtr* ptr = part_switch->TargetList.begin(); ptr != part_switch->TargetList.end(); ++ptr)
+        {
+            if (ptr->GetThing() == NULL) continue;
+            (*ptr)->Behaviour = part_switch->BehaviourOld;
+        }
+    }
+#endif
 
     PScriptName* part = GetPScriptName();
-    if (part != NULL) return part->LoadAlearData(this);
+    if (part != NULL)
+    {
+        if ((ret = part->LoadAlearData(this)) != REFLECT_OK) return ret;
+    }
+
+#ifdef __NEW_LOGIC_SYSTEM__
+    if (part_switch != NULL)
+        part_switch->OnPartLoaded();
+#endif
+    
     return REFLECT_OK;
 }
 

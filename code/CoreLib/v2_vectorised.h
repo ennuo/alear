@@ -30,6 +30,8 @@ struct v2 {
 
     inline v2(Vectormath::Aos::Vector4 v) { V = v.get128(); }
 
+    inline operator Vectormath::Aos::Vector4() const { return Vectormath::Aos::Vector4(V); }
+
     inline vfloat operator[](unsigned int idx) { return vfloat(V, idx); }
 
     inline vfloat getX() const { return vfloat(V, 0); }

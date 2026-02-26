@@ -11,8 +11,10 @@ struct Forked {
     m44 InvWorldPosition;
 };
 public:
+    inline const m44& GetWorldPosition() { return Game.WorldPosition; }
     v4 GetBestGameplayPosv4();
     void SetWorldPos(m44 const& m, bool recompute_stickers, unsigned int);
+    void SetLocalPos(m44 const& m, bool recompute_stickers, unsigned int);
 public:
     u32 AnimHash;
 public:
