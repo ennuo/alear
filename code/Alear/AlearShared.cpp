@@ -233,6 +233,56 @@ void OnUpdateLevel()
 
 
 extern void RenderSwitchDebug();
+
+void RenderInteractiveOutlines()
+{
+    if (gGame->EditMode) return;
+    PWorld* world = gGame->GetWorld();
+    if (!world) return;
+
+
+    CRawVector<const CThing*> shapes;
+    for (u32 i = 0; i < world->Things.size(); ++i)
+    {
+        const CThing* thing = world->Things[i];
+        if (!thing || thing->GetPShape() == NULL) continue;
+        const PShape* shape = thing->GetPShape();
+        if (shape->InteractPlayMode != 0)
+            shapes.push_back(thing);
+    }
+
+    if (shapes.size() == 0) return;
+
+    SDrawObjectEdgesScratch scratch;
+
+    float time = (mmalex::sin((((gGraphicsFrameNum % 64) / 64.0f) * M_PI) * 2) * 0.5f) + 0.5f;
+    float fatness = time * 10.0f;
+    float alpha = time * 0.5f;
+
+    for (u32 i = 0; i < world->ListPYellowHead.size(); ++i)
+    {
+        PYellowHead* yellowhead = world->ListPYellowHead[i];
+        CPoppet* poppet = yellowhead->Poppet;
+
+        if (!poppet || 
+            poppet->GetMode() == MODE_NORMAL || 
+            poppet->GetSubMode() == SUBMODE_GRAB_PHOTO) continue;
+
+        cellGcmSetDepthTestEnable(gCellGcmCurrentContext, CELL_GCM_TRUE);
+        for (u32 j = 0; j < shapes.size(); ++j)
+        {
+            const CThing* thing = shapes[j];
+            const CP<RMaterial>& material = thing->GetPShape()->MMaterial;
+
+            if (material && material->IsLoaded() && material->IDensity == 0.0f) continue;
+
+            poppet->DrawObjectEdges(scratch, thing, PLAYER_COLOUR_PRIMARY, false, fatness, 1.0f, 640.0f, alpha, 660.0f);
+        }
+    }
+
+
+}
+
 void OnRunPipelinePostProcessing()
 {
     gPoppetBloomHack.clear();
@@ -246,7 +296,8 @@ void OnRunPipelinePostProcessing()
         cellGcmSetClearColor(gCellGcmCurrentContext, 0x00000000);
         cellGcmSetClearSurface(gCellGcmCurrentContext, CELL_GCM_CLEAR_R | CELL_GCM_CLEAR_G | CELL_GCM_CLEAR_B | CELL_GCM_CLEAR_A);
     }
-    
+
+    RenderInteractiveOutlines();
     if (gShowOutlines) RenderShapeOutlines();
     RenderSwitchDebug();
 }

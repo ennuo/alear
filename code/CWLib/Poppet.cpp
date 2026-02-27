@@ -26,6 +26,12 @@ MH_DefineFunc(CPoppet_Backup, 0x0034b844, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppet_ClearMarquee, 0x004077a0, TOC1, void, CPoppet*);
 MH_DefineFunc(CPoppetEditState_PlayPoppetEditSound, 0x003668cc, TOC1, AUDIO_HANDLE, CPoppetEditState*, const char*, float, float);
 MH_DefineFunc(CPoppetEditState_SetCursorHoverObject, 0x00365b58, TOC1, void, CPoppetEditState*, CThing*, int);
+MH_DefineFunc(CPoppet_DrawObjectEdges, 0x00342bd0, TOC1, void, const CPoppet*, SDrawObjectEdgesScratch&, const CThing*, EPlayerColour, bool, float, float, float, float, float);
+
+void CPoppet::DrawObjectEdges(SDrawObjectEdgesScratch& scratch, const CThing* thing, EPlayerColour colour, bool draw_back_and_sides, float fatness, float line_extend, float dotted, float alpha, float scroll_speed) const
+{
+    CPoppet_DrawObjectEdges(this, scratch, thing, colour, draw_back_and_sides, fatness, line_extend, dotted, alpha, scroll_speed);
+}
 
 AUDIO_HANDLE CPoppetEditState::PlayPoppetEditSound(const char* name, float param1, float param2)
 {

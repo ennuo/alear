@@ -13,6 +13,15 @@
 #include "PoppetEditState.h"
 #include "PoppetInventory.h"
 
+#include <PlayerColours.h>
+#include <vector.h>
+
+struct SDrawObjectEdgesScratch
+{
+    CRawVector<v2, CAllocatorMMAligned128> Poly;
+    CRawVector<unsigned int> SplitAfter;
+};
+
 enum EPoppetStage {
     E_STAGE_LOCKSTEP = 0x4,
     E_STAGE_PREDICTED = 0x8,
@@ -58,6 +67,7 @@ public:
     bool FloodFill(CThing* thing);
     void Backup();
     void ClearMarquee();
+    void DrawObjectEdges(SDrawObjectEdgesScratch& scratch, const CThing* thing, EPlayerColour colour, bool draw_back_and_sides, float fatness, float line_extend, float dotted, float alpha, float scroll_speed) const;
 private:
     RaycastJobResult m_raycastJobResult;
     CRaycastResults m_raycastOnSwitchConnector;
