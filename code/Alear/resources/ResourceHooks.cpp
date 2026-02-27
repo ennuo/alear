@@ -986,6 +986,13 @@ enum
 void CThing::OnFixup(u32 revision)
 {
     UpdateObjectType();
+    //UpdateKeyColours();
+    UpdateOldScripts();
+    if(revision <= 0x1e6)
+    {
+        UpdateOldJoints();
+        UpdateOldMeshes();
+    }
 
 #ifdef __NEW_LOGIC_SYSTEM__
     PSwitch* part_switch = GetPSwitch();

@@ -8,6 +8,7 @@
 #include <ResourceGFXMesh.h>
 #include <PartGeneratedMesh.h>
 #include <PartRenderMesh.h>
+#include <PartTrigger.h>
 #include <ResourceTranslationTable.h>
 #include <PartScript.h>
 
@@ -497,6 +498,9 @@ void SetCreatureBrainStyle(CThing* thing, s32 style_index)
         shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
         shape->SoundEnumOverride = sound_enum;
     }
+    PTrigger* trigger = thing->GetPTrigger();
+    if (trigger != NULL)
+        trigger->Enabled = (bool)style_index;
 }
 
 s32 GetCreatureBrainStyle(CThing* thing)

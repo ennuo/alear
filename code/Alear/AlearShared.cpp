@@ -1048,7 +1048,7 @@ void AttachIceHooks()
 
 void AttachRenderJointHooks()
 {
-    MH_PokeHook(0x0003e3a0, GetRenderJointMesh);
+    //MH_PokeHook(0x0003e3a0, GetRenderJointMesh);
 }
 
 AUDIO_HANDLE gBackdropAudioHandle;

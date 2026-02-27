@@ -1,4 +1,6 @@
 #include "thing.h"
+#include "ResourceSystem.h"
+#include "MatrixUtils.h"
 #include <hook.h>
 
 #include <PartSwitch.h>
@@ -280,13 +282,14 @@ EObjectType GetObjectType(CThing* thing)
         }
     }
 
-    if (thing->HasPart(PART_TYPE_TRIGGER) && thing->HasPart(PART_TYPE_SHAPE) && thing->Parent != NULL)
+    if (thing->HasPart(PART_TYPE_TRIGGER) && thing->Parent != NULL)
     {
         EObjectType parent_type = GetObjectType(thing->Parent);
         if (parent_type == OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE)
             return OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE_TRIGGER;
         if (parent_type == OBJECT_KEY)
             return OBJECT_KEY_TRIGGER;
+        return OBJECT_TRIGGER;
     }
 
     if (thing->HasPart(PART_TYPE_SCRIPT))
@@ -403,4 +406,140 @@ EObjectType GetObjectType(CThing* thing)
 void CThing::UpdateObjectType()
 {
     ObjectType = GetObjectType(this);
+}
+
+void CThing::UpdateKeyColours()
+{
+    if(this == NULL) return;
+    PSwitchKey* switch_key = this->GetPSwitchKey();
+    if(switch_key != NULL)
+    {
+        //grab switch colour from script?
+        //v4 color = GetSwitchColour(this.switch_key->ColorIndex);
+        PRenderMesh* mesh = this->GetPRenderMesh();
+        PShape* shape = this->GetPShape();
+        //if(shape != NULL)
+            //shape->EditorColour = color;
+        //else if(mesh != NULL)
+            //mesh->EditorColour = color;
+    }
+}
+
+void CThing::UpdateOldScripts()
+{
+    if(this == NULL) return;
+    if(this->HasPart(PART_TYPE_SCRIPT))
+    {
+        const CP<RScript>& script = this->GetPScript()->ScriptInstance.Script;
+        if (script)
+        {
+            switch (script->GetGUID().guid)
+            {
+                case 0x3def:
+                    //assign script with new guid
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0x4750));
+                    script->Fixup();
+                    break;
+                case 0x4807:
+                case 0x493a:
+                case 0x49bb:
+                case 0x4bae:
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0x47f4));
+                    script->Fixup();
+                    break;
+                case 0x54fd:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_LEVER;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x54fe:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_PRESSURE;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x5579:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_PROXIMITY;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x5587:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_KEY;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x5590:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_TRINARY;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x76c0:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_STICKER;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x9037:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_GRAB;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                    break;
+                case 0x9b16:
+                    this->GetPSwitch()->Type = SWITCH_TYPE_BUTTON;
+                    this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
+                    script->Fixup();
+                default: return;
+            }
+        }
+    }
+    //Remove weird shapes with switches
+    else if(this->HasPart(PART_TYPE_SWITCH))
+    {
+        this->RemovePart(PART_TYPE_SWITCH);
+    }
+}
+
+void CThing::UpdateOldJoints()
+{
+    if(this == NULL) return;
+    PJoint* joint = this->GetPJoint();
+    if(joint != NULL)
+    {
+        if(joint->Type == JOINT_TYPE_PISTON)
+            joint->Stiff = true;
+    }
+}
+
+void CThing::UpdateOldMeshes()
+{
+    if(this == NULL) return;
+    PRenderMesh* mesh = this->GetPRenderMesh();
+    if(mesh == NULL) return;
+    PShape* shape = this->GetPShape();
+    PPos* pos = this->GetPPos();
+    if(shape != NULL)
+    {
+        switch (mesh->Mesh->GetGUID().guid)
+        {
+            // Prize Bubble
+            case 0x52bc:
+            {
+                //mesh->Mesh->GetGUID()->SetMesh(LoadResourceByKey<RScript>(0xa60f));
+                shape->SetMaterial(LoadResourceByKey<RMaterial>(0x44fd));
+                shape->Thickness = 70.0f;
+                
+                v4 translation; v3 scale; m44 rotation;
+                Decompose(translation, rotation, scale, this->GetPPos()->Game.WorldPosition);
+
+                scale.setZ(0.671647f);
+
+                m44 wpos = rotation * m44::scale(scale);
+                wpos.setCol3(translation);
+                PPos* pos = this->GetPPos();
+                pos->Fork->LocalPosition = wpos;
+                pos->Fork->WorldPosition = wpos;
+                break;
+            }
+            default:
+                break;
+        }
+    }
 }
