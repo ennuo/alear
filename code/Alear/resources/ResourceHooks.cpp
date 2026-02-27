@@ -983,7 +983,7 @@ enum
     E_KEY_ANGLE = 73932
 };
 
-void CThing::OnFixup()
+void CThing::OnFixup(u32 revision)
 {
     UpdateObjectType();
 

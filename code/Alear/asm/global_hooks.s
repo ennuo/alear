@@ -482,7 +482,8 @@ _initextradata_part_generatedmesh:
 
 create_hook on_fixup_thing_hook, 0x003c4228
     mr %r3, %r28
-    call _ZN6CThing7OnFixupEv
+    mr %r4, %r20
+    call _ZN6CThing7OnFixupEj
     rldicl %r9, %r28, 0x0, 0x20
     ret
 

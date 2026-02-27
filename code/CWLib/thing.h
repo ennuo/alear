@@ -66,7 +66,7 @@ public:
     void OnStartSave();
     void OnFinishSave();
     ReflectReturn OnLoad();
-    void OnFixup();
+    void OnFixup(u32 revision = 0x272);
 
     void Deflate();
     void Inflate();
