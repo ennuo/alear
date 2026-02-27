@@ -144,11 +144,16 @@ int GetNumInputs(const CThing* thing)
 {
     switch (thing->ObjectType)
     {
-        case OBJECT_TAG:
+        case OBJECT_TRIGGER_DELETE:
+        case OBJECT_CREDITS_TEXT:
+        case OBJECT_CREDITS_LIGHTS_ON:
+        case OBJECT_CREDITS_LIGHTS_OFF:
+        case OBJECT_MAGNETIC_KEY:
         case OBJECT_LIGHT:
         case OBJECT_EXPLOSIVE_IMPACT:
         case OBJECT_EXPLOSIVE_TRIGGERED:
         case OBJECT_DISSOLVABLE:
+        case OBJECT_EXPLODING:
         case OBJECT_MESH_GENERATED_TWEAKABLE:
         case OBJECT_MESH_GENERATED_HOLOGRAM:
         case OBJECT_MESH_GENERATED_STICKER_PANEL:
@@ -157,6 +162,7 @@ int GetNumInputs(const CThing* thing)
         case OBJECT_MESH_TWEAKABLE:
         case OBJECT_JOINT_MOTOR_BOLT:
         case OBJECT_JOINT_WOBBLE_BOLT:
+        case OBJECT_JOINT_FLIPPER_BOLT:
         case OBJECT_JOINT_CHAIN:
         case OBJECT_JOINT_PISTON:
         case OBJECT_CAMERA_GAME:
@@ -164,6 +170,7 @@ int GetNumInputs(const CThing* thing)
         case OBJECT_SWITCH_TOGGLE:
         case OBJECT_SWITCH_RANDOM:
         case OBJECT_SWITCH_NOT:
+        case OBJECT_SWITCH_NOP:
         case OBJECT_SWITCH_SIGN_SPLIT:
         case OBJECT_SWITCH_ANIMATIC:
         case OBJECT_SWITCH_CIRCUIT_NODE:
@@ -197,10 +204,10 @@ int GetNumInputs(const CThing* thing)
         case OBJECT_CREATURE_BRAIN_BASE:
         case OBJECT_MAGIC_MOUTH:
         case OBJECT_MAGIC_EYE:
-        case OBJECT_ENTRANCE:
-        case OBJECT_CHECKPOINT_SINGLE_LIFE:
-        case OBJECT_CHECKPOINT_DOUBLE_LIFE:
-        case OBJECT_CHECKPOINT_INFINITE_LIFE:
+        case OBJECT_SPAWNPOINT_ENTRANCE:
+        case OBJECT_SPAWNPOINT_SINGLE_LIFE:
+        case OBJECT_SPAWNPOINT_DOUBLE_LIFE:
+        case OBJECT_SPAWNPOINT_INFINITE_LIFE:
         case OBJECT_SCOREBOARD:
         case OBJECT_LEVEL_LINK:
         case OBJECT_CLOSE_LEVEL:

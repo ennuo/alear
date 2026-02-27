@@ -30,6 +30,20 @@ public:
         
         return default_value;
     }
+    
+    template <typename T> 
+    void SetValue(char const* member, T value)
+    {
+        CP<CInstanceLayout>& layout = ScriptInstance.InstanceLayout;
+        if (!layout) return;
+    
+        SFieldLayoutDetails* field = layout->LookupField(member);
+        if (field == NULL) return;
+    
+        CRawVector<unsigned char>& data = ScriptInstance.MemberVariables;
+        if (data.size() >= field->InstanceOffset + sizeof(T))
+            *(T*)(data.begin() + field->InstanceOffset) = value;
+    }
 
 public:
     CScriptInstance ScriptInstance;

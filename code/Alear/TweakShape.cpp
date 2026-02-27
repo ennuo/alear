@@ -25,6 +25,7 @@ const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 const u32 E_TWEAK_EXPLOSIVE_SCRIPT = 3549987402u;
 const u32 E_TWEAK_MAGIC_EYE_SCRIPT = 34681;
+const u32 E_TWEAK_SPIKE_PLATE_SCRIPT = 34681;
 
 const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
 const u32 E_LAMS_TWEAKABLE_MESH = MakeLamsKeyID("TWEAKABLE_MESH", "_NAME");
@@ -34,6 +35,7 @@ StaticCP<RScript> gTweakShapeScript;
 StaticCP<RScript> gTweakCheckpointScript;
 StaticCP<RScript> gTweakExplosiveScript;
 StaticCP<RScript> gTweakMagicEyeScript;
+StaticCP<RScript> gTweakSpikePlateScript;
 
 struct SCheckpointStyle {
     CGUID Mesh[NUM_CHECKPOINT_TYPES];
@@ -117,10 +119,6 @@ CGUID gLevelKeyStyles[] =
     3763,
     // Brass
     44681,
-    // Foil
-    44679,
-    // Null
-    44679
 };
 
 CGUID gMagicEyeStyles[] =
@@ -131,6 +129,28 @@ CGUID gMagicEyeStyles[] =
     31054,
     // Evil
     31054
+};
+
+struct SCreatureBrainStyle {
+    CGUID Mesh;
+    CGUID Material;
+    u32 SoundEnum;
+};
+
+SCreatureBrainStyle gCreatureBrainStyles[] =
+{
+    // Protected
+    {
+        39574,
+        10724,
+        32
+    },
+    // Unprotected
+    {
+        38925,
+        17661,
+        0
+    }
 };
 
 CGUID gMagicMouthStyles[] =
@@ -459,16 +479,67 @@ s32 GetMagicEyeStyle(CThing* thing)
     return 0;
 }
 
-bool IsMagicEyeMesh(CThing* thing)
+void SetCreatureBrainStyle(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PRenderMesh* mesh = thing->GetPRenderMesh();
+    
+    u32 mesh_key = gCreatureBrainStyles[style_index].Mesh;
+    u32 mat_key = gCreatureBrainStyles[style_index].Material;
+    u32 sound_enum = gCreatureBrainStyles[style_index].SoundEnum;
+
+    if (mesh != NULL)
+        mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
+    
+    PShape* shape = thing->GetPShape();
+    if (shape != NULL)
+    {
+        shape->MMaterial = LoadResourceByKey<RMaterial>(mat_key, 0, STREAM_PRIORITY_DEFAULT);
+        shape->SoundEnumOverride = sound_enum;
+    }
+}
+
+s32 GetCreatureBrainStyle(CThing* thing)
+{
+    CGUID guid = GetMeshGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gCreatureBrainStyles); ++i)
+    {
+        if (gCreatureBrainStyles[i].Mesh == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+bool IsMiscMesh(CThing* thing, s32 mesh_type)
 {
     CGUID guid = GetMeshGUID(thing);
     if (!guid) return false;
 
-    for (int i = 0; i < ARRAY_LENGTH(gMagicEyeStyles); ++i)
-    for (int j = 0; j < NUM_MAGIC_EYE_STYLES; ++j)
+    switch (mesh_type)
     {
-        if (gMagicEyeStyles[i] == guid)
-            return true;
+        case MISC_MESH_MAGIC_EYE:
+            for (int i = 0; i < ARRAY_LENGTH(gMagicEyeStyles); ++i)
+            for (int j = 0; j < NUM_MAGIC_EYE_STYLES; ++j)
+            {
+                if (gMagicEyeStyles[i] == guid)
+                    return true;
+            }
+            break;
+            
+        case MISC_MESH_SPIKE_PLATE:
+            for (int i = 0; i < ARRAY_LENGTH(gSpikePlateStyles); ++i)
+            for (int j = 0; j < NUM_SPIKE_PLATE_STYLES; ++j)
+            {
+                if (gSpikePlateStyles[i].Mesh[j] == guid)
+                    return true;
+            }
+            break;
+        
+        default:
+            break;
     }
 
     return false;
@@ -483,6 +554,17 @@ bool IsTweakMagicEyeScriptAvailable()
     }
     
     return gTweakMagicEyeScript->IsLoaded();
+}
+
+bool IsTweakSpikePlateScriptAvailable()
+{
+    if (gTweakSpikePlateScript.GetRef() == NULL)
+    {
+        *((CP<RScript>*)&gTweakSpikePlateScript) = LoadResourceByKey<RScript>(E_TWEAK_SPIKE_PLATE_SCRIPT, 0, STREAM_PRIORITY_DEFAULT);
+        gTweakSpikePlateScript->BlockUntilLoaded();
+    }
+    
+    return gTweakSpikePlateScript->IsLoaded();
 }
 
 void SetLeverSwitchStyle(CThing* thing, s32 type_index, s32 style_index)
@@ -654,7 +736,8 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 
     if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
     if (IsExplosiveMesh(thing)) return IsTweakExplosiveScriptAvailable();
-    if (IsMagicEyeMesh(thing)) return IsTweakMagicEyeScriptAvailable();
+    if (IsMiscMesh(thing, MISC_MESH_MAGIC_EYE)) return IsTweakMagicEyeScriptAvailable();
+    if (IsMiscMesh(thing, MISC_MESH_SPIKE_PLATE)) return IsTweakMagicEyeScriptAvailable();
 
     if (thing->GetPRenderMesh() == NULL && thing->GetPGeneratedMesh() == NULL) return false;
 
@@ -668,8 +751,10 @@ void OnStartTweaking(CThing* thing)
         set_script = gTweakCheckpointScript;
     else if(IsExplosiveMesh(thing))
         set_script = gTweakExplosiveScript;
-    else if(IsMagicEyeMesh(thing))
+    else if(IsMiscMesh(thing, MISC_MESH_MAGIC_EYE))
         set_script = gTweakMagicEyeScript;
+    else if(IsMiscMesh(thing, MISC_MESH_SPIKE_PLATE))
+        set_script = gTweakSpikePlateScript;
     else if(ShouldAttachShapeTweak(thing))
         set_script = gTweakShapeScript;
     else

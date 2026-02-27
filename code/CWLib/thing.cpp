@@ -176,7 +176,7 @@ EObjectType GetObjectType(CThing* thing)
     if (part_shape != NULL && part_shape->MMaterial && part_shape->MMaterial->GetGUID() == 0x2cbf)
         return OBJECT_HEAD;
 
-    if (thing->GetPart(PART_TYPE_SWITCH_KEY) != NULL) return OBJECT_TAG;
+    if (thing->GetPart(PART_TYPE_SWITCH_KEY) != NULL) return OBJECT_MAGNETIC_KEY;
     if (thing->GetPart(PART_TYPE_EMITTER) != NULL) return OBJECT_EMITTER;
     if (thing->GetPart(PART_TYPE_AUDIO_WORLD) != NULL) return OBJECT_SOUND;
     if (thing->GetPart(PART_TYPE_CREATURE) != NULL) return OBJECT_CREATURE_BRAIN_BASE;
@@ -200,9 +200,10 @@ EObjectType GetObjectType(CThing* thing)
             case SWITCH_TYPE_LEVER: return OBJECT_SWITCH_LEVER;
             case SWITCH_TYPE_TRINARY: return OBJECT_SWITCH_TRINARY;
             case SWITCH_TYPE_PROXIMITY: return OBJECT_SWITCH_PROXIMITY;
-            case SWITCH_TYPE_KEY: return OBJECT_SWITCH_KEY;
+            case SWITCH_TYPE_KEY: return OBJECT_SWITCH_MAGNETIC_LOCK;
             case SWITCH_TYPE_STICKER: return OBJECT_SWITCH_STICKER;
             case SWITCH_TYPE_GRAB: return OBJECT_SWITCH_GRAB;
+            case SWITCH_TYPE_PRESSURE: return OBJECT_SWITCH_PRESSURE;
             case SWITCH_TYPE_PAINT: return OBJECT_SWITCH_PAINT;
             case SWITCH_TYPE_PROJECTILE: return OBJECT_SWITCH_PROJECTILE;
             case SWITCH_TYPE_AND: return OBJECT_SWITCH_AND;
@@ -215,11 +216,13 @@ EObjectType GetObjectType(CThing* thing)
             case SWITCH_TYPE_OR: return OBJECT_SWITCH_OR;
             case SWITCH_TYPE_XOR: return OBJECT_SWITCH_XOR;
             case SWITCH_TYPE_NOT: return OBJECT_SWITCH_NOT;
+            case SWITCH_TYPE_NOP: return OBJECT_SWITCH_NOP;
             case SWITCH_TYPE_MOISTURE: return OBJECT_SWITCH_MOISTURE;
             case SWITCH_TYPE_SIGN_SPLIT: return OBJECT_SWITCH_SIGN_SPLIT;
             case SWITCH_TYPE_ALWAYS_ON: return OBJECT_SWITCH_ALWAYS_ON;
             case SWITCH_TYPE_ANIMATIC: return OBJECT_SWITCH_ANIMATIC;
             case SWITCH_TYPE_SCORE: return OBJECT_SWITCH_SCORE;
+            case SWITCH_TYPE_DEATH: return OBJECT_SWITCH_DEATH;
             case SWITCH_TYPE_SELECTOR: return OBJECT_SWITCH_SELECTOR;
             case SWITCH_TYPE_CIRCUIT_BOARD: return OBJECT_SWITCH_CIRCUIT_BOARD;
             case SWITCH_TYPE_CONTROL_PAD: return OBJECT_SWITCH_CONTROL_PAD;
@@ -242,8 +245,13 @@ EObjectType GetObjectType(CThing* thing)
             case JOINT_TYPE_ROD: return OBJECT_JOINT_ROD;
             case JOINT_TYPE_BOLT: return OBJECT_JOINT_BOLT;
             case JOINT_TYPE_SPRING_ANGULAR: return OBJECT_JOINT_SPRING_BOLT;
-            // account for other types of motor bolts later
-            case JOINT_TYPE_MOTOR: return OBJECT_JOINT_MOTOR_BOLT;
+            case JOINT_TYPE_MOTOR: 
+                if(part_joint->AnimationPattern == 1)
+                    return OBJECT_JOINT_MOTOR_BOLT;
+                else if(part_joint->AnimationPattern == 2)
+                    return OBJECT_JOINT_FLIPPER_BOLT;
+                else
+                    return OBJECT_JOINT_WOBBLE_BOLT;
         }
     }
 
@@ -256,6 +264,20 @@ EObjectType GetObjectType(CThing* thing)
         if (mesh_guid == 0x9a96) return OBJECT_CREATURE_BRAIN_PROTECTED_BUBBLE;
         if (mesh_guid == 0x980d) return OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE;
         if (mesh_guid == 0x86c2) return OBJECT_CREATURE_BRAIN_BASE;
+    }
+
+    if (part_shape != NULL && part_shape->MMaterial)
+    {
+        switch (part_shape->MMaterial->GetGUID().guid)
+        {
+            case 0x29e3: return OBJECT_CREATIVE_ZONE;
+            case 0x5542: 
+            case 0x55fb: 
+                return OBJECT_DISSOLVABLE;
+            case 0x55fc: return OBJECT_EXPLODING;
+            case 0xb123: return OBJECT_MAGICWALL;
+            break;
+        }
     }
 
     if (thing->HasPart(PART_TYPE_TRIGGER) && thing->HasPart(PART_TYPE_SHAPE) && thing->Parent != NULL)
@@ -274,6 +296,12 @@ EObjectType GetObjectType(CThing* thing)
         {
             switch (script->GetGUID().guid)
             {
+                case 0x2d08: return OBJECT_TRIGGER_DELETE;
+                case 0x2d0f: return OBJECT_CREDITS_END_LEVEL;
+                case 0x3df6: return OBJECT_CREATURE_SOCKET;
+                case 0xcb13: return OBJECT_CREDITS_LIGHTS_ON;
+                case 0xcb88: return OBJECT_CREDITS_LIGHTS_OFF;
+                case 0xcb89: return OBJECT_CREDITS_TEXT;
                 case 0x4750: return OBJECT_MUSIC_NORMAL;
                 case 0x4563: return OBJECT_POWERUP_JETPACK_TETHERED;
                 case 0x2d27: return OBJECT_RACE_END;
@@ -285,6 +313,8 @@ EObjectType GetObjectType(CThing* thing)
                 case 0x47f4: return OBJECT_MAGIC_MOUTH;
                 case 0x11596: return OBJECT_POWERUP_GRAPPLING_HOOK;
                 case 0x10542: return OBJECT_POWERUP_REMOVER;
+                case 0x1060d: return OBJECT_MISSILE_EXPLOSIVE;
+                case 0x107c1: return OBJECT_BULLET_PLASMA;
                 case 0x13534: return OBJECT_SCORE_GIVER;
                 case 0x12d39: return OBJECT_BOUNCE_PAD;
                 case 0x122d8: return OBJECT_POWERUP_SCUBA_GEAR;

@@ -5,11 +5,16 @@
 
 class CThing;
 
+enum EMiscMeshType {
+    MISC_MESH_MAGIC_EYE,
+    MISC_MESH_SPIKE_PLATE,
+
+    NUM_MISC_MESHES
+};
+
 enum ELevelKeyStyle {
     LEVEL_KEY_STYLE_GEMS,
     LEVEL_KEY_STYLE_BRASS,
-    LEVEL_KEY_STYLE_FOIL,
-    LEVEL_KEY_STYLE_NULL,
 
     NUM_LEVEL_KEY_STYLES
 };
@@ -63,9 +68,16 @@ enum ESpikePlateType {
     NUM_SPIKE_PLATE_TYPES
 };
 
+enum ECreatureBrainStyle {
+    CREATURE_BRAIN_PROTECTED,
+    CREATURE_BRAIN_UNPROTECTED,
+
+    NUM_CREATURE_BRAIN_STYLES
+};
+
 CGUID GetMeshGUID(CThing* thing);
 
-bool IsMagicEyeMesh(CThing* thing);
+bool IsMiscMesh(CThing* thing, s32 mesh_type);
 
 s32 GetLevelKeyStyle(CThing* thing);
 s32 GetMagicEyeStyle(CThing* thing);
@@ -74,12 +86,14 @@ s32 GetLeverSwitchType(CThing* thing);
 s32 GetBouncePadStyle(CThing* thing);
 s32 GetSpikePlateStyle(CThing* thing);
 s32 GetSpikePlateType(CThing* thing);
+s32 GetCreatureBrainStyle(CThing* thing);
 
 void SetLevelKeyStyle(CThing* thing, s32 style_index);
 void SetMagicEyeStyle(CThing* thing, s32 style_index);
 void SetLeverSwitchStyle(CThing* thing, s32 type_index, s32 style_index);
 void SetBouncePadStyle(CThing* thing, s32 style_index);
 void SetSpikePlateStyle(CThing* thing, s32 type_index, s32 style_index);
+void SetCreatureBrainStyle(CThing* thing, s32 style_index);
 
 
 #endif // MISC_MESH_STYLES_H

@@ -482,6 +482,37 @@ namespace TweakSettingNativeFunctions
                 u8 interact_play_mode = shape->InteractPlayMode;
                 return interact_play_mode;
             }
+            case E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER:
+            {
+                PScript* script = thing->GetPScript();
+                f32 jump_modifier = script->GetValue<f32>("JumpModifier", 0.0f);
+                DebugLog("Jump Mod: (%f)\n", jump_modifier);
+                return setting.GameToFixed(jump_modifier);
+            }
+            case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
+            {
+                PScript* script = thing->GetPScript();
+                f32 speed_modifier = script->GetValue<f32>("SpeedModifier", 0.0f);
+                DebugLog("Speed Mod: (%f)\n", speed_modifier);
+                return setting.GameToFixed(speed_modifier);
+            }
+            case E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE:
+            {
+                PCreature* creature = thing->GetPCreature();
+                if (creature != NULL)
+                {
+                    CThing* resource_thing = creature->ResourceThing.GetThing();
+                    if (resource_thing != NULL)
+                    {
+                        return GetCreatureBrainStyle(resource_thing);
+                    }
+                }
+            }
+            case E_GOOEY_NETWORK_ACTION_ENEMY_POINTS:
+            {
+                PScript* script = thing->GetPScript();
+                return script->GetValue<int>("PointsFixed", 0);
+            }
         }
 
         return 0;
@@ -687,6 +718,7 @@ bool InitTweakSettings()
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE)
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
         .SetIcon(CAROUSEL_LEVEL_KEY_STYLE)
+        .SetIcon(explosive_style_texture, 0)
         .SetDebugToolTip(L"Visual Style");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE)
@@ -726,6 +758,32 @@ bool InitTweakSettings()
         .SetIcon(CAROUSEL_INTERACTION_MODE)
         .SetIcon(interaction_mode_texture, 0)
         .SetDebugToolTip(L"INTERACTION_MODE");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(1.0f, 2.0f)
+        .SetSteps(0.01f, 0.1f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"JUMP_MODIFIER");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(1.0f, 2.0f)
+        .SetSteps(0.01f, 0.1f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"SPEED_MODIFIER");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE)
+        .SetupYesNo()
+        .SetIcon(paramanim_texture, 1)
+        .SetToolTip("ENEMY_COLLECTABLE");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_ENEMY_POINTS)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(0.0, 1000.0f)
+        .SetSteps(1.0f, 10.0f)
+        .SetIcon(paramanim_texture, 1)
+        .SetToolTip("ENEMY_POINTS_AWARDS");
 
     // visual style
         // Entrance
@@ -995,6 +1053,69 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
             break;
         }
+        
+        case E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER:
+        {
+            float jump_modifier = setting.FixedToGame(action.Value);
+            DebugLog("E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER: %08x (%f)\n", (u32)action.Value, jump_modifier);
+
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PScript* script = thing->GetPScript();
+                if (script != NULL)
+                    script->SetValue("JumpModifier", jump_modifier);
+            }
+
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
+        {
+            float speed_modifier = setting.FixedToGame(action.Value);
+            DebugLog("E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER: %08x (%f)\n", (u32)action.Value, speed_modifier);
+
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PScript* script = thing->GetPScript();
+                if (script != NULL)
+                    script->SetValue("SpeedModifier", speed_modifier);
+            }
+
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PCreature* creature = thing->GetPCreature();
+                if (creature != NULL)
+                {
+                    CThing* resource_thing = creature->ResourceThing.GetThing();
+                    if (resource_thing != NULL)
+                    {
+                        SetCreatureBrainStyle(resource_thing, action.Value);
+                    }
+                }
+            }
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_ENEMY_POINTS:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PScript* script = thing->GetPScript();
+                if (script != NULL)
+                    script->SetValue("PointsFixed", (s32)action.Value);
+            }
+
+            break;
+        }
 
         case E_GOOEY_NETWORK_ACTION_TUTORIAL_MODE:
         {
@@ -1052,8 +1173,6 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Gemstones", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Brass", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Gold Foil", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Gold Foil", v4(1.0)));
 
             break;
         }
@@ -1175,6 +1294,11 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_BOUNCE_PAD_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_INTERACTION_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    
+    TABLE[E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_ENEMY_POINTS] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x00931de4, (u32)TABLE);
