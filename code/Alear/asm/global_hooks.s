@@ -860,3 +860,13 @@ create_hook draw_call_hook, 0x001f7f6c
     call _Z27OnPreBindDrawCallPrimitivesP13CMeshInstance 
     rlwinm %r0, %r25, 0x0, 0x18, 0x18 
     ret 
+
+.global _layer_switch_hook
+_layer_switch_hook:
+    cmpwi %cr7, %r11, 0x0
+    beq %cr7, DisableLethalFlag
+    cmpwi %cr7, %r11, 0x3
+    beq %cr7, DisableLethalFlag
+    ba 0x0003a8d0
+DisableLethalFlag:
+    ba 0x0003a73c

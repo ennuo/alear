@@ -1127,6 +1127,8 @@ void OnBackdropChange(PWorld* world)
 
 void InitSharedHooks()
 {
+    MH_PokeBranch(0x0003a8c8, &_layer_switch_hook);
+
     MH_PokeBranch(0x001f7f68, &_draw_call_hook); 
     
     MH_PokeBranch(0x0014e0ec, &_debug_camera_input_hook);
