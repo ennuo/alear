@@ -183,6 +183,7 @@ EObjectType GetObjectType(CThing* thing)
     if (thing->GetPart(PART_TYPE_AUDIO_WORLD) != NULL) return OBJECT_SOUND;
     if (thing->GetPart(PART_TYPE_CREATURE) != NULL) return OBJECT_CREATURE_BRAIN_BASE;
     if (thing->GetPart(PART_TYPE_WORLD) != NULL) return OBJECT_WORLD;
+    if (thing->GetPart(PART_TYPE_EFFECTOR) != NULL) return OBJECT_EFFECTOR;
 
     u32 part_flags = 0;
     for (int i = 0; i < PART_TYPE_SIZE; ++i)
@@ -261,25 +262,54 @@ EObjectType GetObjectType(CThing* thing)
     if (part_render_mesh != NULL && part_render_mesh->Mesh)
     {
         CGUID mesh_guid = part_render_mesh->Mesh->GetGUID();
-        if (mesh_guid == 0xea9) return OBJECT_SCORE_BUBBLE;
-        if (mesh_guid == 0x52bc) return OBJECT_PRIZE_BUBBLE;
-        if (mesh_guid == 0x9a96) return OBJECT_CREATURE_BRAIN_PROTECTED_BUBBLE;
-        if (mesh_guid == 0x980d) return OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE;
-        if (mesh_guid == 0x86c2) return OBJECT_CREATURE_BRAIN_BASE;
+        switch(mesh_guid.guid)
+        {
+            case 0xea5:
+            case 0xea7:
+            case 0xeab:
+                return OBJECT_RESOURCE;
+            case 0xea9: 
+            {
+                if (part_shape != NULL && part_shape->MMaterial && part_shape->MMaterial->GetGUID() == 0x44fd)
+                    return OBJECT_SCORE_BUBBLE;
+                else
+                    return OBJECT_RESOURCE;
+            }
+            case 0x4df1: return OBJECT_FAN;
+            case 0x52bc: return OBJECT_PRIZE_BUBBLE;
+            case 0x7514: return OBJECT_SPIKE_PLATE_SMALL;
+            case 0x7517: return OBJECT_SPIKE_PLATE_LARGE;
+            case 0x9a96: return OBJECT_CREATURE_BRAIN_PROTECTED_BUBBLE;
+            case 0x980d: return OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE;
+            case 0x9853: return OBJECT_CREATURE_LEG;
+            case 0x9854: return OBJECT_CREATURE_WHEEL_LARGE;
+            case 0x99fd: return OBJECT_CREATURE_WHEEL_SMALL;
+            case 0x86c2: return OBJECT_CREATURE_BRAIN_BASE;
+            break;
+        }
     }
 
     if (part_shape != NULL && part_shape->MMaterial)
     {
         switch (part_shape->MMaterial->GetGUID().guid)
         {
+            case 0x29e0:
+            case 0x29e1:
+            case 0x29e2:
+            case 0x4720:
+                return OBJECT_HORRIBLE;
             case 0x29e3: return OBJECT_CREATIVE_ZONE;
             case 0x5542: 
             case 0x55fb: 
                 return OBJECT_DISSOLVABLE;
             case 0x55fc: return OBJECT_EXPLODING;
+            case 0x7476: return OBJECT_EFFECTOR;
             case 0xb123: return OBJECT_MAGICWALL;
             break;
         }
+        if(!thing->HasPart(PART_TYPE_RENDER_MESH))
+            if(part_shape->LethalType == LETHAL_SPIKE)
+                return OBJECT_SPIKE_DANGER;
     }
 
     if (thing->HasPart(PART_TYPE_TRIGGER) && thing->Parent != NULL)
@@ -287,7 +317,7 @@ EObjectType GetObjectType(CThing* thing)
         EObjectType parent_type = GetObjectType(thing->Parent);
         if (parent_type == OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE)
             return OBJECT_CREATURE_BRAIN_UNPROTECTED_BUBBLE_TRIGGER;
-        if (parent_type == OBJECT_KEY)
+        if (parent_type == OBJECT_LEVEL_KEY)
             return OBJECT_KEY_TRIGGER;
         return OBJECT_TRIGGER;
     }
@@ -346,7 +376,7 @@ EObjectType GetObjectType(CThing* thing)
                 case 27432:
                     return OBJECT_PRIZE_BUBBLE;
                 case 11538: return OBJECT_SCORE_BUBBLE;
-                case 17022: return OBJECT_KEY;
+                case 17022: return OBJECT_LEVEL_KEY;
 
                 break;
             }
@@ -395,7 +425,27 @@ EObjectType GetObjectType(CThing* thing)
     }
 
     if (part_render_mesh)
-        return OBJECT_MESH;
+    {
+        if(part_shape)
+            return OBJECT_MESH;
+        return OBJECT_MESH_LOOSE;
+    }
+
+    if(thing->Parent != NULL)
+    {
+        EObjectType parent_type = GetObjectType(thing->Parent);
+        switch (parent_type)
+        {
+            case OBJECT_CREATURE_WHEEL_LARGE:
+            case OBJECT_CREATURE_WHEEL_SMALL:
+                return OBJECT_CREATURE_WHEEL_BONE;
+            case OBJECT_CREATURE_LEG: return OBJECT_CREATURE_LEG_BONE;
+            case OBJECT_MAGIC_EYE: return OBJECT_MAGIC_EYE_BONE;
+        
+            default:
+                break;
+        }
+    }
 
     if (thing->HasPart(PART_TYPE_POS))
         return OBJECT_BONE;
@@ -423,9 +473,48 @@ void CThing::UpdateKeyColours()
         //else if(mesh != NULL)
             //mesh->EditorColour = color;
     }
+    PSwitch* switch_base = this->GetPSwitch();
+    if(switch_base != NULL)
+    {
+        if(switch_base->Type == SWITCH_TYPE_KEY)
+        {}
+    }
 }
 
-void CThing::UpdateOldScripts()
+void CThing::FixupEmitters()
+{
+    if(this == NULL) return;
+    PEmitter* emitter = this->GetPEmitter();
+    if(emitter != NULL)
+    {
+        if(!this->HasPart(PART_TYPE_RENDER_MESH))
+        {
+            emitter->ModScale = 1.0f;
+            this->AddPart(PART_TYPE_RENDER_MESH);
+            PRenderMesh* mesh = this->GetPRenderMesh();
+            mesh->Mesh = LoadResourceByKey<RMesh>(0x477b);
+            mesh->BoneThings.clear();
+            mesh->BoneThings.push_back(this);
+    
+            /*
+            v4 translation; v3 scale; m44 rotation;
+            Decompose(translation, rotation, scale, this->GetPPos()->Game.WorldPosition);
+
+            scale.setX(1.0f);
+            scale.setY(1.0f);
+            scale.setZ(1.0f);
+
+            m44 wpos = rotation * m44::scale(scale);
+            wpos.setCol3(translation);
+            PPos* pos = this->GetPPos();
+            pos->Fork->WorldPosition = wpos;
+            */
+        }
+        emitter->MaxEmittedAtOnce = MIN(emitter->MaxEmittedAtOnce, 100);
+    }
+}
+
+void CThing::FixupOldScripts()
 {
     if(this == NULL) return;
     if(this->HasPart(PART_TYPE_SCRIPT))
@@ -440,6 +529,9 @@ void CThing::UpdateOldScripts()
                     this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0x4750));
                     script->Fixup();
                     break;
+                case 0x4452:
+                    this->RemovePart(PART_TYPE_SCRIPT);
+                    break;
                 case 0x4807:
                 case 0x493a:
                 case 0x49bb:
@@ -447,6 +539,7 @@ void CThing::UpdateOldScripts()
                     this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0x47f4));
                     script->Fixup();
                     break;
+                /*
                 case 0x54fd:
                     this->GetPSwitch()->Type = SWITCH_TYPE_LEVER;
                     this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
@@ -486,6 +579,7 @@ void CThing::UpdateOldScripts()
                     this->GetPSwitch()->Type = SWITCH_TYPE_BUTTON;
                     this->GetPScript()->SetScript(LoadResourceByKey<RScript>(0xa60f));
                     script->Fixup();
+                */
                 default: return;
             }
         }
@@ -497,7 +591,7 @@ void CThing::UpdateOldScripts()
     }
 }
 
-void CThing::UpdateOldJoints()
+void CThing::FixupOldJoints()
 {
     if(this == NULL) return;
     PJoint* joint = this->GetPJoint();
@@ -508,7 +602,7 @@ void CThing::UpdateOldJoints()
     }
 }
 
-void CThing::UpdateOldMeshes()
+void CThing::FixupOldMeshes()
 {
     if(this == NULL) return;
     PRenderMesh* mesh = this->GetPRenderMesh();
@@ -534,7 +628,6 @@ void CThing::UpdateOldMeshes()
                 m44 wpos = rotation * m44::scale(scale);
                 wpos.setCol3(translation);
                 PPos* pos = this->GetPPos();
-                pos->Fork->LocalPosition = wpos;
                 pos->Fork->WorldPosition = wpos;
                 break;
             }

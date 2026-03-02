@@ -867,6 +867,10 @@ _layer_switch_hook:
     beq %cr7, DisableLethalFlag
     cmpwi %cr7, %r11, 0x3
     beq %cr7, DisableLethalFlag
+    cmpwi %cr7, %r11, 0x4
+    beq %cr7, DisableLethalFlag
+    cmpwi %cr7, %r11, 0xc
+    beq %cr7, DisableLethalFlag
     ba 0x0003a8d0
 DisableLethalFlag:
     ba 0x0003a73c

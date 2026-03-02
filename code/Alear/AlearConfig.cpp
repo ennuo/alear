@@ -28,10 +28,19 @@ CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Mes
 CConfigBool gUseLegacyKeyColors(L"Tools", L"Gadgets - Use Legacy Key Colors", true);
 CConfigBool gUseNewKeyColorSelection(L"Tools", L"Gadgets - Use New Key Color Selection", true);
 
-CConfigBool gPlayBackgroundStings(L"Loading", L"Audio - Play Background Stings", true);
-CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
-CConfigBool gLoadDefaultMaterial(L"Loading", L"Visual - Use Fallback Graphics Materials", false);
+CConfigBool gResetLevelSettings(L"Loading", L"Function - Force Default LevelSettings", false);
 CConfigBool gForceLoadEditable(L"Loading", L"Function - Force Editable On Load", false);
+CConfigBool gLoadDefaultMaterial(L"Loading", L"Function - Use Fallback for Missing Graphics Materials", false);
+CConfigBool gForceGFXShapes(L"Loading", L"Function - Add Graphics Materials to Shapes", false);
+CConfigBool gForcePlainGFX(L"Loading", L"Function - Force Plain Graphics Materials", false);
+CConfigBool gForcePlainBevels(L"Loading", L"Function - Force Plain Bevels", false);
+CConfigBool gForceMeshGFX(L"Loading", L"Function - Make All Meshes Materials", false);
+CConfigBool gUnlethalizeAllLethals(L"Loading", L"Function - Remove Lethals", false);
+CConfigBool gLoadRemoveAllStickers(L"Loading", L"Function - Remove all Stickers", false);
+CConfigBool gLoadRemoveAllDecorations(L"Loading", L"Function - Remove all Decorations", false);
+CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
+
+CConfigBool gPlayBackgroundStings(L"Audio", L"Audio - Play Background Stings", true);
 
 CConfigFloat gRenderDistance(L"Render", L"Visual - Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 

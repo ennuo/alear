@@ -89,6 +89,7 @@ int GetNumInputs(const CThing* thing)
         case OBJECT_EXPLOSIVE_TRIGGERED:
         case OBJECT_DISSOLVABLE:
         case OBJECT_EXPLODING:
+        case OBJECT_FAN:
         case OBJECT_MESH_GENERATED_TWEAKABLE:
         case OBJECT_MESH_GENERATED_HOLOGRAM:
         case OBJECT_MESH_GENERATED_STICKER_PANEL:
@@ -146,9 +147,10 @@ int GetNumInputs(const CThing* thing)
         case OBJECT_SCOREBOARD:
         case OBJECT_LEVEL_LINK:
         case OBJECT_CLOSE_LEVEL:
+        case OBJECT_RESOURCE:
         case OBJECT_SCORE_BUBBLE:
         case OBJECT_PRIZE_BUBBLE:
-        case OBJECT_KEY:
+        case OBJECT_LEVEL_KEY:
         case OBJECT_RACE_START:
         case OBJECT_RACE_END:
         case OBJECT_BULLET_WATER:

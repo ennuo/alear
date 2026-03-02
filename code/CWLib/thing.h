@@ -87,9 +87,10 @@ public:
 
     void UpdateObjectType();
     void UpdateKeyColours();
-    void UpdateOldScripts();
-    void UpdateOldJoints();
-    void UpdateOldMeshes();
+    void FixupOldScripts();
+    void FixupEmitters();
+    void FixupOldJoints();
+    void FixupOldMeshes();
 public:
 #define PART_MACRO(name, type) inline name* Get##name() const { return (name*)Parts[type]; }
     #include "PartList.h"

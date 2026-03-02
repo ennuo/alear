@@ -13,7 +13,7 @@ public:
     v4 RimColor;
     v4 RimColor2;
     v4 AmbientColor;
-    v2 SunPosition;
+    v3 SunPosition;
     float SunMultiplier;
     float FogNear;
     float FogFar;

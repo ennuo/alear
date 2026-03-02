@@ -987,11 +987,12 @@ void CThing::OnFixup(u32 revision)
 {
     UpdateObjectType();
     //UpdateKeyColours();
-    UpdateOldScripts();
+    FixupOldScripts();
+    FixupEmitters();
     if(revision <= 0x1e6)
     {
-        UpdateOldJoints();
-        UpdateOldMeshes();
+        FixupOldJoints();
+        FixupOldMeshes();
     }
 
 #ifdef __NEW_LOGIC_SYSTEM__
@@ -1066,23 +1067,153 @@ ReflectReturn CThing::OnLoad()
 {
     ReflectReturn ret = REFLECT_OK;
 
+    PGeneratedMesh* mesh = GetPGeneratedMesh();
+    PShape* shape = GetPShape();
+    PRenderMesh* render_mesh = GetPRenderMesh();
+
+    if(gResetLevelSettings)
+    {
+        PWorld* world = GetPWorld();
+        if(world != NULL)
+        {
+            world->LightingFactor = 1.0f;
+            world->DarknessFactor = 0.0f;
+            world->FogTintFactor = 0.0f;
+            world->FogFactor = 0.0f;
+
+            if(!HasPart(PART_TYPE_LEVEL_SETTINGS))
+                AddPart(PART_TYPE_LEVEL_SETTINGS);
+                
+            PLevelSettings* level_settings = GetPLevelSettings();
+            level_settings->SunPosition = v3(1.0f, 0.5f, 1.0f);
+            level_settings->SunPositionScale = 310309.0f;
+            level_settings->SunColor = v4(0.898648f, 0.787409f, 0.570237f, 1.04264f);
+            level_settings->AmbientColor = v4(0.846537f, 0.960361f, 1.02729f, 1.0f);
+            level_settings->SunMultiplier = 1.23093f;
+            level_settings->Exposure = 1.5f;
+            level_settings->FogColor = v4(0.635056f, 0.791202f, 0.747472f, 1.0f);
+            level_settings->FogNear = 50000.0f;
+            level_settings->FogFar = 70000.0f;
+            level_settings->RimColor = v4(0.0371861f, 0.748525f, 1.00544f, 1.5f);
+            level_settings->RimColor2 = v4(0.3f, 0.4f, 0.5f, 1.0f);
+            level_settings->BackdropAmbience = "";
+            level_settings->Presets = NULL;
+        }
+        else if(HasPart(PART_TYPE_LEVEL_SETTINGS))
+            RemovePart(PART_TYPE_LEVEL_SETTINGS);
+    }
+
     if (gLoadDefaultMaterial)
     {
-        PGeneratedMesh* mesh = GetPGeneratedMesh();
         if (mesh != NULL && !mesh->GfxMaterial)
         {
             DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
             mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
         }
     }
-    
-    if (gLoadDefaultMaterial)
+
+    if (gForceGFXShapes)
     {
-        PGeneratedMesh* mesh = GetPGeneratedMesh();
-        if (mesh != NULL && !mesh->GfxMaterial)
+        if (render_mesh == NULL && mesh == NULL && shape != NULL)
+        {
+            if(shape->MMaterial->GetGUID().guid != 0x2cbf)
+            {
+                AddPart(PART_TYPE_GENERATED_MESH);
+                mesh = GetPGeneratedMesh();
+                DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
+                mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+            }
+        }
+    }
+    
+    if (gForcePlainGFX)
+    {
+        if (mesh != NULL)
         {
             DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
             mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+        }
+    }
+
+    if(gForcePlainBevels)
+    {
+        if (mesh != NULL)
+        {
+            if(mesh->Bevel != NULL)
+            {
+                switch (mesh->Bevel->GetGUID().guid)
+                {
+                    case 0x2a1d:
+                    case 0x2a1f:
+                    case 0x2a26:
+                    case 0x2a27:
+                    case 0x2a29:
+                    case 0x2a47:
+                    case 0x2b6a:
+                    case 0x2c84:
+                    case 0x3d2e:
+                    case 0x436e:
+                    case 0x4473:
+                    case 0x4647:
+                    case 0x4bd7:
+                    case 0x67c0:
+                    case 0x130c2:
+                    case 0x130c4:
+                        break;
+                    default:
+                        mesh->Bevel = NULL;
+                        break;
+                }
+            }
+        }
+    }
+    
+
+    if(gUnlethalizeAllLethals)
+    {
+        if (shape != NULL)
+        {
+            shape->LethalType = LETHAL_NOT;
+            if(shape->MMaterial->GetGUID().guid == 0x779e)
+                shape->MMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
+        }
+    }
+
+    if(HasPart(PART_TYPE_RENDER_MESH) && HasPart(PART_TYPE_GENERATED_MESH))
+        RemovePart(PART_TYPE_GENERATED_MESH);
+
+    if(gForceMeshGFX)
+    {
+        if (shape != NULL)
+        {
+            if (render_mesh != NULL)
+            {
+                if(!HasPart(PART_TYPE_YELLOW_HEAD))
+                {
+                    render_mesh->BoneThings.clear();
+                    RemovePart(PART_TYPE_RENDER_MESH);
+                    AddPart(PART_TYPE_GENERATED_MESH);
+                    mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+                }
+            }
+        }
+    }
+
+    if(gLoadRemoveAllStickers)
+    {
+        PStickers* stickers = GetPStickers();
+        if(stickers != NULL)
+        {
+            RemovePart(PART_TYPE_STICKERS);
+        }
+    }
+
+    if(gLoadRemoveAllDecorations)
+    {
+        PDecorations* decorations = GetPDecorations();
+        if(decorations != NULL)
+        {
+            RemovePart(PART_TYPE_DECORATIONS);
         }
     }
 
@@ -1093,7 +1224,7 @@ ReflectReturn CThing::OnLoad()
         if (joint != NULL)
         {
             joint->InteractEditMode |= 2;
-            joint->InteractPlayMode |= 2;
+            //joint->InteractPlayMode |= 2;
         }
         */
         
@@ -1107,11 +1238,10 @@ ReflectReturn CThing::OnLoad()
             }
         }
        
-        PShape* shape = GetPShape();
         if (shape != NULL)
         {
             shape->InteractEditMode |= 3;
-            shape->InteractPlayMode |= 3;
+            //shape->InteractPlayMode |= 3;
         }
 
         PGroup* group = GetPGroup();
