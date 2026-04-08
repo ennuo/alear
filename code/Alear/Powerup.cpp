@@ -524,7 +524,7 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.TypeOfLethalThingTouched = i;
 
             v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
-            if (force.getY() < 0.0f)
+            if (force.getY() > 0.0f)
             {
                 if(state == STATE_FROZEN && state != STATE_INVINCIBLE)
                 {
@@ -556,6 +556,8 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.LethalForce = creature.Fork->hurt_force[i];
             creature.TypeOfLethalThingTouched = i;
 
+            v2 force = creature.Fork->hurt_force[LETHAL_NO_STAND];
+            if (force.getY() < 0.0f)
             {
                 return false;
             }

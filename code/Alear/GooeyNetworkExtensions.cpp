@@ -32,6 +32,9 @@ const u32 E_KEY_TWEAK_SETTINGS_SCRIPT = 3311245350ul;
 const u32 E_KEY_GLOBAL_SETTINGS_SDF = 3930801866ul;
 const u32 E_KEY_PARAM_ANIMATIONS_SDF = 2295497740ul;
 const u32 E_KEY_CHECKPOINT_TYPE_SDF = 3926674768ul;
+const u32 E_KEY_VISIBILITY_SDF = 4049006123ul;
+const u32 E_KEY_BASIC_ICONS_SDF = 4049006123ul;
+const u32 E_KEY_SENSOR_ICONS_SDF = 4049006123ul;
 const u32 E_KEY_EXPLOSIVE_STYLE_SDF = 4049006123ul;
 const u32 E_KEY_INTERACTION_MODE_SDF = 3410918115ul;
 
@@ -413,6 +416,15 @@ namespace TweakSettingNativeFunctions
 
         switch (network_action)
         {
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED: return thing->GetPSwitch()->Inverted;
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE: return setting.GameToFixed(thing->GetPSwitch()->AngleRange);
+            case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_VISIBLE:
+            {
+                PSwitch* part_switch = thing->GetPSwitch();
+                if (part_switch->HideInPlayMode == true && part_switch->HideConnectors == true) return 0;
+                if (part_switch->HideInPlayMode == false && part_switch->HideConnectors == true) return 1;
+                return 2;
+            }
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE: return GetCheckpointStyle(thing);
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_TYPE: return GetCheckpointType(thing);
             case E_GOOEY_NETWORK_ACTION_CHECKPOINT_DELAY:
@@ -464,6 +476,13 @@ namespace TweakSettingNativeFunctions
                 return setting.GameToFixed(speed);
             }
             
+            case E_GOOEY_NETWORK_ACTION_AMMO_COUNT:
+            {
+                PScript* script = thing->GetPScript();
+                s32 bullet_count = script->GetValue<s32>("BulletCount", 0);
+                return bullet_count;
+            }
+            
             case E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE: return GetExplosiveStyle(thing);
             case E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE: return GetLevelKeyStyle(thing);
             case E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE: return GetMagicEyeStyle(thing);
@@ -488,6 +507,13 @@ namespace TweakSettingNativeFunctions
                 f32 jump_modifier = script->GetValue<f32>("JumpModifier", 0.0f);
                 DebugLog("Jump Mod: (%f)\n", jump_modifier);
                 return setting.GameToFixed(jump_modifier);
+            }
+            case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
+            {
+                PScript* script = thing->GetPScript();
+                f32 distance = script->GetValue<f32>("Distance", 0.0f);
+                DebugLog("Distance: (%f)\n", distance);
+                return setting.GameToFixed(distance);
             }
             case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
             {
@@ -575,6 +601,8 @@ bool InitTweakSettings()
 
     CIconConfig global_settings_texture(E_KEY_GLOBAL_SETTINGS_SDF, 4, 4);
     CIconConfig paramanim_texture(E_KEY_PARAM_ANIMATIONS_SDF, 1, 2);
+    CIconConfig visibleinplaymode_icon_texture(E_KEY_VISIBILITY_SDF, 1, 1);
+    CIconConfig sensor_icons(E_KEY_SENSOR_ICONS_SDF, 4, 4);
     CIconConfig explosive_style_texture(E_KEY_EXPLOSIVE_STYLE_SDF, 2, 4);
     CIconConfig interaction_mode_texture(E_KEY_INTERACTION_MODE_SDF, 2, 2);
 
@@ -701,14 +729,30 @@ bool InitTweakSettings()
         .SetDebugToolTip(L"Spawn Delay")
         .SetConversion(1.0 / 30.0);
         
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED)
+        .SetupYesNo()
+        .SetIcon(sensor_icons, 4)
+        .SetDebugToolTip(L"Invert Output");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_VISIBLE)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(visibleinplaymode_icon_texture, 0)
+        .SetIcon(CAROUSEL_SWITCH_VISIBILITY)
+        .SetDebugToolTip(L"Electronics and Cable Visibility");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE)
+        .SetupAngleRange()
+        .SetIcon(sensor_icons, 1)
+        .SetIcon(MEASURER_ANGLE_RANGE)
+        .SetConversion(2.0f)
+        .SetDebugToolTip(L"Trigger Angle Range");
+        
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_AMMO_COUNT)
         .SetWidget(TWEAK_WIDGET_MEASURER)
         .SetMinMax(0.0, 300.0f)
         .SetSteps(1.0f, 10.0f)
-        .SetDebugSuffix(L"s")
-        .SetDebugToolTip(L"Spawn Delay")
-        .SetConversion(1.0 / 30.0);
-        
+        .SetDebugToolTip(L"Paint Amount");
+
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE)
         .SetWidget(TWEAK_WIDGET_CAROUSEL)
         .SetIcon(CAROUSEL_EXPLOSIVE_STYLE)
@@ -750,7 +794,7 @@ bool InitTweakSettings()
         
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SWITCHKEY_TWEAK_VISIBLE)
         .SetupYesNo()
-        .SetIcon(global_settings_texture, 15)
+        .SetIcon(visibleinplaymode_icon_texture, 0)
         .SetToolTip("HIDE_IN_PLAY_MODE");
         
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_INTERACTION_MODE)
@@ -765,6 +809,13 @@ bool InitTweakSettings()
         .SetSteps(0.01f, 0.1f)
         .SetIcon(paramanim_texture, 1)
         .SetDebugToolTip(L"JUMP_MODIFIER");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(1.0f, 100.0f)
+        .SetSteps(0.1f, 1.0f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"Launcher Height");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER)
         .SetWidget(TWEAK_WIDGET_MEASURER)
@@ -809,6 +860,58 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
     switch (action.Action)
     {
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL) 
+                part_switch->AngleRange = setting.FixedToGame(action.Value);
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL) part_switch->Inverted = action.Value;
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_VISIBLE:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing == NULL) break;
+            PSwitch* part_switch = thing->GetPSwitch();
+            if (part_switch != NULL)
+            {
+                switch (action.Value)
+                {
+                    case 0:
+                    {
+                        part_switch->HideConnectors = true;
+                        part_switch->HideInPlayMode = true;
+                        
+                        break;
+                    }
+                    case 1:
+                    {
+                        part_switch->HideConnectors = true;
+                        part_switch->HideInPlayMode = false;
+                        break;
+                    }
+                    case 2:
+                    {
+                        part_switch->HideConnectors = false;
+                        part_switch->HideInPlayMode = false;
+                    }
+
+                }
+            }
+
+            break;
+        }
         case E_GOOEY_NETWORK_ACTION_CHECKPOINT_MESH_STYLE:
         {
             DebugLog("checkpoint style uid=%d, index=%d\n", action.ThingUID, action.Value);
@@ -971,6 +1074,19 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             break;
         }
         
+        case E_GOOEY_NETWORK_ACTION_AMMO_COUNT:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PScript* script = thing->GetPScript();
+                if (script != NULL)
+                    script->SetValue("BulletCount", action.Value);
+            }
+
+            break;
+        }
+        
         case E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE:
         {
             DebugLog("explosive style uid=%d, index=%d\n", action.ThingUID, action.Value);
@@ -1070,6 +1186,34 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             break;
         }
         
+        case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
+        {
+            float distance = setting.FixedToGame(action.Value);
+            DebugLog("E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE: %08x (%f)\n", (u32)action.Value, distance);
+
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PScript* script = thing->GetPScript();
+                if (script != NULL)
+                {
+                    script->SetValue("Distance", distance);
+                    CThing* light_thing = script->GetValue<CThing*>("LightThing", NULL);
+                    if(light_thing != NULL)
+                    {
+                        PSpriteLight* light = light_thing->GetPSpriteLight();
+                        if(light != NULL)
+                        {
+                            //light->FarDist = distance;
+                        }
+                    }
+
+                }
+            }
+
+            break;
+        }
+        
         case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
         {
             float speed_modifier = setting.FixedToGame(action.Value);
@@ -1127,16 +1271,22 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
 void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 {
+    CIconConfig basic_icons(E_KEY_BASIC_ICONS_SDF, 2, 4);
+
     switch (type)
     {
         case CAROUSEL_MESH_STYLE:
         {
-            CIconConfig icon(2321600356ul, 2, 2);
+            CIconConfig icon(2321600356ul, 2, 4);
 
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Cardboard", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Wood", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Plastic", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Chrome", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Wood", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Copper", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Cardboard", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Silver", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Plastic", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Chrome", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"Rubber", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Gold", v4(1.0)));
 
             break;
         }
@@ -1149,6 +1299,17 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Single-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Double-Life Checkpoint", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Infinite-Lives Checkpoint", v4(1.0)));
+
+            break;
+        }
+        
+        case CAROUSEL_SWITCH_VISIBILITY:
+        {
+            CIconConfig icon(E_KEY_VISIBILITY_SDF, 1, 2);
+
+            items.push_back(CCarouselItem(basic_icons.Texture, basic_icons.GetUV(0), L"No", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Switch Visible", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(0), L"Switch and Cables Visible", v4(1.0)));
 
             break;
         }
@@ -1225,6 +1386,7 @@ void AttachCarouselHooks()
 
     TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_SWITCH_VISIBILITY] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_EXPLOSIVE_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_LEVEL_KEY_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_MAGIC_EYE_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
@@ -1286,6 +1448,10 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_MESH_ANIMATION_SPEED_OFF] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_VISIBLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_INVERTED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_SWITCH_TWEAK_ANGLE_RANGE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    
     TABLE[E_GOOEY_NETWORK_ACTION_EXPLOSIVE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LEVEL_KEY_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_MAGIC_EYE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
@@ -1295,6 +1461,8 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_SPIKE_PLATE_STYLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_INTERACTION_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     
+    TABLE[E_GOOEY_NETWORK_ACTION_AMMO_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

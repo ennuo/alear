@@ -322,6 +322,22 @@ EObjectType GetObjectType(CThing* thing)
         return OBJECT_TRIGGER;
     }
 
+    if (thing->HasPart(PART_TYPE_CAMERA_TWEAK))
+    {
+        //PCameraTweak* camera_tweak = thing->GetPCameraTweak();
+        //if(camera_tweak->CameraType == 0)
+            return OBJECT_CAMERA_GAME;
+        //if(camera_tweak->CameraType == 1)
+        //    return OBJECT_CAMERA_STILL;
+    }
+
+    PEnemy* enemy = thing->GetPEnemy();
+    if (enemy != NULL)
+    {
+        //if(enemy->PartType == 0)
+        //{}
+    }
+
     if (thing->HasPart(PART_TYPE_SCRIPT))
     {
         const CP<RScript>& script = thing->GetPScript()->ScriptInstance.Script;
