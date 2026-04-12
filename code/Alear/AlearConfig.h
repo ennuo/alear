@@ -129,6 +129,7 @@ extern CConfigBool gUnlethalizeAllLethals;
 extern CConfigBool gForceMeshGFX;
 extern CConfigBool gLoadRemoveAllStickers;
 extern CConfigBool gLoadRemoveAllDecorations;
+extern CConfigBool gLoadRemoveAllLights;
 extern CConfigBool gForceLoadEditable;
 extern CConfigBool gAllowDebugTooltypes;
 extern CConfigBool gAllowMeshScaling;
@@ -138,6 +139,8 @@ extern CConfigBool gUseNewKeyColorSelection;
 extern CConfigBool gCanCollapseCategories;
 extern CConfigBool gCanHidePopit;
 extern CConfigBool gUseAlternateJointMeshes;
+extern CConfigBool gFixupEmitters;
+extern CConfigBool gRemoveBurningScripts;
 
 extern CConfigBool gUseIceAccessibility;
 extern CConfigBool gPlayBackgroundStings;

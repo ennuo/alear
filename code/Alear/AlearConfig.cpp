@@ -28,17 +28,20 @@ CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Mes
 CConfigBool gUseLegacyKeyColors(L"Tools", L"Gadgets - Use Legacy Key Colors", true);
 CConfigBool gUseNewKeyColorSelection(L"Tools", L"Gadgets - Use New Key Color Selection", true);
 
-CConfigBool gResetLevelSettings(L"Loading", L"Function - Force Default LevelSettings", false);
-CConfigBool gForceLoadEditable(L"Loading", L"Function - Force Editable On Load", false);
-CConfigBool gLoadDefaultMaterial(L"Loading", L"Function - Use Fallback for Missing Graphics Materials", false);
-CConfigBool gForceGFXShapes(L"Loading", L"Function - Add Graphics Materials to Shapes", false);
-CConfigBool gForcePlainGFX(L"Loading", L"Function - Force Plain Graphics Materials", false);
-CConfigBool gForcePlainBevels(L"Loading", L"Function - Force Plain Bevels", false);
-CConfigBool gForceMeshGFX(L"Loading", L"Function - Make All Meshes Materials", false);
-CConfigBool gUnlethalizeAllLethals(L"Loading", L"Function - Remove Lethals", false);
-CConfigBool gLoadRemoveAllStickers(L"Loading", L"Function - Remove all Stickers", false);
-CConfigBool gLoadRemoveAllDecorations(L"Loading", L"Function - Remove all Decorations", false);
-CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
+CConfigBool gResetLevelSettings(L"Loading", L"LevelSettings - Force Default", false);
+CConfigBool gForceLoadEditable(L"Loading", L"Shapes - Force Editable On Load", false);
+CConfigBool gUnlethalizeAllLethals(L"Loading", L"Shapes - Disable Lethals", false);
+CConfigBool gForceGFXShapes(L"Loading", L"Shapes - Turn into GFX", false);
+CConfigBool gForceMeshGFX(L"Loading", L"Objects - Turn into GFX", false);
+CConfigBool gLoadDefaultMaterial(L"Loading", L"Materials - Render Invisible GFX", false);
+CConfigBool gForcePlainGFX(L"Loading", L"Materials - Use Plain GFX", false);
+CConfigBool gForcePlainBevels(L"Loading", L"Materials - Use Plain Bevels", false);
+CConfigBool gLoadRemoveAllStickers(L"Loading", L"Stickers - Remove all", false);
+CConfigBool gLoadRemoveAllDecorations(L"Loading", L"Decorations - Remove all", false);
+CConfigBool gLoadRemoveAllLights(L"Loading", L"Lights -  Remove all", false);
+CConfigBool gRemoveBurningScripts(L"Loading", L"Scripts - Remove Unused", true);
+CConfigBool gFixupEmitters(L"Loading", L"Emitters - Fixup Invisible", false);
+CConfigBool gUseAlternateJointMeshes(L"Loading", L"Joints - Use Alternate Meshes", true);
 
 CConfigBool gPlayBackgroundStings(L"Audio", L"Audio - Play Background Stings", true);
 

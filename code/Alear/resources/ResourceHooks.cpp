@@ -1168,6 +1168,12 @@ ReflectReturn CThing::OnLoad()
         }
     }
     
+    if (shape != NULL)
+    {
+        if(shape->OldMMaterial == NULL)
+            if(shape->MMaterial->GetGUID().guid == 0x779e)
+                shape->OldMMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
+    }
 
     if(gUnlethalizeAllLethals)
     {
@@ -1175,7 +1181,7 @@ ReflectReturn CThing::OnLoad()
         {
             shape->LethalType = LETHAL_NOT;
             if(shape->MMaterial->GetGUID().guid == 0x779e)
-                shape->MMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
+                shape->MMaterial = shape->OldMMaterial;
         }
     }
 
@@ -1188,12 +1194,20 @@ ReflectReturn CThing::OnLoad()
         {
             if (render_mesh != NULL)
             {
-                if(!HasPart(PART_TYPE_YELLOW_HEAD))
+                switch(render_mesh->Mesh->GetGUID().guid)
                 {
-                    render_mesh->BoneThings.clear();
-                    RemovePart(PART_TYPE_RENDER_MESH);
-                    AddPart(PART_TYPE_GENERATED_MESH);
-                    mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+                    case 0x43f:
+                    case 0x2f6c:
+                    case 0x4760:
+                    case 0x5585:
+                        break;
+                    default:
+                        render_mesh->BoneThings.clear();
+                        RemovePart(PART_TYPE_RENDER_MESH);
+                        AddPart(PART_TYPE_GENERATED_MESH);
+                        PGeneratedMesh* shape_mesh = GetPGeneratedMesh();
+                        shape_mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+                        break;
                 }
             }
         }
@@ -1214,6 +1228,15 @@ ReflectReturn CThing::OnLoad()
         if(decorations != NULL)
         {
             RemovePart(PART_TYPE_DECORATIONS);
+        }
+    }
+
+    if(gLoadRemoveAllLights)
+    {
+        PSpriteLight* light = GetPSpriteLight();
+        if(light != NULL)
+        {
+            RemovePart(PART_TYPE_SPRITE_LIGHT);
         }
     }
 

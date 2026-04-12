@@ -3,6 +3,7 @@
 #include "MatrixUtils.h"
 #include <hook.h>
 
+#include "AlearConfig.h"
 #include <PartSwitch.h>
 
 CThingPtr::~CThingPtr()
@@ -499,7 +500,7 @@ void CThing::UpdateKeyColours()
 
 void CThing::FixupEmitters()
 {
-    if(this == NULL) return;
+    if(this == NULL || !gFixupEmitters) return;
     PEmitter* emitter = this->GetPEmitter();
     if(emitter != NULL)
     {
@@ -546,7 +547,7 @@ void CThing::FixupOldScripts()
                     script->Fixup();
                     break;
                 case 0x4452:
-                    this->RemovePart(PART_TYPE_SCRIPT);
+                    if(gRemoveBurningScripts) { this->RemovePart(PART_TYPE_SCRIPT); }
                     break;
                 case 0x4807:
                 case 0x493a:
