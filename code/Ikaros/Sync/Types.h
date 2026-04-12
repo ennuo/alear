@@ -171,6 +171,13 @@ namespace sync
         u64 RemoteId;
         u64 OwnerId;
         MMString<char> Name;
+        MMString<char> PlanetDecorations;
+    };
+
+    class CFileSource {
+    public:
+        inline CFileSource() : Hash(), FilePath() {}
+        inline CFileSource(const CHash& hash) : Hash(hash), FilePath() {}
         inline CFileSource(const CFilePath& fp) : Hash(), FilePath()
         {
             if (FileHash(fp, &Hash))
