@@ -481,6 +481,22 @@ public:
 		this->Size = new_size;
 		return true;
 	}
+	
+	void swap(CVector<T, Allocator>& rhs)
+	{
+		T* data = rhs.Data;
+		u32 size = rhs.Size;
+		u32 max_size = rhs.MaxSize;
+
+		rhs.Data = this->Data;
+		rhs.Size = this->Size;
+		rhs.MaxSize = this->MaxSize;
+
+		this->Data = data;
+		this->Size = size;
+		this->MaxSize = max_size;
+	}
+
 };
 
 typedef CRawVector<char, CAllocatorMMAligned128> ByteArray;

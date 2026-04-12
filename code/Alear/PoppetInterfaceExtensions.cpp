@@ -1,7 +1,7 @@
 #include "AlearShared.h"
 #include "AlearConfig.h"
 
-#include <hook.h>
+
 #include <refcount.h>
 #include <Hash.h>
 

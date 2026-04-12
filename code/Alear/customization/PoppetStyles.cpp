@@ -1,7 +1,7 @@
 #include "customization/PoppetStyles.h"
 #include "AlearConfig.h"
 
-#include <hook.h>
+
 
 #include <GFXApi.h>
 #include <Poppet.h>

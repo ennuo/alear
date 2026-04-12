@@ -1,9 +1,11 @@
 #include "PoppetOutlineShapes.h"
 
+#include <DebugLog.h>
+
 #include <vector.h>
 #include <refcount.h>
 
-#include <Variable.h>
+#include <SharedSerialise.h>
 #include <ResourceFileOfBytes.h>
 #include <ResourceSystem.h>
 #include <GuidHash.h>
@@ -16,6 +18,8 @@
 
 #include <algorithm>
 #include <set>
+
+#include <thing.h>
 
 
 class CNamedPolygon {
@@ -32,6 +36,24 @@ public:
 CPoppetOutlineConfig gPoppetOutlineData;
 extern CVector<CNamedPolygon> gNamedPolygons;
 
+template<typename R>
+ReflectReturn Reflect(R& r, CPoppetOutline& d)
+{
+    ReflectReturn rv;
+    ADD(Plan);
+    ADD(Mesh);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CPoppetOutlineConfig& d)
+{
+    ReflectReturn rv;
+    ADD(Outlines);
+    return rv;
+}
+
+
 bool LoadPoppetMeshOutlines()
 {
     gPoppetOutlineData.Outlines.clear();
@@ -43,21 +65,21 @@ bool LoadPoppetMeshOutlines()
 
     ByteArray& b = file->GetData();
     CGatherVariables variables;
-    variables.Init<CPoppetOutlineConfig>(&gPoppetOutlineData);
+    Init<CPoppetOutlineConfig>(variables, &gPoppetOutlineData);
     if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
     {
-        DebugLog("An error occurred while loading data for outline shapes!\n");
+        MMLog("An error occurred while loading data for outline shapes!\n");
         return false;
     }
 
     // The game uses a binary search to find outlines, so make sure we're sorted in ascending order.
     std::sort(gPoppetOutlineData.Outlines.begin(), gPoppetOutlineData.Outlines.end(), std::less<CPoppetOutline>());
 
-    DebugLog("Loaded %d outlines...\n", gPoppetOutlineData.Outlines.size());
+    MMLog("Loaded %d outlines...\n", gPoppetOutlineData.Outlines.size());
     for (int i = 0; i < gPoppetOutlineData.Outlines.size(); ++i)
     {
         const CPoppetOutline& outline = gPoppetOutlineData.Outlines[i];
-        DebugLog("[%d] [Mesh]=g%08x [Plan]=g%08x\n", i, outline.Mesh, outline.Plan);
+        MMLog("[%d] [Mesh]=g%08x [Plan]=g%08x\n", i, outline.Mesh, outline.Plan);
     }
 
     return true;
@@ -77,7 +99,7 @@ void LoadOutlinePolygons()
 
     std::set<u32, std::less<u32>, STLBucketAlloc<u32> > plans_processed;
 
-    DebugLog("Caching named polygons...\n");
+    MMLog("Caching named polygons...\n");
 
     for (CPoppetOutline* poppet_outline = gPoppetOutlineData.Outlines.begin(); poppet_outline != gPoppetOutlineData.Outlines.end(); ++poppet_outline)
     {
@@ -89,7 +111,7 @@ void LoadOutlinePolygons()
 
         plans_processed.insert(poppet_outline->Plan);
 
-        DebugLog("Caching poppet outline object g%08x\n", poppet_outline->Plan);
+        MMLog("Caching poppet outline object g%08x\n", poppet_outline->Plan);
         
         CP<RPlan> plan = LoadResourceByKey<RPlan>(poppet_outline->Plan, 0, STREAM_PRIORITY_DEFAULT);
         plan->BlockUntilLoaded();

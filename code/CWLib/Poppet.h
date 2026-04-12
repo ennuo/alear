@@ -36,6 +36,22 @@ enum EStampMode {
     NUM_STAMP_MODES
 };
 
+class CDotToDotState : public CPoppetChild {
+public:
+    CDotToDotState();
+    ~CDotToDotState();
+public:
+    void Enter();
+    void Render();
+    void Update();
+    void AddVertex();
+public:
+    CRawVector<v2, CAllocatorMMAligned128> Polygon;
+    CThingPtr PlacementThing;
+    float Z;
+    float Depth;
+};
+
 class RLocalProfile;
 
 class CPoppet : public CReflectionVisitable {
@@ -104,6 +120,7 @@ public:
 private:
     char Pad4[0x1f4];
 public:
+    CDotToDotState DotToDot;
     CVector<CThingPtr> HiddenList;
     EStampMode StampMode;
     v2 CustomPoppetSize;

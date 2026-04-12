@@ -70,10 +70,10 @@ _reflectresource_gather_rtype_guid_list:
     mr %r4, %r27
 
     std %r2, 0x28(%r1)
-    lis %r7, _ZN16CGatherVariables4InitI9RGuidListEEvPT_@h      
-    ori %r7, %r7, _ZN16CGatherVariables4InitI9RGuidListEEvPT_@l
+    lis %r7, _Z4InitI9RGuidListEvR16CGatherVariablesPT_@h      
+    ori %r7, %r7, _Z4InitI9RGuidListEvR16CGatherVariablesPT_@l
     lwz %r2, 0x4(%r7)
-    bl ._ZN16CGatherVariables4InitI9RGuidListEEvPT_
+    bl ._Z4InitI9RGuidListEvR16CGatherVariablesPT_
     ld %r2, 0x28(%r1)
 
     ba 0x003c81c0

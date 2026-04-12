@@ -15,7 +15,7 @@ public:
 	int GetRefCount() const { return RefCount; }
 	CBaseCounted() : RefCount() {}
 protected:
-	virtual ~CBaseCounted() = 0;
+	virtual ~CBaseCounted();
 private:
 	CBaseCounted(const CBaseCounted&);
 	CBaseCounted& operator=(const CBaseCounted&);

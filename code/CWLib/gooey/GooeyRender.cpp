@@ -1,5 +1,5 @@
 #include "gooey/GooeyRender.h"
-#include <hook.h>
+
 
 namespace NHUD
 {

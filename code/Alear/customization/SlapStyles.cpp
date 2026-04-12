@@ -7,12 +7,34 @@
 #include <MMAudio.h>
 #include <PartCostume.h>
 #include <ResourceGFXMesh.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 #include <ResourceFileOfBytes.h>
 #include <ResourceSystem.h>
 
 CVector<CSlapMesh> gSlapMeshes;
 StaticCP<RFileOfBytes> gSlapStyleData;
+
+template<typename R>
+ReflectReturn Reflect(R& r, CSlapMesh& d)
+{
+    ReflectReturn rv;
+    ADD(Sound);
+    ADD(GUID);
+    ADD(HorizontalForce);
+    ADD(VerticalForce);
+    ADD(LeftHand);
+    ADD(RightHand);
+    ADD(Kill);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CSlapStyles& d)
+{
+    ReflectReturn rv;
+    ADD(Meshes);
+    return rv;
+}
 
 bool LoadSlapStyles()
 {
@@ -26,7 +48,7 @@ bool LoadSlapStyles()
 
     ByteArray& b = file->GetData();
     CGatherVariables variables;
-    variables.Init<CSlapStyles>((CSlapStyles*)&gSlapMeshes);
+    Init<CSlapStyles>(variables, (CSlapStyles*)&gSlapMeshes);
     if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
 {
         DebugLog("An error occurred while loading data for slap styles!\n");

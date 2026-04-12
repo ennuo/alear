@@ -48,7 +48,6 @@ extern "C" uintptr_t _disable_gas_tweak_hook;
 extern "C" uintptr_t _custom_pick_object_action_hook;
 
 extern "C" uintptr_t _popit_draw_cursor_hook;
-extern "C" uintptr_t _run_frame_hook;
 
 extern "C" uintptr_t _base_profile_load_hook;
 

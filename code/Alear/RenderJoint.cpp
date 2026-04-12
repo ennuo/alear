@@ -6,7 +6,7 @@
 
 #include <ResourceSystem.h>
 #include <ResourceFileOfBytes.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 
 #include <cell/DebugLog.h>
 
@@ -33,6 +33,25 @@ void CRenderJoint::LoadMeshResources()
     if (PatternMesh != 0) PatternMeshResource = LoadResourceByKey<RMesh>(PatternMesh, 0, STREAM_PRIORITY_DEFAULT);
 }
 
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoint& d)
+{
+    ReflectReturn rv;
+    ADD(Mesh);    
+    ADD(InactiveMesh);
+    ADD(PatternMesh);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoints& d)
+{
+    ReflectReturn rv;
+    ADD(Joints);
+    return rv;
+}
+
 bool LoadJointMeshes()
 {
     tGatherElementMap lookup;
@@ -48,7 +67,7 @@ bool LoadJointMeshes()
     CGatherVariables variables;
 
     CRenderJoints joints;
-    variables.Init<CRenderJoints>(&joints);
+    Init<CRenderJoints>(variables, &joints);
 
     CScopedGatherLookup _gather_scope(&lookup);
 

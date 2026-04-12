@@ -9,7 +9,7 @@ bool CFileWatcher::AddFile(CFilePath& fp, FileWatchCallback cb)
     CCSLock _the_lock(&CS, __FILE__, __LINE__);
     
     CWatchFile file;
-    if (FileStat(fp, &file.LastModified, &file.Size))
+    if (FileStat(fp, file.LastModified, file.Size))
     {
         file.Path = fp;
         file.Callback = cb;
@@ -36,7 +36,7 @@ void CFileWatcher::WorkerThreadFunction()
         for (; iter != Files.end(); iter++)
         {
             u64 modtime, size;
-            if (FileStat(iter->Path, &modtime, &size))
+            if (FileStat(iter->Path, modtime, size))
             {
                 if (iter->LastModified != modtime || iter->Size != size)
                 {

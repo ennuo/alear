@@ -4,7 +4,40 @@
 
 #include "cell/DebugLog.h"
 
-#include <hook.h>
+
+
+const u16 CompressionBufferSize = 0x8000;
+const u16 CompressionVersion = 1;
+
+u32 gMinRevision = gFormatRevision;
+
+BranchDefine gBranchDefines[] =
+{
+    { "Leerdammer", gLeerdammerFormatRevision, gLeerdammerBranchDescription }
+};
+
+ReflectReturn SRevision::CheckRevision() const
+{
+    if (Revision > gFormatRevision) return REFLECT_FORMAT_TOO_NEW;
+    return IsAfterRevision(gMinSafeRevision) 
+        ? REFLECT_OK : REFLECT_FORMAT_TOO_OLD;
+}
+
+ReflectReturn SRevision::CheckBranchDescription() const
+{
+    if (BranchDescription == 0) return REFLECT_OK;
+
+    for (u32 i = 0; i < sizeof(gBranchDefines); ++i)
+    {
+        BranchDefine& branch = gBranchDefines[i];
+        u16 id = branch.BranchDescription >> 16;
+        u16 revision = branch.BranchDescription & 0xffff; 
+        if (id == GetBranchID() && GetBranchRevision() <= revision)
+            return REFLECT_OK;
+    }
+
+    return REFLECT_FORMAT_TOO_NEW;
+}
 
 CReflectionLoadVector::CReflectionLoadVector(CBaseVector<char>* vec) : // file.h: 183
 CReflectionBase(), Vec(vec), Allocated(0), DecryptedVec(), Revision(),
@@ -20,6 +53,16 @@ CompressionFlags(DEFAULT_COMPRESS_FLAGS), EncryptedBlockStart(-1), CompressionLe
 SPUCompressAvailable(false)
 {
     
+}
+
+CReflectionSaveVector::~CReflectionSaveVector()
+{
+    
+}
+
+CReflectionVisitLoad::CReflectionVisitLoad() : Visited()
+{
+
 }
 
 MH_DefineFunc(CReflectionLoadVector_ReadWrite, 0x0058cf14, TOC1, ReflectReturn, CReflectionLoadVector*, void*, int);
@@ -85,7 +128,7 @@ ReflectReturn CReflectionLoadVector::ReadWrite(void* d, int size) // file.h: 263
 }
 
 
-#include <hook.h>
+
 MH_DefineFunc(ReflectDescriptor_ReflectionLoadVector, 0x0062e564, TOC0, ReflectReturn, CReflectionLoadVector&, CResourceDescriptorBase&, bool, bool);
 template <>
 ReflectReturn ReflectDescriptor(CReflectionLoadVector& r, CResourceDescriptorBase& d, bool cp, bool type)

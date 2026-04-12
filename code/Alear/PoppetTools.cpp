@@ -4,6 +4,7 @@
 
 #include <GuidHash.h>
 
+
 #include <cell/DebugLog.h>
 #include <cell/fs/cell_fs_file_api.h>
 #include <refcount.h>
@@ -356,7 +357,7 @@ bool DumpMeshToFile(CPoppet* poppet, CThing* thing)
     CFilePath fp(FPR_GAMEDATA, path);
 
     FileHandle fd;
-    FileOpen(fp, &fd, OPEN_WRITE);
+    FileOpen(fp, fd, OPEN_WRITE);
 
     MMString<char> gltf;
     gltf.reserve(10000); // reserve a reasonable amount of space for all the strcat bullshit
@@ -398,7 +399,7 @@ bool DumpMeshToFile(CPoppet* poppet, CThing* thing)
         }
     }
 
-    FileClose(&fd);
+    FileClose(fd);
     return true;
 }
 
@@ -763,6 +764,17 @@ bool HandleToolPickSound(CPoppet* poppet, CThing* thing)
 }
 
 void LoadCursorSprites()
+{
+
+}
+
+CDotToDotState::CDotToDotState() : CPoppetChild(),
+Polygon(), PlacementThing(), Z(), Depth()
+{
+    
+}
+
+CDotToDotState::~CDotToDotState()
 {
 
 }

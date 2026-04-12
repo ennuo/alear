@@ -1,12 +1,11 @@
 #include "AlearDebugCamera.h"
-#include "AlearSync.h"
 #include "AlearConfig.h"
 #include "PinSystem.h"
 
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
 
-#include <hook.h>
+
 #include <mmalex.h>
 #include <ppcasm.h>
 #include <json_ext.h>
@@ -394,7 +393,6 @@ v4 GetCameraFocus()
 
 void OnDrawPostComp(COverlayUI* interface)
 {
-    RenderDownloadInfo();
     RenderPinOverlay();
 
     if (!gView.DebugCameraActive && !gRenderOnlyPopit)

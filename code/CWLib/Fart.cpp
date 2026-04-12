@@ -1,7 +1,15 @@
 #include "Fart.h"
 #include "FartRO.h"
 
-#include <hook.h>
+CCache::CCache(const char* name) : Mutex(name)
+{
+    
+}
+
+CCache::~CCache()
+{
+    
+}
 
 MH_DefineFunc(InitCaches, 0x000814f0, TOC0, bool);
 MH_DefineFunc(CloseCaches, 0x0007f2f0, TOC0, bool);

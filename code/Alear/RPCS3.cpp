@@ -4,7 +4,7 @@
 #include <sys/process.h>
 #include <sys/ppu_thread.h>
 
-#include <hook.h>
+
 #include <ppcasm.h>
 
 #include <filepath.h>
@@ -49,7 +49,7 @@ void GeneratePatchYML()
     FileHandle fd;
 
     CFilePath filename(FPR_GAMEDATA, "output/generated_patch.yml");
-    FileOpen(filename, &fd, OPEN_WRITE);
+    FileOpen(filename, fd, OPEN_WRITE);
 
     #define WRITE_STRING(s) FileWrite(fd, (void*)s, StringLength(s));
 
@@ -104,5 +104,5 @@ void GeneratePatchYML()
 
     #undef WRITE_STRING
 
-    FileClose(&fd);
+    FileClose(fd);
 }

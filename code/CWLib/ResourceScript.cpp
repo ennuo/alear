@@ -1,5 +1,5 @@
 #include "ResourceScript.h"
-#include <hook.h>
+
 
 MH_DefineFunc(RScript_LookupFunction, 0x00098e04, TOC0, bool, RScript const*, CSignature const&, NVirtualMachine::CScriptFunctionBinding*);
 bool RScript::LookupFunction(CSignature const& signature, NVirtualMachine::CScriptFunctionBinding* binding) const

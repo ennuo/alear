@@ -13,6 +13,17 @@ int StringICompare(const char* a, const char* b);
 int StringICompareN(const char* a, const char* b, size_t len);
 
 
+size_t StringAppend(char* dst, const char* src, int dst_size);
+size_t StringAppend(wchar_t* dst, const wchar_t* src, int dst_size);
+size_t StringAppend(tchar_t* dst, const tchar_t* src, int dst_size);
+
+template <typename T, u32 size>
+inline size_t StringAppend(T (&dst)[size], const T* src)
+{
+	return StringAppend(dst, src, size);
+}
+
+
 unsigned int StringCopy(char* dst, char const* src, unsigned int size);
 unsigned int StringCopy(wchar_t* dst, wchar_t const* src, unsigned int size);
 

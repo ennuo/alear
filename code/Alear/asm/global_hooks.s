@@ -367,26 +367,6 @@ _custom_event_projects_hook:
 
     ba 0x001a4acc
 
-.global _run_frame_hook
-_run_frame_hook:
-    stw %r2, 0x2c(%r1)
-    lis %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@h      
-    ori %r2, %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@l
-    lwz %r2, 0x4(%r2)
-    bl ._Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb
-    lwz %r2, 0x2c(%r1)
-
-    cmpwi %cr7, %r3, 0x0
-    beq %cr7, ExitFrameHook
-    
-    # continue executing frame
-    ba 0x000b1328
-
-ExitFrameHook:
-    # branch to function epilogue
-    li %r0, 0xe0
-    ba 0x000b1990
-
 .global _base_profile_load_hook
 _base_profile_load_hook:
     std %r2, 0x28(%r1)

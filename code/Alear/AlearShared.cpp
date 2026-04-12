@@ -19,7 +19,7 @@
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
 
-#include <hook.h>
+
 #include <json.h>
 #include <printf.h>
 #include <gfxcore.h>
@@ -70,6 +70,7 @@
 #include <network/NetworkPartiesData.h>
 #include <poppet/ScriptObjectPoppet.h>
 #include <MMAudio.h>
+#include <ppcasm.h>
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -106,8 +107,6 @@ void OnReleaseLevel()
     #endif
 }
 
-#include "AlearSync.h"
-
 void OnResetPoppetModeStack(CPoppet* poppet)
 {
     poppet->ClearHiddenList();
@@ -120,8 +119,6 @@ void CPoppet::ClearHiddenList()
 
 void OnUpdateLevel()
 {
-    MainThreadUpdate();
-
     // Tick Mario's in the world if enabled.
     #ifdef __SM64__
     UpdateMarioAvatars();
@@ -304,7 +301,6 @@ void OnRunPipelinePostProcessing()
 
 void OnPredictionOrRenderUpdate()
 {
-    UpdateDownloadInfo();
     UpdatePinOverlay();
     
     if (!gView.DebugCameraActive)
@@ -367,7 +363,7 @@ bool CustomTryTranslate(u32 key, tchar_t const*& out)
         rlst->BlockUntilLoaded();
 
         CVector<MMString<char> > lines;
-        LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+        LinesLoad(rlst->GetData(), lines);
 
         for (int i = 0; i < lines.size(); ++i)
         {
@@ -532,7 +528,7 @@ void OnLoadSubstTablesFinished()
     rlst->BlockUntilLoaded();
 
     CVector<MMString<char> > lines;
-    LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+    LinesLoad(rlst->GetData(), lines);
 
     for (int i = 0; i < lines.size(); ++i)
     {
@@ -713,14 +709,10 @@ void CustomPreRaycastPrepare(PWorld* world)
 StaticCP<RPixelShader> gCopyGlowShader;
 StaticCP<RPixelShader> gRenderPoppetShader;
 StaticCP<RVertexShader> gFullscreenShader;
-ByteArray gVideoHeader;
+#include <AviHeader.inl>
 
 void LoadRecordingShaders()
 {
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/avi.raw");
-    CHash hash;
-    FileLoad(fp, gVideoHeader, hash);
-
     *((CP<RPixelShader>*)&gCopyGlowShader) = LoadResourceByKey<RPixelShader>(3306909899u, 0, STREAM_PRIORITY_DEFAULT);
     *((CP<RPixelShader>*)&gRenderPoppetShader) = LoadResourceByKey<RPixelShader>(3364422394u, 0, STREAM_PRIORITY_DEFAULT);
      *((CP<RVertexShader>*)&gFullscreenShader) = LoadResourceByKey<RVertexShader>(19194, 0, STREAM_PRIORITY_DEFAULT);
@@ -731,10 +723,10 @@ void CVideoRecording::StartRecording(char* path)
     if (IsRecording()) StopRecording();
     NumFrames = 0;
     Filepath.Assign(FPR_GAMEDATA, path);
-    if (FileOpen(Filepath, &Handle, OPEN_RDWR))
+    if (FileOpen(Filepath, Handle, OPEN_RDWR))
     {
-        FileResize(Handle, gVideoHeader.size());
-        FileSeek(Handle, gVideoHeader.size(), CELL_FS_SEEK_SET);
+        FileResize(Handle, sizeof(gVideoHeader));
+        FileSeek(Handle, sizeof(gVideoHeader), FILE_BEGIN);
     }
 }
 
@@ -743,18 +735,18 @@ void CVideoRecording::StopRecording()
     if (!IsRecording()) return;
 
     u32 data_len = (gResX * gResY * sizeof(s32)) * NumFrames + (0xc * NumFrames);
-    u32 file_len = gVideoHeader.size() + data_len;
+    u32 file_len = sizeof(gVideoHeader) + data_len;
     u32 riff_size = file_len - 0x8;
     u32 mov_size = data_len + 0xc;
     
-    *(u32*)(gVideoHeader.begin() + 0x004) = (riff_size >> 24) | ((riff_size << 8) & 0x00FF0000) | ((riff_size >> 8) & 0x0000FF00) | (riff_size << 24);
-    *(u32*)(gVideoHeader.begin() + 0x030) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
-    *(u32*)(gVideoHeader.begin() + 0x08c) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
-    *(u32*)(gVideoHeader.begin() + 0x5c8) = (mov_size >> 24) | ((mov_size << 8) & 0x00FF0000) | ((mov_size >> 8) & 0x0000FF00) | (mov_size << 24);
+    *(u32*)(gVideoHeader + 0x004) = (riff_size >> 24) | ((riff_size << 8) & 0x00FF0000) | ((riff_size >> 8) & 0x0000FF00) | (riff_size << 24);
+    *(u32*)(gVideoHeader + 0x030) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader + 0x08c) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader + 0x5c8) = (mov_size >> 24) | ((mov_size << 8) & 0x00FF0000) | ((mov_size >> 8) & 0x0000FF00) | (mov_size << 24);
     
-    FileSeek(Handle, 0, CELL_FS_SEEK_SET);
-    FileWrite(Handle, (void*)gVideoHeader.begin(), gVideoHeader.size());
-    FileClose(&Handle);
+    FileSeek(Handle, 0, FILE_BEGIN);
+    FileWrite(Handle, (void*)gVideoHeader, sizeof(gVideoHeader));
+    FileClose(Handle);
 }
 
 bool CVideoRecording::IsRecording()

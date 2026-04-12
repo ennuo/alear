@@ -1,13 +1,19 @@
-#ifndef FILE_PATH_H
-#define FILE_PATH_H
+#pragma once
 
+#include <GuidHash.h>
+#include <vector.h>
+#include <TextRange.h>
+#include <MMString.h>
 
-#include "hook.h"
-#include "vector.h"
-#include "TextRange.h"
-#include "MMString.h"
-#include "StringUtil.h"
-#include "GuidHash.h"
+#define MAX_PATH (255)
+#define INVALID_FILE_HANDLE (-1)
+
+#define FILE_BEGIN (0)
+#define FILE_CURRENT (1)
+#define FILE_END (2)
+
+typedef int FileHandle;
+typedef int DirHandle;
 
 enum EFilePathRootDir 
 {
@@ -25,85 +31,83 @@ enum EOpenMode
 	OPEN_SECURE
 };
 
-typedef int FileHandle;
-typedef int DirHandle;
-
 extern bool gGameDataReady;
 
 class CFilePath {
 public:
-    inline CFilePath()
-    {
-        Invalid = true;
-    }
-
-    inline CFilePath(const char* filename)
-    {
-        Assign(filename);
-    }
+    static CFilePath Empty;
+public:
+    CFilePath();
+    CFilePath(const char* filename);
+    CFilePath(EFilePathRootDir root_dir, const char* filename);
+    CFilePath(const CFilePath& rhs);
     
-    inline CFilePath(EFilePathRootDir root_dir, char* filename)
-    {
-        Assign(root_dir, filename);
-    }
+    void Assign(const char* filename);
+    void Assign(EFilePathRootDir root_dir, const char* filename);
 
-    inline void Assign(EFilePathRootDir root_dir, char* filename)
-    {
-        static shkOpd _shk_prx_opd = { (void*)0x0057bba0, (void*) TOC1 };
-        ((void*(*)(CFilePath*, EFilePathRootDir, char*) )&_shk_prx_opd )(this, root_dir, filename);
-    }
+    void Append(const char* str);
+    void AppendRaw(const char* str);
 
-    inline void Assign(char const* filename)
-    {
-        int len = StringCopy<char, 255>(Filepath, filename);
-        Invalid = 0xfe < len;
-    }
+    const char* GetExtension() const;
+    const char* GetFilename() const;
+    
+    void FixSlashesAndCase();
+    void StripExtension();
+    void StripTrailingSlash();
+    void Clear();
 
-    inline void StripExtension()
-    {
-        char* ptr = strrchr(Filepath, '.');
-        if (ptr != NULL) *ptr = '\0';
-    }
-
-    inline void StripTrailingSlash()
-    {
-        int len = strlen(Filepath);
-        if (len == 0) return;
-        char& c = Filepath[len - 1];
-        if (c == '/' || c == '\\')
-            c = '\0';
-    }
-
+    
     operator char const*() const { return Filepath; }
+    
+    inline bool IsEmpty() const { return *Filepath == '\0'; }
+    inline int Length() const { return strlen(Filepath); }
 
-    inline bool operator==(CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) == 0; }
-    inline bool operator!=(CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) != 0; }
+    inline bool operator==(const CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) == 0; }
+    inline bool operator!=(const CFilePath& rhs) { return strcmp(Filepath, rhs.Filepath) != 0; }
+
+    inline bool IsValid() const { return !Invalid; }
+
+    CFilePath& operator=(const CFilePath& rhs);
+    CFilePath& operator=(const char* rhs);
     
     inline const char* c_str() const { return Filepath; }
 private:
-    char Filepath[255];
+    char Filepath[MAX_PATH];
     bool Invalid;
 };
 
-bool FileExists(CFilePath& fp);
-bool FileStat(FileHandle h, u64* modtime, u64* size);
-bool FileStat(CFilePath& fp, u64* modtime, u64* size);
+bool FileExists(const CFilePath& fp);
+bool FileStat(FileHandle h, u64& modtime, u64& size);
+bool FileStat(const CFilePath& fp, u64& modtime, u64& size);
+u64 FileSize(const CFilePath& fp);
+u64 FileSize(FileHandle h);
 
-void FileClose(FileHandle* h);
-bool FileOpen(CFilePath& fp, FileHandle* fd, EOpenMode mode);
+void FileClose(FileHandle& h);
+bool FileOpen(const CFilePath& fp, FileHandle& fd, EOpenMode mode);
 u64 FileRead(FileHandle h, void* out, u64 count);
-u64 FileWrite(FileHandle h, void* bin, u64 count);
+u64 FileWrite(FileHandle h, const void* bin, u64 count);
 u64 FileSeek(FileHandle h, s64 newpos, u32 whence);
 bool FileResize(FileHandle h, u32 newsize);
+bool FileResizeNoZeroFill(const CFilePath& fp, u32 newsize);
+bool FileSync(FileHandle h);
+
+bool DirectoryOpen(const CFilePath& fp, DirHandle& fd);
+void DirectoryClose(DirHandle& fd);
+bool DirectoryRead(DirHandle fd, char* out, u32 outsize);
+
+int FileAttributes(const CFilePath& fp);
+
+bool FileUnlink(const CFilePath& fp);
+
 
 typedef bool (*ParseFn)(TextRange<char>&);
-bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out);
-bool FileLoad(CFilePath const& filename, ByteArray& out, ParseFn parsefunc);
+bool StripAndIgnoreFileHash(TextRange<char>& range);
+
+bool LinesLoad(const ByteArray& bytes, CVector<MMString<char> >& out, ParseFn parsefunc = &StripAndIgnoreFileHash);
+bool FileLoad(const CFilePath& f, ByteArray& out, CHash* out_hash = NULL);
+bool FileLoad(const CFilePath& path, CVector<MMString<char> >& out, ParseFn parsefunc = &StripAndIgnoreFileHash);
+
+bool FileHash(const CFilePath& fp, CHash* out_hash);
 
 // not a function in the game, just figure it'd be useful to have for JSON
 char* FileLoadText(CFilePath& fp);
-
-bool StripAndIgnoreHash(TextRange<char>& range);
-bool LinesLoad(const ByteArray& bytes, CVector<MMString<char> >& out, ParseFn parsefunc);
-
-#endif // FILE_PATH_H

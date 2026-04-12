@@ -18,8 +18,8 @@
 #include <thing.h>
 #include <ResourceGame.h>
 #include <PartPhysicsWorld.h>
-#include <hook.h>
-#include <Variable.h>
+
+#include <SharedSerialise.h>
 #include <DebugLog.h>
 
 #include <cell/gcm.h>
@@ -353,16 +353,20 @@ void RenderSwitchDebug()
 void CPoppet::InitializeExtraData()
 {
     new (&HiddenList) CVector<CThingPtr>();
+    new (&DotToDot) CDotToDotState();
     StampMode = STAMP_DEFAULT;
     CustomPoppetOffset = v2(0.0f);
     CustomPoppetSize = v2(512.0f, 544.0f);
     ShowTether = true;
     HidePoppetGooey = false;
+
+    DotToDot.SetParent(this);
 }
 
 void CPoppet::DestroyExtraData()
 {
     HiddenList.~CVector();
+    DotToDot.~CDotToDotState();
 }
 
 CSwitchOutput* CThing::GetInput(int port) const
@@ -1611,11 +1615,10 @@ void PRenderMesh::SetupRendering() const
     }
 }
 
-#define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
 template<typename R>
 ReflectReturn Reflect(R& r, CRaycastResults& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(HitPoint);
     ADD(Normal);
     ADD(BaryU);
@@ -1628,35 +1631,35 @@ ReflectReturn Reflect(R& r, CRaycastResults& d)
     ADD(SwitchConnector);
     ADD(HitPort);
     ADD(RefPort);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchSignal& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Analogue);
     ADD(Ternary);
     ADD(Player);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchTarget& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Thing);
     ADD(Port);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchOutput& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Activation);
     ADD(TargetList);
-    return ret;
+    return rv;
 }
 
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CRaycastResults& d);
@@ -1667,9 +1670,18 @@ template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchOut
 template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CSwitchSignal& d);
 template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CSwitchSignal& d);
 
+MH_DefineFunc(Reflect_CGatherVariables_CThingPtr, 0x006f40b0, TOC1, ReflectReturn, CGatherVariables&, CThingPtr&);
+template <typename R>
+ReflectReturn Reflect(R& r, CThingPtr& d)
+{
+    if (r.IsGatherVariables())
+        return Reflect_CGatherVariables_CThingPtr(r, d);
+    return REFLECT_NOT_IMPLEMENTED;
+}
+
 ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Inverted);
     ADD(Radius);
     ADD(ColorIndex);
@@ -1690,11 +1702,8 @@ ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
     ADD(HideConnectors);
     ADD(DetectUnspawnedPlayers);
     ADD(PlaySwitchAudio);
-    return ret;
+    return rv;
 }
-
-#undef ADD
-
 
 ReflectReturn GatherPoppetRaycastVariables(CGatherVariables& r, CRaycastResults& d)
 {
@@ -1786,6 +1795,7 @@ namespace LogicSystemNativeFunctions
     }
 }
 
+#include <ppcasm.h>
 void InitLogicSystemHooks()
 {
     LogicSystemNativeFunctions::Register();

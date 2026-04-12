@@ -1,5 +1,5 @@
 #include "ResourceGuidSubst.h"
-#include <hook.h>
+
 
 MH_DefineFunc(RGuidSubst_Get, 0x00095ce0, TOC0, bool, const RGuidSubst*, CGUID g, CGUID& o);
 bool RGuidSubst::Get(CGUID g, CGUID& o) const

@@ -1,5 +1,4 @@
-#ifndef RESOURCE_GUID_LIST_H
-#define RESOURCE_GUID_LIST_H
+#pragma once
 
 #include <refcount.h>
 #include <vector.h>
@@ -16,11 +15,3 @@ public:
 public:
     CVector<CGUID> List;
 };
-
-
-#include "Serialise.h"
-#include "Variable.h"
-template <typename R>
-ReflectReturn Reflect(R& r, RGuidList& d);
-
-#endif // RESOURCE_GUID_LIST_H

@@ -1,6 +1,6 @@
 #include "OutfitSystem.h"
 
-#include <hook.h>
+
 
 #include <refcount.h>
 #include <filepath.h>
@@ -22,7 +22,7 @@ bool LoadOutfits()
     rlst->BlockUntilLoaded();
 
     CVector<MMString<char> > lines;
-    LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+    LinesLoad(rlst->GetData(), lines);
     for (int i = 0; i < lines.size(); ++i)
     {
         MMString<char>& line = lines[i];

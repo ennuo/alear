@@ -1,5 +1,17 @@
-#ifndef SERIALISEENUMS_H
-#define SERIALISEENUMS_H
+#pragma once
+
+const u32 DEFAULT_COMPRESSION_LEVEL = 7;
+const u32 MID_GAME_JOIN_COMPRESSION_LEVEL = 4;
+
+const u32 STREAM_PRIORITY_MASK = 0xFFFF;
+const u32 STREAM_FLAGS_MASK = 0xFFFF0000;
+
+const u8 COMPRESS_INTS = (1 << 0);
+const u8 COMPRESS_VECTORS = (1 << 1);
+const u8 COMPRESS_MATRICES = (1 << 2);
+
+const u32 NETWORK_COMPRESSION_FLAGS = COMPRESS_INTS | COMPRESS_VECTORS | COMPRESS_MATRICES;
+const u32 DEFAULT_COMPRESS_FLAGS = COMPRESS_INTS | COMPRESS_VECTORS | COMPRESS_MATRICES;
 
 enum ReflectReturn { // file: 20
     REFLECT_OK=0,
@@ -63,7 +75,7 @@ public:
 
     inline EStreamPriority GetPriority()
     {
-        return (EStreamPriority) (Value & 0xFFFF);
+        return (EStreamPriority) (Value & STREAM_PRIORITY_MASK);
     }
 
     inline void SetPriority(EStreamPriority prio)
@@ -79,7 +91,3 @@ public:
 private:
     EStreamPriority Value;
 };
-
-
-
-#endif

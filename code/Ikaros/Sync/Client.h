@@ -1,0 +1,191 @@
+#pragma once
+
+#include <thread.h>
+#include <vector.h>
+#include <refcount.h>
+#include <nettypes.h>
+#include <Sync/Types.h>
+#include <Sync/Messages.h>
+#include <ResourceDescriptor.h>
+#include <DebugLog.h>
+#include <CritSec.h>
+#include <SerialisedResource.h>
+#include <JobManager.h>
+#include <Sync/Shared.h>
+
+namespace sync
+{
+    class CClient;
+    typedef void (*MessageCallback)(CClient*, const packet& p, const ByteArray& d);
+    typedef void (*StateChangeCallback)(CClient*, int state);
+    typedef void (*DownloadCallback)(int, void*);
+
+    void RegisterStateChangeCallback(StateChangeCallback cb);
+    void RegisterMessageCallback(int channel, MessageCallback cb);
+
+    enum
+    {
+        kDownloadState_Inactive,
+        kDownloadState_InProgress,
+        kDownloadState_Success,
+        kDownloadState_Failed,
+        kDownloadState_NoDataSource,
+        kDownloadState_InvalidSession,
+        kDownloadState_NetworkError,
+        kDownloadState_IOError,
+        kDownloadState_BadHash
+    };
+
+    class CDownloadJob : public CBaseCounted {
+    public:
+        CDownloadJob();
+    public:
+        inline bool IsPreload() const { return !CSR; }
+    public:
+        void EnqueueForDownload(const CP<CSerialisedResource>& csr, int priority);
+        void Reset();
+        void Finish();
+    public:
+        static void DownloadJob(void* userdata);
+    private:
+        CDownloadJob(const CDownloadJob& rhs);
+        CDownloadJob& operator=(const CDownloadJob& rhs);
+    public:
+        CP<CSerialisedResource> CSR;
+        int Priority;
+        CFilePath FilePath;
+        sockaddr_in Server;
+        token Token;
+        u32 DownloadSize;
+        u32 BytesDownloaded;
+        u32 JobID;
+        s32 State;
+    };
+
+    class CUploadJob : public CBaseCounted {
+    public:
+        CFileSource Source;
+        sockaddr_in Server;
+        token Token;
+        u32 JobID;
+    };
+
+    class CUploadTask : public CBaseCounted {
+    public:
+        enum
+        {
+            kState_Initial,
+            kState_Filtering,
+            kState_Filtered,
+            kState_Uploading,
+            kState_Finished,
+            kState_FinishedError
+        };
+    public:
+        CUploadTask(const CRawVector<CFileSource>& sources);
+    public:
+        int State;
+        CRawVector<CFileSource> Sources;
+        u32 FilterRequest;
+        CVector<CP<CUploadJob> > Jobs;
+        CP<CUploadTask> Next;
+    };
+
+    class CClient {
+    public:
+        enum
+        {
+            kState_Disconnected,
+            kState_Connecting,
+            kState_Connected,
+            kState_Error
+        };
+
+        enum
+        {
+            kSubState_None,
+            kSubState_WaitingForServerInfo,
+            kSubState_WaitingForLogin,
+            kSubState_WaitingForDepotList,
+            kSubState_WaitingForDepotDownloads
+        };
+        
+        enum
+        {
+            kErrorState_None,
+            kErrorState_Unauthorized = 1000
+        };
+    public:
+        CClient();
+        ~CClient();
+    private:
+        static MAKE_THREAD_FUNCTION(ThreadFunctionStatic);
+        void ThreadFunction();
+    public:
+        inline bool IsConnecting() const { return (State == kState_Disconnected && WantConnect) || State == kState_Connecting; }
+        inline bool IsConnected() const { return State == kState_Connected; }
+        inline bool CanHandleCSR() const
+        {
+            return IsConnecting() || IsConnected();
+        }
+        
+        inline u32 GetDownloadTag() const { return DownloadTag; }
+        inline const sockaddr_in& GetServerAddress() const { return Address; }
+        inline const token& GetSession() const { return Token; }
+    public:
+        bool IsExtensionSupported(u32 channel, u32 protocol);
+        bool Connect(const char* host, int port = kSyncServerPort);
+        void Disconnect();
+        void Update();
+        void UpdateSynced();
+    public:
+        void Download(CP<CSerialisedResource>& csr, int priority);
+        bool SendMessage(u32 channel, u32 message, void* data = NULL, int len = 0);
+        void Upload(const CRawVector<CFileSource>& sources);
+    private:
+        void HandleSyncChannel(const packet& packet, const ByteArray& data);
+        void HandleGateChannel(const packet& packet, const ByteArray& data);
+        void UpdateUploadTasks();
+    private:
+        const depot* GetDepot(u64 id);
+        CFilePath GetDepotCacheFilePath() const;
+        void DestroyDepotCache();
+        void LoadDepotCache();
+        void SaveToDepotCache();
+    public:
+        void DoUploadTest();
+    public:
+        int State;
+        union
+        {
+            int SubState;
+            int ErrorState;
+        };
+        bool WantQuit;
+        bool WantConnect;
+
+        SOCKET Socket;
+        sockaddr_in Address;
+        THREAD Thread;
+
+        u64 AccountID;
+        token Token;
+
+        CP<CUploadTask> UploadTask;
+        
+        SServerInfo ServerInfo;
+        CCriticalSec DepotMutex;
+        CVector<depot> Depots;
+        u32 PendingDepotRequests;
+
+        CCriticalSec DownloadMutex;
+        CCriticalSec UploadMutex;
+        u32 DownloadTag;
+        u32 UploadTag;
+
+        CVector<CP<CDownloadJob> > DownloadsInProgress;
+    };
+
+    extern CClient* Client;
+    extern CJobManager* DownloadJobManager;
+}

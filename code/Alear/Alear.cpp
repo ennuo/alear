@@ -12,12 +12,11 @@
 #include "AlearDebugCamera.h"
 #include "AlearStartMenu.h"
 #include "AlearShared.h"
-#include "AlearSync.h"
-#include "AlearNetworking.h"
 #include "FileWatcher.h"
 #include "PinSystem.h"
 #include "OutfitSystem.h"
 #include "RenderJoint.h"
+#include "Sync/Bootstrap.h"
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -74,10 +73,10 @@ bool AlearEpilogue()
 
 // need this to load before a specific init step, so going to separate it out
 CInitStep gEmoteInitStep = { "Emotes", NULL, LoadEmotes, UnloadEmotes, NULL, false, NULL };
+CInitStep gSyncStep = { "Ikaros", NULL, sync::Open, sync::Close, NULL, false, NULL };
 CInitStep gAlearInitSteps[] =
 {
     { "Alear Patch Validator", NULL, AlearCheckPatch, NULL, false, NULL },
-    { "Alear Sync", NULL, NULL, NULL, InitAlearSync, false, NULL  },
     { "Alear Server Switcher", NULL, AlearInitServerSwitcher, NULL, NULL, false, NULL },
     #ifdef __CINEMACHINE__
     { "Alear Cinemachine", NULL, LoadCameraClips, NULL, NULL, false, NULL },
@@ -95,166 +94,10 @@ CInitStep gAlearInitSteps[] =
     { NULL, NULL, NULL, NULL, NULL, false, NULL }
 };
 
-/// @brief Loads databases from a user-provided config file
-/// @return Whether the operation was successful 
-bool AlearLoadDatabaseConfiguration()
-{
-    CFilePath fp(FPR_GAMEDATA, "/gamedata/alear/databases.json");
-    if (!FileExists(fp))
-    {
-        DebugLog("No database configuration file exists at %s!\n", fp.c_str());
-        // Not technically a fail, just doesn't exist
-        return true;
-    }
-
-    DebugLog("Loading database config from %s\n", fp.c_str());
-    char* json = FileLoadText(fp);
-    if (json == NULL)
-    {
-        DebugLog("Failed to read database configuration file at %s!\n", fp.c_str());
-        return false;
-    }
-
-    const int MAX_DATABASES = 16;
-    const int MAX_FIELDS = MAX_DATABASES + 1;
-
-    json_t pool[MAX_FIELDS];
-    json_t const* root = json_create(json, pool, MAX_FIELDS);
-    if (root == NULL)
-    {
-        DebugLog("Failed to parse database configuration!\n");
-        return false;
-    }
-
-    if (json_getType(root) != JSON_ARRAY)
-    {
-        DebugLog("Root of database configuration file must be a JSON string array!\n");
-        return false;
-    }
-
-    for (json_t const* element = json_getChild(root); element != NULL; element = json_getSibling(element))
-    {
-        if (json_getType(element) != JSON_TEXT)
-        {
-            DebugLog("Element in JSON array is invalid! (Not a string)\n");
-            continue;
-        }
-
-        const char* path = json_getValue(element);
-        if (path == NULL)
-        {
-            DebugLog("Database element filepath was NULL!\n");
-            continue;
-        }
-
-        CFilePath database_fp(FPR_GAMEDATA, (char*)path);
-        if (!FileExists(database_fp))
-        {
-            DebugLog("Database at %s doesn't exist, skipping...\n", database_fp.c_str());
-            continue;
-        }
-
-        DebugLog("Adding database %s...\n", database_fp.c_str());
-        FileDB::DBs.push_back(CFileDB::Construct(database_fp));
-    }
-
-    return true;
-}
-
-bool gEnableFHD = false;
-
-void AlearHookHD()
-{
-    const int width = 1920;
-    const int height = 1080;
-
-    MH_Poke32(0x001df23c + 0x00, LI(4, width));
-    MH_Poke32(0x001df23c + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df124 + 0x00, LI(4, width));
-    MH_Poke32(0x001df124 + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df140 + 0x00, LI(4, width));
-    MH_Poke32(0x001df140 + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df15c + 0x00, LI(4, width));
-    MH_Poke32(0x001df15c + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df178 + 0x00, LI(4, width));
-    MH_Poke32(0x001df178 + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df05c + 0x00, LI(4, width));
-    MH_Poke32(0x001df05c + 0x04, LI(5, height));
-
-    MH_Poke32(0x001df03c + 0x00, LI(4, width));
-    MH_Poke32(0x001df03c + 0x04, LI(5, height));
-
-    // PRT_L_BUFFER_720P2X
-    MH_Poke32(0x001df07c + 0x00, LI(4, (width * 2)));
-    MH_Poke32(0x001df07c + 0x04, LI(5, height));
-
-    // Fix the scissor dimensions in the SetNiceState function
-    MH_Poke32(0x003e28d8 + 0x00, LI(6, width));
-    MH_Poke32(0x003e28d8 + 0x04, LI(7, height));
-    // Change dimension when transferring image in Swap
-    MH_Poke32(0x003e3f0c + 0x00, LI(3, width));
-    MH_Poke32(0x003e3f0c + 0x04, LI(4, height));
-}
-
 #include <Directory.h>
-void InitSyncCache()
-{
-
-    
-    CFilePath fp(FPR_GAMEDATA, gSyncCachePath);
-    DirectoryCreate(fp);
-    
-    if (!FileExists(fp))
-    {
-        Footer footer;
-        footer.count = 0;
-        footer.magic = FARC;
-
-        FileHandle fd;
-        FileOpen(fp, &fd, OPEN_WRITE);
-        FileWrite(fd, (void*)&footer, sizeof(Footer));
-        FileClose(&fd);
-    }
-
-    gCaches[CT_SYNC] = MakeROCache(fp, true, false);
-}
-
 void AlearSetupDatabase()
 {
-    // lazy so we're throwing the init for the sync cache in here
-    InitSyncCache();
-
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
-
-    CFilePath syncofp(FPR_GAMEDATA, gSyncDatabaseOverridePath);
-    FileDB::DBs.push_back(CFileDB::Construct(syncofp));
-
-    CFilePath syncfp(FPR_GAMEDATA, gSyncDatabasePath);
-    gSyncDatabase = CFileDB::Construct(syncfp);
-    FileDB::DBs.push_back(gSyncDatabase);
-    
-    if (gEnableFHD)
-    {
-        CFilePath fp(FPR_GAMEDATA, "/gamedata/alear/hd/patch.map");
-        if (FileExists(fp))
-        {
-            FileDB::DBs.push_back(CFileDB::Construct(fp));
-        }
-    }
-    
-    // CFilePath alear_fp(FPR_GAMEDATA, "/gamedata/alear/boot.map");
-    // if (FileExists(alear_fp))
-    // {
-    //     FileDB::DBs.push_back(CFileDB::Construct(alear_fp));
-    // }
-    // else DebugLog("WARNING: %s isn't present, this may cause issues!\n", alear_fp.c_str());
-
-    AlearLoadDatabaseConfiguration();
 
     if (gGameDataReady)
     {
@@ -303,8 +146,6 @@ void AlearStartup()
     InitOutfitHooks();
     InitAlearOptUiHooks();
     AttachWebternateHooks();
-    if (gEnableFHD) AlearHookHD();
-    AttachNetworkingHooks();
 
     MH_PokeHook(0x0040b678, SetJetpackTether);
     MH_PokeHook(0x0040a9f4, CollectGun);
@@ -322,6 +163,11 @@ void AlearStartup()
     while (strcmp(target->DebugText, "SceneGraph") != 0) target++;
     target->ChainTo = &gEmoteInitStep;
     gEmoteInitStep.ChainTo = target + 1;
+
+    target = gInitSteps;
+    while (strcmp(target->DebugText, "NetworkUtilities") != 0) target++;
+    target->ChainTo = &gSyncStep;
+    gSyncStep.ChainTo = target + 1;
 
     DebugLog("gInitSteps:\n");
     CInitStep* step = gInitSteps, *last = NULL;

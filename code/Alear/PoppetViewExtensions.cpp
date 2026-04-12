@@ -14,6 +14,8 @@
 
 #include "customization/Emotes.h"
 
+
+
 const u32 gUserObjectMask = 0x40100480;
 const u32 gPodMask = E_TYPE_USER_POD | E_TYPE_POD_TOOL;
 

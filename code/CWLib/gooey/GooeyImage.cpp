@@ -4,7 +4,7 @@
 #include "ResourceSystem.h"
 
 #include <new>
-#include <hook.h>
+
 
 const u32 DEFAULT_FRAME_DELAY = 2;
 

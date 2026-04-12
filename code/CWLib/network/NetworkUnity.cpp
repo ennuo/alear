@@ -1,4 +1,4 @@
-#include <hook.h>
+
 #include "network/NetworkPartiesData.h"
 
 MH_DefineFunc(CGamePartyData_NumPS3s, 0x00129330, TOC0, u32, CGamePartyData const*);

@@ -6,7 +6,7 @@
 
 #include <GooeyNetworkAction.h>
 #include <PlayerNumber.inl>
-#include <hook.h>
+
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
 #include <ResourceGFXTexture.h>

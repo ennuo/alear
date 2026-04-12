@@ -1,5 +1,4 @@
 #include "AlearStartMenu.h"
-#include "AlearSync.h"
 #include "AlearShared.h"
 #include "AlearConfig.h"
 #include "ServerSwitcher.h"
@@ -8,7 +7,7 @@
 #include "FileWatcher.h"
 
 #include <printf.h>
-#include <hook.h>
+
 #include <mmalex.h>
 #include <ppcasm.h>
 #include <filepath.h>
@@ -268,39 +267,6 @@ void ProcessStartMenuNotifications()
     }
 
     gStartMenuNotification = 0;
-}
-
-void ReloadPublishDatabases()
-{
-    gPublishDatabases.clear();
-
-    CFilePath publishdir(FPR_GAMEDATA, gSyncPublishPath);
-
-    int fd;
-    if (cellFsOpendir(publishdir.c_str(), &fd) != CELL_FS_OK) return;
-
-    CellFsDirectoryEntry entry;
-    memset(&entry, 0, sizeof(CellFsDirectoryEntry));
-    u32 data_count = 0;
-    char buf[CELL_FS_MAX_FS_PATH_LENGTH];
-    CFilePath fp;
-    do
-    {
-        if (cellFsGetDirectoryEntries(fd, &entry, sizeof(CellFsDirectoryEntry), &data_count) != CELL_FS_OK)
-            break;
-        
-        if (entry.entry_name.d_type != CELL_FS_TYPE_REGULAR) continue;
-        if (strstr(entry.entry_name.d_name, ".map") == NULL) continue;
-
-        sprintf(buf, "%s/%s", publishdir.c_str(), entry.entry_name.d_name);
-        fp.Assign(buf);
-
-        gPublishDatabases.push_back(fp);
-
-    } while (data_count);
-
-    cellFsClosedir(fd);
-
 }
 
 void ReloadReadonlyCaches()
@@ -675,379 +641,22 @@ void DoServersSubmenu(CGooeyNodeManager* manager)
     }
 }
 
-bool IsValidDatabase(CFileDB* database)
-{
-    if (database == NULL) return false;
-    if (database->Files.size() == 0) return false;
-
-    const char* system_paths[] = 
-    {
-        "/gamedata/alear/boot.map",
-        gSyncDatabaseOverridePath,
-        gSyncDatabasePath,
-        "/output/brg_patch.map",
-        "/output/blurayguids.map",
-        "/output/brg_rnp.map"
-    };
-
-    for (int i = 0; i < ARRAY_LENGTH(system_paths); ++i)
-    {
-        if (strstr(database->Path.c_str(), system_paths[i]) != NULL)
-            return false;
-    }
-
-    return true;
-}
-
-const char* GetPlural(int count)
-{
-    if (count > 1) return "files";
-    return "file";
-}
-
-void DoSyncSubpageChangeHistory(CGooeyNodeManager* manager, bool first_open)
-{
-    DoSectionHeader(manager, L"Recent History");
-    if (manager->StartFrame())
-    {
-        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
-
-
-        manager->AddFrameColumn(SizingBehaviour::Relative(0.77f), LM_JUSTIFY_START);
-        manager->AddFrameColumn(SizingBehaviour::Relative(0.23f), LM_JUSTIFY_END);
-
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.47f), LM_JUSTIFY_START);
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.23f), LM_JUSTIFY_START);
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.1f), LM_JUSTIFY_END);
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.1f), LM_JUSTIFY_END);
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.1f), LM_JUSTIFY_END);
-
-        manager->SetFrameBorders(0.0f, 0.0f);
-        manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
-
-        // manager->DoText(L"Change", GTS_T3);
-        // manager->DoText(L"Date", GTS_T3);
-
-        // manager->DoText(L"Author", GTS_T3);
-        // manager->DoText(L"Date", GTS_T3);
-        // manager->DoText(L"+", GTS_T3);
-        // manager->DoText(L"-", GTS_T3);
-        // manager->DoText(L"/", GTS_T3);
-
-        manager->DoBreak();
-
-        for (int i = 0; i < MAX_COMMIT_ENTRIES; ++i)
-        {
-            SCommitData& commit = gCommitHistory[i];
-            if (StringLength(commit.Author) == 0) continue;
-
-            wchar_t message[256] = { 0 };
-            wchar_t date[32] = { 0 };
-
-            FormatString<32>(date, L"%s", commit.PublishDate);
-
-
-            if (commit.Additions == 0 && commit.Changes == 0 && commit.Deletes == 0)
-            {
-                FormatString<256>(message, L"%s did literally nothing", commit.Author);
-            }
-            else if (commit.Additions != 0 && commit.Changes == 0)
-            {
-                FormatString<256>(message, L"%s added %d %s", commit.Author, commit.Additions, GetPlural(commit.Additions));
-            }
-            else if (commit.Additions == 0 && commit.Changes != 0)
-            {
-                FormatString<256>(message, L"%s changed %d %s", commit.Author, commit.Changes, GetPlural(commit.Changes));
-            }
-            else if (commit.Additions != 0 && commit.Changes != 0)
-            {
-                FormatString<256>(message, L"%s added %d %s and changed %d %s", commit.Author, commit.Additions, GetPlural(commit.Additions), commit.Changes, GetPlural(commit.Changes));
-            }
-            else if (commit.Deletes != 0)
-            {
-                FormatString<256>(message, L"%s deleted %d %s", commit.Author, commit.Deletes, GetPlural(commit.Deletes));
-            }
-
-            // manager->DoInline(message, GTS_T5, STATE_NORMAL, NULL, 256);
-            manager->DoText(message, GTS_T5);
-            manager->DoText(date, GTS_T5);
-
-            manager->DoBreak();
-        }
-
-        manager->EndFrame();
-    }
-
-}
-
-void DoDeleteButton(CGooeyNodeManager* manager, u64 uid, CBaseNode* file)
-{
-    if ((GetSyncServerPermissions() & PERMISSIONS_DELETE) != 0)
-    {
-        u32 res = manager->DoInline(uid, L"Delete", GTS_T5, file->IsInRecyclingBin() ? STATE_TOGGLE : STATE_NORMAL, NULL, 256);
-        if (res & 256)
-        {
-            file->ToggleDelete();
-            ForceStartMenuUpdate();
-        }
-    }
-    else manager->DoSpacer();
-}
-
-void DoSyncSubpageFilesystem(CGooeyNodeManager* manager, bool first_open)
-{
-    static bool focus_next_frame = false;
-
-    if ((GetSyncServerPermissions() & PERMISSIONS_READ) == 0)
-    {
-        ForceStartMenuUpdate();
-        gPopAlearSubPage = true;
-        return;
-    }
-
-    bool can_delete = (GetSyncServerPermissions() & PERMISSIONS_DELETE) != 0;
-    if (first_open) ReloadSyncFilesystem();
-
-    if (!gShowRecycleBin)
-    {
-        CRawVector<const wchar_t*> fragments;
-
-        CFolderNode* node = gSelectedFolder;
-        while (node->GetParent() != NULL)
-        {
-            fragments.push_back(node->GetName());
-            node = (CFolderNode*)node->GetParent();
-        }
-
-        if (fragments.size() != 0)
-        {
-            MMString<wchar_t> title;
-            for (int i = fragments.size() - 1; i >= 0; --i)
-            {
-                title += fragments[i];
-                if (i - 1 >= 0) title += L"/";
-            }
-
-            DoSectionHeader(manager, title.c_str());
-        }
-        else DoSectionHeader(manager, L"Filesystem");
-    } else DoSectionHeader(manager, L"Recycling Bin");
-
-    if (!manager->StartFrameNamed(PRIMARY_FRAME_UID)) return;
-    manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_START);
-    manager->SetFrameSizing(SizingBehaviour::Contents(), 400.0f);
-    manager->SetFrameBorders(0.0f, 0.0f);
-
-    if (manager->StartFrame())
-    {
-        manager->SetFrameSizing(SizingBehaviour::Contents(), SizingBehaviour::Relative(0.9f));
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.8f), LM_JUSTIFY_START);
-        // manager->AddFrameColumn(SizingBehaviour::Relative(0.2f), LM_JUSTIFY_END);
-        manager->SetFrameLayoutMode(LM_JUSTIFY_START, LM_JUSTIFY_START);
-        manager->SetFrameBorders(0.0f, 0.0f);
-        manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
-
-        CFolderNode* queued_node = NULL;
-        u64 item_uid = FIRST_SELECTION_UID;
-        u64 action_uid = FIRST_SECONDARY_SELECTION_UID;
-
-        CFolderNode* root = gShowRecycleBin ? &gRecyclingBin : gSelectedFolder;
-
-        for (int i = 0; i < root->Folders.size(); ++i)
-        {
-            u64 uid = item_uid++;
-            CFolderNode* folder = root->Folders[i];
-            if (manager->DoInline(uid, folder->GetName(), GTS_T5, STATE_NORMAL, NULL, 256) & 256)
-                queued_node = folder;
-
-            // manager->DoSpacer();
-            manager->DoBreak();
-        }
-
-        for (int i = 0; i < root->Files.size(); ++i)
-        {
-            CBaseNode* file = root->Files[i];
-            u64 uid = item_uid++;
-
-            // DoDeleteButton(manager, action_uid++, file);
-
-            u32 input_mask = 256;
-            if (can_delete) input_mask |= 0x800;
-
-            if (manager->DoInline(item_uid, file->GetName(), GTS_T5, (file->IsInRecyclingBin() && !gShowRecycleBin) ? STATE_TOGGLE : STATE_NORMAL, NULL, input_mask) & 0x800)
-            {
-                file->ToggleDelete();
-                ForceStartMenuUpdate();
-            }
-
-            manager->DoBreak();
-        }
-
-        if (focus_next_frame)
-        {
-            manager->EnsureNodeOrDescendantHasFocus(gSelectedFolder->LastSelectedUID);
-            focus_next_frame = false;
-        }
-
-        if (manager->CurrentHighlightNode != NULL)
-        {
-            u64 uid = manager->CurrentHighlightNode->UID;
-            if (uid > FIRST_SELECTION_UID && uid < FIRST_SECONDARY_SELECTION_UID)
-                gSelectedFolder->LastSelectedUID = uid;
-        }
-        
-        if (queued_node != NULL)
-        {
-            focus_next_frame = true;
-            gSelectedFolder = queued_node;
-            ForceStartMenuUpdate();
-        }
-
-        manager->EndFrame();
-    }
-
-    if (can_delete)
-    {
-        manager->DoHorizontalBreak(GBS_SOLID, v2(0.5f, 0.5f));
-
-        if (manager->StartFrame())
-        {
-            manager->SetFrameSizing(SizingBehaviour::Contents(), SizingBehaviour::Relative(0.1f));
-            manager->SetFrameBorders(0.0f, 0.0f);
-            manager->SetFrameLayoutMode(LM_JUSTIFY_END, LM_CENTERED);
-            
-            if (gShowRecycleBin)
-            {
-                if (manager->DoInline(L"Empty", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
-                {
-                    CRawVector<CGUID> guids;
-                    for (int i = 0; i < gRecyclingBin.Files.size(); ++i)
-                    {
-                        CFileNode* file = (CFileNode*)gRecyclingBin.Files[i];
-                        guids.push_back(file->GetGUID());
-                    }
-
-                    DeleteResources(guids);
-                }
-            }
-
-            if (manager->DoInline(0x52454359ull, L"Recycling Bin", GTS_T5, gShowRecycleBin ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-            {
-                gShowRecycleBin = !gShowRecycleBin;
-                ForceStartMenuUpdate();
-            }
-
-            manager->EndFrame();
-        }
-    }
-
-    if (manager->EndFrame(0x200) & 0x200)
-    {
-        if (!gShowRecycleBin)
-        {
-            CFolderNode* parent = (CFolderNode*)gSelectedFolder->GetParent();
-            if (parent != NULL) 
-            {
-                gSelectedFolder = parent;
-                focus_next_frame = true;
-            }
-            else
-            {
-                gPopAlearSubPage = true;
-            }
-        } else gShowRecycleBin = false;
-
-        ForceStartMenuUpdate();
-    }
-
-    if (first_open) manager->EnsureNodeOrDescendantHasFocus(FIRST_SELECTION_UID);
-    manager->EnsureNodeOrDescendantHasFocus(PRIMARY_FRAME_UID);
-}
-
-void DoSyncSubpageDatabases(CGooeyNodeManager* manager, bool first_open)
-{
-    if ((GetSyncServerPermissions() & PERMISSIONS_UPLOAD) == 0)
-    {
-        ForceStartMenuUpdate();
-        gPopAlearSubPage = true;
-        return;
-    }
-
-    if (first_open)
-    {
-        ReloadPublishDatabases();
-    }
-
-    DoSectionHeader(manager, L"Select a database to upload");
-
-    if (manager->StartFrame())
-    {
-        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
-        manager->SetFrameBorders(0.0f, 0.0f);
-        manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
-
-        CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
-        MMString<wchar_t> path;
-
-        
-        u64 selection_uid = FIRST_SELECTION_UID;
-        for (CFilePath* it = gPublishDatabases.begin(); it != gPublishDatabases.end(); ++it)
-        {
-            CFilePath fp = (*it);
-            GetRelativePath(path, fp);
-            u32 result = manager->DoInline(selection_uid++, path.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
-            if (result & 256)
-            {
-                CFileDB* database = CFileDB::Construct(fp);
-                if (database != NULL)
-                {
-                    if (database->Load() == REFLECT_OK) UploadDatabase(database);
-                    else delete database; // Upload thread func will delete the database
-                }
-            }
-
-            manager->DoBreak();
-        }
-
-        for (CFileDB** it = FileDB::DBs.begin(); it != FileDB::DBs.end(); ++it)
-        {
-            CFileDB* database = (*it);
-            if (!IsValidDatabase(database)) continue;
-            
-            GetRelativePath(path, database->Path);
-            u32 result = manager->DoInline(selection_uid++, path.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
-            if (result & 256)
-                UploadDatabase(database);
-
-            manager->DoBreak();
-        }
-
-        manager->EndFrame();
-    }
-
-    if (first_open)
-        manager->EnsureNodeOrDescendantHasFocus(FIRST_SELECTION_UID);
-}
-
 int DoSyncSubpage(CGooeyNodeManager* manager, AlearSubPageType subpage, bool first_open)
 {
     switch (subpage)
     {
         case SMSP_UPLOAD_DATABASE:
         {
-            DoSyncSubpageDatabases(manager, first_open);
             break;
         }
 
         case SMSP_CHANGE_HISTORY:
         {
-            DoSyncSubpageChangeHistory(manager, first_open);
             break;
         }
 
         case SMSP_VIRTUAL_FILESYSTEM:
         {
-            DoSyncSubpageFilesystem(manager, first_open);
             break;
         }
 
@@ -1204,11 +813,6 @@ namespace AlearOptNativeFunctions
         RegisterNativeFunction("Start_Menu", "DoServersSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoServersSubmenu>);
         RegisterNativeFunction("Start_Menu", "DoSyncSubpage__Q5Gooeyib", true, NVirtualMachine::CNativeFunction3<int, CScriptObjectGooey*, AlearSubPageType, bool>::Call<DoSyncSubpage>);
         
-        RegisterNativeFunction("Alear", "IsSyncServerConnected__", true, NVirtualMachine::CNativeFunction0<bool>::Call<IsSyncServerConnected>);
-        RegisterNativeFunction("Alear", "IsSyncServerConnecting__", true, NVirtualMachine::CNativeFunction0<bool>::Call<IsSyncServerConnecting>);
-        RegisterNativeFunction("Alear", "TryConnectSyncServer__", true, NVirtualMachine::CNativeFunction0V::Call<TryConnectSyncServer>);
-        RegisterNativeFunction("Alear", "GetSyncServerPermissions__", true, NVirtualMachine::CNativeFunction0<ESyncPermissions>::Call<GetSyncServerPermissions>);
-
         RegisterNativeFunction("Poppet", "ReloadFromInventory__i", false, NVirtualMachine::CNativeFunction2V<CScriptObjectPoppet*, u32>::Call<ReloadInventoryItem>);
         RegisterNativeFunction("Poppet", "RefreshUsedItems__", false, NVirtualMachine::CNativeFunction1V<CScriptObjectPoppet*>::Call<RefreshUsedItems>);
         RegisterNativeFunction("Poppet", "InvalidateTweakThing__Q5Thing", true, NVirtualMachine::CNativeFunction1V<CThing*>::Call<OnStopTweaking>);

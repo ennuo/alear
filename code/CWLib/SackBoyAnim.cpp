@@ -4,7 +4,7 @@
 #include "thing.h"
 #include "RenderYellowHead.h"
 
-#include <hook.h>
+
 #include <ResourceGame.h>
 #include <ResourceSystem.h>
 

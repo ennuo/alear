@@ -1,4 +1,5 @@
-#include "ResourceGFXFont.h"
+#include <ResourceGFXFont.h>
+
 
 
 MH_DefineFunc(StartDrawText, 0x00099b00, TOC0, void, bool faded, CCamera* cam, m44* oldprojmat, bool scribble, bool allow_clipping, float screen_x, float screen_y);

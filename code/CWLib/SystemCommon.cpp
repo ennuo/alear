@@ -1,5 +1,5 @@
 #include "System.h"
-#include <hook.h>
+
 
 MH_DefineFunc(WantQuitOrWantQuitRequested, 0x0001dea8, TOC0, bool);
 

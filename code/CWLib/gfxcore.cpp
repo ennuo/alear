@@ -1,7 +1,7 @@
 #include "gfxcore.h"
 
 #include <cell/gcm.h>
-#include <hook.h>
+
 
 namespace NGfx 
 {

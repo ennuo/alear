@@ -1,7 +1,7 @@
 #include "PolyBubble.h"
 #include "gfxcore.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(CPolyBubble_FindBoundaryPosition, 0x0028bb50, TOC0, bool, const CPolyBubble*, v2, v2&);
 

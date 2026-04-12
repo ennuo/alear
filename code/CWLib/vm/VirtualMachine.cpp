@@ -1,5 +1,5 @@
 #include "vm/VirtualMachine.h"
-#include <hook.h>
+
 
 namespace NVirtualMachine
 {

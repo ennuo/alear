@@ -14,6 +14,7 @@
 #include <map>
 #include <HTTPClient.h>
 
+
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
 #include <thing.h>
@@ -122,9 +123,8 @@ protected:
         ByteArray b;
         if (!GetFileDataFromCaches(row->FileHash, b))
         {
-            CHash hash;
             fp.Assign(FPR_GAMEDATA, row->FilePathX);
-            FileLoad(fp, b, hash);
+            FileLoad(fp, b);
         }
 
         if (b.empty()) return;

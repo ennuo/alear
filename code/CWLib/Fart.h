@@ -26,20 +26,30 @@ struct SResourceReader;
 
 class CCache { // fart.h: 18
 public:
+    CCache(const char* name);
+public:
     virtual ~CCache() = 0;
     virtual bool IsSlow(const SResourceReader&) = 0;
     virtual bool GetReader(const CHash&, SResourceReader&) = 0;
     virtual void CloseReader(SResourceReader* in, bool hashes_matched) = 0;
     virtual bool Unlink(const CHash&) = 0;
     virtual bool GetSize(const CHash&, u32&) = 0;
-    virtual bool Put(CHash&, const void*, u32) = 0;
+    virtual bool Put(CHash& hash_in_out, const void* bin, u32 size)
+    {
+        return false;
+    }
 public:
     CCriticalSec Mutex;
 };
 
 class SResourceReader { // fart.h: 37
 public:
-    SResourceReader() { memset(this, 0, sizeof(SResourceReader)); }
+    SResourceReader() 
+    { 
+        memset(this, 0, sizeof(SResourceReader));
+        RollingHash.Reset();
+        Handle = INVALID_FILE_HANDLE;
+    }
 
     ~SResourceReader()
     {
@@ -66,6 +76,8 @@ private:
     FileHandle Writer;
     u32 Size;
 };
+
+u32 GetFartRevision(u32 magic);
 
 extern bool (*CloseCaches)();
 extern bool (*InitCaches)();

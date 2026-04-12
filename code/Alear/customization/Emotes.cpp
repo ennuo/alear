@@ -5,7 +5,7 @@
 #include <refcount.h>
 #include <cell/DebugLog.h>
 #include <MMAudio.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 #include <SackBoyAnim.h>
 #include <RenderYellowHead.h>
 #include <Resource.h>
@@ -19,6 +19,52 @@
 CVector<CEmote> gEmotes;
 CVector<CAnimBank*> gAnimBanks;
 CStyleBank gStyleBank;
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmote& d)
+{
+    ReflectReturn rv;
+    ADD(Plan);
+    ADD(Anim);
+    ADD(Sounds);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmoteSound& d)
+{
+    ReflectReturn rv;
+    ADD(Frame);
+    ADD(Sound);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmoteBank& d)
+{
+    ReflectReturn rv;
+    ADD(Emotes);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CAnimStyle& d)
+{
+    ReflectReturn rv;
+    ADD(ID);
+    ADD(Gsub);
+    return rv;
+}
+
+
+template<typename R>
+ReflectReturn Reflect(R& r, CStyleBank& d)
+{
+    ReflectReturn rv;
+    ADD(Styles);
+    return rv;
+}
+
 
 CAnimStyle* GetAnimStyle(const char* id)
 {
@@ -61,7 +107,7 @@ bool CustomInitAnims()
     if (!file->IsLoaded()) return false;
 
     CGatherVariables variables;
-    variables.Init<CStyleBank>(&gStyleBank);
+    Init<CStyleBank>(variables, &gStyleBank);
     if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
     {
         DebugLog("An error occurred while loading data for animation styles!\n");
@@ -134,7 +180,7 @@ bool LoadEmotes()
     if (!file->IsLoaded()) return false;
 
     CGatherVariables variables;
-    variables.Init<CEmoteBank>((CEmoteBank*)&gEmotes);
+    Init<CEmoteBank>(variables, (CEmoteBank*)&gEmotes);
     if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
     {
         DebugLog("An error occurred while loading data for emotes!\n");

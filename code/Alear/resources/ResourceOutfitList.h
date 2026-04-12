@@ -1,5 +1,4 @@
-#ifndef RESOURCE_OUTFIT_LIST_H
-#define RESOURCE_OUTFIT_LIST_H
+#pragma once
 
 #include <vector.h>
 
@@ -27,12 +26,3 @@ public:
 };
 
 extern CVector<CP<ROutfitList> > gOutfitLists;
-
-#include "Serialise.h"
-#include "Variable.h"
-template <typename R>
-ReflectReturn Reflect(R& r, COutfit& d);
-template <typename R>
-ReflectReturn Reflect(R& r, ROutfitList& d);
-
-#endif // RESOURCE_OUTFIT_LIST_H

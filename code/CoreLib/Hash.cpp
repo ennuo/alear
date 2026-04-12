@@ -1,6 +1,6 @@
 #include "Hash.h"
 
-#include <hook.h>
+
 MH_DefineFunc(JenkinsHash, 0x0058e374, TOC1, u32, u8* k, u32 length, u32 initial_value);
 
 // Sourced from https://burtleburtle.net/bob/hash/doobs.html

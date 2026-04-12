@@ -1,12 +1,10 @@
-#ifndef RESOURCE_ANIMATED_TEXTURE_H
-#define RESOURCE_ANIMATED_TEXTURE_H
+#pragma once
 
+#include <refcount.h>
+#include <ResourceGFXTexture.h>
+#include <Resource.h>
 
-#include "refcount.h"
-#include "ResourceGFXTexture.h"
-#include "Resource.h"
-
-#include <cell/DebugLog.h>
+#include <DebugLog.h>
 
 class RAnimatedTexture : public CResource {
 public:
@@ -46,10 +44,3 @@ public:
     u32 FrameHeight;
     bool BlendFrames;
 };
-
-#include "Serialise.h"
-#include "Variable.h"
-template <typename R>
-ReflectReturn Reflect(R& r, RAnimatedTexture& d);
-
-#endif // RESOURCE_ANIMATED_TEXTURE_H

@@ -1,7 +1,7 @@
 #include "thing.h"
 #include "ResourceSystem.h"
 #include "MatrixUtils.h"
-#include <hook.h>
+
 
 #include <PartSwitch.h>
 

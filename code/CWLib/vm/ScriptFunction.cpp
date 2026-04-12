@@ -1,5 +1,5 @@
 #include "vm/ScriptFunction.h"
-#include <hook.h>
+
 
 namespace NVirtualMachine 
 {

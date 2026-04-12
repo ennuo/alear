@@ -1,7 +1,7 @@
 #include "Resource.h"
 #include "ResourceSystem.h"
 
-#include <hook.h>
+
 
 void CResource::BlockUntilLoaded()
 {
