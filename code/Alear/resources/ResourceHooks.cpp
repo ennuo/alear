@@ -1167,16 +1167,16 @@ ReflectReturn CThing::OnLoad()
             }
         }
     }
-    
-    if (shape != NULL)
-    {
-        if(shape->OldMMaterial == NULL)
-            if(shape->MMaterial->GetGUID().guid == 0x779e)
-                shape->OldMMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
-    }
 
     if(gUnlethalizeAllLethals)
     {
+        if(shape->OldMMaterial == NULL)
+        {
+            if(shape->MMaterial->GetGUID().guid == 0x779e && shape->LethalType - LETHAL_POISON_GAS < 6)
+            {
+                shape->OldMMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
+            }
+        }
         if (shape != NULL)
         {
             shape->LethalType = LETHAL_NOT;
