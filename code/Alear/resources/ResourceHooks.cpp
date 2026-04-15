@@ -1170,15 +1170,15 @@ ReflectReturn CThing::OnLoad()
 
     if(gUnlethalizeAllLethals)
     {
-        if(shape->OldMMaterial == NULL)
-        {
-            if(shape->MMaterial->GetGUID().guid == 0x779e && shape->LethalType - LETHAL_POISON_GAS < 6)
-            {
-                shape->OldMMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
-            }
-        }
         if (shape != NULL)
         {
+            if(shape->OldMMaterial == NULL)
+            {
+                if(shape->MMaterial->GetGUID().guid == 0x779e && shape->LethalType - LETHAL_POISON_GAS < 6)
+                {
+                    shape->OldMMaterial = LoadResourceByKey<RMaterial>(99258u, 0, STREAM_PRIORITY_DEFAULT);
+                }
+            }
             shape->LethalType = LETHAL_NOT;
             if(shape->MMaterial->GetGUID().guid == 0x779e)
                 shape->MMaterial = shape->OldMMaterial;
@@ -1200,6 +1200,7 @@ ReflectReturn CThing::OnLoad()
                     case 0x2f6c:
                     case 0x4760:
                     case 0x5585:
+                    case 0x10392:
                         break;
                     default:
                         render_mesh->BoneThings.clear();
