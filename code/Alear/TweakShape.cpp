@@ -284,6 +284,73 @@ SSpikePlateStyle gSpikePlateStyles[] =
     }
 };
 
+CGUID gBevelTypes[] =
+{
+    // Rounded 1
+    10790,
+    // Rounded 2
+    17991,
+    // Metal
+    11396,
+    // Metal Beam
+    15662,
+
+    // Gold
+    10781,
+    // Fluid
+    10791,
+    // Sponge
+    10783,
+    // Squidgy
+    19415,
+    
+    // Stitched 1
+    10793,
+    // Stitched 2
+    10823,
+    // Soft
+    78020,
+    // Couch
+    78018
+};
+
+CGUID gPhysicsTypes[] =
+{
+    // Cardboard
+    10724,
+    // Cardboard No-Bev
+    66927,
+    // Fluid
+    10726,
+    // Polystyrene
+    10718,
+
+    // Sponge
+    10719,
+    // Wood
+    10717,
+    // Rubber
+    16362,
+    // Glass
+    10725,
+
+    // Gold
+    10715,
+    // Metal
+    10716,
+    // Stone
+    26602,
+
+    // Pink Floaty
+    21166,
+    // Peach Floaty
+    21165,
+    // Dark Matter
+    45764,
+    // Hologram
+    99258
+};
+
 CGUID GetMeshGUID(CThing* thing)
 {
     if (thing == NULL) return 0;
@@ -746,6 +813,82 @@ s32 GetSpikePlateType(CThing* thing)
     }
 
     return SPIKE_PLATE_LARGE;
+}
+
+CGUID GetBevelGUID(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PGeneratedMesh* part = thing->GetPGeneratedMesh();
+    if (part == NULL) return 0;
+    CP<RBevel>& bevel = part->Bevel;
+    if (!bevel) return 0;
+    return bevel->GetGUID();
+}
+
+void SetBevelType(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+    
+    u32 bevel_key = gBevelTypes[style_index];
+
+    if (mesh != NULL)
+    {
+        if(bevel_key != NULL) { mesh->Bevel = LoadResourceByKey<RBevel>(bevel_key, 0, STREAM_PRIORITY_DEFAULT); }
+        else { mesh->Bevel = NULL; }
+    }
+}
+
+s32 GetBevelType(CThing* thing)
+{
+    CGUID guid = GetBevelGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gBevelTypes); ++i)
+    {
+        if (gBevelTypes[i] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+CGUID GetPhysicsGUID(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PShape* part = thing->GetPShape();
+    if (part == NULL) return 0;
+    CP<RMaterial>& material = part->MMaterial;
+    if (!material) return 0;
+    return material->GetGUID();
+}
+
+void SetPhysicsType(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PShape* shape = thing->GetPShape();
+    
+    u32 physics_key = gPhysicsTypes[style_index];
+
+    if (shape != NULL)
+    {
+        if(physics_key != NULL) 
+            shape->MMaterial = LoadResourceByKey<RMaterial>(physics_key, 0, STREAM_PRIORITY_DEFAULT);
+    }
+}
+
+s32 GetPhysicsType(CThing* thing)
+{
+    CGUID guid = GetPhysicsGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gPhysicsTypes); ++i)
+    {
+        if (gPhysicsTypes[i] == guid)
+            return i;
+    }
+
+    return 0;
 }
 
 bool IsTweakCheckpointScriptAvailable()

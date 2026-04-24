@@ -28,6 +28,7 @@ class RCharacterSettings;
 class RGuidList;
 class RJoint;
 class RFluidSettings;
+class RBevel;
 
 enum EResourceType
 {
@@ -199,6 +200,7 @@ template <> inline EResourceType GetResourceType<RCharacterSettings>() { return 
 template <> inline EResourceType GetResourceType<RGuidList>() { return RTYPE_GUID_LIST; }
 template <> inline EResourceType GetResourceType<RJoint>() { return RTYPE_JOINT; }
 template <> inline EResourceType GetResourceType<RFluidSettings>() { return RTYPE_SETTINGS_FLUID; }
+template <> inline EResourceType GetResourceType<RBevel>() { return RTYPE_BEVEL; }
 
 /* ResourceDescriptor.h: 86 */
 template <class T>

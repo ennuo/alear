@@ -1062,7 +1062,7 @@ void CThing::OnFixup(u32 revision)
 }
 
 #include "AlearConfig.h"
-const u32 FALLBACK_GFX_MATERIAL_KEY = 66449u;
+const u32 FALLBACK_GFX_MATERIAL_KEY = 918u;
 ReflectReturn CThing::OnLoad()
 {
     ReflectReturn ret = REFLECT_OK;
@@ -1126,48 +1126,6 @@ ReflectReturn CThing::OnLoad()
         }
     }
     
-    if (gForcePlainGFX)
-    {
-        if (mesh != NULL)
-        {
-            DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
-            mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
-        }
-    }
-
-    if(gForcePlainBevels)
-    {
-        if (mesh != NULL)
-        {
-            if(mesh->Bevel != NULL)
-            {
-                switch (mesh->Bevel->GetGUID().guid)
-                {
-                    case 0x2a1d:
-                    case 0x2a1f:
-                    case 0x2a26:
-                    case 0x2a27:
-                    case 0x2a29:
-                    case 0x2a47:
-                    case 0x2b6a:
-                    case 0x2c84:
-                    case 0x3d2e:
-                    case 0x436e:
-                    case 0x4473:
-                    case 0x4647:
-                    case 0x4bd7:
-                    case 0x67c0:
-                    case 0x130c2:
-                    case 0x130c4:
-                        break;
-                    default:
-                        mesh->Bevel = NULL;
-                        break;
-                }
-            }
-        }
-    }
-
     if(gUnlethalizeAllLethals)
     {
         if (shape != NULL)
@@ -1208,6 +1166,207 @@ ReflectReturn CThing::OnLoad()
                         AddPart(PART_TYPE_GENERATED_MESH);
                         PGeneratedMesh* shape_mesh = GetPGeneratedMesh();
                         shape_mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+                        break;
+                }
+            }
+        }
+    }
+
+    // Debug setting to show material types as the basic materials
+    if(gPhysicsToGFX)
+    {
+        if (shape != NULL)
+        {
+            if(mesh != NULL)
+            {
+                if(shape->MMaterial != NULL)
+                {
+                    v4 editor_color = v4(1.0f);
+                    u32 gfx_material = FALLBACK_GFX_MATERIAL_KEY;
+                    u32 bevel = 11396u;
+                    if(mesh->Bevel != NULL) { bevel = mesh->Bevel->GetGUID().guid; }
+                    switch (shape->MMaterial->GetGUID().guid)
+                    {
+                        // Gold
+                        case 0x29db:
+                            gfx_material = 10809u;
+                            bevel = 10781u;
+                            editor_color = v4(1.0f, 1.0f, 0.0f, 1.0f);
+                            break;
+                        // Metal
+                        case 0x29dc:
+                            gfx_material = 10810u;
+                            bevel = 11396u;
+                            editor_color = v4(0.435294118f, 0.207843137f, 0.0862745098f, 1.0f);
+                            break;
+                        // Wood
+                        case 0x29dd:
+                            gfx_material = 10811u;
+                            bevel = 10790u;
+                            editor_color = v4(0.925490196f, 0.780392157f, 0.615686275f, 1.0f);
+                            break;
+                        // Poly
+                        case 0x29de:
+                            gfx_material = 10798u;
+                            bevel = 10790u;
+                            editor_color = v4(0.6f, 0.6f, 0.6f, 1.0f);
+                            break;
+                        // Sponge
+                        case 0x29df:
+                            gfx_material = 10797u;
+                            bevel = 10783u;
+                            editor_color = v4(0.917647059f, 0.815686275f, 0.443137255f, 1.0f);
+                            break;
+                        // Orrible
+                        case 0x29e0:
+                            gfx_material = 10799u;
+                            bevel = 10783u;
+                            editor_color = v4(1.0f, 0.125f, 0.25f, 1.0f);
+                            break;
+                        // Creative Zone
+                        case 0x29e3:
+                            gfx_material = 10802u;
+                            bevel = 17262u;
+                            editor_color = v4(0.5f, 0.375f, 1.0f, 1.0f);
+                            break;
+                        case 0x44fd:
+                            gfx_material = 10802u;
+                            bevel = 17262u;
+                            break;
+                        // Cardboard
+                        case 0x29e4:
+                            gfx_material = 10803u;
+                            editor_color = v4(0.623529412f, 0.537254902f, 0.356862745f, 1.0f);
+                            break;
+                        // Cardboard NoBev
+                        case 0x1056f:
+                            gfx_material = 10844u;
+                            editor_color = v4(0.623529412f, 0.537254902f, 0.356862745f, 1.0f);
+                            break;
+                        // Glass
+                        case 0x29e5:
+                            gfx_material = 3745u;
+                            bevel = 10790u;
+                            editor_color = v4(0.375f, 1.0f, 0.875f, 1.0f);
+                            break;
+                        // Fluid
+                        case 0x29e6:
+                            gfx_material = 10806u;
+                            bevel = 10791u;
+                            editor_color = v4(0.0f, 0.625f, 1.0f, 1.0f);
+                            break;
+                        // Dark Matter
+                        case 0xb2c4:
+                            gfx_material = 45766u;
+                            editor_color = v4(0.195935f, -0.0220214f, 0.318695f, 1.0f);
+                            bevel = 10783u;
+                            break;
+                        case 0x2ed3:
+                            gfx_material = 45766u;
+                            break;
+                        // Dark Matter Glassy
+                        case 0xd89:
+                            gfx_material = 45763u;
+                            break;
+                        case 0x4540:
+                            gfx_material = 45763u;
+                            break;
+                        case 0xb375:
+                            gfx_material = 45763u;
+                            break;
+                        // Rubber
+                        case 0x3fea:
+                            gfx_material = 9492u;
+                            bevel = 10783u;
+                            editor_color = v4(0.05, 0.05, 0.05, 1.0f);
+                            break;
+                        // Peach Floaty
+                        case 0x52ad:
+                            gfx_material = 51424u;
+                            bevel = 19415u;
+                            editor_color = v4(0.967205f, 0.640752f, 0.331177f, 1.0f);
+                            break;
+                        // Pink Floaty
+                        case 0x52ae:
+                            gfx_material = 22476u;
+                            bevel = 19415u;
+                            editor_color = v4(1.12134f, 0.411483f, 0.723244f, 1.0f);
+                            break;
+                        // Dissolve
+                        case 0x55fb:
+                            gfx_material = 27500u;
+                            editor_color = v4(0.457079f, 0.883928f, 0.524861f, 1.0f);
+                            break;
+                        case 0x5542:
+                            gfx_material = 27500u;
+                            editor_color = v4(0.257079f, 0.683928f, 0.324861f, 1.0f);
+                            break;
+                        // Stone
+                        case 0x67ea:
+                            gfx_material = 26637u;
+                            bevel = 10790u;
+                            editor_color = v4(0.647058824f, 0.6f, 0.760784314f, 1.0f);
+                            break;
+                        // Gas
+                        case 0x779e:
+                            editor_color = v4(0.395379f, 0.377019f, -0.0560795f, 1.0f);
+                            break;
+                        // Explosive
+                        case 0x8ad9:
+                            editor_color = v4(0.970174f, 0.051139f, 0.291318f, 1.0f);
+                            break;
+                        case 0x8ada:
+                            editor_color = v4(0.970174f, 0.051139f, 0.291318f, 1.0f);
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    shape->EditorColour = editor_color;
+                    mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(gfx_material, 0, STREAM_PRIORITY_DEFAULT);
+                    mesh->Bevel = LoadResourceByKey<RBevel>(bevel, 0, STREAM_PRIORITY_DEFAULT);
+                }
+            }
+        }
+    }
+    
+    if (gForcePlainGFX)
+    {
+        if (mesh != NULL)
+        {
+            DebugLog("Replacing thing[^%d]'s gfx material w/ fallback!!!\n", UID);
+            mesh->GfxMaterial = LoadResourceByKey<RGfxMaterial>(FALLBACK_GFX_MATERIAL_KEY, 0, STREAM_PRIORITY_DEFAULT);
+        }
+    }
+
+    if(gForcePlainBevels)
+    {
+        if (mesh != NULL)
+        {
+            if(mesh->Bevel != NULL)
+            {
+                switch (mesh->Bevel->GetGUID().guid)
+                {
+                    case 0x2a1d:
+                    case 0x2a1f:
+                    case 0x2a26:
+                    case 0x2a27:
+                    case 0x2a29:
+                    case 0x2a47:
+                    case 0x2b6a:
+                    case 0x2c84:
+                    case 0x3d2e:
+                    case 0x436e:
+                    case 0x4473:
+                    case 0x4647:
+                    case 0x4bd7:
+                    case 0x67c0:
+                    case 0x130c2:
+                    case 0x130c4:
+                        break;
+                    default:
+                        mesh->Bevel = NULL;
                         break;
                 }
             }

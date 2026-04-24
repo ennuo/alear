@@ -91,6 +91,8 @@ s32 GetBouncePadStyle(CThing* thing);
 s32 GetSpikePlateStyle(CThing* thing);
 s32 GetSpikePlateType(CThing* thing);
 s32 GetCreatureBrainStyle(CThing* thing);
+s32 GetBevelType(CThing* thing);
+s32 GetPhysicsType(CThing* thing);
 
 void SetLevelKeyStyle(CThing* thing, s32 style_index);
 void SetMagicEyeStyle(CThing* thing, s32 style_index);
@@ -98,6 +100,8 @@ void SetLeverSwitchStyle(CThing* thing, s32 type_index, s32 style_index);
 void SetBouncePadStyle(CThing* thing, s32 style_index);
 void SetSpikePlateStyle(CThing* thing, s32 type_index, s32 style_index);
 void SetCreatureBrainStyle(CThing* thing, s32 style_index);
+void SetBevelType(CThing* thing, s32 type_index);
+void SetPhysicsType(CThing* thing, s32 type_index);
 
 
 #endif // MISC_MESH_STYLES_H

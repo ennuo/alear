@@ -25,13 +25,15 @@ CConfigBool gAllowDebugTooltypes(L"Popit", L"Function - Allow Debug Tooltypes", 
 CConfigBool gAllowMeshScaling(L"Popit", L"Function - Allow Mesh Scaling", false);
 CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Meshes", false);
 
-CConfigBool gUseLegacyKeyColors(L"Tools", L"Gadgets - Use Legacy Key Colors", true);
-CConfigBool gUseNewKeyColorSelection(L"Tools", L"Gadgets - Use New Key Color Selection", true);
+CConfigBool gDebugMaterialTweaks(L"Editor", L"Materials - Use Debug Tweak Options", false);
+CConfigBool gUseLegacyKeyColors(L"Editor", L"Gadgets - Use Legacy Key Colors", true);
+CConfigBool gUseNewKeyColorSelection(L"Editor", L"Gadgets - Use New Key Color Selection", true);
 
 CConfigBool gResetLevelSettings(L"Loading", L"LevelSettings - Force Default", false);
 CConfigBool gForceLoadEditable(L"Loading", L"Shapes - Force Editable On Load", false);
 CConfigBool gUnlethalizeAllLethals(L"Loading", L"Shapes - Disable Lethals", false);
 CConfigBool gForceGFXShapes(L"Loading", L"Shapes - Turn into GFX", false);
+CConfigBool gPhysicsToGFX(L"Loading", L"Shapes - Visualize Physics", false);
 CConfigBool gForceMeshGFX(L"Loading", L"Objects - Turn into GFX", false);
 CConfigBool gLoadDefaultMaterial(L"Loading", L"Materials - Render Invisible GFX", false);
 CConfigBool gForcePlainGFX(L"Loading", L"Materials - Use Plain GFX", false);
