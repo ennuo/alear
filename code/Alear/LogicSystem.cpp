@@ -668,7 +668,26 @@ CSwitchSignal PSwitch::GetNewActivationButton(bool b)
     return activation;
 }
 
+CSwitchSignal PSwitch::GetNewActivationGrab(int)
+{
+    CSwitchSignal activation;
 
+
+    const PWorld* world = GetThing()->World;
+    float analogue = 0.0f;
+    for (u32 i = 0; i < world->ListPYellowHead.size(); ++i)
+    {
+        PYellowHead* yellowhead = world->ListPYellowHead[i];
+        PCreature* creature = yellowhead->GetThing()->GetPCreature();
+        if (creature->IsGrabbing())
+            analogue = 1.0f;
+    }
+
+    activation.Analogue = analogue;
+    activation.Ternary = RemapTernary(analogue, 0, 0);
+    
+    return activation;
+}
 
 CSwitchSignal PSwitch::GetNewActivation(int port)
 {
@@ -690,6 +709,11 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
             analogue = GetNewActivationProximity(this);
             ternary = analogue < 0.0f ? -1 : analogue > 0.0f ? 1 : 0; 
             player = E_PLAYER_NUMBER_NONE; 
+            break;
+        }
+        case SWITCH_TYPE_GRAB:
+        {
+            activation = GetNewActivationGrab(true);
             break;
         }
         case SWITCH_TYPE_ALWAYS_ON:

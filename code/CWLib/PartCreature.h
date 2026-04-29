@@ -106,6 +106,7 @@ public:
         bool GunDirPrecisionMode; //0x470
     };
 public:
+    bool IsGrabbing() const;
     void BeSlapped(CThing const* thing, v2 force);
     void StartGunState(CThing* thing);
     void StopGrabbing(PCreature* creature);

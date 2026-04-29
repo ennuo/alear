@@ -228,6 +228,7 @@ public:
     CSwitchSignal GetNewActivation(int port);
     int RemapTernary(float activation, int, int port);
     CSwitchSignal GetNewActivationButton(bool);
+    CSwitchSignal GetNewActivationGrab(int);
 public:
     CVector<CThingPtr> TargetList;
     CVector<CThingPtr> EditorHackTargetList;

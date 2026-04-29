@@ -1,5 +1,6 @@
 #include "PartCreature.h"
 #include "PartYellowHead.h"
+#include <PartPhysicsJoint.h>
 #include "thing.h"
 #include "hook.h"
 
@@ -17,6 +18,13 @@ CInput* PCreature::GetInput()
     PYellowHead* yellowhead = thing->GetPYellowHead();
     if (yellowhead == NULL) return NULL;
     return yellowhead->GetInput();
+}
+
+bool PCreature::IsGrabbing() const
+{
+    if (!GrabJoint) return false;
+    const PJoint* joint = GrabJoint->GetPJoint();
+    return joint && joint->B && joint->B->BodyRoot;
 }
 
 MH_DefineFunc(PCreature_StartGunState, 0x00073718, TOC0, void, PCreature*, CThing*);
