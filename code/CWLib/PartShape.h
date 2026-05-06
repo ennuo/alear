@@ -30,6 +30,20 @@ public:
     void SetMaterial(RMaterial* material);
     void InitialisePolygon();
     void SetPolygon(CRawVector<v2, CAllocatorMMAligned128> const& vertices, CRawVector<unsigned int> const& indices);
+
+    inline void SetThickness(floatInV2 thickness) { Thickness = thickness; }
+    inline void UpdateMassDepth()
+    {
+        if (20.0f <= MassDepth)
+        {
+            MassDepth = ceilf(Thickness / 100.0f);
+        }
+        else
+        {
+            MassDepth = 0.2f;
+        }
+    }
+    
 public:
     v4 GetPosCOMv4() const;
     v2 GetPosCOM() const;

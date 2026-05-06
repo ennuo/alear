@@ -283,6 +283,28 @@ void RenderInteractiveOutlines()
 
 }
 
+void OnRunFrame()
+{
+    PWorld* world = gGame->GetWorld();
+    if (gGame->EditMode && world != NULL)
+    {
+        for (u32 i = 0; i < world->Things.size(); ++i)
+        {
+            CThing* thing = world->Things[i];
+            if (thing == NULL) continue;
+            PMicroChip* microchip = thing->GetPMicroChip();
+            if (microchip == NULL) continue;
+
+            if (microchip->IsCircuitBoardVisible())
+            {
+                microchip->UpdateRenderPos();
+                microchip->UpdateAnimation();
+                microchip->UpdateRenderDepths();
+            }
+        }
+    }
+}
+
 void OnRunPipelinePostProcessing()
 {
     gPoppetBloomHack.clear();
@@ -1247,6 +1269,8 @@ void InitSharedHooks()
     MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
 
     MH_PokeHook(0x0009a634, IsGamePaused);
+
+    MH_PokeBranch(0x000b149c, &_run_frame_hook);
 }
 
 // Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

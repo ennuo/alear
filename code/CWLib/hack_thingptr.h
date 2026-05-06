@@ -2,6 +2,8 @@
 #define CTHING_PTR
 
 class CThing;
+class PWorld;
+
 class CThingPtr {
 public:
     CThingPtr();
@@ -16,10 +18,26 @@ public:
     inline operator CThing*() const { return Thing; }
     inline CThing* operator->() const { return Thing; }
     inline CThing* GetThing() const { return Thing; }
+public:
+    bool IsDeferred() const;
+    void SetDeferred(u32 thing_uid);
+    void Link(PWorld* world);
 private:
-    CThing* Thing;
-    CThingPtr* Next;
-    CThingPtr* Prev;
+    union
+    {
+        struct
+        {
+            CThing* Thing;
+            CThingPtr* Next;
+            CThingPtr* Prev;
+        };
+        struct
+        {
+            u32 ThingUID;
+            u32 Magic;
+            u32 Pad;
+        };
+    };
 };
 
 #endif // CTHING_PTR

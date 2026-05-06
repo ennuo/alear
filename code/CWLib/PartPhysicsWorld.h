@@ -59,7 +59,13 @@ public:
     void ResetToDefaultGlobalSettings(EGlobalSettingsType type);
     void ClearGlobalSettingUID(EGlobalSettingsType type);
     void InitBackdropCuller();
-    
+
+    inline u32 GetFrame() const
+    {
+        // hack for now
+        return (**(u32**)(((char*)this) + 0x1d0));
+    }
+
     void UpgradeAllScripts();
     float GetWaterLevelWorldYCoords() const;
 

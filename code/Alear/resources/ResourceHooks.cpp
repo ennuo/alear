@@ -149,6 +149,44 @@ ReflectReturn Reflect(R& r, PMaterialOverride& d)
     ADD(Brightness);
     return ret;
 }
+
+template<typename R>
+ReflectReturn Reflect(R& r, PMicroChip& d)
+{
+    ReflectReturn ret;
+
+    if (r.IsGatherVariables())
+    {
+        ADD(CircuitBoardThing);
+    }
+    else
+    {
+        int thing_uid = d.CircuitBoardThing ? d.CircuitBoardThing->UID : 0;
+        if ((ret = Reflect(r, thing_uid)) != REFLECT_OK) return ret;
+
+        if (r.GetLoading())
+            d.CircuitBoardThing.SetDeferred(thing_uid);
+    }
+
+    ADD(HideInPlayMode);
+    ADD(WiresVisible);
+    ADD(LastTouched);
+    ADD(Offset);
+    
+    u32 name_len = 0;
+    if ((ret = Reflect(r, name_len)) != REFLECT_OK) return ret;
+    u32 num_components = 0;
+    if ((ret = Reflect(r, num_components)) != REFLECT_OK) return ret;
+
+    ADD(CircuitBoardSizeX);
+    ADD(CircuitBoardSizeY);
+    ADD(KeepVisualVertical);
+    ADD(BroadcastType);
+
+    return ret;
+}
+
+
 template <typename R>
 ReflectReturn OnSerializeExtraData(R& r, RMaterial& d)
 {
@@ -407,6 +445,11 @@ template ReflectReturn ReflectExtraResourceData<CReflectionLoadVector>(CResource
 template ReflectReturn ReflectExtraResourceData<CReflectionSaveVector>(CResource* resource, CReflectionSaveVector& r);
 
 template void CGatherVariables::Init<RGuidList>(RGuidList* data);
+
+void Initialize(CGatherVariables& r, PMicroChip* d)
+{
+    r.Init(d);
+}
 
 
 RPins* AllocatePinsResource(EResourceFlag flags) 
@@ -753,12 +796,21 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
             { 
                 PMaterialOverride* part = new PMaterialOverride();
                 part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
-                if ((ret = Reflect(r, part)) != REFLECT_OK) return ret;
+                if ((ret = Reflect(r, *part)) != REFLECT_OK) return ret;
                 thing->CustomThingData->PartMaterialOverride = part;
 
                 break; 
             }
 #ifdef __NEW_LOGIC_SYSTEM__
+            case 0x4d434850: /* MCHP */
+            {
+                PMicroChip* part_microchip = new PMicroChip();
+                part_microchip->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
+                if ((ret = Reflect(r, *part_microchip)) != REFLECT_OK) return ret;
+                thing->CustomThingData->PartMicroChip = part_microchip;
+
+                break;
+            }
             case 0x4c4f4743: /* LOGC */
             {
                 PSwitch* part_switch = thing->GetPSwitch();
@@ -857,6 +909,15 @@ ReflectReturn PScriptName::WriteAlearData()
         if ((ret = Reflect(r, *part_override)) != REFLECT_OK) return ret; 
     }
 
+    PMicroChip* part_microchip = thing->GetPMicroChip();
+    if (part_microchip != NULL)
+    {
+        u32 magic = 0x4d434850;
+
+        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret; 
+        if ((ret = Reflect(r, *part_microchip)) != REFLECT_OK) return ret; 
+    }
+
     PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData())
     {
@@ -926,6 +987,7 @@ bool CThing::HasCustomPartData()
 #endif
 
     if (GetPMaterialOverride() != NULL) return true;
+    if (GetPMicroChip() != NULL) return true;
 
     PGeneratedMesh* mesh = GetPGeneratedMesh();
     if (mesh != NULL && mesh->HasCustomData()) return true;
@@ -980,11 +1042,17 @@ enum
     E_KEY_SIGN_SPLIT = 77755,
     E_KEY_DIRECTION = 73736,
     E_KEY_SELECTOR = 73812,
-    E_KEY_ANGLE = 73932
+    E_KEY_ANGLE = 73932,
+    E_KEY_MICROCHIP = 75923
 };
 
 void CThing::OnFixup(u32 revision)
 {
+
+    PMicroChip* part_microchip = GetPMicroChip();
+    if (part_microchip != NULL && part_microchip->CircuitBoardThing.IsDeferred())
+        part_microchip->CircuitBoardThing.Link(World);
+
     UpdateObjectType();
     //UpdateKeyColours();
     FixupOldScripts();
@@ -1015,6 +1083,13 @@ void CThing::OnFixup(u32 revision)
     PSwitch* part_switch = GetPSwitch();
     if (part_switch != NULL)
     {
+
+        if (!HasPart(PART_TYPE_POS) && !HasPart(PART_TYPE_JOINT))
+        {
+            AddPart(PART_TYPE_POS);
+            GetPPos()->ThingOfWhichIAmABone = this;
+        }
+    
         // fixup model
         PRenderMesh* part_render_mesh = GetPRenderMesh();
         if (part_render_mesh == NULL)
@@ -1037,7 +1112,18 @@ void CThing::OnFixup(u32 revision)
             case SWITCH_TYPE_SIGN_SPLIT: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_SIGN_SPLIT, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_DIRECTION: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_DIRECTION, 0, STREAM_PRIORITY_DEFAULT); break;
             case SWITCH_TYPE_ANGLE: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_ANGLE, 0, STREAM_PRIORITY_DEFAULT); break;
+            case SWITCH_TYPE_MICROCHIP: part_render_mesh->Mesh = LoadResourceByKey<RMesh>(E_KEY_MICROCHIP); break;
         }
+
+        if (part_switch->Type == SWITCH_TYPE_MICROCHIP)
+        {
+            AddPart(PART_TYPE_MICROCHIP);
+        } 
+        else if (HasPart(PART_TYPE_MICROCHIP))
+        {
+            RemovePart(PART_TYPE_MICROCHIP);
+        }
+
 
         if (part_switch->Type == SWITCH_TYPE_SELECTOR)
         {
@@ -1048,7 +1134,7 @@ void CThing::OnFixup(u32 revision)
         if (part_switch->Type == SWITCH_TYPE_AND || part_switch->Type == SWITCH_TYPE_OR || part_switch->Type == SWITCH_TYPE_XOR)
             GetPRenderMesh()->BoneThings.try_resize(3);
 
-        if (part_script == NULL)
+        if (part_script == NULL && part_switch->Type != SWITCH_TYPE_MICROCHIP)
         {
             AddPart(PART_TYPE_SCRIPT);
             CP<RScript> script = LoadResourceByKey<RScript>(E_KEY_SWITCH_BASE, 0, STREAM_PRIORITY_DEFAULT);
@@ -1468,6 +1554,15 @@ ReflectReturn CThing::OnLoad()
     PSwitch* part_switch = GetPSwitch();
     if (part_switch != NULL)
     {
+        if (part_switch->Type == SWITCH_TYPE_MICROCHIP)
+        {
+            AddPart(PART_TYPE_MICROCHIP);
+        } 
+        else if (HasPart(PART_TYPE_MICROCHIP))
+        {
+            RemovePart(PART_TYPE_MICROCHIP);
+        }
+
         // The outputs haven't been fixed up yet, so everything should still be in the target list.
         for (CThingPtr* ptr = part_switch->TargetList.begin(); ptr != part_switch->TargetList.end(); ++ptr)
         {

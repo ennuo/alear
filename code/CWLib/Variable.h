@@ -6,6 +6,7 @@
 #include "ResourceDescriptor.h"
 #include <MMString.h>
 #include <map>
+#include <mem_stl_buckets.h>
 
 #include "hack_thingptr.h"
 
@@ -288,7 +289,7 @@ public:
     EGatherType Purpose;
     EResourceType ResourceType;
     ReflectFunctionPtr ReflectFunction;
-    void* Visited; // this is a map i just dont care
+    std::map<void*, void*, std::less<void*>, STLBucketAlloc<std::pair<void*, void*> > > * Visited;
     CVector<CGatherVariables> Children;
     PWorld* World;
     MMString<char> TempString;

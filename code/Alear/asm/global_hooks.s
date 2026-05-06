@@ -369,18 +369,9 @@ _custom_event_projects_hook:
 
 .global _run_frame_hook
 _run_frame_hook:
-    stw %r2, 0x2c(%r1)
-    lis %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@h      
-    ori %r2, %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@l
-    lwz %r2, 0x4(%r2)
-    bl ._Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb
-    lwz %r2, 0x2c(%r1)
-
-    cmpwi %cr7, %r3, 0x0
-    beq %cr7, ExitFrameHook
-    
-    # continue executing frame
-    ba 0x000b1328
+    call _Z10OnRunFramev
+    mr %r3, %r25
+    ba 0x000b14a0
 
 ExitFrameHook:
     # branch to function epilogue
@@ -881,3 +872,11 @@ _update_joints_hook:
     call _Z12UpdateJointsP6PWorld
     mr %r3, %r30
     ba 0x0007c50c
+
+.global _webternate_custom_parts_hook
+_webternate_custom_parts_hook:
+    mr %r3, %r27
+    mr %r4, %r24
+    call _Z19WebternateThingPageR14MMOTextStreamARK9CThingPtr
+    ld %r0, 0x160(%r1)
+    ba 0x0023966c

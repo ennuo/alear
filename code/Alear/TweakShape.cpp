@@ -27,6 +27,7 @@ const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 const u32 E_TWEAK_EXPLOSIVE_SCRIPT = 3549987402u;
 const u32 E_TWEAK_MAGIC_EYE_SCRIPT = 34681;
 const u32 E_TWEAK_SPIKE_PLATE_SCRIPT = 34681;
+const u32 E_TWEAK_MICROCHIP_SCRIPT = 2682034179ul;
 
 const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
 const u32 E_LAMS_TWEAKABLE_MESH = MakeLamsKeyID("TWEAKABLE_MESH", "_NAME");
@@ -37,6 +38,7 @@ StaticCP<RScript> gTweakCheckpointScript;
 StaticCP<RScript> gTweakExplosiveScript;
 StaticCP<RScript> gTweakMagicEyeScript;
 StaticCP<RScript> gTweakSpikePlateScript;
+StaticCP<RScript> gTweakMicroChipScript;
 
 struct SCheckpointStyle {
     CGUID Mesh[NUM_CHECKPOINT_TYPES];
@@ -675,6 +677,18 @@ bool IsTweakSpikePlateScriptAvailable()
     return gTweakSpikePlateScript->IsLoaded();
 }
 
+bool IsTweakMicroChipScriptAvailable()
+{
+    if (!gTweakMicroChipScript)
+    {
+        gTweakMicroChipScript = LoadResourceByKey<RScript>(E_TWEAK_MICROCHIP_SCRIPT);
+        gTweakMicroChipScript->BlockUntilLoaded();
+    }
+
+    return gTweakMicroChipScript->IsLoaded();
+}
+
+
 void SetLeverSwitchStyle(CThing* thing, s32 type_index, s32 style_index)
 {
     if (thing == NULL) return;
@@ -932,6 +946,9 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
     CPoppetChild* gooey = (CPoppetChild*)((char*)poppet + 0xa60);
     if (CPoppetGooey_CanTweak(gooey, thing)) return true;
 
+    if (thing->HasPart(PART_TYPE_MICROCHIP))
+        return IsTweakMicroChipScriptAvailable();
+    
     if (IsCheckpointMesh(thing)) return IsTweakCheckpointScriptAvailable();
     if (IsExplosiveMesh(thing)) return IsTweakExplosiveScriptAvailable();
     if (IsMiscMesh(thing, MISC_MESH_MAGIC_EYE)) return IsTweakMagicEyeScriptAvailable();
@@ -945,22 +962,23 @@ bool CanTweakThing(CPoppet* poppet, CThing* thing)
 void OnStartTweaking(CThing* thing)
 {
     StaticCP<RScript> set_script;
-    if(IsCheckpointMesh(thing))
+
+    if (thing->HasPart(PART_TYPE_MICROCHIP))
+        set_script = gTweakMicroChipScript;
+    else if (IsCheckpointMesh(thing))
         set_script = gTweakCheckpointScript;
-    else if(IsExplosiveMesh(thing))
+    else if (IsExplosiveMesh(thing))
         set_script = gTweakExplosiveScript;
-    else if(IsMiscMesh(thing, MISC_MESH_MAGIC_EYE))
+    else if (IsMiscMesh(thing, MISC_MESH_MAGIC_EYE))
         set_script = gTweakMagicEyeScript;
-    else if(IsMiscMesh(thing, MISC_MESH_SPIKE_PLATE))
+    else if (IsMiscMesh(thing, MISC_MESH_SPIKE_PLATE))
         set_script = gTweakSpikePlateScript;
-    else if(ShouldAttachShapeTweak(thing))
+    else if (ShouldAttachShapeTweak(thing))
         set_script = gTweakShapeScript;
-    else
-        return;
-    if (thing->GetPScript() == NULL)
-        thing->AddPart(PART_TYPE_SCRIPT);
-    PScript* script = thing->GetPScript();
-    script->SetScript(set_script);
+    else return;
+
+    thing->AddPart(PART_TYPE_SCRIPT);
+    thing->GetPScript()->SetScript(set_script);
 }
 
 void OnStopTweaking(CThing* thing)
@@ -973,7 +991,8 @@ void OnStopTweaking(CThing* thing)
     if (script->GetGUID() == E_TWEAK_SHAPE_SCRIPT || 
         script->GetGUID() == E_TWEAK_CHECKPOINT_SCRIPT || 
         script->GetGUID() == E_TWEAK_EXPLOSIVE_SCRIPT || 
-        script->GetGUID() == E_TWEAK_MAGIC_EYE_SCRIPT)
+        script->GetGUID() == E_TWEAK_MAGIC_EYE_SCRIPT ||
+        script->GetGUID() == E_TWEAK_MICROCHIP_SCRIPT)
         thing->RemovePart(PART_TYPE_SCRIPT);
 }
 

@@ -11,8 +11,47 @@ CThingPtr::~CThingPtr()
     Unset();
 }
 
+const u32 kMagic_Deferred = 0x4C494E4B;
+
+bool CThingPtr::IsDeferred() const
+{
+    return Magic == kMagic_Deferred;
+}
+
+void CThingPtr::SetDeferred(u32 thing_uid)
+{
+    Unset();
+    if (thing_uid != 0)
+    {
+        Magic = kMagic_Deferred;
+        ThingUID = thing_uid;
+    }
+}
+
+void CThingPtr::Link(PWorld* world)
+{
+    if (!IsDeferred()) return;
+    CThing* thing = world->GetThingByUID(ThingUID);
+    
+    Thing = NULL;
+    Next = NULL;
+    Prev = NULL;
+
+    Set(thing);
+}
+
+
 void CThingPtr::Unset()
 {
+    if (IsDeferred())
+    {
+        Thing = NULL;
+        Next = NULL;
+        Prev = NULL;
+
+        return;
+    }
+
     if (Thing == NULL) return;
 
     if (Next != NULL) Next->Prev = Prev;
@@ -26,6 +65,13 @@ void CThingPtr::Unset()
 
 void CThingPtr::Set(CThing* thing)
 {
+    if (IsDeferred())
+    {
+        Thing = NULL;
+        Next = NULL;
+        Prev = NULL;
+    }
+
     Thing = thing;
     if (Thing != NULL)
     {
@@ -104,6 +150,16 @@ void CThing::AddPart(EPartType type)
         return; 
     }
 
+    if (type == PART_TYPE_MICROCHIP)
+    {
+        PMicroChip*& part = CustomThingData->PartMicroChip;
+        if (part != NULL) return;
+
+        part = new PMicroChip();
+        part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(this);
+
+        return;
+    }
 
     CThing_AddPart(this, type);
 }
@@ -117,6 +173,12 @@ void CThing::RemovePart(EPartType type)
         CustomThingData->PartMaterialOverride = NULL; 
     }
 
+    if (type == PART_TYPE_MICROCHIP && CustomThingData->PartMicroChip != NULL)
+    {
+        delete CustomThingData->PartMicroChip;
+        CustomThingData->PartMicroChip = NULL;
+    }
+
     CThing_RemovePart(this, type);
 }
 
@@ -124,6 +186,12 @@ MH_DefineFunc(CThing_SetWorld, 0x0001f5ec, TOC0, void, CThing*, PWorld*, u32);
 void CThing::SetWorld(PWorld* world, u32 preferred_uid)
 {
     CThing_SetWorld(this, world, preferred_uid);
+}
+
+MH_DefineFunc(CThing_SetParent, 0x0001f3fc, TOC0, void, CThing*, CThing*);
+void CThing::SetParent(CThing* p)
+{
+    CThing_SetParent(this, p);
 }
 
 void CThing::Deflate()
@@ -165,6 +233,9 @@ void CThing::DestroyExtraData()
         if (CustomThingData->PartMaterialOverride != NULL)
             delete CustomThingData->PartMaterialOverride;
 
+        if (CustomThingData->PartMicroChip != NULL)
+            delete CustomThingData->PartMicroChip;
+
         delete CustomThingData;
     }
 }
@@ -185,6 +256,7 @@ EObjectType GetObjectType(CThing* thing)
     if (thing->GetPart(PART_TYPE_CREATURE) != NULL) return OBJECT_CREATURE_BRAIN_BASE;
     if (thing->GetPart(PART_TYPE_WORLD) != NULL) return OBJECT_WORLD;
     if (thing->GetPart(PART_TYPE_EFFECTOR) != NULL) return OBJECT_EFFECTOR;
+    if (thing->GetPart(PART_TYPE_MICROCHIP) != NULL) return OBJECT_MICROCHIP;
 
     u32 part_flags = 0;
     for (int i = 0; i < PART_TYPE_SIZE; ++i)
@@ -232,6 +304,7 @@ EObjectType GetObjectType(CThing* thing)
             case SWITCH_TYPE_CONTROL_PAD: return OBJECT_SWITCH_CONTROL_PAD;
             case SWITCH_TYPE_VITA_PAD: return OBJECT_SWITCH_VITA_PAD;
             case SWITCH_TYPE_CIRCUIT_NODE: return OBJECT_SWITCH_CIRCUIT_NODE;
+            case SWITCH_TYPE_MICROCHIP: return OBJECT_MICROCHIP;
         }
     }
 

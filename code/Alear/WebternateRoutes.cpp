@@ -390,6 +390,24 @@ const char* GetObjectTypeName(const CThing* thing)
     return gObjectTypeNames[type];
 }
 
+#include <Variable.h>
+
+extern void Initialize(CGatherVariables& r, PMicroChip* d);
+MH_DefineFunc(WebternateGatherVariables, 0x002387e8, TOC0, void, MMOTextStreamA&, CGatherVariables&, void*);
+void WebternateThingPage(MMOTextStreamA& stream, const CThingPtr& thing)
+{
+    if (thing->HasPart(PART_TYPE_MICROCHIP))
+    {
+        stream << "<h3>PMicroChip</h3>";
+
+        CGatherVariables variables;
+        Initialize(variables, thing->GetPMicroChip());
+        variables.Visited = new std::map<void*, void*, std::less<void*>, STLBucketAlloc<std::pair<void*, void*> > > ();
+        WebternateGatherVariables(stream, variables, NULL);
+        delete variables.Visited;
+    }
+}
+
 void WebternateThingsPage(CRoute* route, MMOTextStreamA& stream)
 {
     stream << "<h1>Things</h1>";
@@ -421,6 +439,8 @@ void WebternateThingsPage(CRoute* route, MMOTextStreamA& stream)
             stream << " " #name; \
         }
         #include <PartList.h>
+        PART_MACRO(PMicroChip, PART_TYPE_MICROCHIP)
+        PART_MACRO(PMaterialOverride, PART_TYPE_MATERIAL_OVERRIDE)
         #undef PART_MACRO
 
         stream << "</td>";
@@ -440,7 +460,9 @@ void OnWebternateSetup(CWebternate* webternate)
     webternate->AddRoute(new CFaviconEndpoint(webternate));
 }
 
+extern "C" uintptr_t _webternate_custom_parts_hook;
 void AttachWebternateHooks()
 {
     MH_PokeHook(0x006827a4, WebternateThingsPage);
+    MH_PokeBranch(0x00239668, &_webternate_custom_parts_hook);
 }

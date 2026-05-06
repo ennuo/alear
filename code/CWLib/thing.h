@@ -29,6 +29,7 @@
 #include "PartPhysicsJoint.h"
 
 #include <PartMaterialOverride.h>
+#include <PartMicroChip.h>
 #include <PartList.h>
 
 #include "hack_thingptr.h"
@@ -50,11 +51,12 @@ class PPos;
 
 class CCustomThingData {
 public:
-    inline CCustomThingData() : Microchip(), PartMaterialOverride(), InputList()
+    inline CCustomThingData() : Microchip(), PartMaterialOverride(), PartMicroChip(), InputList()
     {}
 public:
     CThing* Microchip;
     PMaterialOverride* PartMaterialOverride;
+    PMicroChip* PartMicroChip;
     CVector<CSwitchOutput*> InputList;
 };
 
@@ -63,6 +65,9 @@ public:
     CThing();
     ~CThing();
 public:
+
+    void SetParent(CThing* p);
+    
     void InitializeExtraData();
     void DestroyExtraData();
 
@@ -105,6 +110,11 @@ public:
         return CustomThingData == NULL ? NULL : CustomThingData->PartMaterialOverride;
     }
 
+    inline PMicroChip* GetPMicroChip() const
+    {
+        return CustomThingData == NULL ? NULL : CustomThingData->PartMicroChip;
+    }
+
     inline bool HasPart(EPartType part) const
     {
         return GetPart(part) != NULL;
@@ -113,6 +123,7 @@ public:
     inline CPart* GetPart(EPartType part) const
     {
         if (part == PART_TYPE_MATERIAL_OVERRIDE) return GetPMaterialOverride();
+        if (part == PART_TYPE_MICROCHIP) return GetPMicroChip();
         return Parts[part];
     }
 public:

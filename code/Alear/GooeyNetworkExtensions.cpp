@@ -560,22 +560,25 @@ namespace TweakSettingNativeFunctions
             case E_GOOEY_NETWORK_ACTION_INTERACTION_MODE:
             {
                 PShape* shape = thing->GetPShape();
-                u8 interact_play_mode = shape->InteractPlayMode;
-                return interact_play_mode;
+                if (shape != NULL)
+                    return shape->InteractPlayMode;
+                break;
             }
             case E_GOOEY_NETWORK_ACTION_BEVEL_TYPE: return GetBevelType(thing);
             case E_GOOEY_NETWORK_ACTION_BEVEL_SIZE:
             {
                 PShape* shape = thing->GetPShape();
-                float bevel_size = shape->BevelSize;
-                return setting.GameToFixed(bevel_size);
+                if (shape != NULL)
+                    return setting.GameToFixed(shape->BevelSize);
+                break;
             }
             case E_GOOEY_NETWORK_ACTION_PHYSICS_TYPE: return GetPhysicsType(thing);
             case E_GOOEY_NETWORK_ACTION_PHYSICS_AUDIO:
             {
                 PShape* shape = thing->GetPShape();
-                s32 sound_enum = shape->SoundEnumOverride;
-                return sound_enum;
+                if (shape != NULL)
+                    return shape->SoundEnumOverride;
+                break;
             }
             case E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER:
             {
@@ -740,6 +743,15 @@ namespace TweakSettingNativeFunctions
                 PJoint* joint = thing->GetPJoint();
                 if (joint != NULL)
                     return !joint->HideInPlayMode;
+
+                break;
+            }
+
+            case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT:
+            {
+                PMicroChip* microchip = thing->GetPMicroChip();
+                if (microchip != NULL)
+                    return microchip->IsCircuitBoardVisible();
 
                 break;
             }
@@ -1199,6 +1211,11 @@ bool InitTweakSettings()
         .SetIcon(visibleinplaymode_icon_texture, 0)
         .SetDebugToolTip(L"Visible in Play Mode");
 
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT)
+        .SetupYesNo()
+        .SetIcon(tweak_inputs_icon, 0)
+        .SetDebugToolTip(L"Open Sesame");
+    
     return true;
 }
 
@@ -1908,6 +1925,19 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
             break;
         }
+
+        case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT:
+        {
+            CThing* thing = world->GetThingByUID(action.ThingUID);
+            if (thing != NULL)
+            {
+                PMicroChip* part_microchip = thing->GetPMicroChip();
+                if (part_microchip != NULL)
+                    part_microchip->SetCircuitBoardVisible(action.Value);
+            }
+
+            break;
+        }
     }
 
 #undef GET_PART
@@ -2263,7 +2293,8 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_JOINT_TWEAK_REVERSED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
     TABLE[E_GOOEY_NETWORK_ACTION_JOINT_TWEAK_VISIBLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
     TABLE[E_GOOEY_NETWORK_ACTION_JOINT_BEHAVIOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
-    TABLE[E_GOOEY_NETWORK_ACTION_VISIBLE_IN_PLAY_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
+    TABLE[E_GOOEY_NETWORK_ACTION_VISIBLE_IN_PLAY_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 #endif
 
     // Switch out the pointer to the switch case in the TOC

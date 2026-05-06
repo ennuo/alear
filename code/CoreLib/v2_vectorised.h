@@ -47,9 +47,10 @@ struct v2 {
     inline void setZ(float z) { _vmathVfSetElement(V, z, 2); }
     inline void setW(float w) { _vmathVfSetElement(V, w, 3); }
     
-    inline v2 operator+(const v2& b) const { return v2(vec_add(V, b.V)); }
-    inline v2 operator-(const v2& b) const { return v2(vec_sub(V, b.V)); }
-    
+    inline v2 operator+(v2 b) const { return v2(vec_add(V, b.V)); }
+    inline v2 operator-(v2 b) const { return v2(vec_sub(V, b.V)); }
+    inline v2 operator*(v2 b) const { return v2(vec_madd(V, b.V, (vec_float4)(0.0f))); }
+
     inline v2 operator*(float scalar) const { return *this * vfloat(scalar); }
     inline v2 operator*(vfloat scalar) const { return v2(vec_madd(V, scalar.V, (vec_float4)(0.0f))); }
 
