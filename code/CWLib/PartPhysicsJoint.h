@@ -39,19 +39,31 @@ struct Forked {
     bool DontRotateA;
 };
 public:
+    float GetMaxLength() const;
+    float GetMinLength() const;
+    float GetWorldFrame() const;
+    float GetCurrentLength() const;
+
+    v4 GetContactPointA() const;
+    v4 GetContactPointB() const;
+
+    void SetModScale(float scale);
+    void SetPosition(float analogue, bool directional);
+public:
     u32 Type;
     CThingPtr A;
     CThingPtr B;
-    v2 AContact;
-    v2 BContact;
+    u8 Direction;
+    v4 AContact;
+    v4 BContact;
     float AAngleOffset;
     float BAngleOffset;
     CP<RJoint> Settings;
     u32 LastRenderFrameNum;
-    v2 AContactGlobalOld;
-    v2 BContactGlobalOld;
-    v2 AContactGlobalNew;
-    v2 BContactGlobalNew;
+    v4 AContactGlobalOld;
+    v4 BContactGlobalOld;
+    v4 AContactGlobalNew;
+    v4 BContactGlobalNew;
     v2 SlideDir;
     bool Stiff;
     float Strength;
@@ -61,8 +73,30 @@ public:
     float AnimationPhase;
     float AnimationSpeed;
     float AnimationPause;
-
-    // there's a bunch more, but i only really care about these fields.
+    floatInV2 Angle;
+    floatInV2 Length;
+    u32 JointSoundEnum;
+    Forked Game;
+    Forked Rend;
+    Forked* Fork;
+    float ModStartFrame;
+    float ModDeltaFrames;
+    float ModScale;
+    bool ModDriven;
+    bool ModScaleActive;
+    u32 BoneIdx[2];
+    u32 ShapeIdx[2];
+    v4 BoneLengths;
+    float RenderScale;
+    u8 InteractEditMode;
+    u8 InteractPlayMode;
+    float TweakTargetMaxLength;
+    float TweakTargetMinLength;
+    bool CurrentlyEditing;
+    bool Dissolving;
+    floatInV2 OffsetTime;
+    bool InvertAngle;
+    bool HideInPlayMode;
 public:
     void SetA(CThing* thing);
     void SetB(CThing* thing);

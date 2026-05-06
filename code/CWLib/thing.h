@@ -39,6 +39,11 @@ enum EObjectType
     NUM_OBJECT_TYPES
 };
 
+enum
+{
+    FLAG_LEGACY_SWITCH_TARGET = (1 << 0)
+};
+
 class PBody : public CPart {};
 class PPos;
 
@@ -136,7 +141,7 @@ public:
     CCustomThingData* CustomThingData;
 };
 
-extern float (*GetWorldAngle)(CThing* thing);
+extern float (*GetWorldAngle)(const CThing* thing);
 
 #include "hack_thingptr.h"
 

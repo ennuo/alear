@@ -31,6 +31,14 @@ public:
     void InitialisePolygon();
     void SetPolygon(CRawVector<v2, CAllocatorMMAligned128> const& vertices, CRawVector<unsigned int> const& indices);
 public:
+    v4 GetPosCOMv4() const;
+    v2 GetPosCOM() const;
+    v2 GetRenderPosCOM() const;
+public:
+    inline const m44& GetCOM() const { return COM; }
+    inline const CRawVector<v2, CAllocatorMMAligned128>& GetPolygon() const { return Polygon; }
+    inline const CRawVector<unsigned int>& GetLoops() const { return Loops; }
+public:
     float Moment;
     v4 EditorColourTint;
     v4 EditorColour;

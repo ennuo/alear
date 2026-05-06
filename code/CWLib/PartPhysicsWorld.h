@@ -11,6 +11,7 @@ class PRenderMesh;
 class PGeneratedMesh;
 class PYellowHead;
 class PSwitch;
+class PJoint;
 
 class CColCorrectMatrix {
     v4 Tint;
@@ -73,8 +74,10 @@ public:
     CRawVector<CThing*> Things;
     RLevel* Level;
 private:
-    char Pad[0x48];
+    char Pad[0x30];
 public:
+    CRawVector<PJoint*> ListPJoint;
+    CRawVector<PWorld*> ListPWorld;
     CRawVector<PRenderMesh*> ListPRenderMesh;
     CRawVector<PPos*> ListPPos;
     CRawVector<void*> ListPTrigger;

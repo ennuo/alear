@@ -8,7 +8,7 @@ public:
     inline CScriptArguments() : Arguments(), NumArguments(0) {}
 public:
     CScriptVariant& GetArgument(u32 index) { return Arguments[index]; }
-    void AppendArg(CScriptVariant& arg) { Arguments[NumArguments++] = arg; }
+    void AppendArg(const CScriptVariant& arg) { Arguments[NumArguments++] = arg; }
 private:
     CScriptVariant Arguments[12];
     u32 NumArguments;

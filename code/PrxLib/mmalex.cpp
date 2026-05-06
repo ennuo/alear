@@ -7,6 +7,7 @@ namespace mmalex {
     MH_DefineFunc(__stoll, 0x0059ce94, TOC1, long long, const char *, char **, int);
     MH_DefineFunc(__FSin, 0x004722d0, TOC1, float, float, unsigned int);
     MH_DefineFunc(_sqrtf, 0x004719d0, TOC1, float, float);
+    MH_DefineFunc(_powf, 0x004713b4, TOC1, float, float, float);
 };
 
 extern "C"

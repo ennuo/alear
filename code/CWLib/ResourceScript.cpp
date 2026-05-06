@@ -13,6 +13,12 @@ void RScript::Fixup()
     return RScript_Fixup(this);
 }
 
+MH_DefineFunc(RScript_BlockUntilLoaded, 0x000d3f90, TOC0, bool, RScript*);
+bool RScript::BlockUntilLoaded()
+{
+    return RScript_BlockUntilLoaded(this);
+}
+
 bool RScript::IsInstanceLayoutValid()
 {
     return false;

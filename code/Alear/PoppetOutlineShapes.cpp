@@ -130,6 +130,19 @@ void LoadOutlinePolygons()
     delete world_thing;
 }
 
+static CRawVector<v2, CAllocatorMMAligned128> EMPTY;
+const CRawVector<v2, CAllocatorMMAligned128>& GetOutlinePolygon(u32 key)
+{
+    for (u32 i = 0; i < gNamedPolygons.size(); ++i)
+    {
+        const CNamedPolygon& polygon = gNamedPolygons[i];
+        if (polygon.guid == key)
+            return polygon.polygon;
+    }
+
+    return EMPTY;
+}
+
 u32 GetOutlinePlanGUID(u32 mesh_guid)
 {
     if (!gHasLoadedPolygons)

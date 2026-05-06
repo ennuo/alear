@@ -6,6 +6,7 @@ namespace mmalex {
     extern long long (*__stoll)(const char *, char **, int);
     extern float (*__FSin)(float, unsigned int);
     extern float (*_sqrtf)(float);
+    extern float (*_powf)(float, float);
 
     inline float sin(float f) { return __FSin(f, 0); }
     inline float cos(float f) { return __FSin(f, 1); }
@@ -21,6 +22,8 @@ namespace mmalex {
 	}
     
     inline float sqrtf(float f) { return _sqrtf(f); }
+
+    inline float powf(float f, float e) { return _powf(f, e); }
 }
 
 #endif // MMALEX_H

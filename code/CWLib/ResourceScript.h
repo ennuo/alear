@@ -47,6 +47,7 @@ public:
     bool IsInstanceLayoutValid();
     void ForceFixup();
     void Fixup();
+    bool BlockUntilLoaded();
 };
 
 #endif // RESOURCE_SCRIPT_H

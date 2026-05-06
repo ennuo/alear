@@ -1,5 +1,24 @@
-#include "PartShape.h"
+
 #include <hook.h>
+
+#include <thing.h>
+#include <PartShape.h>
+#include <PartRenderPosition.h>
+
+v2 PShape::GetPosCOM() const
+{
+    return GetThing()->GetPPos()->Fork->WorldPosition * COM.getCol3();
+}
+
+v2 PShape::GetRenderPosCOM() const
+{
+    return GetThing()->GetPPos()->Rend.WorldPosition * COM.getCol3();
+}
+
+v4 PShape::GetPosCOMv4() const
+{
+    return GetPosCOM().Makev4();
+}
 
 MH_DefineFunc(PShape_SetCollidableGame, 0x0002f0f0, TOC0, void, PShape*, bool);
 void PShape::SetCollidableGame(bool collidable)

@@ -10,27 +10,25 @@ struct vint {
 struct vfloat {
     inline vfloat() { }
     inline vfloat(float v) { V = vec_splats(v); }
-    inline vfloat(__vector float v, int slot) { V = vec_splat(v, slot); }
-    inline vfloat(__vector float v) { V = v; }
+    inline vfloat(vec_float4 v, int slot) { V = vec_splat(v, slot); }
+    inline vfloat(vec_float4 v) { V = v; }
 
-    inline operator float() const { return *((float*)&V); }
+    inline operator float() const { return (float)vec_extract(V, 0); }
 
     inline vfloat operator+(const vfloat& b) const { return vfloat(vec_add(V, b.V)); }
     inline vfloat operator-(const vfloat& b) const { return vfloat(vec_sub(V, b.V)); }
 
-    __vector float V;
+    vec_float4 V;
 };
 
 struct v2 {
     inline v2() {}
     inline v2(float v) { V = vfloat(v).V; }
-    inline v2(float x, float y) { V = (__vector float){x, y, 0.0f, 0.0f}; }
-    inline v2(float x, float y, float z, float w) { V = (__vector float){x, y, z, w}; }
-    inline v2(__vector float v) { V = v; }
+    inline v2(float x, float y) { V = (vec_float4){x, y, 0.0f, 0.0f}; }
+    inline v2(float x, float y, float z, float w) { V = (vec_float4){x, y, z, w}; }
+    inline v2(vec_float4 v) { V = v; }
 
     inline v2(Vectormath::Aos::Vector4 v) { V = v.get128(); }
-
-    inline operator Vectormath::Aos::Vector4() const { return Vectormath::Aos::Vector4(V); }
 
     inline vfloat operator[](unsigned int idx) { return vfloat(V, idx); }
 
@@ -53,9 +51,26 @@ struct v2 {
     inline v2 operator-(const v2& b) const { return v2(vec_sub(V, b.V)); }
     
     inline v2 operator*(float scalar) const { return *this * vfloat(scalar); }
-    inline v2 operator*(vfloat scalar) const { return v2(vec_madd(V, scalar.V, (__vector float)(0.0f))); }
+    inline v2 operator*(vfloat scalar) const { return v2(vec_madd(V, scalar.V, (vec_float4)(0.0f))); }
 
-    __vector float V;
+    Vectormath::Aos::Vector4 Makev4(vfloat w = (vec_float4)(1.0)) const
+    {
+        vec_float4 vec128 = V;
+        vec128 = _vmathVfInsert(vec128, w.V, 3);
+        return Vectormath::Aos::Vector4(vec128);
+    }
+
+    inline v2 Min(v2 v) const
+    {
+        return v2( vec_min( V, v.V ) );
+    }
+
+    inline v2 Max(v2 v) const
+    {
+        return v2( vec_max( V, v.V ));
+    }
+
+    vec_float4 V;
 };
 
 typedef vfloat floatInV2;

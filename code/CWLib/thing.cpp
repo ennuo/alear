@@ -76,7 +76,7 @@ CThingPtr& CThingPtr::operator=(CThing* rhs)
     return *this;
 }
 
-MH_DefineFunc(GetWorldAngle, 0x00464f70, TOC1, float, CThing*);
+MH_DefineFunc(GetWorldAngle, 0x00464f70, TOC1, float, const CThing*);
 
 MH_DefineFunc(CThing_ctor, 0x00020128, TOC0, void, CThing*);
 CThing::CThing()

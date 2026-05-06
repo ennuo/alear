@@ -34,6 +34,16 @@ enum EmitterBehavior
     EMITTER_BEHAVIOR_COUNT
 };
 
+enum JointBehavior
+{
+    JOINT_BEHAVIOR_ON_OFF,
+    JOINT_BEHAVIOR_FORWARDS_BACKWARDS,
+    JOINT_BEHAVIOR_SINGLE_CYCLE,
+    JOINT_BEHAVIOR_SPEED_SCALE,
+    JOINT_BEHAVIOR_POSITIONAL,
+    JOINT_BEHAVIOR_COUNT
+};
+
 enum SwitchEvent
 {
     SWITCH_EVENT_UPDATE,
@@ -229,6 +239,7 @@ public:
     int RemapTernary(float activation, int, int port);
     CSwitchSignal GetNewActivationButton(bool);
     CSwitchSignal GetNewActivationGrab(int);
+    bool HasDirection(int port) const;
 public:
     CVector<CThingPtr> TargetList;
     CVector<CThingPtr> EditorHackTargetList;

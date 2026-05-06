@@ -21,6 +21,8 @@ public:
 
 extern CPoppetOutlineConfig gPoppetOutlineData;
 void LoadOutlinePolygons();
+u32 GetOutlinePlanGUID(u32 mesh_guid);
+const CRawVector<v2, CAllocatorMMAligned128>& GetOutlinePolygon(u32 key);
 
 enum { E_OUTLINES_KEY = 3256491230u };
 

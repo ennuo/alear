@@ -996,6 +996,22 @@ void CThing::OnFixup(u32 revision)
     }
 
 #ifdef __NEW_LOGIC_SYSTEM__
+    PJoint* part_joint = GetPJoint();
+    if (part_joint != NULL)
+        part_joint->Direction = signbit(part_joint->AnimationSpeed);
+    
+    PScript* part_script = GetPScript();
+    if (part_script != NULL && part_script->ScriptInstance.Script)
+    {
+        const CP<RScript>& script = part_script->ScriptInstance.Script;
+        script->BlockUntilLoaded();
+        if (script->LookupFunction("SwitchPerformReaction__fbii", NULL))
+        {
+            Flags |= FLAG_LEGACY_SWITCH_TARGET;
+            MMLog("thing uid %08x is a legacy switch target\n", UID);
+        }
+    }
+
     PSwitch* part_switch = GetPSwitch();
     if (part_switch != NULL)
     {
@@ -1032,7 +1048,6 @@ void CThing::OnFixup(u32 revision)
         if (part_switch->Type == SWITCH_TYPE_AND || part_switch->Type == SWITCH_TYPE_OR || part_switch->Type == SWITCH_TYPE_XOR)
             GetPRenderMesh()->BoneThings.try_resize(3);
 
-        PScript* part_script = GetPScript();
         if (part_script == NULL)
         {
             AddPart(PART_TYPE_SCRIPT);
@@ -1456,8 +1471,29 @@ ReflectReturn CThing::OnLoad()
         // The outputs haven't been fixed up yet, so everything should still be in the target list.
         for (CThingPtr* ptr = part_switch->TargetList.begin(); ptr != part_switch->TargetList.end(); ++ptr)
         {
-            if (ptr->GetThing() == NULL) continue;
-            (*ptr)->Behaviour = part_switch->BehaviourOld;
+            CThing* thing = ptr->GetThing();
+            if (thing == NULL) continue;
+
+            if (thing->HasPart(PART_TYPE_JOINT))
+            {
+                switch (part_switch->BehaviourOld)
+                {
+                    case SWITCH_BEHAVIOR_SPEED_SCALE: thing->Behaviour = JOINT_BEHAVIOR_SPEED_SCALE; break;
+                    case SWITCH_BEHAVIOR_DIRECTION: thing->Behaviour = JOINT_BEHAVIOR_FORWARDS_BACKWARDS; break;
+                    case SWITCH_BEHAVIOR_ONE_SHOT: thing->Behaviour = JOINT_BEHAVIOR_SINGLE_CYCLE; break;
+                    default: thing->Behaviour = JOINT_BEHAVIOR_ON_OFF; break;
+                }
+            }
+            else if (thing->HasPart(PART_TYPE_EMITTER))
+            {
+                switch (part_switch->BehaviourOld)
+                {
+                    case SWITCH_BEHAVIOR_SPEED_SCALE: thing->Behaviour = EMITTER_BEHAVIOR_SPEED_SCALE; break;
+                    case SWITCH_BEHAVIOR_ONE_SHOT: thing->Behaviour = EMITTER_BEHAVIOR_ONE_SHOT; break;
+                    default: thing->Behaviour = EMITTER_BEHAVIOR_OFF_ON; break;
+                }
+            }
+            else (*ptr)->Behaviour = part_switch->BehaviourOld;
         }
     }
 #endif

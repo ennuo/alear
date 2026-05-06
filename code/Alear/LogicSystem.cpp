@@ -33,7 +33,10 @@
 #include <SceneGraph.h>
 
 const v4 PORT_ZBIAS = v4(0.0f, 0.0f, 10.0f, 0.0f);
+const v4 JOINT_PORT_ZBIAS = v4(0.0f, 0.0f, 50.0f, 0.0f);
 const float PORT_RADIUS = 20.0f;
+
+static CSignature gSwitchPerformReaction("SwitchPerformReaction__fbii");
 
 namespace NPoppetUtils
 {
@@ -45,6 +48,28 @@ MH_DefineFunc(HitTestRayVsAABB, 0x002272c4, TOC0, bool, v4 boxmin, v4 boxmax, v4
 namespace SystemFunctions
 {
     MH_DefineFunc(DrawRectangle, 0x0046369c, TOC1, void, v4 min, v4 max, v4 col, bool world_space, bool z_test, bool fill);
+}
+
+bool IsCenteredPort(int type)
+{
+    switch (type)
+    {
+        case OBJECT_CREATURE_BRAIN_BASE:
+        case OBJECT_MAGIC_EYE:
+        case OBJECT_SPAWNPOINT_ENTRANCE:
+        case OBJECT_SPAWNPOINT_SINGLE_LIFE:
+        case OBJECT_SPAWNPOINT_DOUBLE_LIFE:
+        case OBJECT_SPAWNPOINT_INFINITE_LIFE:
+        case OBJECT_SCOREBOARD:
+        case OBJECT_LEVEL_LINK:
+        case OBJECT_THRUSTER:
+        case OBJECT_PRIZE_BUBBLE:
+        case OBJECT_SCORE_BUBBLE:
+        case OBJECT_DISSOLVABLE:
+            return true;
+        default:
+            return false;
+    }
 }
 
 int GetNumOutputs(PSwitch* sw)
@@ -77,6 +102,9 @@ int GetBottomInputs(const CThing* thing)
 
 int GetNumInputs(const CThing* thing)
 {
+    if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET)
+        return 1;
+    
     switch (thing->ObjectType)
     {
         case OBJECT_TRIGGER_DELETE:
@@ -190,6 +218,22 @@ int GetNumInputs(const CThing* thing)
     return 0;
 }
 
+v4 GetJointCenter(const PJoint* joint)
+{
+    if (joint->Type < JOINT_TYPE_FIRST_ANGULAR)
+    {
+        v4 a = joint->GetContactPointA();
+        v4 b = joint->GetContactPointB();
+
+        v4 c = ((a + b) / 2.0f) + JOINT_PORT_ZBIAS;
+        c.setW(1.0f);
+
+        return c;
+    }
+
+    return joint->GetContactPointA();
+}
+
 CBone* GetRootBone(const CThing* thing)
 {
     if (thing == NULL) return NULL;
@@ -209,17 +253,47 @@ CBone* GetRootBone(const CThing* thing)
     return mesh->Bones.begin();
 }
 
+MH_DefineFunc(thingcast, 0x0001efb8, TOC0, bool, CThing*, v4&, v4&, float&, u32&, float&, float&, bool, void*, void*, void*);
+
 bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, bool output, v4 ray_pos, v4 ray_dir, float& intersect_dist)
 {
     if (thing == NULL) return false;
 
-    bool centered = false;
+
+    if (thing->GetPJoint() != NULL)
+    {
+        PJoint* joint = thing->GetPJoint();
+
+        // If we're trying to raycast for connecting a wire,
+        // raycast against the joint mesh.
+        if (switch_connector)
+        {
+            u32 triout;
+            float uout, vout;
+            return thingcast(thing, ray_pos, ray_dir, intersect_dist, triout, uout, vout, true, NULL, NULL, NULL);
+        }
+
+        // Otherwise, do a sphere cast against the center of the mesh to
+        // pick up the wire.
+        return NPoppetUtils::RaySphereIntersect(GetJointCenter(joint), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
+    }
+
+    if (thing->GetPPos() == NULL) return false;
+    bool centered = IsCenteredPort(thing->ObjectType);
 
     const CMesh* mesh;
     if (thing->GetPGeneratedMesh() != NULL) 
     {
         mesh = thing->GetPGeneratedMesh()->SharedMesh;
         centered = num_ports == 1 && !output;
+
+        // for single port shapes, just wire into the center
+        if (centered && switch_connector)
+        {
+            u32 triout;
+            float uout, vout;
+            return thingcast(thing, ray_pos, ray_dir, intersect_dist, triout, uout, vout, true, NULL, NULL, NULL);
+        }
     }
     else
     {
@@ -235,16 +309,34 @@ bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, 
     // but we'll still check it anyways, I guess.
     if (mesh == NULL || mesh->Bones.size() == 0) return false;
 
-    CBone& bone = mesh->Bones.front();
-    const m44& wpos = thing->GetPPos()->GetWorldPosition();
+    v4 min, max, center;
+    m44 wpos;
 
-    v4 center = bone.SkinPoseMatrix.getCol3();
+    if (thing->GetPShape() != NULL)
+    {
+        const PShape* part_shape = thing->GetPShape();
 
-    float dist = abs(bone.BoundBoxMax.getY() - bone.BoundBoxMin.getY());
+        center = wpos.getCol3() + PORT_ZBIAS;
+        wpos = m44::identity();
+        min = part_shape->Fork->Min.Makev4();
+        max = part_shape->Fork->Max.Makev4();
+
+        center.setZ(center.getZ() + part_shape->Thickness);
+    }
+    else
+    {
+        const CBone& bone = mesh->Bones.front();
+        wpos = thing->GetPPos()->GetWorldPosition();
+        center = bone.SkinPoseMatrix.getCol3();
+        max = bone.BoundBoxMax;
+        min = bone.BoundBoxMin;
+    }
+
+    float dist = abs(max.getY() - min.getY());
     float inc = dist / (float)num_ports;
 
-    float top = bone.BoundBoxMax.getY() - (inc * (float)(port + 0));
-    float bottom = bone.BoundBoxMax.getY() - (inc * (float)(port + 1));
+    float top = max.getY() - (inc * (float)(port + 0));
+    float bottom = min.getY() - (inc * (float)(port + 1));
 
     // If we're raycasting against this port while trying to connect a switch,
     // we'll split the mesh's bound box for a boxcast.
@@ -254,13 +346,13 @@ bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, 
 
         if (centered)
         {
-            bl = bone.BoundBoxMin;
-            tr = bone.BoundBoxMax;
+            bl = min;
+            tr = max;
         }
         else
         {
-            bl = v4(bone.BoundBoxMin.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
-            tr = v4(bone.BoundBoxMax.getX(), top, center.getZ(), 1.0f);
+            bl = v4(min.getX() - PORT_RADIUS * 2.0f, bottom, center.getZ(), 1.0f);
+            tr = v4(max.getX(), top, center.getZ(), 1.0f);
         }
         
         v4 hitout;
@@ -274,11 +366,10 @@ bool RaycastPort(CThing* thing, int port, int num_ports, bool switch_connector, 
     }
 
     // Otherwise, we'll do a sphere cast against the port.
-
     if (centered)
         return NPoppetUtils::RaySphereIntersect(wpos * center, PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
 
-    float origin = output ? bone.BoundBoxMax.getX() + PORT_RADIUS : bone.BoundBoxMin.getX() - PORT_RADIUS;
+    float origin = output ? max.getX() + PORT_RADIUS : min.getX() - PORT_RADIUS;
     return NPoppetUtils::RaySphereIntersect(wpos * v4(origin, (top + bottom) / 2.0f, center.getZ(), 1.0f), PORT_RADIUS, ray_pos, ray_dir, intersect_dist);
 }
 
@@ -421,6 +512,21 @@ bool CSwitchOutput::AddTarget(CThing* thing, int port)
     TargetList.push_back(CSwitchTarget(thing, port));
     thing->SetInput(this, port);
 
+
+    if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET)
+    {
+        MMLog("registering legacy switch target...\n");
+        PScript* part_script = thing->GetPScript();
+        CScriptArguments args;
+        args.AppendArg(Activation.Analogue);
+        args.AppendArg(false);
+        args.AppendArg(SWITCH_EVENT_REGISTER);
+        args.AppendArg(thing->UID);
+
+        MMLog("invoke: %s\n", part_script->InvokeSync(gSwitchPerformReaction, args) ? "true" : "false");
+    }
+
+
     return true;
 }
 
@@ -434,13 +540,41 @@ bool CSwitchOutput::RemoveTarget(CThing* thing, int port)
     thing->SetInput(NULL, port);
     TargetList.erase(TargetList.begin() + index);
 
+    if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET)
+    {
+        PScript* part_script = thing->GetPScript();
+        CScriptArguments args;
+        args.AppendArg(Activation.Analogue);
+        args.AppendArg(false);
+        args.AppendArg(SWITCH_EVENT_UNREGISTER);
+        args.AppendArg(thing->UID);
+
+        part_script->InvokeSync(gSwitchPerformReaction, args);
+    }
+
     return true;
 }
 
 CSwitchOutput::~CSwitchOutput()
 {
     for (CSwitchTarget* target = TargetList.begin(); target != TargetList.end(); ++target)
-        target->Thing->SetInput(NULL, target->Port);
+    {
+        CThing* thing = target->Thing;
+
+        thing->SetInput(NULL, target->Port);
+        if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET)
+        {
+            PScript* part_script = thing->GetPScript();
+            CScriptArguments args;
+            args.AppendArg(Activation.Analogue);
+            args.AppendArg(false);
+            args.AppendArg(SWITCH_EVENT_UNREGISTER);
+            args.AppendArg(thing->UID);
+
+            part_script->InvokeSync(gSwitchPerformReaction, args);
+        }
+
+    }
 }
 
 void PSwitch::InitializeExtraData()
@@ -576,8 +710,22 @@ void CPoppetEditState::ClearSwitchConnector()
     SetCursorHoverObject(NULL, -1);
 }
 
-void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool one_shot)
+void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool one_shot, bool crappy_old_lbp1_switch)
 {
+    if (target->Flags & FLAG_LEGACY_SWITCH_TARGET)
+    {
+        PScript* part_script = target->GetPScript();
+        CScriptArguments args;
+        args.AppendArg(input->Activation.Analogue);
+        args.AppendArg(one_shot);
+        args.AppendArg(crappy_old_lbp1_switch ? SWITCH_EVENT_REGISTER : SWITCH_EVENT_UPDATE);
+        args.AppendArg(target->UID);
+
+        part_script->InvokeSync(gSwitchPerformReaction, args);
+        return;
+    }
+
+
     switch (target->ObjectType)
     {
         case OBJECT_SWITCH_SELECTOR:
@@ -608,6 +756,74 @@ void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool 
     }
 }
 
+void UpdateJoints(PWorld* world)
+{
+    // check for if we're paused :worried:
+    for (u32 i = 0; i < world->ListPJoint.size(); ++i)
+    {
+        PJoint* joint = world->ListPJoint[i];
+
+        joint->ModDriven = false;
+        joint->ModScaleActive = true;
+
+        if (joint->CurrentlyEditing)
+        {
+            joint->SetModScale(0.0f);
+            continue;
+        }
+
+        CSwitchOutput* input = joint->GetThing()->GetInput(0);
+        int behaviour = joint->GetThing()->Behaviour;
+
+        if (input == NULL)
+        {
+            joint->ModStartFrame = 0.0f;
+            joint->ModDeltaFrames = 0.0f;
+            joint->ModScale = 1.0f;
+
+            if (behaviour == JOINT_BEHAVIOR_POSITIONAL)
+                joint->AnimationSpeed = -4.0f;
+
+            continue;
+        }
+
+        float scale;
+        switch (behaviour)
+        {
+            case JOINT_BEHAVIOR_ON_OFF:
+            {
+                joint->SetModScale(input->Activation.Ternary ? 1.0f : 0.0f);
+                break;
+            }
+            case JOINT_BEHAVIOR_FORWARDS_BACKWARDS:
+            {
+                joint->SetModScale(
+                    input->Activation.Ternary != 0 || input->Owner->HasDirection(input->Port) ?
+                    (float)input->Activation.Ternary :
+                    -1.0f
+                );
+
+                break;
+            }
+            case JOINT_BEHAVIOR_SINGLE_CYCLE:
+            {
+                joint->SetModScale(1.0f);
+                break;
+            }
+            case JOINT_BEHAVIOR_SPEED_SCALE:
+            {
+                joint->SetModScale(input->Activation.Analogue);
+                break;
+            }
+            case JOINT_BEHAVIOR_POSITIONAL:
+            {
+                joint->SetPosition(input->Activation.Analogue, input->Owner->HasDirection(input->Port));
+                break;
+            }
+        }
+    }
+}
+
 static CSwitchSignal EMPTY_ACTIVATION;
 const CSwitchSignal& PSwitch::GetActivation(int port)
 {
@@ -627,8 +843,20 @@ CSwitchSignal PSwitch::GetActivationFromInput(int port)
     return activation;
 }
 
-MH_DefineFunc(GetNewActivationButton, 0x0006e7c8, TOC0, float, PSwitch*);
-MH_DefineFunc(GetNewActivationProximity, 0x0006b45c, TOC0, float, PSwitch*);
+bool PSwitch::HasDirection(int port) const
+{
+    switch (Type)
+    {
+        case SWITCH_TYPE_TRINARY: return true;
+        default: return false;
+    }
+}
+
+MH_DefineFunc(_GetNewActivationButton, 0x0006e7c8, TOC0, float, PSwitch*);
+MH_DefineFunc(_GetNewActivationProximity, 0x0006b45c, TOC0, float, PSwitch*);
+MH_DefineFunc(_GetNewActivationLever, 0x0006a228, TOC0, float, PSwitch*);
+MH_DefineFunc(_GetNewActivationTrinary, 0x00069fa0, TOC0, float, PSwitch*);
+MH_DefineFunc(_GetNewActivationKey, 0x0006afac, TOC0, float, PSwitch*);
 
 extern void (*ForceSum)(const PShape* shape, unsigned int n, v2& sum, float& length_sum, float min_vel_length);
 
@@ -701,13 +929,36 @@ CSwitchSignal PSwitch::GetNewActivation(int port)
     {
         case SWITCH_TYPE_BUTTON:
         {
-            activation = GetNewActivationButton(true);
+            analogue = _GetNewActivationButton(this);
+            ternary = RemapTernary(analogue, 0, 0);
+            player = E_PLAYER_NUMBER_NONE; 
+            break;
+        }
+        case SWITCH_TYPE_LEVER:
+        {
+            analogue = _GetNewActivationLever(this);
+            ternary = RemapTernary(analogue, 0, 0);
+            player = E_PLAYER_NUMBER_NONE; 
+            break;
+        }
+        case SWITCH_TYPE_TRINARY:
+        {
+            analogue = _GetNewActivationTrinary(this);
+            ternary = RemapTernary(analogue, 0, 0);
+            player = E_PLAYER_NUMBER_NONE; 
             break;
         }
         case SWITCH_TYPE_PROXIMITY:
         {
-            analogue = GetNewActivationProximity(this);
-            ternary = analogue < 0.0f ? -1 : analogue > 0.0f ? 1 : 0; 
+            analogue = _GetNewActivationProximity(this);
+            ternary = RemapTernary(analogue, 0, 0);
+            player = E_PLAYER_NUMBER_NONE; 
+            break;
+        }
+        case SWITCH_TYPE_KEY:
+        {
+            analogue = _GetNewActivationKey(this);
+            ternary = RemapTernary(analogue, 0, 0);
             player = E_PLAYER_NUMBER_NONE; 
             break;
         }
@@ -848,8 +1099,8 @@ void PSwitch::SetInputCount(int size)
         Outputs.try_resize(size);
         for (int i = 0; i < size; ++i)
         {
-            if (Outputs[i] != NULL) continue;
-            Outputs[i] = new CSwitchOutput();
+            if (Outputs[i] == NULL)
+                Outputs[i] = new CSwitchOutput();
             Outputs[i]->Port = i;
             Outputs[i]->Owner = this;
         }
@@ -919,7 +1170,7 @@ void PSwitch::Update()
         if (change || one_shot)
         {
             for (CSwitchTarget* target = output->TargetList.begin(); target != output->TargetList.end(); ++target)
-                PerformReactionStatic(output, target->Thing, target->Port, one_shot);
+                PerformReactionStatic(output, target->Thing, target->Port, one_shot, CrappyOldLBP1Switch);
         }
     }
 
@@ -1043,17 +1294,6 @@ MH_DefineFunc(RenderRope, 0x001ec5f0, TOC0, void,
 
 typedef CRawVector<const CThing*> UniqueThingVec;
 extern UniqueThingVec gUniqueThingsOnCamera;
-CRawVector<PRenderMesh*> gPortMeshticles;
-class CMeshticleState {
-public:
-    m44 Spawn;
-    v4 AABBMin;
-    v4 AABBMax;
-    s32 Life;
-    float TargetScale;
-    float PopY;
-    u32 AirBubbleIndex;
-};
 
 class SHeldWire {
 public:
@@ -1071,26 +1311,169 @@ public:
     int To;
 };
 
+#include <PoppetOutlineShapes.h>
+
+bool GetPortPos2(const CThing* thing, int port, bool output, m44& pos)
+{
+    if (port == 255 || thing == NULL) return false;
+
+    // If we're getting the port position of a joint,
+    // it'll just be the center between the contact points
+    // for long joints, otherwise just the contact point from A.
+    if (thing->GetPJoint() != NULL)
+    {
+        const PJoint* joint = thing->GetPJoint();
+        if (joint->A == NULL || joint->B == NULL) return false;
+        
+        pos = m44::identity();
+        pos = pos.setCol3(GetJointCenter(joint));
+
+        return true;
+    }
+
+    // Realistically every single Thing that we're getting port
+    // positions of at this point should have a PPos component attached,
+    // but redundancy checks!
+    const PPos* part_pos = thing->GetPPos();
+    if (part_pos == NULL) return false;
+
+    v2 min(FLT_MAX), max(FLT_MIN);
+    v4 z_bias = v4(0.0f);
+
+    const m44& wpos = part_pos->Fork->WorldPosition;
+    const m44& inv_wpos = part_pos->Fork->InvWorldPosition;
+
+    m44 local_pos = m44::identity();
+
+    CBone* bone = GetRootBone(thing);
+    if (thing->GetPRenderMesh() != NULL)
+    {
+        const PRenderMesh* part_render_mesh = thing->GetPRenderMesh();
+
+        // Check if we have an outline polygon for decorative things.
+        u32 outline_plan_key = 0;
+        if (part_render_mesh->Mesh)
+            outline_plan_key = GetOutlinePlanGUID(part_render_mesh->Mesh->GetGUID());
+        
+        if (outline_plan_key)
+        {
+            const CRawVector<v2, CAllocatorMMAligned128>& polygon = GetOutlinePolygon(outline_plan_key);
+            for (u32 i = 0; i < polygon.size(); ++i)
+            {
+                min = polygon[i].Min(min);
+                max = polygon[i].Max(max);
+            }
+
+            z_bias.setZ(10.0f);
+        }
+        else
+        {
+            if (bone == NULL) return false;
+
+            min = bone->BoundBoxMin;
+            max = bone->BoundBoxMax;
+
+            z_bias.setZ(10.0f);
+        }
+    }
+
+    // If we have a shape attached to this thing, get
+    // the position of the port in shape space, then
+    // transform it by the world position of the thing.
+    if (thing->GetPShape() != NULL)
+    {
+        const PShape* part_shape = thing->GetPShape();
+
+        const CRawVector<v2, CAllocatorMMAligned128>& polygon = part_shape->GetPolygon();
+        for (u32 i = 0; i < polygon.size(); ++i)
+        {
+            min = polygon[i].Min(min);
+            max = polygon[i].Max(max);
+        }
+
+        z_bias.setXYZ(part_shape->COM.getCol3().getXYZ());
+        z_bias.setZ(z_bias.getZ() + part_shape->Thickness);
+    }
+
+    int num_ports;
+    if (output)
+    {
+        PSwitch* part_switch = thing->GetPSwitch();
+        if (part_switch == NULL) return false;
+        num_ports = part_switch->Outputs.size();
+    }
+    else 
+    {
+        num_ports = GetNumInputs(thing);
+        if (thing->ObjectType == OBJECT_SWITCH_SELECTOR)
+            num_ports = 1;
+    }
+
+    float top = max.getY();
+    float bottom = max.getY();
+
+    float dist = abs(max.getY() - min.getY());
+    const float spacing = 61.8731f;
+    if (num_ports > 2)
+    {
+        dist += (num_ports - 2) * (spacing * 0.5f);
+        top += (num_ports - 2) * (spacing * 0.25f);
+        bottom += (num_ports - 2) * (spacing * 0.25f);
+    }
+
+    float inc = dist / (float)num_ports;
+
+    top -= (inc * (float)(port + 0));
+    bottom -= (inc * (float)(port + 1));
+
+    if (IsCenteredPort(thing->ObjectType))
+    {
+        z_bias.setW(1.0f);
+        local_pos.setCol3(z_bias);
+    }
+    else if (output)
+        local_pos.setCol3(v4((float)max.getX() + PORT_RADIUS, ((top + bottom) / 2.0f), 0.0f, 1.0f) + z_bias);
+    else
+        local_pos.setCol3( v4((float)min.getX() - PORT_RADIUS, ((top + bottom) / 2.0f), 0.0f, 1.0f) + z_bias);
+
+    pos = wpos * local_pos;
+
+    return true;
+}
+
 bool GetPortPos(const CThing* thing, int port, bool output, v4& out)
 {
     if (port == 255) return false;
 
-    CBone* bone = GetRootBone(thing);
-    if (bone == NULL || thing->GetPPos() == NULL) return false;
-
-    m44 wpos = thing->GetPPos()->Rend.WorldPosition;
-    v4 center = bone->SkinPoseMatrix.getCol3() + PORT_ZBIAS;
-
-    v4 min = bone->BoundBoxMin;
-    v4 max = bone->BoundBoxMax;
-
-    PShape* part_shape = thing->GetPShape();
-    if (part_shape != NULL)
+    v4 min, max, center;
+    m44 wpos;
+    if (thing != NULL && thing->GetPJoint() != NULL)
     {
-        center = wpos.getCol3() + PORT_ZBIAS;
-        wpos = m44::identity();
-        min = part_shape->Fork->Min;
-        max = part_shape->Fork->Max;
+        const PJoint* joint = thing->GetPJoint();
+        if (joint->A == NULL || joint->B == NULL) return false;
+        out = GetJointCenter(joint);
+        return true;
+    }
+    else
+    {
+        CBone* bone = GetRootBone(thing);
+        if (bone == NULL || thing->GetPPos() == NULL) return false;
+
+        wpos = thing->GetPPos()->Rend.WorldPosition;
+        center = bone->SkinPoseMatrix.getCol3() + PORT_ZBIAS;
+
+        min = bone->BoundBoxMin;
+        max = bone->BoundBoxMax;
+
+        PShape* part_shape = thing->GetPShape();
+        if (part_shape != NULL)
+        {
+            center = wpos.getCol3() + PORT_ZBIAS;
+            center.setZ(center.getZ() + part_shape->Thickness);
+            wpos = m44::identity();
+            min = part_shape->Fork->Min.Makev4();
+            max = part_shape->Fork->Max.Makev4();
+        }
     }
 
     if (thing->ObjectType == OBJECT_SWITCH_SELECTOR && (port != 0 || output))
@@ -1161,9 +1544,14 @@ void DrawWire(CSwitchOutput* output, CPoppet* player, CThing* target, int port)
     bool loose = false;
     
 
-    v4 a, b;
-    if (!GetPortPos(output->Owner->GetThing(), output->Port, true, a)) return;
-    if (target != NULL && !GetPortPos(target, port, false, b)) return;
+    m44 amat = m44::identity();
+    m44 bmat = m44::identity();
+
+    if (!GetPortPos2(output->Owner->GetThing(), output->Port, true, amat)) return;
+    if (target != NULL && !GetPortPos2(target, port, false, bmat)) return;
+
+    v4 a = amat.getCol3();
+    v4 b = bmat.getCol3();
 
     if (target == NULL)
     {
@@ -1337,11 +1725,9 @@ void CPoppet::RaycastAgainstSwitchConnector(v4 ray_start, v4 ray_dir, CRaycastRe
     for (CThing** it = world->Things.begin(); it != world->Things.end(); ++it)
     {
         CThing* thing = (*it);
-        if (thing == NULL || thing->GetPPos() == NULL || GetNumInputs(thing) == 0) continue;
+        if (thing == NULL || GetNumInputs(thing) == 0) continue;
 
         float t = 1.0e+20f;
-
-        m44 wpos = thing->GetPPos()->Game.WorldPosition;
         int num_inputs = GetNumInputs(thing);
 
         for (int i = 0; i < num_inputs; ++i)
@@ -1390,10 +1776,9 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
         PSwitch* sw = (*it);
         CThing* thing = sw->GetThing();
 
-        if (thing == ignored || thing->GetPPos() == NULL) continue;
+        if (thing == ignored) continue;
 
         // Test against our own output ports first
-        m44 wpos = thing->GetPPos()->Game.WorldPosition;
         for (int i = 0; i < sw->Outputs.size(); ++i)
         {
             if (!RaycastPort(thing, i, sw->Outputs.size(), false, true, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
@@ -1423,7 +1808,7 @@ void CustomRaycastAgainstSwitches(CPoppet* poppet)
             CSwitchOutput& output = *sw->Outputs[ref_port];
             for (CSwitchTarget* target = output.TargetList.begin(); target != output.TargetList.end(); ++target)
             {
-                if (target->Thing == NULL || target->Thing->GetPPos() == NULL) continue;
+                if (target->Thing == NULL) continue;
 
                 if (!RaycastPort(target->Thing, target->Port, GetNumInputs(target->Thing), false, false, poppet->m_rayStart, poppet->m_rayDir, t)) continue;
                 if (t >= 1.0e+20f) continue;
@@ -1480,8 +1865,12 @@ void GatherPortsForDrawing()
         const CThing* thing = *it;
         if (thing == NULL) continue;
 
+
+
         int num_inputs = GetNumInputs(thing);
-        if (num_inputs == 0) continue;
+        if (num_inputs == 0 || thing->HasPart(PART_TYPE_JOINT)) continue;
+        if (IsCenteredPort(thing->ObjectType)) continue;
+
 
         CP<RMesh> primary_port_mesh;
         CP<RMesh> secondary_port_mesh;
@@ -1514,8 +1903,8 @@ void GatherPortsForDrawing()
                     CP<RMesh> mesh = thing->ObjectType == OBJECT_SWITCH_SELECTOR && i == 0 ? secondary_port_mesh : primary_port_mesh;
                     if (!mesh->IsLoaded()) continue;
 
-                    v4 port_pos;
-                    if (!GetPortPos(thing, i, false, port_pos)) continue;
+                    m44 wpos;
+                    if (!GetPortPos2(thing, i, false, wpos)) continue;
                     // port_pos -= PORT_ZBIAS;
 
                     CMeshInstance* inst = AllocateHugePort();
@@ -1531,16 +1920,6 @@ void GatherPortsForDrawing()
         
                     inst->SetMesh(&mesh->mesh);
                     inst->Invalidate();
-
-                    v4 translation; m44 rotation; v3 scale;
-                    Decompose(translation, rotation, scale, thing->GetPPos()->Rend.WorldPosition);
-
-                    // undo weird scaling shit
-                    scale.setX(scale.getY());
-
-                    // m44 wpos = rotation * m44::scale(scale);
-                    m44 wpos = m44::identity();
-                    wpos.setCol3(port_pos);
 
                     HugeBoneArray[inst->FirstBoneIndex] = wpos;
         
@@ -1739,6 +2118,14 @@ void OnPartSwitchDestructor(PSwitch* sw)
 
 namespace LogicSystemNativeFunctions
 {
+    bool IsUsingNewLogicSystem()
+    {
+#ifdef __NEW_LOGIC_SYSTEM__
+        return true;
+#else
+        return false;
+#endif
+    }
     int GetSwitchType(CThing* thing)
     {
         if (thing == NULL) return SWITCH_TYPE_INVALID;
@@ -1803,12 +2190,27 @@ namespace LogicSystemNativeFunctions
         thing->OnFixup();
     }
 
+    bool IsSwitchTriggered(CThing* thing, int port)
+    {
+        return thing && thing->GetInput(port) != NULL;
+    }
+
+    int GetBehaviour(CThing* thing)
+    {
+        if (thing != NULL)
+            return thing->Behaviour;
+        return 0;
+    }
+
     void Register()
     {
-        // RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
-        // RegisterNativeFunction("SwitchBase", "GetNumOutputs__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetNumOutputs>);
-        // RegisterNativeFunction("SwitchBase", "GetTweakTitle__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetTweakTitle>);
-        // RegisterNativeFunction("SwitchBase", "SetSwitchType__i", false, NVirtualMachine::CNativeFunction2V<CThing*, int>::Call<SetSwitchType>);
+        RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
+        RegisterNativeFunction("SwitchBase", "GetNumOutputs__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetNumOutputs>);
+        RegisterNativeFunction("SwitchBase", "GetTweakTitle__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetTweakTitle>);
+        RegisterNativeFunction("SwitchBase", "IsUsingNewLogicSystem__", true, NVirtualMachine::CNativeFunction0<bool>::Call<IsUsingNewLogicSystem>);
+        RegisterNativeFunction("SwitchBase", "SetSwitchType__i", false, NVirtualMachine::CNativeFunction2V<CThing*, int>::Call<SetSwitchType>);
+        RegisterNativeFunction("Thing", "IsSwitchTriggered__i", false, NVirtualMachine::CNativeFunction2<bool, CThing*, int>::Call<IsSwitchTriggered>);
+        RegisterNativeFunction("Thing", "GetBehaviour__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetBehaviour>);
     }
 }
 
@@ -1831,6 +2233,8 @@ void InitLogicSystemHooks()
 
     MH_PokeBranch(0x001df8f4, &_render_wire_hook);
     MH_PokeBranch(0x0003ecb4, &_render_mesh_setup_rendering_hook);
+
+    MH_PokeBranch(0x0007c508, &_update_joints_hook);
 
 
     MH_PokeCall(0x001e9f3c, OnSceneGraphStartFrame);

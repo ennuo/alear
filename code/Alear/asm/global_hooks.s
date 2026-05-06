@@ -874,3 +874,10 @@ _layer_switch_hook:
     ba 0x0003a8d0
 DisableLethalFlag:
     ba 0x0003a73c
+
+.global _update_joints_hook
+_update_joints_hook:
+    mr %r3, %r30
+    call _Z12UpdateJointsP6PWorld
+    mr %r3, %r30
+    ba 0x0007c50c

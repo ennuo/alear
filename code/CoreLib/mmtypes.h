@@ -18,7 +18,7 @@
 #define ARRAY_LENGTH(x) sizeof(x) / sizeof(x[0])
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
-
+#define SATURATE(x) MAX(0.0f, MIN(x, 1.0f))
 
 typedef int8_t s8;
 typedef uint8_t u8;
