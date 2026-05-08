@@ -13,29 +13,42 @@ public:
         
     }
 public:
-    u32 GetBigInt();
-    
-    inline float GetFloat()
+    inline void SetSeed(u32 seed)
     {
-        r0 = r0 * PRNG_A + PRNG_B & PRNG_M_MASK;
-        return (float)(r0 >> 16) * PRNG_INV_DENOM;
+        r0 = seed;
     }
 
+    inline u32& GetSeedForSerialisation() { return r0; }
+
     inline s32 GetInt()
+    {
+        r0 = r0 * PRNG_A + PRNG_B & PRNG_M_MASK;
+        return r0 >> 16;
+    }
+
+    inline u32 GetBigInt()
     {
         r0 = r0 * PRNG_A + PRNG_B & PRNG_M_MASK;
         return r0;
     }
 
-    inline u32& GetSeedForSerialisation() { return r0; }
+    inline s32 GetInt(s32 min, s32 max)
+    {
+        return ((GetInt() * (max - min)) >> 14) + min;
+    }
+    
+    inline float GetFloat()
+    {
+        return GetInt() * PRNG_INV_DENOM;
+    }
 
+    inline float GetFloat(float min, float max)
+    {
+        return GetFloat() * (max - min) + min;
+    }
+    
     v3 GetUnitVector();
     v2 GetUnitVectorv2();
-
-    inline void SetSeed(u32 seed)
-    {
-        r0 = seed;
-    }
 private:
     u32 r0;
 };
