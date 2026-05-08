@@ -2229,6 +2229,19 @@ namespace LogicSystemNativeFunctions
         return NULL;
     }
 
+    const wchar_t* GetMicroChipName(CThing* thing, int)
+    {
+        PMicroChip* microchip;
+        if (thing == NULL || (microchip == thing->GetPMicroChip()) == NULL || microchip->Name == NULL)
+            return L"";
+        return microchip->Name;
+    }
+
+    bool IsCircuitBoardChildHeldByAnyPlayer(CThing* thing, int player)
+    {
+        return false;
+    }
+
     void Register()
     {
         RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
@@ -2240,6 +2253,8 @@ namespace LogicSystemNativeFunctions
         RegisterNativeFunction("Thing", "GetBehaviour__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetBehaviour>);
         RegisterNativeFunction("TweakEmitter", "GetEmitterPlan__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetEmitterPlan>);
         RegisterNativeFunction("TweakEmitter", "GetEmitterPlanIcon__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetEmitterPlanIcon>);
+        RegisterNativeFunction("MicroChip", "GetMicroChipName__Q5Thingi", true, NVirtualMachine::CNativeFunction2<const wchar_t*, CThing*, int>::Call<GetMicroChipName>);
+        RegisterNativeFunction("MicroChip", "IsCircuitBoardChildHeldByAnyPlayer__Q5Thingi", true, NVirtualMachine::CNativeFunction2<bool, CThing*, int>::Call<IsCircuitBoardChildHeldByAnyPlayer>);
     }
 }
 

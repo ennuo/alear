@@ -131,7 +131,7 @@ public:
         return *this;
     }
 
-    CTweakSetting& SetIcon(CIconConfig& config, u32 index)
+    CTweakSetting& SetIcon(const CIconConfig& config, u32 index)
     {
         IconTexture = gScriptObjectManager->RegisterResource(config.Texture.GetRef());
 
@@ -762,18 +762,17 @@ namespace TweakSettingNativeFunctions
                 PEmitter* emitter = thing->GetPEmitter();
                 if (emitter != NULL)
                     return !emitter->HideInPlayMode;
-
-                break;
-            }
-
-            case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT:
-            {
                 PMicroChip* microchip = thing->GetPMicroChip();
                 if (microchip != NULL)
-                    return microchip->IsCircuitBoardVisible();
+                    return !microchip->HideInPlayMode;
 
                 break;
             }
+
+
+            GET_PART_MEMBER_FAST(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT, PMicroChip, IsCircuitBoardVisible());
+            GET_PART_MEMBER_FAST(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_WIRES, PMicroChip, WiresVisible ^ 1);
+            GET_PART_MEMBER_FAST(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_HORIZONTAL_CIRCUIT, PMicroChip, KeepVisualVertical);
 
             GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL, PEmitter, LinearVel);
             GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL, PEmitter, AngVel);
@@ -1247,8 +1246,18 @@ bool InitTweakSettings()
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT)
         .SetupYesNo()
-        .SetIcon(tweak_inputs_icon, 0)
-        .SetDebugToolTip(L"Open Sesame");
+        .SetIcon(CIconConfig(106055, 1, 1), 0)
+        .SetDebugToolTip(L"Show Circuitboard");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_HORIZONTAL_CIRCUIT)
+        .SetupYesNo()
+        .SetIcon(CIconConfig(818522, 4, 4), 13)
+        .SetDebugToolTip(L"Stabilize Circuitboard");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_WIRES)
+        .SetupYesNo()
+        .SetIcon(CIconConfig(108528, 1, 1), 0)
+        .SetDebugToolTip(L"Hide Outgoing Wires when Circuitboard is Closed");
 
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL)
@@ -2016,6 +2025,9 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
                 PEmitter* emitter = thing->GetPEmitter();
                 if (emitter != NULL)
                     emitter->HideInPlayMode = !action.Value;
+                PMicroChip* microchip = thing->GetPMicroChip();
+                if (microchip != NULL)
+                    microchip->HideInPlayMode = !action.Value;
             }
 
             break;
@@ -2023,17 +2035,21 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
         case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT:
         {
-            CThing* thing = world->GetThingByUID(action.ThingUID);
-            if (thing != NULL)
-            {
-                PMicroChip* part_microchip = thing->GetPMicroChip();
-                if (part_microchip != NULL)
-                    part_microchip->SetCircuitBoardVisible(action.Value);
-            }
-
+            GET_PART(PMicroChip)->SetCircuitBoardVisible(action.Value);
             break;
         }
 
+        case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_WIRES:
+        {
+            GET_PART(PMicroChip)->WiresVisible = !action.Value;
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_MICRO_CHIP_HORIZONTAL_CIRCUIT:
+        {
+            GET_PART(PMicroChip)->KeepVisualVertical = (bool)action.Value;
+            break;
+        }
 
         case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL: { GET_PART(PEmitter)->LinearVel = setting.FixedToGame(action.Value); break; }
         case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL: { GET_PART(PEmitter)->AngVel = setting.FixedToGame(action.Value); break; }
@@ -2424,6 +2440,8 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_JOINT_BEHAVIOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
     TABLE[E_GOOEY_NETWORK_ACTION_VISIBLE_IN_PLAY_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_WIRES] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_MICRO_CHIP_HORIZONTAL_CIRCUIT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 
     TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

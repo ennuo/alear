@@ -65,17 +65,16 @@ public:
     bool CollidableWithParent;
     u8 InteractPlayMode;
     u8 InteractEditMode;
-private:
-    char Pad0[0xf];
-public:
     floatInV2 Thickness;
     float MassDepth;
     CRawVector<v2, CAllocatorMMAligned128> Polygon;
     CRawVector<unsigned int> Loops;
     CP<RMaterial> MMaterial;
     CP<RMaterial> OldMMaterial;
+    float Radius;
+    float Area;
 private:
-    char Pad2[0x2c];
+    char Pad2[0x24];
 public:
     // theres padding here, so i can just sneak it in
     Forked Game; // 0xf0

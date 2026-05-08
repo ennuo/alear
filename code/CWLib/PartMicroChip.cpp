@@ -116,23 +116,18 @@ void PMicroChip::UpdateRenderPos()
 
     const PPos* part_pos = GetThing()->GetPPos();
 
-    // v4 translation; q4 rotation; v3 scale;
-    // Decompose(translation, rotation, scale, part_pos->Fork->WorldPosition);
-
-    
+    m44 matrix;
+    if (KeepVisualVertical)
+        matrix = m44::identity();
+    else
+        matrix = m44::rotationZ(-GetWorldAngle(GetThing()));
 
     v4 offset = part_pos->Fork->WorldPosition.getCol3() + (Offset * AnimationCurrent);
     offset.setW(1.0f);
 
+    matrix.setCol3(offset);
 
-
-
-    CircuitBoardThing->GetPPos()->SetWorldPos(m44(
-        v4::xAxis(), // * MAX(abs(AnimationCurrent), 0.1f),
-        v4::yAxis(), // * MAX(abs(AnimationCurrent), 0.1f),
-        v4::zAxis(),
-        offset
-    ), false, 0);
+    CircuitBoardThing->GetPPos()->SetWorldPos(matrix, false, 0);
 }
 
 void PMicroChip::UpdateAnimation()
