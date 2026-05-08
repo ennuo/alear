@@ -2213,6 +2213,22 @@ namespace LogicSystemNativeFunctions
         return 0;
     }
 
+    CP<CResource> GetEmitterPlan(CThing* thing)
+    {
+        PEmitter* emitter;
+        if (thing == NULL || (emitter = thing->GetPEmitter()) == NULL) return NULL;
+        return CP<CResource>(emitter->Plan.GetRef());
+    }
+
+    CP<CResource> GetEmitterPlanIcon(CThing* thing)
+    {
+        PEmitter* emitter;
+        if (thing == NULL || (emitter = thing->GetPEmitter()) == NULL) return NULL;
+        if (emitter->Plan && emitter->Plan->IsLoaded())
+            return CP<CResource>(emitter->Plan->InventoryData.Icon.GetRef());
+        return NULL;
+    }
+
     void Register()
     {
         RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
@@ -2222,6 +2238,8 @@ namespace LogicSystemNativeFunctions
         RegisterNativeFunction("SwitchBase", "SetSwitchType__i", false, NVirtualMachine::CNativeFunction2V<CThing*, int>::Call<SetSwitchType>);
         RegisterNativeFunction("Thing", "IsSwitchTriggered__i", false, NVirtualMachine::CNativeFunction2<bool, CThing*, int>::Call<IsSwitchTriggered>);
         RegisterNativeFunction("Thing", "GetBehaviour__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetBehaviour>);
+        RegisterNativeFunction("TweakEmitter", "GetEmitterPlan__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetEmitterPlan>);
+        RegisterNativeFunction("TweakEmitter", "GetEmitterPlanIcon__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetEmitterPlanIcon>);
     }
 }
 

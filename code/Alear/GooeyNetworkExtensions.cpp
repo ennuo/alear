@@ -278,6 +278,16 @@ public:
         return *this;
     }
 
+    CTweakSetting& SetupLinearVel()
+    {
+        Widget = TWEAK_WIDGET_MEASURER;
+        Icon = MEASURER_LINEAR_VELOCITY;
+        Conversion = 0.142857f;
+        StepSize = 0.1f;
+        StepSizeDPad = 1.0f;
+        return *this;
+    }
+
     CTweakSetting& SetupAngularVel()
     {
         Widget = TWEAK_WIDGET_MEASURER;
@@ -315,6 +325,12 @@ public:
     CTweakSetting& SetOffset(f32 offset)
     {
         Offset = offset;
+        return *this;
+    }
+    
+    CTweakSetting& SetInfinityType(int type)
+    {
+        InfinityType = type;
         return *this;
     }
 
@@ -743,6 +759,9 @@ namespace TweakSettingNativeFunctions
                 PJoint* joint = thing->GetPJoint();
                 if (joint != NULL)
                     return !joint->HideInPlayMode;
+                PEmitter* emitter = thing->GetPEmitter();
+                if (emitter != NULL)
+                    return !emitter->HideInPlayMode;
 
                 break;
             }
@@ -755,6 +774,20 @@ namespace TweakSettingNativeFunctions
 
                 break;
             }
+
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL, PEmitter, LinearVel);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL, PEmitter, AngVel);
+            // E_GOOEY_NETWORK_ACTION_EMITTER_IGNORE_PARENTS_VELOCITY
+            GET_PART_MEMBER_FAST(E_GOOEY_NETWORK_ACTION_EMITTER_BEHAVIOUR, PEmitter, GetThing()->Behaviour);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_FREQUENCY, PEmitter, Frequency);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LIFETIME, PEmitter, Lifetime);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_PHASE, PEmitter, Phase);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXNUM, PEmitter, MaxEmitted);
+            GET_PART_MEMBER(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXATONCENUM, PEmitter, MaxEmittedAtOnce);
+            // E_GOOEY_NETWORK_ACTION_EMITTER_RECYCLE
+            // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_CREATE
+            // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_DESTROY
+
         }
 
         #undef GET_PART_MEMBER
@@ -840,6 +873,7 @@ bool InitTweakSettings()
     CIconConfig tweak_batteryoutput_icon(119887, 1, 1);
     CIconConfig tweak_danger_icons(107868, 2, 4);
     CIconConfig tweak_timing_icons(106137, 2, 2);
+    CIconConfig tweak_emitter_icons(39196, 4, 4);
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LIGHTING)
         .SetupLighting()
@@ -1215,6 +1249,64 @@ bool InitTweakSettings()
         .SetupYesNo()
         .SetIcon(tweak_inputs_icon, 0)
         .SetDebugToolTip(L"Open Sesame");
+
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL)
+        .SetupLinearVel()
+        .SetToolTip(2638927608ul)
+        .SetIcon(tweak_emitter_icons, 0);
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL)
+        .SetupAngularVel()
+        .SetMinMax(-1500.0f, 1500.0f)
+        .SetToolTip(1328326009)
+        .SetIcon(tweak_emitter_icons, 1);
+    
+    // E_GOOEY_NETWORK_ACTION_EMITTER_IGNORE_PARENTS_VELOCITY
+    
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_BEHAVIOUR)
+        .SetWidget(TWEAK_WIDGET_CAROUSEL)
+        .SetIcon(CAROUSEL_EMITTER_BEHAVIOUR)
+        .SetIcon(tweak_input_action_icons, 0)
+        .SetDebugToolTip(L"Input Action");
+
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_FREQUENCY)
+        .SetupTimer()
+        .SetIcon(MEASURER_SPEEDO)
+        .SetToolTip(3035953324ul)
+        .SetIcon(tweak_emitter_icons, 3);
+    
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LIFETIME)
+        .SetupTimer()
+        .SetIcon(MEASURER_LIFE_SPAN)
+        .SetToolTip(473723627ul)
+        .SetInfinityType(1)
+        .SetIcon(tweak_emitter_icons, 4);
+    
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_PHASE)
+        .SetupTimer()
+        .SetIcon(MEASURER_PHASE)
+        .SetToolTip(3075593739ul)
+        .SetIcon(tweak_timing_icons, 2);
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXNUM)
+        .SetupCounter()
+        .SetIcon(MEASURER_MAX_EMITTED_EVER)
+        .SetToolTip(2846760626)
+        .SetInfinityType(1)
+        .SetIcon(tweak_emitter_icons, 5);
+    
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXATONCENUM)
+        .SetupCounter()
+        .SetIcon(MEASURER_MAX_EMITTED_ATONCE)
+        .SetToolTip(3642780210ull)
+        .SetIcon(tweak_emitter_icons, 6);
+
+    // E_GOOEY_NETWORK_ACTION_EMITTER_RECYCLE
+    // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_CREATE
+    // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_DESTROY
+
     
     return true;
 }
@@ -1921,6 +2013,9 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
                 PJoint* joint = thing->GetPJoint();
                 if (joint != NULL) 
                     joint->HideInPlayMode = !action.Value;
+                PEmitter* emitter = thing->GetPEmitter();
+                if (emitter != NULL)
+                    emitter->HideInPlayMode = !action.Value;
             }
 
             break;
@@ -1938,6 +2033,27 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
 
             break;
         }
+
+
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL: { GET_PART(PEmitter)->LinearVel = setting.FixedToGame(action.Value); break; }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL: { GET_PART(PEmitter)->AngVel = setting.FixedToGame(action.Value); break; }
+        // E_GOOEY_NETWORK_ACTION_EMITTER_IGNORE_PARENTS_VELOCITY
+        case E_GOOEY_NETWORK_ACTION_EMITTER_BEHAVIOUR: { GET_PART(PEmitter)->GetThing()->Behaviour = action.Value; break; }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_FREQUENCY: { GET_PART(PEmitter)->Frequency = (u32)setting.FixedToGame(action.Value); break; }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LIFETIME: { GET_PART(PEmitter)->Lifetime = (u32)setting.FixedToGame(action.Value); break; }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_PHASE: { GET_PART(PEmitter)->Phase = (u32)setting.FixedToGame(action.Value); break; }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXNUM: 
+        { 
+            u32 max_emitted = (u32)setting.FixedToGame(action.Value);
+            GET_PART(PEmitter)->MaxEmitted = max_emitted;
+            if (max_emitted == 0) part->CurrentEmitted = 0;
+            break; 
+        }
+        case E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXATONCENUM: { GET_PART(PEmitter)->MaxEmittedAtOnce = (u32)setting.FixedToGame(action.Value); break; }
+        // E_GOOEY_NETWORK_ACTION_EMITTER_RECYCLE
+        // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_CREATE
+        // E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_DESTROY
+
     }
 
 #undef GET_PART
@@ -1961,6 +2077,18 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
 
             break;
         }
+
+        case CAROUSEL_EMITTER_BEHAVIOUR:
+        {
+            CIconConfig icon(107100, 2, 4);
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"On/Off", v4(1.0f)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Emit Once", v4(1.0f)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Speed Scale", v4(1.0f)));
+
+            break;
+        }
+
         case CAROUSEL_MESH_STYLE:
         {
             CIconConfig icon(2321600356ul, 2, 4);
@@ -2177,6 +2305,7 @@ void AttachCarouselHooks()
     }
 
     TABLE[CAROUSEL_JOINT_BEHAVIOUR] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
+    TABLE[CAROUSEL_EMITTER_BEHAVIOUR] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_MESH_STYLE] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_CHECKPOINT] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
     TABLE[CAROUSEL_SWITCH_VISIBILITY] = (u32)&_gooey_carousel_type_hook - (u32)TABLE;
@@ -2295,6 +2424,19 @@ void AttachGooeyNetworkHooks()
     TABLE[E_GOOEY_NETWORK_ACTION_JOINT_BEHAVIOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE; 
     TABLE[E_GOOEY_NETWORK_ACTION_VISIBLE_IN_PLAY_MODE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_MICRO_CHIP_SHOW_CIRCUIT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LINEARVEL] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_ANGULARVEL] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_IGNORE_PARENTS_VELOCITY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_BEHAVIOUR] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_FREQUENCY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_LIFETIME] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_PHASE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXNUM] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_TWEAK_MAXATONCENUM] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+	TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_RECYCLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+	TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_CREATE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+	TABLE[E_GOOEY_NETWORK_ACTION_EMITTER_EFFECT_DESTROY] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
 #endif
 
     // Switch out the pointer to the switch case in the TOC
