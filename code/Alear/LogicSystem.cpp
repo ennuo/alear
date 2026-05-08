@@ -37,6 +37,7 @@ const v4 JOINT_PORT_ZBIAS = v4(0.0f, 0.0f, 50.0f, 0.0f);
 const float PORT_RADIUS = 20.0f;
 
 static CSignature gSwitchPerformReaction("SwitchPerformReaction__fbii");
+static CSignature gSwitchPerformReactionNew("SwitchPerformReaction__b");
 
 namespace NPoppetUtils
 {
@@ -102,7 +103,7 @@ int GetBottomInputs(const CThing* thing)
 
 int GetNumInputs(const CThing* thing)
 {
-    if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET)
+    if (thing->Flags & FLAG_LEGACY_SWITCH_TARGET || thing->Flags & FLAG_SWITCH_TARGET)
         return 1;
     
     switch (thing->ObjectType)
@@ -722,6 +723,16 @@ void PerformReactionStatic(CSwitchOutput* input, CThing* target, int port, bool 
         args.AppendArg(target->UID);
 
         part_script->InvokeSync(gSwitchPerformReaction, args);
+        return;
+    }
+
+    if (target->Flags & FLAG_SWITCH_TARGET)
+    {
+        PScript* part_script = target->GetPScript();
+        CScriptArguments args;
+        args.AppendArg(one_shot);
+
+        part_script->InvokeSync(gSwitchPerformReactionNew, args);
         return;
     }
 

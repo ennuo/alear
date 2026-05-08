@@ -1073,7 +1073,11 @@ void CThing::OnFixup(u32 revision)
     {
         const CP<RScript>& script = part_script->ScriptInstance.Script;
         script->BlockUntilLoaded();
-        if (script->LookupFunction("SwitchPerformReaction__fbii", NULL))
+        if (script->LookupFunction("SwitchPerformReaction__b", NULL))
+        {
+            Flags |= FLAG_SWITCH_TARGET;
+        }
+        else if (script->LookupFunction("SwitchPerformReaction__fbii", NULL))
         {
             Flags |= FLAG_LEGACY_SWITCH_TARGET;
             MMLog("thing uid %08x is a legacy switch target\n", UID);

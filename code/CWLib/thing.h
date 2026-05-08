@@ -42,7 +42,8 @@ enum EObjectType
 
 enum
 {
-    FLAG_LEGACY_SWITCH_TARGET = (1 << 0)
+    FLAG_LEGACY_SWITCH_TARGET = (1 << 0),
+    FLAG_SWITCH_TARGET = (1 << 1)
 };
 
 class PBody : public CPart {};
