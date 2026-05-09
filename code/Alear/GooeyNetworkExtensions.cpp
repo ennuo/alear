@@ -1872,13 +1872,18 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             float length = setting.FixedToGame(action.Value);
             if (!thing->Stamping)
             {
-                if (part->GetMinLength() < length) part->AnimationRange = 0.0f;
+                if (part->GetMaxLength() < length) part->AnimationRange = 0.0f;
                 else 
                 {
                     if (part->AnimationRange < 0.0f)
+                    {
                         part->AnimationRange = length - part->Length;
+                        break;
+                    }
                     else
+                    {
                         part->AnimationRange = (part->AnimationRange + part->Length) - length;
+                    }
                 }
 
                 part->Length = length;
@@ -1898,7 +1903,7 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
             float length = setting.FixedToGame(action.Value);
             if (!thing->Stamping)
             {
-                if (length < part->GetMaxLength())
+                if (length < part->GetMinLength())
                 {
                     part->AnimationRange = 0.0f;
                     part->Length = length;
