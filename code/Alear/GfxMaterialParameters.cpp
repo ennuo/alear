@@ -154,3 +154,29 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset
         cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, param, (float*)&key, ucode_offset);
     }
 }
+
+bool HandleShadowDrawCall(CMeshInstance* instance)
+{
+    CMesh* mesh = instance->Mesh;
+    if (mesh == NULL) return false;
+
+    PCostume* costume;
+    if (instance->MyThing && (costume = instance->MyThing->GetPCostume()) != NULL)
+    {
+        if (instance->InstancePrimitives == NULL) return false;
+
+        for (u32 i = 0; i < instance->InstancePrimitives->size(); ++i)
+        {
+            const CPrimitive& p = (*instance->InstancePrimitives)[i];
+            cellGcmSetDrawIndexArray(gCellGcmCurrentContext, 
+                mesh->PrimitiveType, p.NumIndices, CELL_GCM_DRAW_INDEX_ARRAY_TYPE_16,
+                mesh->Indices.GetLocation(),
+                mesh->Indices.GetOffset() + (p.FirstIndex * sizeof(u16))
+            );
+        }
+        
+        return true;
+    }
+
+    return false;
+}
