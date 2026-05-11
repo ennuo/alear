@@ -1595,6 +1595,10 @@ void PRenderMesh::SetupRendering() const
 {
     if (!Mesh || !Mesh->IsLoaded()) return;
 
+    PCostume* costume = GetThing()->GetPCostume();
+    if (costume != NULL)
+        MeshInstance->InstancePrimitives = &costume->MeshPrimitives;
+    
     u32 first_bone_index = *(u32*)(((char*)MeshInstance) + 0x14c);
 
     const CThing* thing = GetThing();

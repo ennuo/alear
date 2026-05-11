@@ -874,3 +874,13 @@ _layer_switch_hook:
     ba 0x0003a8d0
 DisableLethalFlag:
     ba 0x0003a73c
+
+create_hook shadow_call_hook, 0x001f0e90
+    mr %r3, %r27
+    call _Z20HandleShadowDrawCallP13CMeshInstance
+    cmpwi %cr7, %r3, 0
+    beq %cr7, NormalShadowPass
+    ba 0x001f0e0c
+    lhz %r0, 0x19a(%r27)
+NormalShadowPass:
+    ret
