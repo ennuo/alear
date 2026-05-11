@@ -883,4 +883,5 @@ create_hook shadow_call_hook, 0x001f0e90
     ba 0x001f0e0c
 NormalShadowPass:
     lhz %r0, 0x19a(%r27)
+    lwz %r4, 0xf0(%r27)
     ret
