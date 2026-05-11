@@ -881,6 +881,6 @@ create_hook shadow_call_hook, 0x001f0e90
     cmpwi %cr7, %r3, 0
     beq %cr7, NormalShadowPass
     ba 0x001f0e0c
-    lhz %r0, 0x19a(%r27)
 NormalShadowPass:
+    lhz %r0, 0x19a(%r27)
     ret
