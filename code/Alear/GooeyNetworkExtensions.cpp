@@ -1680,6 +1680,24 @@ void AttachGooeyNetworkHooks()
     MH_Poke32(0x00931de4, (u32)TABLE);
 }
 
+// fix for sliders in subframes
+bool ParentAllowsChildrenInput(CGooeyNodeManager* manager, CGooeyNode* node, int input)
+{
+    if (node != NULL && manager->CurrentHighlightNode != node && node->Parent != NULL && node->Parent->IsType(2))
+    {
+        CGooeyNodeContainer* container = (CGooeyNodeContainer*)node->Parent;
+        if (manager->CurrentHighlightNode == node->Parent)
+        {
+            if (input & container->DescendantAcceptedInput)
+                return input & (container->AcceptedInput | container->AllowChildrenInput);
+        }
+        else if (input & container->DescendantAcceptedInput && input & (container->AcceptedInput | container->AllowChildrenInput))
+            return ParentAllowsChildrenInput(manager, container, input);
+    }
+
+    return false;
+}
+
 void InitGooeyNetworkHooks()
 {
     AttachGooeyNetworkHooks();
@@ -1695,5 +1713,5 @@ void InitGooeyNetworkHooks()
     // MH_Poke32(0x0031f670, LIS(4, 0xa14));
     MH_Poke32(0x0031f67c, 0x80810028 /* lwz %r4, 0x28(%r1)*/ );
 
-
+    MH_PokeHook(0x002f8c10, ParentAllowsChildrenInput);
 }

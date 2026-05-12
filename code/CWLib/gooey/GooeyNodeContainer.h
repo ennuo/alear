@@ -7,7 +7,7 @@ class CGooeyNodeContainer : public CGooeyNode {
 struct ContainerAttributes : public NodeAttributes {
     v4 Tint;
 };
-protected:
+public:
     CRawVector<CGooeyNode*> Children;
     m44 ViewMatrix;
     u32 UniqueContainerID;
