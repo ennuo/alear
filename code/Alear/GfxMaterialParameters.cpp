@@ -12,11 +12,36 @@
 #include "Clock.h"
 #include "Colour.h"
 
+#include <ResourceGame.h>
+#include <Player.h>
+
 #include <mmalex.h>
 
-void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset, CMeshInstance* instance)
+static float gLethalRemap[LETHAL_TYPE_COUNT] =
 {
-    CGparameter parameter;
+    0.0f, // LETHAL_NOT
+    1.0f / 8.0f, // LETHAL_FIRE
+    2.0f / 8.0f, // LETHAL_ELECTRIC
+    3.0f / 8.0f, // LETHAL_ICE
+    4.0f / 8.0f, // LETHAL_CRUSH
+    5.0f / 8.0f, // LETHAL_SPIKE
+    6.0f / 8.0f, // LETHAL_POISON_GAS
+    6.0f / 8.0f, // LETHAL_POISON_GAS2
+    6.0f / 8.0f, // LETHAL_POISON_GAS3
+    6.0f / 8.0f, // LETHAL_POISON_GAS4
+    6.0f / 8.0f, // LETHAL_POISON_GAS5
+    6.0f / 8.0f, // LETHAL_POISON_GAS6
+    0.0f, // LETHAL_NO_STAND
+    2.0f / 8.0f, // LETHAL_BULLET
+    7.0f / 8.0f, // LETHAL_DROWNED
+};
+
+void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 shader, u32 ucode_offset, CMeshInstance* instance)
+{
+    shader = shader >> 2;
+    gmat->CacheParameters();
+
+    const RGfxMaterial::UniformCache& c = gmat->CachedUniforms[shader];
 
     // If we actually have an instance pointer,
     // try to bind the expression/time parameters.
@@ -30,48 +55,59 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset
             CSackBoyAnim* anim = yellowhead->RenderYellowHead->SackBoyAnim;
             if (anim != NULL)
             {
-                parameter = cellGcmCgGetNamedParameter(program, "iExpressionLevel");
-                if (parameter != NULL)
-                    cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, (float*)&anim->ExpressionState, ucode_offset);
+                if (c.ExpressionLevel != NULL)
+                    cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.ExpressionLevel, (float*)&anim->ExpressionState, ucode_offset);
             };
 
-            c32 primary = yellowhead->GetColour(PLAYER_COLOUR_PRIMARY);
-            c32 secondary = yellowhead->GetColour(PLAYER_COLOUR_SECONDARY);
-            c32 tertiary = yellowhead->GetColour(PLAYER_COLOUR_TERTIARY);
+            for (u32 i = 0; i < 3; ++i)
+            {
+                if (c.PlayerColour[i] == NULL) continue;
 
-            float primary_v4[4];
-            float secondary_v4[4];
-            float tertiary_v4[4];
+                float colour[4];
+                yellowhead->GetColour((EPlayerColour)i).GetRGBAf(colour);
 
-            primary.GetRGBAf(primary_v4);
-            secondary.GetRGBAf(secondary_v4);
-            tertiary.GetRGBAf(tertiary_v4);
+                cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.PlayerColour[i], colour, ucode_offset);
+            }
 
-            parameter = cellGcmCgGetNamedParameter(program, "iPlayerColour0");
-            if (parameter != NULL)
-                cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, primary_v4, ucode_offset);
-            
-            parameter = cellGcmCgGetNamedParameter(program, "iPlayerColour1");
-            if (parameter != NULL)
-                cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, secondary_v4, ucode_offset);
+            if (c.PlayerNumber != NULL)
+            {
 
-            parameter = cellGcmCgGetNamedParameter(program, "iPlayerColour2");
-            if (parameter != NULL)
-                cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, tertiary_v4, ucode_offset);
+                int index = 0;
+                for (u32 i = 0; i < 4; ++i)
+                {
+                    CPlayer* player = gGame->GetPlayerFromIndex(i);
+                    if (player != NULL && player->PlayerNumber == yellowhead->PlayerNumber)
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+
+                float indexf = index / 4.0f;
+                cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.PlayerNumber, &indexf, ucode_offset);
+            }
         }
+        
+        PCreature* creature = instance->MyThing->GetPCreature();
+        if (creature != NULL && c.DeathParams != NULL)
+        {
+            int lethal = creature->GetTypeOfLethalThingTouched();
+            bool dead = creature->GetState() == STATE_DEAD;
+            float params[4] = { gLethalRemap[lethal >= 0 && lethal < LETHAL_TYPE_COUNT ? lethal : 0], dead ? 0.5f : 0.0f, dead ? creature->GetStateTimer() / 30.0f : 0.0f, 0.0f };
+            cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.DeathParams, params, ucode_offset);
+        }
+
     }
 
 
 
     const float DELTA_TIME = 1.0f / 30.0f;
     float time = GetClockSeconds();
+    if (c.Time != NULL)
+        cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.Time, &time, ucode_offset);
 
-    parameter = cellGcmCgGetNamedParameter(program, "iTime");
-    if (parameter != NULL)
-    {
-        cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, parameter, &time, ucode_offset);
-    }
 
+    if (gmat->ParameterAnimations.size() == 0) return;
 
     bool lerp = false;
     float anim_speed = 1.0f;
@@ -88,26 +124,11 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 ucode_offset
     for (int i = 0; i < gmat->ParameterAnimations.size(); ++i)
     {
         CMaterialParameterAnimation& anim = gmat->ParameterAnimations[i];
-
-        char name[4];
-        name[0] = 't';
-        name[1] = anim.Name[0];
-        name[2] = anim.Name[1];
-        name[3] = '\0';
-
-        CGparameter param = cellGcmCgGetNamedParameter(program, name);
-
+        CGparameter param = anim.ParameterCache[shader];
         if (param == NULL || anim.Keys.size() == 0) continue;
 
         v4 last_key = anim.BaseValue;
         v4 next_key = anim.BaseValue;
-
-        // float last_key[4];
-        // float next_key[4];
-        // float key[4];
-
-        // Vectormath::Aos::storeXYZW(anim.BaseValue, last_key);
-        // Vectormath::Aos::storeXYZW(anim.BaseValue, next_key);
 
         int num_components = __builtin_popcount(anim.ComponentsAnimated);
         int stride = anim.Keys.size() / num_components;
@@ -179,4 +200,50 @@ bool HandleShadowDrawCall(CMeshInstance* instance)
     }
 
     return false;
+}
+
+void RGfxMaterial::CacheParameters()
+{
+    if (UniformsCached) return;
+
+    UniformsCached = true;
+    UsesPlayerDefinedColour = false;
+
+    for (u32 i = 0; i < SHADER_LAST; ++i)
+    {
+        UniformCache& c = CachedUniforms[i];
+        CGprogram program = Shaders[i];
+
+        if (cellGcmCgGetVertexAttribInputMask(program) & CG_COLOR0)
+            UsesPlayerDefinedColour = true;
+        
+        c.Time = cellGcmCgGetNamedParameter(program, "iTime");
+        c.ExpressionLevel = cellGcmCgGetNamedParameter(program, "iExpressionLevel");
+        c.PlayerNumber = cellGcmCgGetNamedParameter(program, "iPlayerNumber");
+        c.DeathParams = cellGcmCgGetNamedParameter(program, "iDeathParams");
+
+        if (c.Time != NULL)
+            UsesTime = true;
+
+        for (u32 j = 0; j < 3; ++j)
+        {
+            char name[16] = { 0 };
+            sprintf(name, "iPlayerColour%d", j);
+            c.PlayerColour[j] = cellGcmCgGetNamedParameter(program, name);
+        }
+
+        for (u32 j = 0; j < ParameterAnimations.size(); ++j)
+        {
+            CMaterialParameterAnimation& anim = ParameterAnimations[j];
+
+            char name[4];
+            name[0] = 't';
+            name[1] = anim.Name[0];
+            name[2] = anim.Name[1];
+            name[3] = '\0';
+
+            anim.ParameterCache[i] = cellGcmCgGetNamedParameter(program, name);
+        }
+    }
+    
 }

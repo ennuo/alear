@@ -25,7 +25,7 @@ public:
 
 class CMaterialParameterAnimation {
 public:
-    inline CMaterialParameterAnimation() : BaseValue(), Keys(), Name(), ComponentsAnimated()
+    inline CMaterialParameterAnimation() : BaseValue(), Keys(), Name(), ComponentsAnimated(), ParameterCache()
     {
 
     }
@@ -34,6 +34,7 @@ public:
     CRawVector<float> Keys;
     char Name[3];
     u8 ComponentsAnimated;
+    CGparameter ParameterCache[4];
 };
 
 class CMaterialBoxAttributes {
@@ -50,6 +51,16 @@ public:
 };
 
 class RGfxMaterial : public CResource {
+public:
+struct UniformCache
+{
+    CGparameter Time;
+    CGparameter ExpressionLevel;
+    CGparameter PlayerNumber;
+    CGparameter DeathParams;
+    CGparameter PlayerColour[3];
+};
+
 enum {
     SHADER_N,
     SHADER_C,
@@ -59,6 +70,7 @@ enum {
     SHADER_LAST
 };
 public:
+    void CacheParameters();
     void InitializeExtraData();
     void DestroyExtraData();
 public:
@@ -80,14 +92,16 @@ public:
     u32 LightSettingsHash[4];
     u8 AlphaLayer;
     u8 ShadowCastMode;
-    /* sneaking this in the padding */
-    bool UsesPlayerDefinedColour;
 private:
-    char Pad[0x6];
+    char Pad[0x7];
 public:
     CVector<CMaterialParameterAnimation> ParameterAnimations;
     CVector<CMaterialBoxAttributes> BoxAttributes;
     u8 AlphaMode;
+    UniformCache CachedUniforms[4];
+    bool UniformsCached;
+    bool UsesPlayerDefinedColour;
+    bool UsesTime;
 };
 
 #endif // RESOURCE_GFX_MATERIAL_H

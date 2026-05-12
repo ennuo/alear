@@ -78,6 +78,10 @@ void RGfxMaterial::InitializeExtraData()
     new (&ParameterAnimations) CVector<CMaterialParameterAnimation>();
     new (&BoxAttributes) CVector<CMaterialBoxAttributes>();
     AlphaMode = 0;
+    memset(&CachedUniforms, 0, sizeof(CachedUniforms));
+    UniformsCached = false;
+    UsesPlayerDefinedColour = false;
+    UsesTime = false;
 }
 
 void RGfxMaterial::DestroyExtraData()
