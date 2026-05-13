@@ -4,6 +4,7 @@
 class RLevel;
 class CThing;
 class PWorld;
+class CPlayer;
 
 #include "Resource.h"
 #include "PlayerNumber.inl"
@@ -12,6 +13,7 @@ class RGame : public CResource {
 public:
     CThing* GetYellowheadFromPlayerNumber(EPlayerNumber player_number);
     void TeleportPlayer(CThing* player, v2 const& position);
+    CPlayer* GetPlayerFromIndex(u32);
 public:
     PWorld* GetWorld();
 public:

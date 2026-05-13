@@ -1117,8 +1117,10 @@ void OnBackdropChange(PWorld* world)
     gBackdropAudioHandle = CAudio::PlaySample(gStingerGroup, stinger, world->GetThing(), -10000.0f, -10000.0f);
 }
 
+extern "C" uintptr_t _shadow_call_hook;
 void InitSharedHooks()
 {
+    MH_PokeBranch(0x001f0e8c, &_shadow_call_hook);
     MH_PokeBranch(0x0003a8c8, &_layer_switch_hook);
 
     MH_PokeBranch(0x001f7f68, &_draw_call_hook); 

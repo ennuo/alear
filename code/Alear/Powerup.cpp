@@ -524,7 +524,7 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.TypeOfLethalThingTouched = i;
 
             v2 force = creature.Fork->hurt_force[LETHAL_FIRE];
-            if (force.getY() < 0.0f)
+            if (force.getY() > 0.0f)
             {
                 if(state == STATE_FROZEN && state != STATE_INVINCIBLE)
                 {
@@ -544,11 +544,11 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
 
     // If we're touching a spike plate, check if we're touching spikes
     // don't know what I'm doing with this one, just testing
-    if (lethal == LETHAL_NO_STAND)
+    if (lethal == LETHAL_SPIKE)
     {
         for (int i = LETHAL_FIRE; i < LETHAL_TYPE_COUNT; ++i)
         {
-            if (i == LETHAL_NO_STAND) continue;
+            if (i == LETHAL_SPIKE) return true;
 
             CThingPtr& ptr = creature.Fork->hurt_by[i];
             if (ptr.GetThing() == NULL) continue;
@@ -556,8 +556,8 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
             creature.LethalForce = creature.Fork->hurt_force[i];
             creature.TypeOfLethalThingTouched = i;
 
-            v2 force = creature.Fork->hurt_force[LETHAL_SPIKE];
-            if (force.getY() > 0.0f)
+            v2 force = creature.Fork->hurt_force[LETHAL_NO_STAND];
+            if (force.getY() < 0.0f)
             {
                 return false;
             }
@@ -595,7 +595,6 @@ bool IsLethalInstaKill(PCreature& creature, ELethalType lethal)
 
     return 
         lethal == LETHAL_ELECTRIC ||
-        lethal == LETHAL_SPIKE ||
         lethal == LETHAL_BULLET ||
         lethal == LETHAL_DROWNED || 
         lethal == LETHAL_POISON_GAS;

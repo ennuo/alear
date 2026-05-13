@@ -22,3 +22,17 @@ PWorld* RGame::GetWorld()
     if (!Level) return NULL;
     return Level->GetWorld();
 }
+
+CPlayer* RGame::GetPlayerFromIndex(u32 index)
+{
+    // lazy
+
+    u32 count = *(u32*)(((char*)this) + 0x144);
+    if (index >= count) return NULL;
+
+
+    const char* data = *(char**)(((char*)this) + 0x140);
+    data += (index * 0x240);
+
+    return (CPlayer*)data;
+}

@@ -452,6 +452,14 @@ void DoSectionHeader(CGooeyNodeManager* manager, wchar_t* title)
 
 void DoGamedataSubmenu(CGooeyNodeManager* manager)
 {
+    DoSectionHeader(manager, L"Debug");
+    if (manager->DoInline(L"try reload resources", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
+        ReloadModifiedResources();
+    manager->DoBreak();
+    if (manager->DoInline(L"print loaded resources", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
+        PrintLoadedResources();
+    manager->DoBreak();
+
     MMString<wchar_t> wstr;
     DoSectionHeader(manager, L"Loaded Caches");
     
@@ -495,29 +503,22 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
             manager->DoBreak();
         }
 
-    }
-
-    DoSectionHeader(manager, L"Debug");
-    if (manager->DoInline(L"try reload resources", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
-        ReloadModifiedResources();
-    manager->DoBreak();
-    if (manager->DoInline(L"print loaded resources", GTS_T5, STATE_NORMAL, NULL, 256) & 256)
-        PrintLoadedResources();
-    manager->DoBreak();
-
-
-    bool* pod_level = ((bool*)gGame) + 0x161;
-
-    if (manager->DoInline(L"edit mode hack", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-        gGame->EditMode = !gGame->EditMode;
-
-    if (manager->DoInline(L"pod mode hack", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-        *pod_level = !*pod_level;
-    
+    }    
 }
 
 void DoConfigSubmenu(CGooeyNodeManager* manager)
 {
+    DoSectionHeader(manager, L"Game Mode");
+    bool* pod_level = ((bool*)gGame) + 0x161;
+
+    if (manager->DoInline(L"Edit Mode", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+        gGame->EditMode = !gGame->EditMode;
+    manager->DoText(gGame->EditMode ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+    manager->DoBreak();
+    if (manager->DoInline(L"Pod Level", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+        *pod_level = !*pod_level;
+    manager->DoText(*pod_level ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+
     ConfigMap::iterator it;
     for (it = gConfigMap.begin(); it != gConfigMap.end(); ++it)
     {
@@ -532,8 +533,6 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
 
             for (CConfigOption* opt = it->second; opt != NULL; opt = opt->GetNext())
             {
-
-
                 u32 input_mask = 256;
                 if (opt->GetType() == OPT_FLOAT)
                 {
@@ -541,7 +540,7 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
                     input_mask |= 0x80;
                 }
 
-                u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                //u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
                 
                 switch (opt->GetType())
                 {
@@ -564,6 +563,7 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
                     case OPT_BOOL:
                     {
                         CConfigBool& b = *(CConfigBool*)opt;
+                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, b ? STATE_TOGGLE : STATE_NORMAL, NULL, input_mask);
                         if (result & 256) b = !b;
                         manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
 
@@ -571,6 +571,7 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
                     }
                     case OPT_FLOAT:
                     {
+                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
                         wchar_t fstr[256];
                         CConfigFloat& f = *(CConfigFloat*)opt;
                         
@@ -585,6 +586,7 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
                     }
                     default:
                     {
+                        manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
                         manager->DoText(L"<N/A>", GTS_T5);
                         break;
                     }
@@ -770,6 +772,9 @@ namespace AlearOptNativeFunctions
         item->Details.Creator = plan->InventoryData.Creator;
         item->Details.HighlightSound = plan->InventoryData.HighlightSound;
         item->Details.LevelUnlockSlotID = plan->InventoryData.LevelUnlockSlotID;
+        item->Details.Colour = plan->InventoryData.Colour;
+        item->Details.Shareable = plan->InventoryData.Shareable;
+        item->Details.Copyright = plan->InventoryData.Copyright;
         
         prf->SetViewsDirtyIfTheyContainItem(uid);
     }

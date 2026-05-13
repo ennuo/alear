@@ -45,27 +45,44 @@ struct SCheckpointStyle {
 
 SCheckpointStyle gCheckpointStyles[] =
 {
+    // Wood
+    {
+        { 3200327082u, 11668, 55455, 68386 },
+        3
+    },
+    // Copper
+    {
+        { 31238, 2501668549u, 3491421589u, 4047031520u },
+        32
+    },
     // Cardboard
     {
         { 122175, 120921, 120915, 120935 },
         6
     },
-
-    // Wood
+    // Silver
     {
-        { 31238, 11668, 55455, 68386 },
-        3
+        { 4080069737u, 4257822373u, 3100607989u, 2902472298u },
+        24
     },
-
     // Plastic
     {
         { 119228, 119230, 119227, 120939 },
         24
     },
-
     // Chrome
     {
         { 119221, 119217, 119220, 120941 },
+        32
+    },
+    // Rubber
+    {
+        { 16393, 16393, 16393, 16393 },
+        24
+    },
+    // Gold
+    {
+        { 16393, 16393, 16393, 16393 },
         32
     }
 };
@@ -167,15 +184,15 @@ struct SLeverSwitchStyle {
 
 SLeverSwitchStyle gLeverSwitchStyles[] =
 {
-    // Cardboard
-    {
-        { 21936, 21940 },
-        6
-    },
     // Wood
     {
         { 21935, 21939 },
         3
+    },
+    // Cardboard
+    {
+        { 21936, 21940 },
+        6
     },
     // Plastic
     {
@@ -196,15 +213,25 @@ struct SBouncePadStyle {
 
 SBouncePadStyle gBouncePadStyles[] =
 {
-    // Cardboard
-    {
-        77780,
-        6
-    },
     // Wood
     {
-        77780,
+        3360462266u,
         3
+    },
+    // Copper
+    {
+        3304928266u,
+        32
+    },
+    // Cardboard
+    {
+        4132910393u,
+        6
+    },
+    // Silver
+    {
+        3153109842u,
+        32
     },
     // Plastic
     {
@@ -213,7 +240,17 @@ SBouncePadStyle gBouncePadStyles[] =
     },
     // Chrome
     {
-        77780,
+        3451681638u,
+        32
+    },
+    // Rubber
+    {
+        4221611394u,
+        24
+    },
+    // Gold
+    {
+        2992887359u,
         32
     }
 };
@@ -245,6 +282,73 @@ SSpikePlateStyle gSpikePlateStyles[] =
         { 29972, 29975 },
         32
     }
+};
+
+CGUID gBevelTypes[] =
+{
+    // Rounded 1
+    10790,
+    // Rounded 2
+    17991,
+    // Metal
+    11396,
+    // Metal Beam
+    15662,
+
+    // Gold
+    10781,
+    // Fluid
+    10791,
+    // Sponge
+    10783,
+    // Squidgy
+    19415,
+    
+    // Stitched 1
+    10793,
+    // Stitched 2
+    10823,
+    // Soft
+    78020,
+    // Couch
+    78018
+};
+
+CGUID gPhysicsTypes[] =
+{
+    // Cardboard
+    10724,
+    // Cardboard No-Bev
+    66927,
+    // Fluid
+    10726,
+    // Polystyrene
+    10718,
+
+    // Sponge
+    10719,
+    // Wood
+    10717,
+    // Rubber
+    16362,
+    // Glass
+    10725,
+
+    // Gold
+    10715,
+    // Metal
+    10716,
+    // Stone
+    26602,
+
+    // Pink Floaty
+    21166,
+    // Peach Floaty
+    21165,
+    // Dark Matter
+    45764,
+    // Hologram
+    99258
 };
 
 CGUID GetMeshGUID(CThing* thing)
@@ -630,6 +734,20 @@ void SetBouncePadStyle(CThing* thing, s32 style_index)
     if (mesh != NULL)
         mesh->Mesh = LoadResourceByKey<RMesh>(mesh_key, 0, STREAM_PRIORITY_DEFAULT);
     
+    /*
+    PScript* script = thing->GetPScript();
+    if(script != NULL)
+    {
+        CThing* platform_thing = script->GetValue<CThing*>("PlatformThing", NULL);
+        if(platform_thing != NULL)
+        {
+            PShape* platform_shape = thing->GetPShape();
+            if (platform_shape != NULL)
+                platform_shape->SoundEnumOverride = sound_enum;
+        }
+    }
+    */
+
     PShape* shape = thing->GetPShape();
     if (shape != NULL)
         shape->SoundEnumOverride = sound_enum;
@@ -695,6 +813,82 @@ s32 GetSpikePlateType(CThing* thing)
     }
 
     return SPIKE_PLATE_LARGE;
+}
+
+CGUID GetBevelGUID(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PGeneratedMesh* part = thing->GetPGeneratedMesh();
+    if (part == NULL) return 0;
+    CP<RBevel>& bevel = part->Bevel;
+    if (!bevel) return 0;
+    return bevel->GetGUID();
+}
+
+void SetBevelType(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+    
+    u32 bevel_key = gBevelTypes[style_index];
+
+    if (mesh != NULL)
+    {
+        if(bevel_key != NULL) { mesh->Bevel = LoadResourceByKey<RBevel>(bevel_key, 0, STREAM_PRIORITY_DEFAULT); }
+        else { mesh->Bevel = NULL; }
+    }
+}
+
+s32 GetBevelType(CThing* thing)
+{
+    CGUID guid = GetBevelGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gBevelTypes); ++i)
+    {
+        if (gBevelTypes[i] == guid)
+            return i;
+    }
+
+    return 0;
+}
+
+CGUID GetPhysicsGUID(CThing* thing)
+{
+    if (thing == NULL) return 0;
+    PShape* part = thing->GetPShape();
+    if (part == NULL) return 0;
+    CP<RMaterial>& material = part->MMaterial;
+    if (!material) return 0;
+    return material->GetGUID();
+}
+
+void SetPhysicsType(CThing* thing, s32 style_index)
+{
+    if (thing == NULL) return;
+    PShape* shape = thing->GetPShape();
+    
+    u32 physics_key = gPhysicsTypes[style_index];
+
+    if (shape != NULL)
+    {
+        if(physics_key != NULL) 
+            shape->MMaterial = LoadResourceByKey<RMaterial>(physics_key, 0, STREAM_PRIORITY_DEFAULT);
+    }
+}
+
+s32 GetPhysicsType(CThing* thing)
+{
+    CGUID guid = GetPhysicsGUID(thing);
+    if (!guid) return 0;
+
+    for (int i = 0; i < ARRAY_LENGTH(gPhysicsTypes); ++i)
+    {
+        if (gPhysicsTypes[i] == guid)
+            return i;
+    }
+
+    return 0;
 }
 
 bool IsTweakCheckpointScriptAvailable()

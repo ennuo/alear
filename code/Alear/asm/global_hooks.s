@@ -847,6 +847,22 @@ _layer_switch_hook:
     beq %cr7, DisableLethalFlag
     cmpwi %cr7, %r11, 0x3
     beq %cr7, DisableLethalFlag
+    cmpwi %cr7, %r11, 0x4
+    beq %cr7, DisableLethalFlag
+    cmpwi %cr7, %r11, 0xc
+    beq %cr7, DisableLethalFlag
     ba 0x0003a8d0
 DisableLethalFlag:
     ba 0x0003a73c
+
+create_hook shadow_call_hook, 0x001f0e90
+    mr %r3, %r27
+    call _Z20HandleShadowDrawCallP13CMeshInstance
+    cmpwi %cr7, %r3, 0
+    beq %cr7, NormalShadowPass
+    ba 0x001f0e0c
+NormalShadowPass:
+    lhz %r0, 0x19a(%r27)
+    lwz %r11, 0xf0(%r27)
+    mr %r4, %r11
+    ret

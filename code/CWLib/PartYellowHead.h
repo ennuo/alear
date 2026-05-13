@@ -26,8 +26,9 @@ public:
 public:
     inline CRenderYellowHead* GetRenderYellowHead() const { return RenderYellowHead; }
 private:
-    char Pad[0x24];
+    char Pad[0x20];
 public:
+    EPlayerNumber PlayerNumber;
     CThingPtr Head;
     CRenderYellowHead* RenderYellowHead;
     float OnScreenCounter;

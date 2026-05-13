@@ -57,6 +57,8 @@ public:
     {
         return Offset + Handles[handle].GetAlignedOffset();
     }
+public:
+    inline u32 GetLocation() const { return Location; }
 private:
     CFreeInfo* FreeInfos;
     CAllactionInfo* Handles;
@@ -84,8 +86,12 @@ public:
 public:
     inline CGfxMemoryPool* GetPool() const { return Pool; }
     inline void* GetCachedAddress() const { return CachedAddress; }
-    inline void* GetAddress() const { return Pool->GetAddress(Handle); }
-    inline u32 GetOffset() const { return Pool->GetOffset(Handle); }
+    inline void* GetAddress() const { return Pool ? Pool->GetAddress(Handle) : 0; }
+    inline u32 GetOffset() const { return Pool ? Pool->GetOffset(Handle) : 0; }
+    inline u32 GetLocation() const
+    {
+        return Pool ? Pool->GetLocation() : 0;
+    }
 private:
     void* CachedAddress;
     u32 Handle;

@@ -25,13 +25,27 @@ CConfigBool gAllowDebugTooltypes(L"Popit", L"Function - Allow Debug Tooltypes", 
 CConfigBool gAllowMeshScaling(L"Popit", L"Function - Allow Mesh Scaling", false);
 CConfigBool gAllowEyedroppingMeshes(L"Popit", L"Function - Allow Eyedropping Meshes", false);
 
-CConfigBool gUseLegacyKeyColors(L"Tools", L"Gadgets - Use Legacy Key Colors", true);
-CConfigBool gUseNewKeyColorSelection(L"Tools", L"Gadgets - Use New Key Color Selection", true);
+CConfigBool gDebugMaterialTweaks(L"Editor", L"Materials - Use Debug Tweak Options", false);
+CConfigBool gUseLegacyKeyColors(L"Editor", L"Gadgets - Use Legacy Key Colors", true);
+CConfigBool gUseNewKeyColorSelection(L"Editor", L"Gadgets - Use New Key Color Selection", true);
 
-CConfigBool gPlayBackgroundStings(L"Loading", L"Audio - Play Background Stings", true);
-CConfigBool gUseAlternateJointMeshes(L"Loading", L"Visual - Use Alternate Joint Meshes", true);
-CConfigBool gLoadDefaultMaterial(L"Loading", L"Visual - Use Fallback Graphics Materials", false);
-CConfigBool gForceLoadEditable(L"Loading", L"Function - Force Editable On Load", false);
+CConfigBool gResetLevelSettings(L"Loading", L"LevelSettings - Force Default", false);
+CConfigBool gForceLoadEditable(L"Loading", L"Shapes - Force Editable On Load", false);
+CConfigBool gUnlethalizeAllLethals(L"Loading", L"Shapes - Disable Lethals", false);
+CConfigBool gForceGFXShapes(L"Loading", L"Shapes - Turn into GFX", false);
+CConfigBool gPhysicsToGFX(L"Loading", L"Shapes - Visualize Physics", false);
+CConfigBool gForceMeshGFX(L"Loading", L"Objects - Turn into GFX", false);
+CConfigBool gLoadDefaultMaterial(L"Loading", L"Materials - Render Invisible GFX", false);
+CConfigBool gForcePlainGFX(L"Loading", L"Materials - Use Plain GFX", false);
+CConfigBool gForcePlainBevels(L"Loading", L"Materials - Use Plain Bevels", false);
+CConfigBool gLoadRemoveAllStickers(L"Loading", L"Stickers - Remove all", false);
+CConfigBool gLoadRemoveAllDecorations(L"Loading", L"Decorations - Remove all", false);
+CConfigBool gLoadRemoveAllLights(L"Loading", L"Lights -  Remove all", false);
+CConfigBool gRemoveBurningScripts(L"Loading", L"Scripts - Remove Unused", true);
+CConfigBool gFixupEmitters(L"Loading", L"Emitters - Fixup Invisible", false);
+CConfigBool gUseAlternateJointMeshes(L"Loading", L"Joints - Use Alternate Meshes", true);
+
+CConfigBool gPlayBackgroundStings(L"Audio", L"Audio - Play Background Stings", true);
 
 CConfigFloat gRenderDistance(L"Render", L"Visual - Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
