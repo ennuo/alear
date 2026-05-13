@@ -59,6 +59,7 @@ struct UniformCache
     CGparameter PlayerNumber;
     CGparameter DeathParams;
     CGparameter PlayerColour[3];
+    CGparameter EditorColourAlpha;
 };
 
 enum {

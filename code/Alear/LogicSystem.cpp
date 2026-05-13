@@ -1783,12 +1783,57 @@ namespace LogicSystemNativeFunctions
         thing->OnFixup();
     }
 
+    CThing* GetPodThing(bool platform)
+    {
+        PWorld* world = gGame->GetWorld();
+        if (world == NULL) return NULL;
+        for (u32 i = 0; i < world->ListPRenderMesh.size(); ++i)
+        {
+            PRenderMesh* part = world->ListPRenderMesh[i];
+            if (!part || !part->Mesh) continue;
+            if (part->Mesh->GetGUID() == 0x2f6c)
+                return part->GetThing();
+            if (part->Mesh->GetGUID() == 0x23959 && platform)
+                return part->GetThing();
+        }
+
+        return NULL;
+    }
+
+    void SetRenderMeshMesh(CThing* thing, CP<CResource> resource)
+    {
+        if (thing == NULL) return;
+        PRenderMesh* part = thing->GetPRenderMesh();
+        if (part == NULL) return;
+
+        RMesh* mesh = resource->GetResourceType() == RTYPE_MESH ? (RMesh*)resource.GetRef() : NULL;
+        part->Mesh = mesh;
+    }
+
+    CP<CResource> LoadMeshByFilename(CGUID guid)
+    {
+        return (CP<CResource>)LoadResourceByKey<RMesh>(guid.guid);
+    }
+
+    void SetShapeEditorColour(CThing* thing, v4 c)
+    {
+        PShape* shape;
+        if (thing == NULL || (shape = thing->GetPShape()) == NULL) return;
+        shape->EditorColour = c;
+    }
+
     void Register()
     {
         // RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
         // RegisterNativeFunction("SwitchBase", "GetNumOutputs__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetNumOutputs>);
         // RegisterNativeFunction("SwitchBase", "GetTweakTitle__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetTweakTitle>);
         // RegisterNativeFunction("SwitchBase", "SetSwitchType__i", false, NVirtualMachine::CNativeFunction2V<CThing*, int>::Call<SetSwitchType>);
+
+        RegisterNativeFunction("Thing", "GetPodThing__b", true, NVirtualMachine::CNativeFunction1<CThing*, bool>::Call<GetPodThing>);
+        RegisterNativeFunction("Thing", "SetRenderMeshMesh__Q5ThingQ8Resource", true, NVirtualMachine::CNativeFunction2V<CThing*, CP<CResource> >::Call<SetRenderMeshMesh>);
+        RegisterNativeFunction("Resource", "LoadMeshByFilename__g", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CGUID>::Call<LoadMeshByFilename>);
+        RegisterNativeFunction("Thing", "SetShapeEditorColour__Q5Thingr", true, NVirtualMachine::CNativeFunction2V<CThing*, v4>::Call<SetShapeEditorColour>);
+
     }
 }
 

@@ -43,6 +43,14 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 shader, u32 
 
     const RGfxMaterial::UniformCache& c = gmat->CachedUniforms[shader];
 
+    if (instance != NULL && c.EditorColourAlpha != NULL)
+    {
+        // lbp1 fucks up the alpha of the editor color in the vertex shader
+        // uThingCol.w = frac(0.125 * uThingCol.w)
+        float w = instance->InstanceColor.getW().getAsFloat();
+        cellGcmSetFragmentProgramParameter(gCellGcmCurrentContext, program, c.EditorColourAlpha, &w, ucode_offset);
+    }
+
     // If we actually have an instance pointer,
     // try to bind the expression/time parameters.
     // Should maybe add flags for whether or not a function has time/expression
@@ -221,6 +229,7 @@ void RGfxMaterial::CacheParameters()
         c.ExpressionLevel = cellGcmCgGetNamedParameter(program, "iExpressionLevel");
         c.PlayerNumber = cellGcmCgGetNamedParameter(program, "iPlayerNumber");
         c.DeathParams = cellGcmCgGetNamedParameter(program, "iDeathParams");
+        c.EditorColourAlpha = cellGcmCgGetNamedParameter(program, "iEditorColourAlpha");
 
         if (c.Time != NULL)
             UsesTime = true;
