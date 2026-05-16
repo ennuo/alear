@@ -9,15 +9,13 @@
 
 #include <Fart.h>
 #include <FartRO.h>
+#include <ReadINI.h>
 
 extern MAKE_THREAD_FUNCTION(SyncLoadThread);
 
 namespace sync
 {
-    int gServerPort = kSyncServerPort;
-    const char* gServerAddress = "127.0.0.1";
-    bool gServerEnabled = true;
-
+    CIniSettings Config;
     CSyncDatabase Database;
     CVector<depot> Depots;
     CCriticalSec DepotMutex("DepotMutex");
@@ -93,8 +91,6 @@ namespace sync
 
     bool Open()
     {
-        SYNC_LOG("server enabled: %s, server url: %s, server port: %d\n", gServerEnabled ? "true" : "false", gServerAddress, gServerPort);
-        
         DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/publish/"));
         DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/local"));
         DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/remote"));
@@ -116,7 +112,8 @@ namespace sync
         LoadDepotCache();
         LinkDepots();
 
-        if (gServerEnabled)
+        Config.ReadIniFile(CFilePath(FPR_GAMEDATA, "gamedata/alear/config/sync.ini"));
+        if (Config.GetBool("enabled", true))
         {
             DownloadJobManager = new CJobManager(kMaxConcurrentDownloads, "alear sync download job worker");
             ResourceThread = ThreadCreate(&SyncLoadThread, NULL, "alear sync loading thread");

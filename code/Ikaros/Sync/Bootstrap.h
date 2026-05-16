@@ -4,13 +4,12 @@
 #include <CritSec.h>
 #include <Sync/Database.h>
 #include <Sync/Types.h>
+#include <ReadINI.h>
 
 namespace sync
 {
-    extern int gServerPort;
-    extern const char* gServerAddress;
-
     extern CSyncDatabase Database;
+    extern CIniSettings Config;
     extern CVector<depot> Depots;
     extern CCriticalSec DepotMutex;
 

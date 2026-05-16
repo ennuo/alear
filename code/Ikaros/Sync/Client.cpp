@@ -47,10 +47,7 @@ namespace sync
             return false;
 
         if (state == SCE_NP_MANAGER_STATUS_OFFLINE)
-        {
-            // credential based login
-            return true;
-        }
+            return Config.GetString("username") != NULL;
 
         return state == SCE_NP_MANAGER_STATUS_ONLINE;
     }
@@ -499,7 +496,7 @@ namespace sync
             {
                 if (client->WantConnect && IsNetworkReady())
                 {
-                    client->Connect("localhost", 16723);
+                    client->Connect(Config.GetString("address", "localhost"), Config.GetInt("port", kSyncServerPort));
                     client->WantConnect = false;
                 }
             }
@@ -722,10 +719,20 @@ namespace sync
                             }
                             else
                             {
-                                SYNC_LOG("failed to get np ticket, defaulting to dummy r/o creds!\n");
-                                login.Method = eAuthenticationType_Credentials;
-                                login.Username = "mold";
-                                login.Password = "dummy123";
+                                const char* username = Config.GetString("username");
+                                const char* password = Config.GetString("password");
+
+                                if (username != NULL && password != NULL)
+                                {
+                                    login.Method = eAuthenticationType_Credentials;
+                                    login.Username = username;
+                                    login.Password = password;
+                                }
+                                else
+                                {
+                                    SYNC_LOG("failed to authenticate against sync server!\n");
+                                    Disconnect();
+                                }
                             }
                         }
 
