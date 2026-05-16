@@ -76,6 +76,10 @@ private:
     bool Invalid;
 };
 
+extern CFilePath gBaseDir;
+extern CFilePath gSysCachePath;
+extern CFilePath gGameDataPath;
+
 bool FileExists(const CFilePath& fp);
 bool FileStat(FileHandle h, u64& modtime, u64& size);
 bool FileStat(const CFilePath& fp, u64& modtime, u64& size);

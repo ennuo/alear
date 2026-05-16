@@ -24,7 +24,7 @@ int StringCompare(const char* a, const char* b)
 
 size_t StringCompareN(const char* a, const char* b, size_t len)
 {
-	return StringCompareN(a, b, len);
+	return strncmp(a, b, len);
 }
 
 int StringICompare(const char* a, const char* b)

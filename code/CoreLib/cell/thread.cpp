@@ -1,6 +1,9 @@
 #include <sys/timer.h>
 #include <cell/thread.h>
 
+extern bool gThreadInit;
+extern THREADID gMainThreadID;
+
 THREAD CreatePPUThread(THREADPROC threadproc, uint64_t thread_arg, const char* name, int priority, int stacksize, bool joinable) 
 {
     THREAD rv;
@@ -67,4 +70,15 @@ void ThreadSleepUS(int us)
     }
 
     sys_timer_usleep(us);
+}
+
+bool AmInMainThread()
+{
+    THREADID thread_id;
+    sys_ppu_thread_get_id(&thread_id);
+
+    if (gThreadInit)
+        return thread_id == gMainThreadID;
+    
+    return true;
 }

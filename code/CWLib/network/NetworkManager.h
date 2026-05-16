@@ -16,6 +16,8 @@ class CNetworkConnectionManager {
 private:
     char Pad[0x20130];
 public:
+    inline bool IsDownloadOK() const { return DownloadOK; }
+public:
     bool DownloadOK;
 };
 

@@ -1,5 +1,7 @@
 #include <Sync/Client.h>
+#include <Sync/Cache.h>
 #include <Sync/Serialise.h>
+#include <Sync/Bootstrap.h>
 #include <netdb.h>
 #include <JobManager.h>
 // #include <Crafteroids.h>
@@ -13,18 +15,15 @@
 #include <np.h>
 #include <Directory.h>
 #include <network/NetworkManager.h>
-// #include <network/RNPManager.h>
+#include <network/RNPManager.h>
 
 #include <mem_stl_buckets.h>
 
-
-extern ESerialisationType GetPreferredSerialisationType(EResourceType type);
 namespace sync
 {
     CClient* Client;
     CJobManager* DownloadJobManager;
 
-    const u32 kProtocolVersion = eSyncSR_LatestPlusOne - 1;
     static u32 NextMark = 1;
 
     typedef std::map<u32, MessageCallback, std::less<u32>, STLBucketAlloc<std::pair<u32, MessageCallback> > > CallbackMap;
@@ -61,7 +60,7 @@ namespace sync
         int bytes_sent = 0;
         while (bytes_sent < len)
         {
-            int ret = send(s, (void*)((char*)data + bytes_sent), len - bytes_sent, 0xc00);
+            int ret = send(s, (void*)((char*)data + bytes_sent), len - bytes_sent, 0);
             if (ret <= 0) return false;
             bytes_sent += ret;
         }
@@ -69,31 +68,55 @@ namespace sync
         return true;
     }
 
-    int recv_exactly(SOCKET s, void* buf, int len)
+    bool recv_exactly(SOCKET s, char* buf, int len)
     {
-        int n = 0;
-        do
+        while (len > 0)
         {
-            int res = recv(s, (char*)buf + n, len - n, 0);
-            if (res <= 0) return res;
-            n += res;
-        } 
-        while (n < len);
+            int ret = recv(s, buf, len, 0);
+            if (ret <= 0) return false;
 
-        return n;
+            len -= ret;
+            buf += ret;
+        }
+
+        return len == 0;
     }
 
     bool recvmsg(SOCKET s, packet& p, ByteArray& data)
     {
-        if (recv_exactly(s, &p, sizeof(packet)) <= 0) return false;
+        if (!recv_exactly(s, (char*)&p, sizeof(packet))) return false;
 
         u32 length = p.Length - sizeof(packet);
         data.resize(length);
 
         if (length > 0)
-            return recv_exactly(s, data.begin(), length) > 0;
+            return recv_exactly(s, data.begin(), length);
         
         return true;
+    }
+
+    bool tryrecvmsg(SOCKET s, packet& p, ByteArray& data, bool& listen_error)
+    {
+        timeval tv = {0};
+        fd_set readfds, errorfds;
+        int ret;
+
+        FD_ZERO(&readfds);
+        FD_ZERO(&errorfds);
+        FD_SET(s, &readfds);
+        FD_SET(s, &errorfds);
+
+        ret = select(FD_SETSIZE, &readfds, NULL, &errorfds, &tv);
+        if (ret == 0) return false;
+        if (ret < 0 || FD_ISSET(s, &errorfds))
+        {
+            listen_error = true;
+            return false;
+        }
+
+        if (!FD_ISSET(s, &readfds)) return false;
+
+        return recvmsg(s, p, data);
     }
 
     template <typename T>
@@ -150,6 +173,69 @@ namespace sync
         return sendmsg(s, channel, message, NULL, 0);
     }
 
+    void OnDownloadFinish(const CP<CSerialisedResource>& csr, int priority, int state)
+    {
+        switch (state)
+        {
+            case kDownloadState_Success:
+            {
+                AddCSRToDoneQueue(csr, priority);
+                break;
+            }
+            case kDownloadState_NetworkError:
+            case kDownloadState_NoDataSource:
+            {
+                if (!gNetworkManager.ConnectionManager.IsDownloadOK())
+                {
+                    SetResourceError(csr, LOAD_STATE_ERROR_NO_DATA_SOURCE);
+                    break;
+                }
+
+                // Resources that prefer to be loaded as a loose file
+                // can't be loaded over either the HTTP or RNP server.
+                if (GetPreferredSerialisationType(csr->GetDescriptor().GetType()) == PREFER_FILE)
+                {
+                    SetResourceError(csr, LOAD_STATE_ERROR_NO_DATA_SOURCE);
+                    break;
+                }
+
+                // If we have no data source, we can now try
+                // passing the resource to either the RNP or HTTP
+                // thread depending on which is available.
+                if (gRNPManager.CanHandleCSR())
+                {
+                    AddCSRToQueue(csr, CSRsForRNP, priority);
+                    break;
+                }
+
+                // Make sure the resource we're trying to download actually has a hash
+                // to pass to the HTTP resource thread.
+                CHash hash = csr->GetDescriptor().LatestHash();
+                if (hash)
+                {
+                    AddCSRToQueue(csr, CSRsForHTTP, priority);
+                    break;
+                }
+
+                SetResourceError(csr, LOAD_STATE_ERROR_NO_DATA_SOURCE);
+                break;
+            }
+            case kDownloadState_InvalidSession:
+            case kDownloadState_BadHash:
+            {
+                // requeue the download for bad hash
+                // request a new session for invalid session
+                SetResourceError(csr, LOAD_STATE_ERROR_NO_DATA_SOURCE);
+                break;
+            }
+            default:
+            {
+                SetResourceError(csr, LOAD_STATE_ERROR_NO_DATA_SOURCE);
+                break;
+            }
+        }
+    }
+
     CDownloadJob::CDownloadJob() : CBaseCounted(),
     CSR(), FilePath(), Server(), Token(), DownloadSize(),
     BytesDownloaded(), JobID(), State(kDownloadState_Inactive), Priority(STREAM_NO_STREAMING)
@@ -200,72 +286,14 @@ namespace sync
 
     void CDownloadJob::Finish()
     {
-        // if (!CSR)
-        // {
-        //     Reset();
-        //     return;
-        // }
+        if (!CSR)
+        {
+            Reset();
+            return;
+        }
 
-        // switch (State)
-        // {
-        //     case kDownloadState_Success:
-        //     {
-        //         AddCSRToDoneQueue(CSR, Priority, 0);
-        //         break;
-        //     }
-        //     case kDownloadState_NoDataSource:
-        //     {
-        //         if (!gNetworkManager.ConnectionManager.IsDownloadOK())
-        //         {
-        //             SetResourceError(CSR, LOAD_STATE_ERROR_NO_DATA_SOURCE);
-        //             break;
-        //         }
-
-        //         // Resources that prefer to be loaded as a loose file
-        //         // can't be loaded over either the HTTP or RNP server.
-        //         if (GetPreferredSerialisationType(CSR->GetDescriptor().GetType()) == PREFER_FILE)
-        //         {
-        //             SetResourceError(CSR, LOAD_STATE_ERROR_NO_DATA_SOURCE);
-        //             break;
-        //         }
-
-        //         // If we have no data source, we can now try
-        //         // passing the resource to either the RNP or HTTP
-        //         // thread depending on which is available.
-        //         if (gRNPManager.CanHandleCSR())
-        //         {
-        //             AddCSRToQueue(CSR, CSRsForRNP, Priority, 0);
-        //             break;
-        //         }
-
-        //         // Make sure the resource we're trying to download actually has a hash
-        //         // to pass to the HTTP resource thread.
-        //         CHash hash = CSR->GetDescriptor().LatestHash();
-        //         if (hash)
-        //         {
-        //             AddCSRToQueue(CSR, CSRsForHTTP, Priority, 0);
-        //             break;
-        //         }
-
-        //         SetResourceError(CSR, LOAD_STATE_ERROR_NO_DATA_SOURCE);
-        //         break;
-        //     }
-        //     case kDownloadState_InvalidSession:
-        //     case kDownloadState_BadHash:
-        //     {
-        //         // requeue the download for bad hash
-        //         // request a new session for invalid session
-        //         SetResourceError(CSR, LOAD_STATE_ERROR_NO_DATA_SOURCE);
-        //         break;
-        //     }
-        //     default:
-        //     {
-        //         SetResourceError(CSR, LOAD_STATE_ERROR_NO_DATA_SOURCE);
-        //         break;
-        //     }
-        // }
-
-        // Reset();
+        OnDownloadFinish(CSR, Priority, State);
+        Reset();
     }
 
     struct CDownloadClient
@@ -323,8 +351,8 @@ namespace sync
             int n = 0;
             while (n < Response.FileSize)
             {
-                ssize_t rv = recv_exactly(Socket, buf, MIN(Response.FileSize - n, kBufferSize));
-                if (rv <= 0)
+                bool rv = recv_exactly(Socket, buf, MIN(Response.FileSize - n, kBufferSize));
+                if (!rv)
                 {
                     FileClose(fd);
                     FileUnlink(fp);
@@ -352,41 +380,7 @@ namespace sync
 
         bool StreamToCache(const ByteArray& data)
         {
-            CFartRO* cache = (CFartRO*)gCaches[CT_SYNC];
-            if (cache == NULL) return false;
-            CCSLock lock(&cache->Mutex, __FILE__, __LINE__);
-
-            CFartRO::CFAT fat;
-            fat.hash = Response.FileHash;
-            fat.size = Response.FileSize;
-            fat.offset = 0;
-
-            for (CFartRO::CFAT* it = cache->FAT.begin(); it != cache->FAT.end(); ++it)
-            {
-                fat.offset = MAX(fat.offset, it->offset + it->size);
-
-                // Hash is already in the FAT, we can just ignore this data.
-                if (it->hash == fat.hash) return true;
-            }
-
-            FileHandle fd;
-            if (!FileOpen(cache->fp, fd, OPEN_RDWR)) 
-                return false;
-            
-            cache->FAT.push_back(fat);
-            std::sort(cache->FAT.begin(), cache->FAT.end(), std::less<CFartRO::CFAT>());
-
-            Footer footer;
-            footer.count = cache->FAT.size();
-            footer.magic = FARC;
-
-            FileSeek(fd, fat.offset, FILE_BEGIN);
-            FileWrite(fd, (void*)data.begin(), data.size());
-            FileWrite(fd, (void*)cache->FAT.begin(), cache->FAT.size() * sizeof(CFartRO::CFAT));
-            FileWrite(fd, (void*)&footer, sizeof(Footer));
-            FileClose(fd);
-
-            return true;
+            return gCaches[CT_SYNC] != NULL ? gCaches[CT_SYNC]->Put(Response.FileHash, data.begin(), Response.FileSize) : false;
         }
 
         bool Work()
@@ -394,7 +388,7 @@ namespace sync
             CResourceDescriptorBase desc = Owner->CSR->GetDescriptor();
             msg_download rqst;
             rqst.GUID = desc.GetGUID();
-            rqst.Hash = desc.GetHash();
+            rqst.Hash = desc.LatestHash();
             rqst.Token = Owner->Token;
 
             if (!sendmsg(Socket, rqst))
@@ -421,7 +415,7 @@ namespace sync
                 {
                     ByteArray data;
                     data.resize(Response.FileSize);
-                    if (recv_exactly(Socket, data.begin(), data.size()) <= 0)
+                    if (!recv_exactly(Socket, data.begin(), data.size()))
                     {
                         SYNC_LOG("an error occurred in worker while receiving file data!\n");
                         return false;
@@ -472,7 +466,6 @@ namespace sync
 
     CClient::CClient() : WantQuit(false), WantConnect(true),
     State(kState_Disconnected), SubState(kSubState_None), Socket(-1), Address(), Thread(),
-    DepotMutex("DepotMutex"), Depots(),
     DownloadMutex("DownloadMutex"), UploadMutex("UploadMutex"), DownloadTag(), DownloadsInProgress(),
     ServerInfo(), UploadTask(), PendingDepotRequests()
     {
@@ -484,7 +477,6 @@ namespace sync
             DownloadJobManager->EnqueueJob(1000, &DownloadTest, (void*)this, DownloadTag, "Download Test"), sizeof(packet)
         );
 
-        LoadDepotCache();
         Thread = ThreadCreate(&ThreadFunctionStatic, (u64)this, "alear sync client thread");
     }
 
@@ -511,8 +503,8 @@ namespace sync
                     client->WantConnect = false;
                 }
             }
-            else client->Update();
 
+            client->Update();
             ThreadSleep(33);
         }
     }
@@ -551,13 +543,6 @@ namespace sync
         if (connect(Socket, (sockaddr*)&Address, sizeof(sockaddr_in)) != 0)
         {
             SYNC_LOG("failed to connect to sync server!\n");
-            return false;
-        }
-
-        int opt = 1;
-        if (setsockopt(Socket, SOL_SOCKET, SO_NBIO, &opt, sizeof(int)) != 0)
-        {
-            SYNC_LOG("failed to set socket to non blocking!\n");
             return false;
         }
 
@@ -604,7 +589,13 @@ namespace sync
 
             ThreadSleep(33);
         }
-        
+
+        if (!IsConnected())
+        {
+            OnDownloadFinish(csr, priority, kDownloadState_NetworkError);
+            return;
+        }
+
         CP<CDownloadJob> dl = new CDownloadJob();
         CCSLock lock(&DownloadMutex, __FILE__, __LINE__);
         DownloadsInProgress.push_back(dl);
@@ -652,7 +643,9 @@ namespace sync
         
         packet p;
         ByteArray data;
-        if (recvmsg(Socket, p, data))
+
+        bool listen_error = false;
+        if (tryrecvmsg(Socket, p, data, listen_error))
         {
             if (p.Method != eMethod_Response && p.Message != eMethod_Event)
             {
@@ -807,8 +800,6 @@ namespace sync
                         }
 
                         CVector<depot> server_depots;
-                        CVector<depot>& depot_cache = Depots;
-
                         if (!parsemsg(data, server_depots))
                         {
                             SYNC_LOG("failed to parse depot list reply from server!\n");
@@ -818,22 +809,49 @@ namespace sync
 
                         PendingDepotRequests = 0;
 
+
+                        CCSLock lock(&DepotMutex, __FILE__, __LINE__);
                         SYNC_LOG("Depots:\n");
                         for (u32 i = 0; i < server_depots.size(); ++i)
                         {
                             const depot& d = server_depots[i];
 
                             const depot* c = GetDepot(d.DepotID);
-                            if (c == NULL || c->CommitID != d.CommitID)
+
+                            bool download = c == NULL || c->CommitID != d.CommitID || !FileExists(c->MakeDatabaseFilePath());
+                            if (download)
                             {
                                 sendmsg(Socket, eChannel_Sync, eMessageType_Depot, (void*)&d.DepotID, sizeof(u64));
                                 PendingDepotRequests++;
                             }
 
-                            SYNC_LOG("[%s] %s, prio = %d\n", d.Id.c_str(), d.Name.c_str(), d.Priority);
+                            SYNC_LOG("%s\n", d.Id);
+
+                            SYNC_LOG("srv[%s] %s, prio = %d, download = %s\n", d.Id, d.Name, d.Priority, download ? "true" : "false");
                         }
 
-                        server_depots.swap(depot_cache);
+
+                        // Remove all server depots from the list and re-add the newly
+                        // received list.
+                        for (depot* it = Depots.begin(); it != Depots.end(); )
+                        {
+                            if (it->IsRemote())
+                            {
+                                if (it->Database)
+                                {
+                                    delete it->Database;
+                                    it->Database = NULL;
+                                }
+
+                                it = Depots.erase(it);
+                            }
+                            else it++;
+                        }
+
+                        Depots.reserve(Depots.size() + server_depots.size());
+                        for (u32 i = 0; i < server_depots.size(); ++i)
+                            Depots.push_back(server_depots[i]);
+                        
                         SaveToDepotCache();
                         SubState = kSubState_WaitingForDepotDownloads;
 
@@ -855,6 +873,8 @@ namespace sync
                             return;
                         }
 
+                        SYNC_LOG("got depot message\n");
+
                         msg_depot_response resp;
                         if (!parsemsg(data, resp))
                         {
@@ -864,10 +884,8 @@ namespace sync
                         }
 
                         const depot* depot = GetDepot(resp.DepotID);
-
-                        CFilePath fp(FPR_GAMEDATA, "gamedata/alear/sync/depots");
-                        fp.Append(depot->Id.c_str());
-                        fp.AppendRaw(".map");
+                        CFilePath fp = depot->MakeDatabaseFilePath();
+                        DirectoryCreate(fp);
 
                         int fd;
                         if (FileOpen(fp, fd, OPEN_WRITE))
@@ -877,31 +895,48 @@ namespace sync
                         }
 
                         PendingDepotRequests--;
-                        if (PendingDepotRequests != 0) break;
-
-                        State = kState_Connected;
-                        SubState = kSubState_None;
-
-                        for (StateChangeCallback* cb = RegisteredStateCallbacks.begin(); cb != RegisteredStateCallbacks.end(); ++cb)
-                            (*cb)(this, kState_Connected);
-
                         break;
                     }
                 }
             }
         }
-        else if (net_errno != EWOULDBLOCK)
+        else if (listen_error)
         {
             SYNC_LOG("failed to recv msg from server, disconnected\n");
             Disconnect();
             return;
         }
 
-        if (State == kState_Connecting && SubState == kSubState_None)
+        if (State == kState_Connecting)
         {
-            SYNC_LOG("requesting server information\n");
-            sendmsg(Socket, eChannel_Gate, eMessageType_ServerInfo);
-            SubState = kSubState_WaitingForServerInfo;
+            switch (SubState)
+            {
+                case kSubState_None:
+                {
+                    SYNC_LOG("requesting server information\n");
+                    sendmsg(Socket, eChannel_Gate, eMessageType_ServerInfo);
+                    SubState = kSubState_WaitingForServerInfo;
+                    break;
+                }
+                case kSubState_WaitingForDepotDownloads:
+                {
+                    if (PendingDepotRequests == 0)
+                        SubState = kSubState_FinishedDownloadingDepots;
+                    break;
+                }
+                case kSubState_FinishedDownloadingDepots:
+                {
+                    LinkDepots();
+
+                    for (StateChangeCallback* cb = RegisteredStateCallbacks.begin(); cb != RegisteredStateCallbacks.end(); ++cb)
+                        (*cb)(this, kState_Connected);
+
+                    State = kState_Connected;
+                    SubState = kSubState_None;
+
+                    break;
+                }
+            }
         }
     }
 
@@ -934,58 +969,6 @@ namespace sync
         }
 
         return NULL;
-    }
-
-    CFilePath CClient::GetDepotCacheFilePath() const
-    {
-        return CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depotcache");
-    }
-
-    void CClient::DestroyDepotCache()
-    {
-        FileUnlink(GetDepotCacheFilePath());
-    }
-
-    void CClient::LoadDepotCache()
-    {
-        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
-        Depots.resize(0);
-
-        ByteArray b;
-        if (!FileLoad(GetDepotCacheFilePath(), b)) return;
-
-        CReflectionLoadVector r(&b);
-        r.SetCompressionFlags(0);
-        u32 version;
-        if (Reflect(r, version) != REFLECT_OK || version > kProtocolVersion)
-        {
-            DestroyDepotCache();
-            return;
-        }
-
-        r.SetRevision(SRevision(version));
-        if (Reflect(r, Depots) != REFLECT_OK)
-        {
-            Depots.resize(0);
-            DestroyDepotCache();
-        }
-    }
-
-    void CClient::SaveToDepotCache()
-    {
-        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
-
-        CSyncSaveVector r;
-        u32 version = kProtocolVersion;
-        if (Reflect(r, version) != REFLECT_OK) return;
-        if (Reflect(r, Depots) != REFLECT_OK) return;
-
-        int fd;
-        if (FileOpen(GetDepotCacheFilePath(), fd, OPEN_WRITE))
-        {
-            FileWrite(fd, r.Data.begin(), r.Data.size());
-            FileClose(fd);
-        }
     }
 
     void CClient::UpdateUploadTasks()

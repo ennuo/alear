@@ -1,6 +1,8 @@
 #include <Sync/Bootstrap.h>
 #include <Sync/Client.h>
 #include <Sync/Shared.h>
+#include <Sync/Cache.h>
+#include <Sync/Serialise.h>
 
 #include <filepath.h>
 #include <Directory.h>
@@ -16,15 +18,86 @@ namespace sync
     const char* gServerAddress = "127.0.0.1";
     bool gServerEnabled = true;
 
+    CSyncDatabase Database;
+    CVector<depot> Depots;
+    CCriticalSec DepotMutex("DepotMutex");
+
     static THREAD ResourceThread;
+
+    CFilePath GetDepotCacheFilePath()
+    {
+        return CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depotcache");
+    }
+
+    void LinkDepots()
+    {
+        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < Depots.size(); ++i)
+        {
+            depot& d = Depots[i];
+            if (d.Database == NULL)
+            {
+                d.Database = new CFileDB(d.MakeDatabaseFilePath());
+                d.Database->Load();
+            }
+        }
+    }
+
+    void DestroyDepotCache()
+    {
+        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+        FileUnlink(GetDepotCacheFilePath());
+    }
+
+    void LoadDepotCache()
+    {
+        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+        Depots.resize(0);
+
+        ByteArray b;
+        if (!FileLoad(GetDepotCacheFilePath(), b)) return;
+
+        CReflectionLoadVector r(&b);
+        r.SetCompressionFlags(0);
+        u32 version;
+        if (Reflect(r, version) != REFLECT_OK || version > kProtocolVersion)
+        {
+            DestroyDepotCache();
+            return;
+        }
+
+        r.SetRevision(SRevision(version));
+        if (Reflect(r, Depots) != REFLECT_OK)
+        {
+            Depots.resize(0);
+            DestroyDepotCache();
+        }
+    }
+
+    void SaveToDepotCache()
+    {
+        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+
+        CSyncSaveVector r;
+        u32 version = kProtocolVersion;
+        if (Reflect(r, version) != REFLECT_OK) return;
+        if (Reflect(r, Depots) != REFLECT_OK) return;
+
+        int fd;
+        if (FileOpen(GetDepotCacheFilePath(), fd, OPEN_WRITE))
+        {
+            FileWrite(fd, r.Data.begin(), r.Data.size());
+            FileClose(fd);
+        }
+    }
 
     bool Open()
     {
         SYNC_LOG("server enabled: %s, server url: %s, server port: %d\n", gServerEnabled ? "true" : "false", gServerAddress, gServerPort);
         
         DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/publish/"));
-        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/local/"));
-        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/"));
+        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/local"));
+        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/remote"));
 
         const CFilePath cache_path(FPR_GAMEDATA, "gamedata/alear/sync/resourcecache.farc");
         if (!FileExists(cache_path))
@@ -38,8 +111,11 @@ namespace sync
             }
         }
 
-        gCaches[CT_SYNC] = MakeROCache(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/resourcecache.farc"), true, false);
-        
+        gCaches[CT_SYNC] = new CMutableCache(cache_path);
+
+        LoadDepotCache();
+        LinkDepots();
+
         if (gServerEnabled)
         {
             DownloadJobManager = new CJobManager(kMaxConcurrentDownloads, "alear sync download job worker");
@@ -47,7 +123,17 @@ namespace sync
             sync::Client = new sync::CClient();
             
             // wait for initial server bringup
-            while (sync::Client->IsConnecting()) ThreadSleep(33);
+            while (sync::Client->IsConnecting()) ThreadSleep(500);
+
+            if (sync::Client->IsConnected())
+            {
+                MMLog("CONNECTED!!!!!\n");
+            }
+            else
+            {
+
+            }
+
         }
         
         return true;

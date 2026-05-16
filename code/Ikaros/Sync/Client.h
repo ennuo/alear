@@ -107,7 +107,8 @@ namespace sync
             kSubState_WaitingForServerInfo,
             kSubState_WaitingForLogin,
             kSubState_WaitingForDepotList,
-            kSubState_WaitingForDepotDownloads
+            kSubState_WaitingForDepotDownloads,
+            kSubState_FinishedDownloadingDepots
         };
         
         enum
@@ -148,10 +149,6 @@ namespace sync
         void UpdateUploadTasks();
     private:
         const depot* GetDepot(u64 id);
-        CFilePath GetDepotCacheFilePath() const;
-        void DestroyDepotCache();
-        void LoadDepotCache();
-        void SaveToDepotCache();
     public:
         void DoUploadTest();
     public:
@@ -172,10 +169,8 @@ namespace sync
         token Token;
 
         CP<CUploadTask> UploadTask;
-        
+
         SServerInfo ServerInfo;
-        CCriticalSec DepotMutex;
-        CVector<depot> Depots;
         u32 PendingDepotRequests;
 
         CCriticalSec DownloadMutex;

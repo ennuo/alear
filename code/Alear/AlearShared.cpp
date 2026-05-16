@@ -653,9 +653,9 @@ FMOD_RESULT LoadAllEventProjects()
             return result;
     }
 
-    FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
-    if (result != FMOD_OK) return result;
-    gStingerGroup.Frame = gGraphicsFrameNum;
+    // FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
+    // if (result != FMOD_OK) return result;
+    // gStingerGroup.Frame = gGraphicsFrameNum;
 
     return FMOD_OK;
 }

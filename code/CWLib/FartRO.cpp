@@ -95,9 +95,14 @@ bool CFartRO::GetReader(CFAT* f, SResourceReader& out)
     out.OriginalHash = f->hash;
     out.OwnerData = Slow;
     out.BytesRead = 0;
+    out.BytesRequested = 0;
     out.RollingHash.Reset();
     out.Size = f->size;
     out.Offset = f->offset;
+    
+    out.DebugCache = this;
+    out.Owner = this;
+    
 
     FileSeek(out.Handle, f->offset, FILE_BEGIN);
 

@@ -728,37 +728,6 @@ void AttachCustomRevisionHooks()
     // MH_Poke32(0x0058ca18, LI(0, ALEAR_LATEST_PLUS_ONE - 1));
 }
 
-ESerialisationType GetPreferredSerialisationType(EResourceType type)
-{
-    switch (type)
-    {
-        case RTYPE_FILENAME:
-        case RTYPE_FONTFACE:
-            return PREFER_FILE;
-        
-        case RTYPE_GUID_SUBST:
-        case RTYPE_SETTINGS_CHARACTER:
-        case RTYPE_SETTINGS_SOFT_PHYS:
-        case RTYPE_EDITOR_SETTINGS:
-        case RTYPE_JOINT:
-        case RTYPE_GAME_CONSTANTS:
-        case RTYPE_POPPET_SETTINGS:
-        case RTYPE_SETTINGS_NETWORK:
-        case RTYPE_PARTICLE_SETTINGS:
-        // case RTYPE_PARTICLE_TEMPLATE:
-        // case RTYPE_PARTICLE_LIBRARY:
-        case RTYPE_AUDIO_MATERIALS:
-        case RTYPE_SETTINGS_FLUID:
-        case RTYPE_TEXTURE_LIST:
-        case RTYPE_MUSIC_SETTING:
-        case RTYPE_MIXER_SETTINGS:
-            return PREFER_TEXT;
-        
-        default: 
-            return PREFER_BINARY;
-    }
-}
-
 class CScopedPart {
 public:
     inline CScopedPart(EPartType part) : Thing(NULL), Part(part) {}

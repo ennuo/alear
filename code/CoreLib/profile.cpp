@@ -1,4 +1,5 @@
 #include <profile.h>
+#include <thread.h>
 
 CProfileName gProfileRoot("root"); // 9
 u32 gCurrentProfileEntry = -1;
@@ -39,8 +40,6 @@ void CProfileEntry::Init(CProfileName* name, u32 parentIdx, u32 key) // 43
         r = gCurrentProfileEntry;
     }
 }
-
-static bool AmInMainThread() { return true; }
 
 bool CreateProfileEntry(CProfileName* name, u32& last) // 62
 {

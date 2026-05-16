@@ -400,7 +400,7 @@ public:
 		}
 		else
 		{
-			for (int i = index; i < this->Size; ++i)
+			for (int i = this->Size - 1; i >= index; --i)
 			{
 				new (this->Data + i + 1) T(this->Data[i]);
 				(this->Data + i)->~T();

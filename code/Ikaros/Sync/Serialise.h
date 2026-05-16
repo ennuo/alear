@@ -13,6 +13,8 @@ enum SyncSR
     eSyncSR_LatestPlusOne
 };
 
+const u32 kProtocolVersion = eSyncSR_LatestPlusOne - 1;
+
 class CSyncSaveVector : public CReflectionSaveVector {
 public:
     inline CSyncSaveVector() : Data(), CReflectionSaveVector(&Data, 0) 
@@ -91,9 +93,19 @@ ReflectReturn Reflect(R& r, depot& d)
     ReflectReturn rv = REFLECT_OK;
     ADD(DepotID);
     ADD(CommitID);
-    ADD(Id);
-    ADD(Name);
+
+    int len = StringLength(d.Id);
+    if ((rv = Reflect(r, len)) != REFLECT_OK) return rv;
+    if ((rv = r.ReadWrite(d.Id, len)) != REFLECT_OK) return rv;
+    if (r.GetLoading()) d.Id[len] = '\0';
+
+    len = StringLength(d.Name);
+    if ((rv = Reflect(r, len)) != REFLECT_OK) return rv;
+    if ((rv = r.ReadWrite(d.Name, len)) != REFLECT_OK) return rv;
+    if (r.GetLoading()) d.Name[len] = '\0';
+    
     ADD(Priority);
+    ADD(Flags);
     return rv;
 }
 

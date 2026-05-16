@@ -7,6 +7,14 @@
 #include <vector.h>
 #include <CritSec.h>
 #include <ResourcePointer.h>
+#include <ResourceTypes.h>
+
+extern CSRQueue* CSRsForStaging;
+extern CSRQueue* CSRsForSlow;
+extern CSRQueue* CSRsForRNP;
+extern CSRQueue* CSRsForHTTP;
+extern CSRQueue* CSRsDone;
+extern CSRQueue* CSRsDoneThreaded;
 
 extern bool gTestSuiteResourcesDisabled;
 
@@ -52,6 +60,12 @@ bool _BlockUntilAllResourcesLoaded(EWaitForStreamingResources streaming_resource
 extern CResource* (*FindResourceInList)(CResourceDescriptorBase const& desc);
 extern void (*GetResourceSet)(CRawVector<CResource*>& out, EResourceType resource_type);
 extern void (*UnloadResource)(CP<CResource> resource);
+extern void (*SetResourceError)(const CSerialisedResource* res, EResourceLoadState error);
+
+ESerialisationType GetPreferredSerialisationType(EResourceType type);
+void AddCSRToDoneQueue(const CP<CSerialisedResource>& csr, CStreamPriority prio);
+void AddCSRToQueue(const CP<CSerialisedResource>& csr, CSRQueue* queue, CStreamPriority priority);
+
 
 typedef CRawVector<CResource*> CWeakResourceArray;
 extern CWeakResourceArray gResourceArray;

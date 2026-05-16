@@ -4,6 +4,7 @@
 #include <MMString.h>
 #include <CalendarTime.h>
 #include <GuidHash.h>
+#include <GuidHashMap.h>
 #include <network/NetworkUtilsNP.h>
 #include <filepath.h>
 
@@ -110,6 +111,11 @@ namespace sync
         eMethod_Event,
         eMethod_Response
     };
+
+    enum
+    {
+        eDepotFlags_Local = (1 << 0)
+    };
     
     struct packet
     {
@@ -149,16 +155,38 @@ namespace sync
 
     struct depot
     {
-        inline depot() : Name(), Id(), DepotID(), Priority()
+        inline depot() : DepotID(), CommitID(), Name(), Id(), Priority(), Database(), Flags()
         {
+
+        }
+        
+        inline bool IsLocal() const
+        {
+            return (Flags & eDepotFlags_Local) != 0;
+        }
+
+        inline bool IsRemote() const
+        {
+            return (Flags & eDepotFlags_Local) == 0;
+        }
+        
+        inline CFilePath MakeDatabaseFilePath() const
+        {
+            CFilePath fp(FPR_GAMEDATA, IsLocal() ? "gamedata/alear/sync/depots/local" : "gamedata/alear/sync/depots/remote");
+            fp.Append(Id);
+            fp.AppendRaw(".map");
+
+            return fp;
 
         }
 
         u64 DepotID;
         u64 CommitID;
-        MMString<char> Name;
-        MMString<char> Id;
+        char Name[128];
+        char Id[32];
         u32 Priority;
+        CFileDB* Database;
+        u32 Flags;
     };
 
     struct SSerializedCrafteroid

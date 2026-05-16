@@ -99,6 +99,9 @@ void AlearSetupDatabase()
 {
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
 
+    FileDB::DBs.push_back(&sync::Database);
+    sync::Database.Path = CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/cache.map");
+    
     if (gGameDataReady)
     {
         CFilePath patch_fp(FPR_GAMEDATA, "/output/brg_patch.map");
@@ -115,6 +118,7 @@ void AlearSetupDatabase()
 
 #include <gooey/GooeyImage.h>
 
+extern MAKE_THREAD_FUNCTION(MainLoadingThread);
 void AlearStartup()
 {
     DebugLog("Alear version v%f build date: " __DATE__ " time: " __TIME__ "\n", mmalex::sqrtf(ALEAR_VERSION));
@@ -150,6 +154,8 @@ void AlearStartup()
     MH_PokeHook(0x0040b678, SetJetpackTether);
     MH_PokeHook(0x0040a9f4, CollectGun);
     MH_PokeHook(0x0040a92c, SetScubaGear);
+
+    MH_PokeHook(0x00090538, MainLoadingThread);
 
     MH_Poke32(0x0001da24, 0x39200001);
     
