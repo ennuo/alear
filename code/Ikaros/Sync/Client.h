@@ -36,6 +36,18 @@ namespace sync
         kDownloadState_BadHash
     };
 
+    enum
+    {
+        kUploadState_Inactive,
+        kUploadState_InProgress,
+        kUploadState_Success,
+        kUploadState_Failed,
+        kUploadState_NoDataSource,
+        kUploadState_InvalidSession,
+        kUploadState_NetworkError,
+        kUploadState_IOError
+    };
+
     class CDownloadJob : public CBaseCounted {
     public:
         CDownloadJob();
@@ -63,11 +75,23 @@ namespace sync
     };
 
     class CUploadJob : public CBaseCounted {
+    protected:
+        CUploadJob();
+    public:
+        static CP<CUploadJob> EnqueueForUpload(const CFileSource& source);
+    public:
+        static void UploadJob(void* userdata);
+    private:
+        CUploadJob(const CDownloadJob& rhs);
+        CUploadJob& operator=(const CDownloadJob& rhs);
     public:
         CFileSource Source;
         sockaddr_in Server;
         token Token;
+        u32 UploadSize;
+        u32 BytesUploaded;
         u32 JobID;
+        s32 State;
     };
 
     class CUploadTask : public CBaseCounted {
@@ -86,7 +110,7 @@ namespace sync
     public:
         int State;
         CRawVector<CFileSource> Sources;
-        u32 FilterRequest;
+        CRawVector<CHash> Hashes;
         CVector<CP<CUploadJob> > Jobs;
         CP<CUploadTask> Next;
     };
@@ -131,6 +155,7 @@ namespace sync
         }
         
         inline u32 GetDownloadTag() const { return DownloadTag; }
+        inline u32 GetUploadTag() const { return UploadTag; }
         inline const sockaddr_in& GetServerAddress() const { return Address; }
         inline const token& GetSession() const { return Token; }
     public:
@@ -144,8 +169,9 @@ namespace sync
         bool SendMessage(u32 channel, u32 message, void* data = NULL, int len = 0);
         void Upload(const CRawVector<CFileSource>& sources);
     private:
-        void HandleSyncChannel(const packet& packet, const ByteArray& data);
-        void HandleGateChannel(const packet& packet, const ByteArray& data);
+        void HandleSyncChannel(const packet& packet, ByteArray& data);
+        void HandleGateChannel(const packet& packet, ByteArray& data);
+        void HandleResourceChannel(const packet& packet, ByteArray& data);
         void UpdateUploadTasks();
     private:
         const depot* GetDepot(u64 id);
@@ -169,7 +195,7 @@ namespace sync
         token Token;
 
         CP<CUploadTask> UploadTask;
-
+        
         SServerInfo ServerInfo;
         u32 PendingDepotRequests;
 

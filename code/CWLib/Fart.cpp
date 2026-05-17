@@ -21,7 +21,7 @@ MH_DefineFunc(IncorporateFartRO, 0x0008026c, TOC0, bool, CFartRO* cache);
 MH_DefineFunc(GetFileDataFromCaches, 0x000816bc, TOC0, bool, CHash&, ByteArray&);
 MH_DefineFunc(SaveFileDataToCache, 0x0007f458, TOC0, bool, CacheType type, const void* data, u32 size, CHash& out);
 
-bool GetResourceReader(CHash& hash, SResourceReader& out)
+bool GetResourceReader(const CHash& hash, SResourceReader& out)
 {
     for (int i = 0; i < CT_COUNT; ++i)
     {

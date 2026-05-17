@@ -105,6 +105,7 @@ namespace sync
         template <> inline u32 GetChannel<type>() { return channel; }
 
     REGISTER(msg_download, eChannel_Resource, eMessageType_Download);
+    REGISTER(msg_upload, eChannel_Resource, eMessageType_UploadResource);
     REGISTER(msg_download_response, eChannel_Resource, eMessageType_Download);
     REGISTER(msg_login_response, eChannel_Gate, eMessageType_Login);
     REGISTER(msg_login, eChannel_Gate, eMessageType_Login);

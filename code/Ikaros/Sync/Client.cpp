@@ -19,6 +19,8 @@
 
 #include <mem_stl_buckets.h>
 
+#define SYNC_ERROR(...) MMLogCh(DC_NETWORK, "sync: " __VA_ARGS__); Disconnect()
+
 namespace sync
 {
     CClient* Client;
@@ -240,6 +242,13 @@ namespace sync
         Reset();
     }
 
+    CUploadJob::CUploadJob() : CBaseCounted(),
+    Source(), Server(), Token(), UploadSize(), BytesUploaded(), JobID(), State(kUploadState_Inactive)
+    {
+
+    }
+
+
     void CDownloadJob::Reset()
     {
         CSR = NULL;
@@ -292,6 +301,122 @@ namespace sync
         OnDownloadFinish(CSR, Priority, State);
         Reset();
     }
+
+    class CUploadClient {
+    public:
+        CUploadClient(CUploadJob* owner) : Socket(-1), Owner(owner)
+        {
+
+        }
+
+        ~CUploadClient()
+        {
+            if (Socket != -1)
+            {
+                shutdown(Socket, SHUT_RDWR);
+                close(Socket);
+                Socket = -1;
+            }
+        }
+
+        void SetState(int state)
+        {
+            Owner->State = state;
+        }
+
+        bool Connect()
+        {
+            Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+            if (Socket == -1)
+            {
+                SetState(kUploadState_NetworkError);
+                return false;
+            }
+
+            if (connect(Socket, (sockaddr*)&Owner->Server, sizeof(sockaddr_in)) != 0)
+            {
+                SetState(kUploadState_NetworkError);
+                return false;
+            }
+
+            return true;
+        }
+
+        bool Work()
+        {
+            CFileSource& source = Owner->Source;
+            msg_upload msg;
+            msg.FileSize = Owner->UploadSize;
+            msg.Hash = source.Hash;
+            msg.Token = Owner->Token;
+
+            if (!sendmsg(Socket, msg))
+                return false;
+
+            SResourceReader reader;
+            int fd;
+            bool loose = false;
+
+            if (!source.FilePath)
+            {
+                if (!GetResourceReader(source.Hash, reader))
+                {
+                    SetState(kUploadState_NoDataSource);
+                    return false;
+                }
+
+                fd = reader.Handle;
+            }
+            else
+            {
+                if (!FileExists(source.FilePath))
+                {
+                    SetState(kUploadState_NoDataSource);
+                    return false;
+                }
+
+                if (!FileOpen(source.FilePath, fd, OPEN_READ))
+                {
+                    SetState(kUploadState_IOError);
+                    return false;
+                }
+
+                loose = true;
+            }
+
+
+            char buf[1024];
+            while (Owner->BytesUploaded < Owner->UploadSize)
+            {
+                u64 n = FileRead(fd, buf, MIN(sizeof(buf), Owner->UploadSize - Owner->BytesUploaded));
+                if (!unbuffered_send(Socket, buf, n))
+                {
+                    SetState(kUploadState_NetworkError);
+                    if (loose) FileClose(fd);
+                    return false;
+
+                }
+
+                Owner->BytesUploaded += n;
+            }
+
+            if (loose) FileClose(fd);
+
+            packet p;
+            ByteArray data;
+            if (!recvmsg(Socket, p, data))
+                return false;
+
+            if (p.Status != kResponse_Ok)
+                return false;
+            
+            return true;
+        }
+
+        int Socket;
+        CUploadJob* Owner;
+        msg_download_response Response;
+    };
 
     struct CDownloadClient
     {
@@ -456,6 +581,57 @@ namespace sync
         d->Finish();
     }
 
+    void CUploadJob::UploadJob(void* userdata)
+    {
+        CUploadJob* d = (CUploadJob*)userdata;
+        CUploadClient c(d);
+
+        if (!c.Connect()) return;
+
+        if (!c.Work())
+        {
+            if (d->State < kUploadState_Failed) 
+                d->State = kUploadState_Failed;
+        }
+        else d->State = kUploadState_Success;
+    }
+
+    CP<CUploadJob> CUploadJob::EnqueueForUpload(const CFileSource& source)
+    {
+        CP<CUploadJob> job = new CUploadJob();
+
+        job->Source = source;
+        job->Server = Client->GetServerAddress();
+        job->Token = Client->GetSession();
+
+        if (!source.FilePath)
+        {
+            SYNC_LOG("Uploading h%s\n", StringifyHash(source.Hash).c_str());
+            for (u32 i = 0; i < CT_COUNT; ++i)
+            {
+                if (gCaches[i]->GetSize(source.Hash, job->UploadSize))
+                    break;
+            }
+        }
+        else
+        {
+            SYNC_LOG("Uploading h%s (%s)\n", StringifyHash(source.Hash).c_str(), source.FilePath.c_str());
+            u64 modtime, size;
+            FileStat(source.FilePath, modtime, size);
+            job->UploadSize = size;
+        }
+
+        job->BytesUploaded = 0;
+        
+        job->JobID = DownloadJobManager->EnqueueJob(
+            1000, &UploadJob, (void*)job.GetRef(),
+            Client->GetUploadTag(), "UploadJob"
+        );
+        job->State = kUploadState_InProgress;
+
+        return job;
+    }
+
     void DownloadTest(void* userdata)
     {
         SYNC_LOG("download test, making sure tag is correct!!!: %08x\n", ((CClient*)userdata)->DownloadTag);
@@ -603,15 +779,14 @@ namespace sync
     {
         if (!sendmsg(Socket, channel, message, data, size))
         {
-            SYNC_LOG("failed to send message to server!\n");
-            Disconnect();
+            SYNC_ERROR("failed to send message to server!\n");
             return false;
         }
 
         return true;
     }
     
-    void CClient::HandleSyncChannel(const packet& packet, const ByteArray& data)
+    void CClient::HandleSyncChannel(const packet& packet, ByteArray& data)
     {
         switch (packet.Message)
         {
@@ -619,11 +794,47 @@ namespace sync
         }
     }
 
-    void CClient::HandleGateChannel(const packet& packet, const ByteArray& data)
+    void CClient::HandleGateChannel(const packet& packet, ByteArray& data)
     {
         switch (packet.Message)
         {
 
+        }
+    }
+
+    void CClient::HandleResourceChannel(const packet& packet, ByteArray& data)
+    {
+        switch (packet.Message)
+        {
+            case eMessageType_FilterResources:
+            {
+                if (!UploadTask || UploadTask->State != CUploadTask::kState_Filtering)
+                {
+                    SYNC_ERROR("Got filtered resources response despite no pending upload task!\n");
+                    return;
+                }
+
+                UploadTask->State = CUploadTask::kState_FinishedError;
+
+                if (packet.Status != kResponse_Ok)
+                {
+                    SYNC_ERROR("Filter resources request failed!\n");
+                    return;
+                }
+
+                msg_resource_list resp;
+                if (!parsemsg(data, resp))
+                {
+                    SYNC_ERROR("Failed to parse filtered resources response from server!\n");
+                    return;
+                }
+
+                UploadTask->Jobs.reserve(resp.Hashes.size());
+                UploadTask->Hashes.swap(resp.Hashes);
+                UploadTask->State = CUploadTask::kState_Filtered;
+
+                break;
+            }
         }
     }
 
@@ -646,8 +857,7 @@ namespace sync
         {
             if (p.Method != eMethod_Response && p.Message != eMethod_Event)
             {
-                SYNC_LOG("received packet with invalid method from server!\n");
-                Disconnect();
+                SYNC_ERROR("received packet with invalid method from server!\n");
                 return;
             }
 
@@ -657,6 +867,7 @@ namespace sync
                 {
                     case eChannel_Gate: HandleGateChannel(p, data); break;
                     case eChannel_Sync: HandleSyncChannel(p, data); break;
+                    case eChannel_Resource: HandleResourceChannel(p, data); break;
                     default:
                     {
                         CallbackMap::iterator it = RegisteredCallbacks.find(p.Channel);
@@ -679,15 +890,13 @@ namespace sync
                     {
                         if (p.Message != eMessageType_ServerInfo)
                         {
-                            SYNC_LOG("expected server info on client wakeup!\n");
-                            Disconnect();
+                            SYNC_ERROR("expected server info on client wakeup!\n");
                             return;
                         }
 
                         if (!parsemsg(data, ServerInfo))
                         {
-                            SYNC_LOG("failed to parse server info reply from the server!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to parse server info reply from the server!\n");
                             return;
                         }
 
@@ -704,8 +913,7 @@ namespace sync
 
                         if (ServerInfo.ProtocolVersion != kProtocolVersion)
                         {
-                            SYNC_LOG("protocol version mismatch: %d != %d\n", kProtocolVersion, ServerInfo.ProtocolVersion);
-                            Disconnect();
+                            SYNC_ERROR("protocol version mismatch: %d != %d\n", kProtocolVersion, ServerInfo.ProtocolVersion);
                             return;
                         }
 
@@ -730,16 +938,14 @@ namespace sync
                                 }
                                 else
                                 {
-                                    SYNC_LOG("failed to authenticate against sync server!\n");
-                                    Disconnect();
+                                    SYNC_ERROR("failed to authenticate against sync server!\n");
                                 }
                             }
                         }
 
                         if (!sendmsg(Socket, login))
                         {
-                            SYNC_LOG("failed to send login message to server!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to send login message to server!\n");
                             return;
                         }
 
@@ -752,23 +958,20 @@ namespace sync
                     {
                         if (p.Message != eMessageType_Login)
                         {
-                            SYNC_LOG("expected login response from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("expected login response from server!\n");
                             return;
                         }
 
                         if (p.Status != kResponse_Ok)
                         {
-                            SYNC_LOG("failed to login!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to login!\n");
                             return;
                         }
 
                         msg_login_response resp;
                         if (!parsemsg(data, resp))
                         {
-                            SYNC_LOG("failed to parse login reply from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to parse login reply from server!\n");
                             return;
                         }
 
@@ -781,8 +984,7 @@ namespace sync
 
                         if (!sendmsg(Socket, eChannel_Sync, eMessageType_DepotList))
                         {
-                            SYNC_LOG("failed to send request for depot list!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to send request for depot list!\n");
                             return;
                         }
 
@@ -794,23 +996,20 @@ namespace sync
                     {
                         if (p.Message != eMessageType_DepotList)
                         {
-                            SYNC_LOG("expected depot list response from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("expected depot list response from server!\n");
                             return;
                         }
 
                         if (p.Status != kResponse_Ok)
                         {
-                            SYNC_LOG("failed to fetch depot list!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to fetch depot list!\n");
                             return;
                         }
 
                         CVector<depot> server_depots;
                         if (!parsemsg(data, server_depots))
                         {
-                            SYNC_LOG("failed to parse depot list reply from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to parse depot list reply from server!\n");
                             return;
                         }
 
@@ -868,15 +1067,13 @@ namespace sync
                     {
                         if (p.Message != eMessageType_Depot)
                         {
-                            SYNC_LOG("expected depot response from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("expected depot response from server!\n");
                             return;
                         }
 
                         if (p.Status != kResponse_Ok)
                         {
-                            SYNC_LOG("failed to fetch depot!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to fetch depot!\n");
                             return;
                         }
 
@@ -885,8 +1082,7 @@ namespace sync
                         msg_depot_response resp;
                         if (!parsemsg(data, resp))
                         {
-                            SYNC_LOG("failed to parse depot reply from server!\n");
-                            Disconnect();
+                            SYNC_ERROR("failed to parse depot reply from server!\n");
                             return;
                         }
 
@@ -909,8 +1105,7 @@ namespace sync
         }
         else if (listen_error)
         {
-            SYNC_LOG("failed to recv msg from server, disconnected\n");
-            Disconnect();
+            SYNC_ERROR("failed to recv msg from server, disconnected\n");
             return;
         }
 
@@ -945,13 +1140,18 @@ namespace sync
                 }
             }
         }
+
+        if (State == kState_Connected)
+        {
+            UpdateUploadTasks();
+        }
     }
 
     void CClient::DoUploadTest()
     {
         SYNC_LOG("doing upload test\n");
         CRawVector<CFileSource> sources;
-        sources.push_back(CFilePath(FPR_GAMEDATA, "cwml/data/test.bin"));
+        sources.push_back(CFilePath(FPR_GAMEDATA, "test.bin"));
         Upload(sources);
     }
 
@@ -959,10 +1159,13 @@ namespace sync
     {
         if (sources.size() == 0) return;
 
-        CP<CUploadTask> task = new CUploadTask(sources);
-        if (UploadTask != NULL)
-            task->Next = UploadTask;
-        UploadTask = task;
+        CCSLock _lock(&UploadMutex, __FILE__, __LINE__);
+        
+        CP<CUploadTask> task = UploadTask;
+        while (task && task->Next) task = task->Next;
+
+        if (task) task->Next = new CUploadTask(sources);
+        else UploadTask = new CUploadTask(sources);
     }
 
     const depot* CClient::GetDepot(u64 id)
@@ -980,38 +1183,94 @@ namespace sync
 
     void CClient::UpdateUploadTasks()
     {
+        CCSLock _lock(&UploadMutex, __FILE__, __LINE__);
         CP<CUploadTask>& task = UploadTask;
-        while (task)
+        if (task)
         {
             switch (task->State)
             {
                 case CUploadTask::kState_Initial:
                 {
-                    task->FilterRequest = NextMark;
+                    SYNC_LOG("Sending filter request for %d resources\n", task->Sources.size());
 
                     msg_resource_list msg;
                     for (CFileSource* it = task->Sources.begin(); it != task->Sources.end(); ++it)
                         msg.Hashes.push_back(it->Hash);
 
                     if (!sendmsg(Socket, msg))
+                    {
                         task->State = CUploadTask::kState_FinishedError;
+                        SYNC_LOG("Failed to send filter request for upload task, bailing!\n");
+                    }
                     else 
+                    {
                         task->State = CUploadTask::kState_Filtering;
+                        SYNC_LOG("Waiting for filter request response...\n");
+                    }
                     
                     break;
                 }
                 case CUploadTask::kState_Filtered:
                 {
+                    SYNC_LOG("Got %d (out of %d) filtered resources\n", task->Hashes.size(), task->Sources.size());
+
+                    if (task->Hashes.size() == 0)
+                    {
+                        SYNC_LOG("Skipping upload task as server has all resources uploaded\n");
+                        task->State = CUploadTask::kState_Finished;
+                        break;
+                    }
+
+                    for (CFileSource* it = task->Sources.begin(); it != task->Sources.end(); ++it)
+                    {
+                        bool upload = false;
+                        for (u32 i = 0; i < task->Hashes.size(); ++i)
+                        {
+                            if (task->Hashes[i] == it->Hash)
+                                upload = true;
+                        }
+
+                        if (upload)
+                        {
+                            task->Jobs.push_back(CUploadJob::EnqueueForUpload(*it));
+                        }
+                    }
+
+                    task->State = CUploadTask::kState_Uploading;
+                    break;
+                }
+                case CUploadTask::kState_Uploading:
+                {
+                    bool finished = true;
+                    bool errored = false;
+                    for (u32 i = 0; i < task->Jobs.size(); ++i)
+                    {
+                        const CP<CUploadJob>& job = task->Jobs[i];
+                        if (DownloadJobManager->CountJobsWithJobID(job->JobID))
+                        {
+                            finished = false;
+                            break;
+                        }
+
+                        if (job->State >= kUploadState_Failed)
+                            errored = true;
+                    }
+
+                    if (finished)
+                    {
+                        SYNC_LOG("UPLOAD TASK FINISHED : [%s]\n", errored ? "FAIL" : "OK");
+                        task->State = errored ? CUploadTask::kState_FinishedError : CUploadTask::kState_Finished;
+                        UploadTask = task->Next;
+                    }
+
                     break;
                 }
             }
-
-            task = task->Next;
         }    
     }
 
     CUploadTask::CUploadTask(const CRawVector<CFileSource>& sources) :
-    State(), Sources(sources), Jobs(), Next(), FilterRequest()
+    State(), Sources(sources), Jobs(), Next(), Hashes()
     {
         State = kState_Initial;
     }

@@ -165,6 +165,16 @@ ReflectReturn Reflect(R& r, msg_download_response& d)
 }
 
 template <typename R>
+ReflectReturn Reflect(R& r, msg_upload& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+    ADD(Token);
+    ADD(Hash);
+    ADD(FileSize);
+    return rv;
+}
+
+template <typename R>
 ReflectReturn Reflect(R& r, msg_login& d)
 {
     ReflectReturn rv = REFLECT_OK;
