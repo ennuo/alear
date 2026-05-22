@@ -34,6 +34,7 @@
 
 #include "ResourceSystem.h"
 #include <FartRO.h>
+#include <System.h>
 #include <resources/ResourceAnimatedTexture.h>
 
 extern "C" void _gfxbind_hook_naked();

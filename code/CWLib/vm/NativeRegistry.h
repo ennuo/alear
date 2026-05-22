@@ -1,14 +1,8 @@
-#ifndef VM_NATIVE_REGISTRY_H
-#define VM_NATIVE_REGISTRY_H
+#pragma once
 
+#include <vm/VMTypes.h>
 
-
-#include "VMTypes.h"
-#include "ScriptContext.h"
-
+class CScriptContext;
 typedef void (*NativeFunctionWrapper)(CScriptContext*, void*, u8*);
 
-void RegisterNativeFunction(char* class_name, CSignature& signature, bool is_static, NativeFunctionWrapper function);
-void RegisterNativeFunction(char* class_name, char* function_signature, bool is_static, NativeFunctionWrapper function);
-
-#endif // VM_NATIVE_REGISTRY_H
+void RegisterNativeFunction(const char* class_name, const CSignature& signature, bool is_static, NativeFunctionWrapper function);

@@ -1,5 +1,6 @@
 #include "thing.h"
 #include "ResourceSystem.h"
+#include <ResourceScript.h>
 #include "MatrixUtils.h"
 
 

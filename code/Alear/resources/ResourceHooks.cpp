@@ -28,6 +28,7 @@
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
 #include <ResourceSettingsFluid.h>
+#include <ParasiticVector.h>
 
 #include <ppcasm.h>
 #include <ReflectionFindDependencies.h>

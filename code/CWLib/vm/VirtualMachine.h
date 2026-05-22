@@ -9,7 +9,8 @@
 
 namespace NVirtualMachine 
 {
-    extern CScriptVariant (*ExecuteNonStatic)(CThing* this_ptr, CSignature& signature, CScriptArguments& args, bool suppress_assert_if_missing, bool* found);
+    extern CScriptVariant (*ExecuteNonStatic)(CThing* this_ptr, const CSignature& signature, const CScriptArguments& args, bool suppress_assert_if_missing, bool* found);
+    extern CScriptVariant (*ExecuteStatic)(CThing* world_thing, int script_file, const CSignature& signature, const CScriptArguments& args, bool suppress_assert_if_missing, bool* found);
 }
 
 

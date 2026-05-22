@@ -30,8 +30,10 @@ class CResource : public CReflectionVisitable, public CDependencyWalkable {
 public:
     CResource(EResourceFlag flags, EResourceType type);
 public:
+    inline const CGUID& GetGUID() const { return GUID; }
     inline CGUID& GetGUID() { return GUID; }
     inline CHash& GetLoadedHash() { return LoadedHash; }
+    inline const CHash& GetLoadedHash() const { return LoadedHash; }
     inline EResourceType GetResourceType() const { return ResourceType; }
 public:
     volatile u32 RefCount;

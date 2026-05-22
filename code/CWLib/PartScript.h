@@ -1,14 +1,9 @@
-#ifndef PART_SCRIPT_H
-#define PART_SCRIPT_H
+#pragma once
 
-#include <refcount.h>
-
-#include "Part.h"
-#include "vm/ScriptInstance.h"
-#include "vm/ScriptFunction.h"
-#include "vm/ScriptArguments.h"
-
-class RScript;
+#include <Part.h>
+#include <vm/InstanceLayout.h>
+#include <vm/ScriptInstance.h>
+#include <vm/ScriptArguments.h>
 
 class PScript : public CPart {
 public:
@@ -21,7 +16,7 @@ public:
         CP<CInstanceLayout>& layout = ScriptInstance.InstanceLayout;
         if (!layout) return default_value;
     
-        SFieldLayoutDetails* field = layout->LookupField(member);
+        const SFieldLayoutDetails* field = layout->LookupField(member);
         if (field == NULL) return default_value;
     
         CRawVector<unsigned char>& data = ScriptInstance.MemberVariables;
@@ -37,7 +32,7 @@ public:
         CP<CInstanceLayout>& layout = ScriptInstance.InstanceLayout;
         if (!layout) return;
     
-        SFieldLayoutDetails* field = layout->LookupField(member);
+        const SFieldLayoutDetails* field = layout->LookupField(member);
         if (field == NULL) return;
     
         CRawVector<unsigned char>& data = ScriptInstance.MemberVariables;
@@ -57,5 +52,3 @@ public:
     NVirtualMachine::CScriptFunctionBinding OnRenderBinding;
     NVirtualMachine::CScriptFunctionBinding NeedsPredictionBinding;
 };
-
-#endif // PART_SCRIPT_H

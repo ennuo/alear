@@ -467,6 +467,12 @@ create_hook on_fixup_thing_hook, 0x003c4228
     rldicl %r9, %r28, 0x0, 0x20
     ret
 
+create_hook on_fixup_script_hook, 0x000cc0b0
+    mr %r3, %r30
+    call _ZN7RScript19FixupStaticInstanceEv
+    lwz %r0, 0x4(%r29)
+    ret
+
 .global _custom_gooey_network_action_hook
 _custom_gooey_network_action_hook:
     mr %r3, %r31

@@ -1,5 +1,4 @@
 #include "Portal.h"
-#include "cwlib.h"
 #include "ppcasm.h"
 #include "vector.h"
 #include "hook.h"

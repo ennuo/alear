@@ -3,6 +3,7 @@
 
 #include "vm/ScriptContext.h"
 #include "vm/ScriptObject.h"
+#include <thing.h>
 #include "scriptobjects/ScriptObjectResource.h"
 
 template <typename Type>
