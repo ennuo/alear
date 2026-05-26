@@ -7,7 +7,7 @@
 
 using namespace NVirtualMachine;
 
-typedef std::map<const RScript*, CScriptInstance*, std::less<const RScript*>, STLBucketAlloc<std::pair<const RScript*, CScriptInstance*> > > InstanceMap;
+typedef std::map<CGUID, CScriptInstance*, std::less<CGUID>, STLBucketAlloc<std::pair<CGUID, CScriptInstance*> > > InstanceMap;
 InstanceMap gScriptObjectStatics;
 
 static void* g_ElfTocTable[] =
@@ -89,7 +89,7 @@ CScriptInstance* GetOrCreateStaticInstance(const RScript* script, bool reload_if
 
     // We'll basically handle all static members by initializing an instance
     // of the script, but only calling the static initializer.
-    InstanceMap::iterator it = gScriptObjectStatics.find(script);
+    InstanceMap::iterator it = gScriptObjectStatics.find(script->GetGUID());
     if (it != gScriptObjectStatics.end())
         old_instance = it->second;
 
@@ -132,12 +132,15 @@ CScriptInstance* GetOrCreateStaticInstance(const RScript* script, bool reload_if
     members.resize(instance_size);
     if (instance_size != 0)
         memset(members.begin(), 0, instance_size);
-
-    gScriptObjectStatics.insert(InstanceMap::value_type(script, instance));
+    
     if (old_instance)
     {
-        // copy old data back over
+        it->second = instance;
         delete old_instance;
+    }
+    else
+    {
+        gScriptObjectStatics.insert(InstanceMap::value_type(script->GetGUID(), instance));
     }
     
     {
