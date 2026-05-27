@@ -115,6 +115,37 @@ namespace sync
         CP<CUploadTask> Next;
     };
 
+    class CCommitTask : public CBaseCounted {
+    public:
+        enum
+        {
+            kState_Inactive,
+            kState_UploadingResources,
+            kState_Committing,
+            kState_Success,
+            kState_Failed,
+
+            kState_NoDatabaseFile,
+            kState_DepotNotFound,
+            kState_DatabaseLoadFailed,
+            kState_UploadResourcesFailed,
+            kState_NetworkError
+        };
+    public:
+        CCommitTask(const CFilePath& fp, u64 depot_id);
+    public:
+        inline bool InProgress() const { return State < kState_Success; }
+        inline bool Succeeded() const { return State == kState_Success; }
+        inline bool Failed() const { return State >= kState_Failed; }
+        inline bool Completed() const { return State >= kState_Success; }
+    public:
+        u64 Depot;
+        int State;
+        CP<CUploadTask> UploadTask;
+        CFilePath DatabaseFilePath;
+        msg_commit CommitMessage;
+    };
+
     class CClient {
     public:
         enum
@@ -167,14 +198,17 @@ namespace sync
     public:
         void Download(CP<CSerialisedResource>& csr, int priority);
         bool SendMessage(u32 channel, u32 message, void* data = NULL, int len = 0);
-        void Upload(const CRawVector<CFileSource>& sources);
+        CP<CUploadTask> Upload(const CRawVector<CFileSource>& sources);
+        CP<CCommitTask> Commit(const CFilePath& fp, u64 depot_id);
     private:
         void HandleSyncChannel(const packet& packet, ByteArray& data);
         void HandleGateChannel(const packet& packet, ByteArray& data);
         void HandleResourceChannel(const packet& packet, ByteArray& data);
         void UpdateUploadTasks();
-    private:
+        void UpdateCommitTask();
+    public:
         const depot* GetDepot(u64 id);
+        const depot* GetDepot(const char* id);
     public:
         void DoUploadTest();
     public:
@@ -195,12 +229,15 @@ namespace sync
         token Token;
 
         CP<CUploadTask> UploadTask;
-        
+        CP<CCommitTask> CommitTask;
+
         SServerInfo ServerInfo;
         u32 PendingDepotRequests;
 
         CCriticalSec DownloadMutex;
         CCriticalSec UploadMutex;
+        CCriticalSec CommitMutex;
+
         u32 DownloadTag;
         u32 UploadTag;
 

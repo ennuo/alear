@@ -7,6 +7,16 @@ CFileWatcher* gFileWatcher;
 bool CFileWatcher::AddFile(CFilePath& fp, FileWatchCallback cb)
 {
     CCSLock _the_lock(&CS, __FILE__, __LINE__);
+
+    // overwrite existing one if it exists
+    for (u32 i = 0; i < Files.size(); ++i)
+    {
+        if (Files[i].Path == fp)
+        {
+            Files[i].Callback = cb;
+            return true;
+        }
+    }
     
     CWatchFile file;
     if (FileStat(fp, file.LastModified, file.Size))
@@ -18,6 +28,17 @@ bool CFileWatcher::AddFile(CFilePath& fp, FileWatchCallback cb)
     }
 
     return false;
+}
+
+void CFileWatcher::RemoveFile(const CFilePath& fp)
+{
+    CCSLock _the_lock(&CS, __FILE__, __LINE__);
+    
+    for (CWatchFile* iter = Files.begin(); iter != Files.end(); )
+    {
+        if (iter->Path == fp) iter = Files.erase(iter);
+        else iter = iter + 1;
+    }
 }
 
 void CFileWatcher::WorkerThreadFunctionStatic(u64 arg)

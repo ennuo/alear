@@ -20,20 +20,22 @@ enum EConfigOptionType {
 
 class CConfigOption {
 protected:
-    inline CConfigOption(EConfigOptionType type, const wchar_t* category, const wchar_t* name) : Next(NULL), Category(category), DisplayName(name), Type(type), Invoke(NULL)
+    inline CConfigOption(EConfigOptionType type, const wchar_t* category, const wchar_t* name, const char* ini_name) : Next(NULL), Category(category), DisplayName(name), IniName(ini_name), Type(type), Invoke(NULL)
     {
         AddToRegistry();
     }
 public:
     inline CConfigOption* GetNext() { return Next; }
     inline wchar_t* GetDisplayName() { return (wchar_t*)DisplayName; }
-    inline EConfigOptionType GetType() { return Type; }
+    inline const char* GetIniName() const { return IniName; }
+    inline EConfigOptionType GetType() const { return Type; }
 protected:
     void AddToRegistry();
 protected:
     DebugFn Invoke;
 private:
     CConfigOption* Next;
+    const char* IniName;
     const wchar_t* Category;
     const wchar_t* DisplayName;
     EConfigOptionType Type;
@@ -41,12 +43,12 @@ private:
 
 class CConfigBool : public CConfigOption {
 public:
-    inline CConfigBool(const wchar_t* category, const wchar_t* name, bool default_value) 
-    : CConfigOption(OPT_BOOL, category, name), Value(default_value)
+    inline CConfigBool(const wchar_t* category, const wchar_t* name, const char* ini_name, bool default_value) 
+    : CConfigOption(OPT_BOOL, category, name, ini_name), Value(default_value)
     {}
 
-    inline CConfigBool(const wchar_t* category, const wchar_t* name, bool default_value, DebugFn invoke) 
-    : CConfigOption(OPT_BOOL, category, name), Value(default_value)
+    inline CConfigBool(const wchar_t* category, const wchar_t* name, const char* ini_name, bool default_value, DebugFn invoke) 
+    : CConfigOption(OPT_BOOL, category, name, ini_name), Value(default_value)
     {
         Invoke = invoke;
     }
@@ -66,22 +68,22 @@ private:
 
 class CConfigFloat : public CConfigOption {
 public:
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, float default_value) : 
-    CConfigOption(OPT_FLOAT, category, name), Value(default_value)
+    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value) : 
+    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value)
     {
         MinValue = NAN;
         MaxValue = NAN;
         Step = 1.0f;
     }
 
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, float default_value, float min_value, float max_value, float step) : 
-    CConfigOption(OPT_FLOAT, category, name), Value(default_value),
+    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value, float min_value, float max_value, float step) : 
+    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
     }
 
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
-    CConfigOption(OPT_FLOAT, category, name), Value(default_value),
+    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
+    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
         Invoke = invoke;
@@ -151,5 +153,12 @@ extern bool gPauseGameSim;
 extern float gFarDist;
 
 void AlearInitConf();
+
+
+namespace alear
+{
+    void LoadConfig();
+    void SaveConfig();
+}
 
 #endif // ALEAR_CONFIG_H

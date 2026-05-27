@@ -49,6 +49,11 @@
 #include <poppet/ScriptObjectPoppet.h>
 #include <ResourceLocalProfile.h>
 
+#include <Sync/Bootstrap.h>
+#include <Sync/Client.h>
+#include <Sync/Database.h>
+#include <Sync/Shared.h>
+
 
 #ifdef __SM64__
 extern void UpdateMarioAvatars();
@@ -281,17 +286,44 @@ void ReloadReadonlyCaches()
     // shallow or deep copy though
     CVector<CFartRO*> farts(caches->Farts.size());
     for (int i = 0; i < caches->Farts.size(); ++i)
+    {
+        caches->Farts[i]->CloseCache(false);
         farts.push_back(caches->Farts[i]);
-    
-    caches->FAT.clear();
-    caches->Farts.clear();
-    
+    }
+
+    // remove duplicate keys
+    for (CFartRO** it = farts.begin(); it != farts.end(); )
+    {
+        
+        bool erase = false;
+        CFartRO** it2 = it + 1;
+
+        for (; it2 != farts.end(); ++it2)
+        {
+            if ((*it2)->fp == (*it)->fp)
+            {
+                erase = true;
+                break;
+            }
+        }
+
+        if (erase) 
+        {
+            if (*it2 != *it)
+                delete *it;
+            it = farts.erase(it);
+        }
+        else it = it + 1;
+    }
+
+    caches->FAT.resize(0);
+    caches->Farts.resize(0);
+
     CFartRO** iter = farts.begin();
     for (; iter != farts.end(); ++iter)
     {
         CFartRO* fart = *iter;
 
-        fart->CloseCache(false);
         if (!fart->OpenCache())
             fart->CloseCache(false);
 
@@ -679,34 +711,70 @@ int DoSyncSubpage(CGooeyNodeManager* manager, AlearSubPageType subpage, bool fir
     return flags;
 }
 
+bool FindDatabaseAndMutex(const CFilePath& fp, CFileDB*& out_database, CCriticalSec*& out_mutex)
+{
+    CCSLock _database_lock(&FileDB::Mutex, __FILE__, __LINE__);
+    for (V_CFileDB::iterator it = FileDB::DBs.begin(); it != FileDB::DBs.end(); ++it)
+    {
+        if ((*it)->Path == fp)
+        {
+            out_database = *it;
+            out_mutex = &FileDB::Mutex;
+
+            return true;
+        }
+    }
+
+    CCSLock _depot_lock(&sync::DepotMutex, __FILE__, __LINE__);
+    for (u32 i = 0; i < sync::Depots.size(); ++i)
+    {
+        sync::depot& d = sync::Depots[i];
+        if (d.IsLocal() && d.Database && d.Database->Path == fp)
+        {
+            out_database = d.Database;
+            out_mutex = &sync::DepotMutex;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void ReloadDatabase(CFilePath& fp)
 {
-    FileDB::Mutex.Enter(__FILE__, __LINE__);
-    CFileDB** iter = FileDB::DBs.begin();
-    for (; iter != FileDB::DBs.end(); iter++)
+    CCSLock _database_lock(&FileDB::Mutex, __FILE__, __LINE__);
+
+    CFileDB* database;
+    CCriticalSec* mutex;
+
+    if (!FileExists(fp))
     {
-        CFileDB* database = *iter;
-        if (database->Path != fp) continue;
-
-        delete database;
-        database = CFileDB::Construct(fp);
-        *iter = database;
-
-        if (FileExists(fp))
-        {
-            DebugLog("Reloading %s from disk...\n", fp.c_str());
-            database->Load();
-        }
-        else
-        {
-            DebugLog("Tried reloading %s from disk, but file doesn't exist?\n", fp.c_str());
-        }
-
-        break;
+        MMLog("Want reload %s from disk, but file doesn't exist\n", fp.c_str());
+        return;
     }
-    
-    FileDB::Mutex.Leave();
+
+    if (!FindDatabaseAndMutex(fp, database, mutex))
+    {
+        MMLog("Couldn't find database in memory for %s\n", fp.c_str());
+        return;
+    }
+
+    CCSLock lock(mutex, __FILE__, __LINE__);
+    MMLog("Reloading %s from disk...\n", fp.c_str());
+
+    database->Files.resize(0);
+    database->SortedIndex = 0;
+
+    database->Load();
+
+    // Not sure why they don't just sort it instead
+    // of using the sorted index, but whatever.
+    std::sort(database->Files.begin(), database->Files.end(), SCompareGUID());
+    database->SortedIndex = database->Files.size();
 }
+
+bool gCachesDirty = true;
 
 void ReloadPendingDatabases()
 {
@@ -719,7 +787,11 @@ void ReloadPendingDatabases()
     if (gReloadMap.size() != 0)
     {
         gReloadMap.clear();
-        ReloadReadonlyCaches();
+
+        if (gCachesDirty)
+            ReloadReadonlyCaches();
+        gCachesDirty = false;
+        
         ReloadModifiedResources();
     }
 }
@@ -729,6 +801,11 @@ void OnDatabaseFileChanged(CFilePath& fp)
     DebugLog("File has been updated on local filesystem! (%s)\n", fp.c_str());
     CCSLock _the_lock(&gReloadCS, __FILE__, __LINE__);
     gReloadMap.push_back(fp);
+}
+
+void OnCacheFileChanged(CFilePath& fp)
+{
+    gCachesDirty = true;
 }
 
 extern void OnStopTweaking(CThing* thing);

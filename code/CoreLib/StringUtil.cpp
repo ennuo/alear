@@ -169,3 +169,78 @@ size_t StringAppend(tchar_t* dst, const tchar_t* src, int dst_size)
 {
 	return StringAppend<tchar_t>(dst, src, dst_size);
 }
+
+
+
+char* WCharToMultiByte_(char* utf8_str, const wchar_t* str, const wchar_t* str_end, u32 dstlen, u32* len_out)
+{
+	if (dstlen == 0) return utf8_str;
+
+	char* it = utf8_str;
+	if (str < str_end)
+	{
+		for (u32 n = dstlen - 1; n != 0; --n)
+		{
+			wchar_t c = *str++;
+			if (c < 0x80) *it++ = c;
+
+			if (str_end <= str) break;
+
+			// else if (c > 0x7ff)
+			// {
+			// 	n -= 2;
+			// 	if (n > 0)
+
+
+
+			// 	if (n != 1 && n - 2 != 0)
+			// 	{
+
+
+			// 		continue;
+			// 	}
+
+			// 	break;
+
+			// }
+			// else
+			// {
+
+			// }
+		}
+	}
+
+	*it = '\0';
+
+	if (len_out != NULL)
+		*len_out = (uintptr_t)it + (1 - (uintptr_t)utf8_str);
+
+	return utf8_str;
+}
+
+u32 MultiByteStringLength_Bytes(const wchar_t* src, const wchar_t* src_end)
+{
+	u32 length = 0;
+	while (src < src_end)
+	{
+		if (*src < 0x80) length += 1;
+		else if (*src > 0x7ff) length += 3;
+		else length += 2;
+
+		src += 1;
+	}
+
+	return length;
+}
+
+void WCharToMultiByteAppend(MMString<char>& dst, const wchar_t* src, const wchar_t* src_end)
+{
+	if (src_end == NULL) src_end = src + StringLength(src);
+	u32 offset = dst.length();
+	u32 length = offset + MultiByteStringLength_Bytes(src, src_end) + 1;
+
+	dst.resize(length);
+	WCharToMultiByte_(dst.begin() + offset, src, src_end, length, &length);
+	if (length != 0) length--;
+	dst.resize(offset + length);
+}

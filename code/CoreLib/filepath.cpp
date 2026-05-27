@@ -81,11 +81,23 @@ void CFilePath::Clear()
 	Assign("");
 }
 
-
 void CFilePath::Assign(EFilePathRootDir root_dir, const char* filename)
 {
-	static shkOpd _shk_prx_opd = { (void*)0x0057bba0, (void*) TOC1 };
-    ((void*(*)(CFilePath*, EFilePathRootDir, const char*) )&_shk_prx_opd )(this, root_dir, filename);
+	Invalid = false;
+
+	switch (root_dir)
+	{
+		case FPR_GAMEDATA: PrependPath(Filepath, filename, gGameDataPath.c_str()); break;
+		case FPR_BLURAY: PrependPath(Filepath, filename, gBaseDir.c_str()); break;
+		case FPR_SYSCACHE: PrependPath(Filepath, filename, gSysCachePath.c_str()); break;
+		case FPR_ALEAR:
+			PrependPath(Filepath, "gamedata/alear/", gGameDataPath.c_str());
+			Append(filename);
+			break;
+		default: 
+			Invalid = true; 
+			break;
+	}
 }
 
 void CFilePath::Assign(const char* filename)

@@ -15,6 +15,43 @@ namespace sync
         kResponse_MethodNotAllowed
     };
 
+    struct msg_commit_file
+    {
+        const char* FilePath;
+        CGUID FileGuid;
+        u32 FileSize;
+        CHash FileHash;
+
+        bool IsDeletedFile() const
+        {
+            return FileSize == ~0ul;
+        }
+    };
+
+    struct msg_commit
+    {
+        u64 DepotID;
+        CVector<msg_commit_file> Files;
+
+        void AddFile(const char* fp, u32 file_size, const CHash& file_hash, const CGUID& file_guid)
+        {
+            Files.resize(Files.size() + 1);
+            msg_commit_file& file = Files.back();
+            file.FilePath = fp;
+            file.FileSize = file_size;
+            file.FileHash = file_hash;
+            file.FileGuid = file_guid;
+        }
+
+        void DeleteFile(CGUID guid)
+        {
+            Files.resize(Files.size() + 1);
+            msg_commit_file& file = Files.back();
+            file.FileGuid = guid;
+            file.FileSize = ~0ul;
+        }
+    };
+
     struct msg_download
     {
         token Token;
@@ -110,6 +147,7 @@ namespace sync
     REGISTER(msg_login_response, eChannel_Gate, eMessageType_Login);
     REGISTER(msg_login, eChannel_Gate, eMessageType_Login);
     REGISTER(msg_resource_list, eChannel_Resource, eMessageType_FilterResources);
+    REGISTER(msg_commit, eChannel_Sync, eMessageType_Commit);
     
     #undef REGISTER
 }

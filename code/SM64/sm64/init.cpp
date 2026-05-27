@@ -65,7 +65,7 @@ bool gStartedSound = false;
 
 bool InitMarioLib()
 {
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/sm64/baserom.us.z64");
+    CFilePath fp(FPR_ALEAR, "sm64/baserom.us.z64");
     if (!FileExists(fp))
     {
         DebugLog("No ROM for SM64 exists at %s!\n", fp.c_str());

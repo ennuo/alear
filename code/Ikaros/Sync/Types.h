@@ -15,6 +15,16 @@ namespace sync
         char bytes[32];
     };
 
+    enum
+    {
+        eCommitFlags_None,
+        eCommitFlags_FilePathChanged = (1 << 0),
+        eCommitFlags_SizeChanged = (1 << 1),
+        eCommitFlags_HashChanged = (1 << 2),
+        eCommitFlags_Deleted = (1 << 3),
+        eCommitFlags_Added = (1 << 4) | eCommitFlags_FilePathChanged | eCommitFlags_SizeChanged | eCommitFlags_HashChanged
+    };
+
     enum Permissions
     {
         ePermissions_Admin = (1 << 0),
@@ -64,8 +74,14 @@ namespace sync
     enum SyncMessageType
     {
         eMessageType_DepotList = 0x80100000,
+        
         eMessageType_Depot,
-        eMessageType_Database,
+        eMessageType_CreateDepot,
+        eMessageType_DeleteDepot,
+        eMessageType_UpdateDepot,
+        
+        eMessageType_Commit,
+
         eMessageType_RecentActivity,
         eMessageType_CommitInfo
     };
@@ -122,9 +138,32 @@ namespace sync
         u32 Length;
         u32 Message;
         u32 Channel;
-        u16 Method;
-        u16 Status;
-        u32 Mark;
+        u32 Status;
+    };
+
+    struct commit_file
+    {
+        CGUID FileGuid;
+        CFilePath OldFilePath;
+        CFilePath NewFilePath;
+        u32 OldFileSize;
+        u32 NewFileSize;
+        CHash OldFileHash;
+        CHash NewFileHash;
+        u64 OldFileTimestamp;
+        u64 NewFileTimestamp;
+    };
+
+    struct commit_info
+    {
+        u32 Revision;
+        u64 DepotId;
+        u64 CommitId;
+        u64 UserId;
+        u32 FilesAdded;
+        u32 FilesChanged;
+        u32 FilesDeleted;
+        CVector<commit_file> Files;
     };
 
     struct extension_info
@@ -213,6 +252,7 @@ namespace sync
         }
     public:
         inline bool IsValid() const { return Hash || !FilePath.IsEmpty(); }
+        inline bool IsSlow() const { return !FilePath.IsEmpty(); }
     public:
         CHash Hash;
         CFilePath FilePath;

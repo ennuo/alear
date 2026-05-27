@@ -19,7 +19,8 @@ enum EFilePathRootDir
 {
 	FPR_GAMEDATA,
 	FPR_BLURAY,
-	FPR_SYSCACHE
+	FPR_SYSCACHE,
+    FPR_ALEAR
 };
 
 enum EOpenMode 

@@ -73,5 +73,4 @@ inline size_t FormatString(char (&dst)[size], const char* format, ...)
 	return len;
 }
 
-
 #endif // STRING_UTIL_H

@@ -54,13 +54,29 @@ bool AlearEpilogue()
         CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
         for (int i = 0; i < FileDB::DBs.size(); ++i)
         {
-            // skip sync database
-            if (i == 1) continue;
-
             gFileWatcher->AddFile(FileDB::DBs[i]->Path, OnDatabaseFileChanged);
             DebugLog("\t[0x%x]: %s\n", (u32)FileDB::DBs[i], FileDB::DBs[i]->Path.c_str());
         }
     }
+
+
+    {
+        CCSLock _depot_mutex(&sync::DepotMutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < sync::Depots.size(); ++i)
+        {
+            const sync::depot& d = sync::Depots[i];
+            if (d.IsLocal())
+                gFileWatcher->AddFile(d.Database->Path, OnDatabaseFileChanged);
+        }
+    }
+
+    CFartManyRO* fart = (CFartManyRO*)gCaches[CT_READONLY];
+    {
+        CCSLock _cache_lock(&fart->Mutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < fart->Farts.size(); ++i)
+            gFileWatcher->AddFile(fart->Farts[i]->fp, OnCacheFileChanged);
+    }
+
 
     LoadCursorSprites();
     LoadRecordingShaders();
@@ -68,6 +84,8 @@ bool AlearEpilogue()
     LoadSackboyPolygon();
     LoadBallPolygon();
     InitializeExplosiveStyles();
+
+    alear::SaveConfig();
     
     return true;
 }
@@ -101,7 +119,7 @@ void AlearSetupDatabase()
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
 
     FileDB::DBs.push_back(&sync::Database);
-    sync::Database.Path = CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/cache.map");
+    sync::Database.Path = CFilePath(FPR_ALEAR, "sync/cache.map");
     
     if (gGameDataReady)
     {

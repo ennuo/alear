@@ -6,6 +6,7 @@
 
 void InitAlearOptUiHooks();
 void OnDatabaseFileChanged(CFilePath& fp);
+void OnCacheFileChanged(CFilePath& fp);
 void ReloadPendingDatabases();
 void ProcessStartMenuNotifications();
 

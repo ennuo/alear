@@ -16,6 +16,8 @@ struct SCompareIgnoreCase
 typedef std::map<MMString<char>, MMString<char>, SCompareIgnoreCase, STLBucketAlloc<std::pair<MMString<char>, MMString<char > > > > SettingsMap;
 typedef std::map<MMString<char>, SettingsMap, SCompareIgnoreCase, STLBucketAlloc<std::pair<MMString<char>, SettingsMap> > > CategorySettingsMap; 
 
+const char* copyupto(char* dst, const char* src, bool allowspace);
+
 class CIniSettings {
 public:
     CIniSettings();

@@ -229,3 +229,32 @@ ReflectReturn Reflect(R& r, msg_download& d)
 
     return rv;
 }
+
+template <typename R>
+ReflectReturn Reflect(R& r, msg_commit_file& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+
+    ADD(FileGuid);
+    ADD(FileSize);
+    
+    if (d.IsDeletedFile()) return rv;
+
+    ADD(FileHash);
+
+    if (r.GetLoading()) return REFLECT_NOT_IMPLEMENTED;
+
+    s32 length = d.FilePath != NULL ? StringLength(d.FilePath) : 0;
+    if ((rv = Reflect(r, length)) != REFLECT_OK) return rv;
+
+    return r.ReadWrite((void*)d.FilePath, length);
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, msg_commit& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+    ADD(DepotID);
+    ADD(Files);
+    return rv;
+}

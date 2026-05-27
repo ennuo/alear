@@ -26,8 +26,6 @@ namespace sync
     CClient* Client;
     CJobManager* DownloadJobManager;
 
-    static u32 NextMark = 1;
-
     typedef std::map<u32, MessageCallback, std::less<u32>, STLBucketAlloc<std::pair<u32, MessageCallback> > > CallbackMap;
     static CallbackMap RegisteredCallbacks;
     static CRawVector<StateChangeCallback> RegisteredStateCallbacks;
@@ -143,9 +141,7 @@ namespace sync
         p.Length = sizeof(packet) + len;
         p.Message = message;
         p.Channel = channel;
-        p.Method = eMethod_Request;
         p.Status = kResponse_Ok;
-        p.Mark = NextMark++;
         
         if (!unbuffered_send(s, &p, sizeof(packet))) return false;
         if (len > 0)
@@ -357,7 +353,7 @@ namespace sync
             int fd;
             bool loose = false;
 
-            if (!source.FilePath)
+            if (!source.IsSlow())
             {
                 if (!GetResourceReader(source.Hash, reader))
                 {
@@ -604,12 +600,12 @@ namespace sync
         job->Server = Client->GetServerAddress();
         job->Token = Client->GetSession();
 
-        if (!source.FilePath)
+        if (!source.IsSlow())
         {
             SYNC_LOG("Uploading h%s\n", StringifyHash(source.Hash).c_str());
             for (u32 i = 0; i < CT_COUNT; ++i)
             {
-                if (gCaches[i]->GetSize(source.Hash, job->UploadSize))
+                if (gCaches[i] != NULL && gCaches[i]->GetSize(source.Hash, job->UploadSize))
                     break;
             }
         }
@@ -632,6 +628,12 @@ namespace sync
         return job;
     }
 
+    CCommitTask::CCommitTask(const CFilePath& fp, u64 depot_id) : CBaseCounted(),
+    Depot(depot_id), State(kState_Inactive), UploadTask(), DatabaseFilePath(fp), CommitMessage()
+    {
+        CommitMessage.DepotID = Depot;
+    }
+
     void DownloadTest(void* userdata)
     {
         SYNC_LOG("download test, making sure tag is correct!!!: %08x\n", ((CClient*)userdata)->DownloadTag);
@@ -640,7 +642,8 @@ namespace sync
     CClient::CClient() : WantQuit(false), WantConnect(true),
     State(kState_Disconnected), SubState(kSubState_None), Socket(-1), Address(), Thread(),
     DownloadMutex("DownloadMutex"), UploadMutex("UploadMutex"), DownloadTag(), DownloadsInProgress(),
-    ServerInfo(), UploadTask(), PendingDepotRequests()
+    ServerInfo(), UploadTask(), PendingDepotRequests(),
+    CommitMutex("CommitMutex"), CommitTask()
     {
         // Using the HTTP job manager because it's probably going to be
         // less congested than the main job manager.
@@ -790,7 +793,31 @@ namespace sync
     {
         switch (packet.Message)
         {
+            case eMessageType_Commit:
+            {
+                CCSLock _lock(&CommitMutex, __FILE__, __LINE__);
+                if (!CommitTask || CommitTask->State != CCommitTask::kState_Committing)
+                {
+                    SYNC_ERROR("Got commit response despite no pending commit task!\n");
+                    return;
+                }
 
+                if (packet.Status != kResponse_Ok)
+                {
+                    SYNC_LOG("Commit failed!\n");
+                    CommitTask->State = CCommitTask::kState_Failed;
+                    return;
+                }
+
+                CommitTask->State = CCommitTask::kState_Success;
+                break;
+            }
+
+            case eEventType_Commit:
+            {
+                // blah blah parse database response
+                break;
+            }
         }
     }
 
@@ -818,7 +845,7 @@ namespace sync
 
                 if (packet.Status != kResponse_Ok)
                 {
-                    SYNC_ERROR("Filter resources request failed!\n");
+                    SYNC_LOG("Filter resources request failed!\n");
                     return;
                 }
 
@@ -855,12 +882,6 @@ namespace sync
         bool listen_error = false;
         if (tryrecvmsg(Socket, p, data, listen_error))
         {
-            if (p.Method != eMethod_Response && p.Message != eMethod_Event)
-            {
-                SYNC_ERROR("received packet with invalid method from server!\n");
-                return;
-            }
-
             if (State == kState_Connected)
             {
                 switch (p.Channel)
@@ -1144,28 +1165,44 @@ namespace sync
         if (State == kState_Connected)
         {
             UpdateUploadTasks();
+            UpdateCommitTask();
         }
     }
 
     void CClient::DoUploadTest()
     {
-        SYNC_LOG("doing upload test\n");
-        CRawVector<CFileSource> sources;
-        sources.push_back(CFilePath(FPR_GAMEDATA, "test.bin"));
-        Upload(sources);
+        SYNC_LOG("doing commit test!\n");
+        Commit(CFilePath(FPR_ALEAR, "sync/publish/uploadtest.map"), GetDepot("alear")->DepotID);
     }
 
-    void CClient::Upload(const CRawVector<CFileSource>& sources)
+    CP<CUploadTask> CClient::Upload(const CRawVector<CFileSource>& sources)
     {
-        if (sources.size() == 0) return;
+        if (sources.size() == 0) return NULL;
 
         CCSLock _lock(&UploadMutex, __FILE__, __LINE__);
         
         CP<CUploadTask> task = UploadTask;
         while (task && task->Next) task = task->Next;
 
-        if (task) task->Next = new CUploadTask(sources);
-        else UploadTask = new CUploadTask(sources);
+        CP<CUploadTask> next = new CUploadTask(sources);
+
+        if (task) task->Next = next;
+        else UploadTask = next;
+
+        return next;
+    }
+
+    const depot* CClient::GetDepot(const char* id)
+    {
+        CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < Depots.size(); ++i)
+        {
+            const depot& depot = Depots[i];
+            if (StringCompare(depot.Id, id) == 0)
+                return &depot;
+        }
+
+        return NULL;
     }
 
     const depot* CClient::GetDepot(u64 id)
@@ -1179,6 +1216,126 @@ namespace sync
         }
 
         return NULL;
+    }
+
+    CP<CCommitTask> CClient::Commit(const CFilePath& fp, u64 depot_id)
+    {
+        CCSLock _commit_lock(&CommitMutex, __FILE__, __LINE__);
+        CCSLock _depot_lock(&DepotMutex, __FILE__, __LINE__);
+
+        CommitTask = new CCommitTask(fp, depot_id);
+
+        return CommitTask;
+    }
+
+    void CClient::UpdateCommitTask()
+    {
+        CCSLock _lock(&CommitMutex, __FILE__, __LINE__);
+        CP<CCommitTask>& task = CommitTask;
+        if (!task) return;
+
+        switch (task->State)
+        {
+            case CCommitTask::kState_Inactive:
+            {
+                if (!FileExists(task->DatabaseFilePath))
+                {
+                    SYNC_LOG("not committing changes because file database doesn't exist\n");
+                    task->State = CCommitTask::kState_NoDatabaseFile;
+                    break;
+                }
+
+                CCSLock _depot_lock(&DepotMutex, __FILE__, __LINE__);
+                const depot* d = GetDepot(task->Depot);
+                if (d == NULL)
+                {
+                    SYNC_LOG("not committing changes because depot wasn't found\n");
+                    task->State = CCommitTask::kState_DepotNotFound;
+                    break;
+                }
+
+                CFileDB database(task->DatabaseFilePath);
+                if (database.Load() != REFLECT_OK)
+                {
+                    SYNC_LOG("failed to parse database for commit at %s\n", task->DatabaseFilePath.c_str());
+                    task->State = CCommitTask::kState_DatabaseLoadFailed;
+                    break;
+                }
+
+                CRawVector<CFileSource> sources(database.Files.size());
+                task->CommitMessage.Files.reserve(database.Files.size());
+                
+                for (CFileDBRow* it = database.Files.begin(); it != database.Files.end(); ++it)
+                {
+                    const CFileDBRow* row = d->Database->FindByGUID(it->FileGuid);
+                    
+                    if (row != NULL && row->FileHash == it->FileHash)
+                    {
+                        SYNC_LOG("skipping upload of g%d (%s) because hash already exists in local depot cache\n", row->FileGuid.guid, row->FilePathX);
+                        continue;
+                    }
+                    
+                    u32 size;
+                    CFileSource source;
+                    
+                    if (!it->FileHash) source = CFileSource(CFilePath(FPR_GAMEDATA, it->FilePathX));
+                    else
+                    {
+                        for (u32 i = 0; i < CT_COUNT; ++i)
+                        {
+                            if (gCaches[i] != NULL && gCaches[i]->GetSize(it->FileHash, size))
+                                source = CFileSource(it->FileHash);
+                        }
+                    }
+
+                    if (!source.IsValid())
+                    {
+                        SYNC_LOG("skipping upload of g%d (%s) because data source was not found\n", it->FileGuid.guid, it->FilePathX);
+                        continue;
+                    }
+
+                    if (source.IsSlow())
+                        size = FileSize(source.FilePath);
+                    
+                    sources.push_back(source);
+                    task->CommitMessage.AddFile(it->FilePathX, size, source.Hash, it->FileGuid);
+                    SYNC_LOG("queueing upload of %s...\n", it->FilePathX);
+                }
+
+                SYNC_LOG("starting commit task with %d files\n", sources.size());
+
+                task->UploadTask = Upload(sources);
+                task->State = CCommitTask::kState_UploadingResources;
+
+                break;
+            }
+            case CCommitTask::kState_UploadingResources:
+            {
+                if (task->UploadTask)
+                {
+                    int state = task->UploadTask->State;
+                    if (state < CUploadTask::kState_Finished)
+                        break;
+
+                    if (state >= CUploadTask::kState_FinishedError)
+                    {
+                        task->State = CCommitTask::kState_UploadingResources;
+                        break;
+                    }
+
+                }
+
+                if (sendmsg(Socket, task->CommitMessage))
+                    task->State = CCommitTask::kState_Committing;
+                else
+                    task->State = CCommitTask::kState_NetworkError;
+
+                break;
+            }
+        }
+
+        if (task->Completed())
+            CommitTask = NULL;
     }
 
     void CClient::UpdateUploadTasks()

@@ -157,7 +157,7 @@ bool AlearInitServerSwitcher()
 {
     DebugLog("Initializing Server Switcher\n");
     gServerSwitcher = new CServerSwitcher();
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/servers.json");
+    CFilePath fp(FPR_ALEAR, "servers.json");
     if (FileExists(fp))
     {
         DebugLog("Loading server configuration file at %s\n", fp.c_str());

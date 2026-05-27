@@ -621,7 +621,7 @@ bool LoadCameraClips()
     gClips.clear();
     DebugLog("Starting load of camera config clips...\n");
 
-    CFilePath clipdir(FPR_GAMEDATA, "gamedata/alear/clips");
+    CFilePath clipdir(FPR_ALEAR, "clips");
 
     int fd;
 

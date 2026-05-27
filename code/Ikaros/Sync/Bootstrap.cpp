@@ -10,6 +10,8 @@
 #include <Fart.h>
 #include <FartRO.h>
 #include <ReadINI.h>
+#include <FileWatcher.h>
+#include <AlearStartMenu.h>
 
 extern MAKE_THREAD_FUNCTION(SyncLoadThread);
 
@@ -24,7 +26,7 @@ namespace sync
 
     CFilePath GetDepotCacheFilePath()
     {
-        return CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depotcache");
+        return CFilePath(FPR_ALEAR, "sync/depotcache");
     }
 
     void LinkDepots()
@@ -91,11 +93,11 @@ namespace sync
 
     bool Open()
     {
-        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/publish/"));
-        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/local"));
-        DirectoryCreate(CFilePath(FPR_GAMEDATA, "gamedata/alear/sync/depots/remote"));
+        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/publish/"));
+        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/depots/local"));
+        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/depots/remote"));
 
-        const CFilePath cache_path(FPR_GAMEDATA, "gamedata/alear/sync/resourcecache.farc");
+        const CFilePath cache_path(FPR_ALEAR, "sync/resourcecache.farc");
         if (!FileExists(cache_path))
         {
             Footer footer = { 0, FARC };
@@ -112,7 +114,7 @@ namespace sync
         LoadDepotCache();
         LinkDepots();
 
-        Config.ReadIniFile(CFilePath(FPR_GAMEDATA, "gamedata/alear/config/sync.ini"));
+        Config.ReadIniFile(CFilePath(FPR_ALEAR, "config/sync.ini"));
         if (Config.GetBool("enabled", true))
         {
             DownloadJobManager = new CJobManager(kMaxConcurrentDownloads, "alear sync download job worker");
@@ -125,6 +127,7 @@ namespace sync
             if (sync::Client->IsConnected())
             {
                 MMLog("CONNECTED!!!!!\n");
+                sync::Client->DoUploadTest();
             }
             else
             {
