@@ -26,6 +26,14 @@ bool IsPlayerCustomizationTool(u32 tool_type)
         tool_type == TOOL_COSTUME_WASH;
 }
 
+void Translate(MMString<wchar_t>& dst, const char* t)
+{
+    u32 key = MakeLamsKeyID(t, NULL);
+    const tchar_t* text = (const tchar_t*)L"";
+    CustomTryTranslate(key, text);
+    dst = (const wchar_t*)text;
+}
+
 bool IsToolMatch(CInventoryView* view, u32 tool_type)
 {
     bool edit = gGame->EditMode;
@@ -187,6 +195,19 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     if (item_guid == 0x12981 || item_guid == 0x15351) return false;
     if ((item_type & view_type) == 0) return false;
 
+    if ((item_type & E_TYPE_READYMADE) != 0)
+    {
+        if ((item_type & E_TYPE_TOOL) != 0) return true;
+
+        if(!gSeparateToys)
+        {
+            return (item_type & view_type) != 0;
+        }
+        if (view_subtype == E_SUBTYPE_TOYS)
+            return (item_subtype & E_SUBTYPE_TOYS) != 0;
+        return (item_subtype & E_SUBTYPE_TOYS) == 0;
+    }
+
     if (view_type == gPodMask)
     {
         if ((item_type & E_TYPE_POD_TOOL) != 0) return true;
@@ -236,6 +257,218 @@ struct SortByName
         return cmp < 0;
     }
 };
+
+int MapInventoryItemToType(int type, int subtype)
+{
+    if (type == E_TYPE_TOOL)
+        return 0;
+    if (type == E_TYPE_PLAYER_COLOUR)
+        return 1;
+    if (type == E_TYPE_USER_POD)
+        return 2;
+    if (type == E_TYPE_BACKGROUND)
+        return 3;
+    if (type == E_TYPE_PRIMITIVE_SHAPE)
+        return 4;
+    if (type == E_TYPE_PRIMITIVE_MATERIAL)
+        return 5;
+    if (type == E_TYPE_READYMADE)
+    {
+        if (subtype == E_SUBTYPE_TOYS)
+        {
+            return 7;
+        }
+        return 6;
+    }
+    if (type == E_TYPE_USER_OBJECT)
+    {
+        if (type == E_SUBTYPE_MADE_BY_ME)
+        {   
+            return 8;
+        }
+        return 9;
+    }
+    if (type == E_TYPE_JOINT)
+        return 10;
+    if (type == E_TYPE_GADGET)
+        return 11;
+    if (type == E_TYPE_GAMEPLAY_KIT)
+        return 12;
+    if (type == E_TYPE_MUSIC)
+        return 13;
+    if (type == E_TYPE_SOUND)
+        return 14;
+    if (type == E_TYPE_COSTUME_MATERIAL || type == E_TYPE_COSTUME)
+        return 15;
+    if (type == E_TYPE_USER_COSTUME)
+        return 16;
+    if (type == E_TYPE_STICKER)
+        return 17;
+    if (type == E_TYPE_DECORATION)
+        return 18;
+    if (type == E_TYPE_PAINT)
+        return 19;
+    if (type == E_TYPE_EYETOY)
+        return 20;
+    if (type == E_TYPE_USER_STICKER)
+    {
+        if (type == E_SUBTYPE_MADE_BY_ME)
+        {
+            return 21;
+        }
+        return 22;
+    }
+    return 23;
+}
+
+struct SortByType
+{
+    bool operator()(CInventoryView::SInventoryItemData& a, CInventoryView::SInventoryItemData& z) const
+    {
+      int a_type = MapInventoryItemToType(a.Item->Details.Type, a.Item->Details.SubType);
+      int z_type = MapInventoryItemToType(z.Item->Details.Type, z.Item->Details.SubType);
+
+      if (a_type == z_type)
+        return a.Item->UID < z.Item->UID;
+      return a_type > z_type;
+    }
+};
+
+void DoTypeSort(CInventoryView* view)
+{
+    std::sort(view->PageData.begin(), view->PageData.end(), SortByType());
+
+    int key = 0xDEADBEEF;
+    for (int i = 0; i < view->PageData.size(); ++i)
+    {
+        CInventoryItem* item = view->PageData[i].Item;
+        
+        SSortTermBoundary boundary;
+        if (item->Details.Type == E_TYPE_TOOL)
+        {
+            Translate(boundary.Name, "POPIT_FUNCTIONS");
+            item->Details.CustomSortKey = 0;
+        }
+        if (item->Details.Type == E_TYPE_PLAYER_COLOUR)
+        {
+            Translate(boundary.Name, "POPIT_PAGE_PLAYER_COLOUR");
+            item->Details.CustomSortKey = 1;
+        }
+        if (item->Details.Type == E_TYPE_USER_POD)
+        {
+            Translate(boundary.Name, "TG_My_Pods");
+            item->Details.CustomSortKey = 2;
+        }
+        if (item->Details.Type == E_TYPE_BACKGROUND)
+        {
+            Translate(boundary.Name, "TG_Backgrounds");
+            item->Details.CustomSortKey = 3;
+        }
+        if (item->Details.Type == E_TYPE_PRIMITIVE_SHAPE)
+        {
+            Translate(boundary.Name, "TG_Shapes");
+            item->Details.CustomSortKey = 4;
+        }
+        if (item->Details.Type == E_TYPE_PRIMITIVE_MATERIAL)
+        {
+            Translate(boundary.Name, "TG_Materials");
+            item->Details.CustomSortKey = 5;
+        }
+        if (item->Details.Type == E_TYPE_READYMADE)
+        {
+            if (item->Details.SubType == E_SUBTYPE_TOYS)
+            {
+                Translate(boundary.Name, "TG_Toys");
+                item->Details.CustomSortKey = 7;
+            }
+            Translate(boundary.Name, "TG_Objects");
+            item->Details.CustomSortKey = 6;
+        }
+        if (item->Details.Type == E_TYPE_USER_OBJECT)
+        {
+            if (item->Details.SubType == E_SUBTYPE_MADE_BY_ME)
+            {
+                Translate(boundary.Name, "POPIT_MY_PLANS");
+                item->Details.CustomSortKey = 8;
+            }
+            Translate(boundary.Name, "POPIT_PAGE_COMMUNITY_OBJECTS");
+            item->Details.CustomSortKey = 9;
+        }
+        if (item->Details.Type == E_TYPE_JOINT)
+        {
+            Translate(boundary.Name, "TG_Links");
+            item->Details.CustomSortKey = 10;
+        }
+        if (item->Details.Type == E_TYPE_GADGET)
+        {
+            Translate(boundary.Name, "POPIT_PAGE_GADGETS");
+            item->Details.CustomSortKey = 11;
+        }
+        if (item->Details.Type == E_TYPE_GAMEPLAY_KIT)
+        {
+            Translate(boundary.Name, "TG_Gameplay_Kits");
+            item->Details.CustomSortKey = 12;
+        }
+        if (item->Details.Type == E_TYPE_MUSIC)
+        {
+            Translate(boundary.Name, "CATEGORY_MUSIC");
+            item->Details.CustomSortKey = 13;
+        }
+        if (item->Details.Type == E_TYPE_SOUND)
+        {
+            Translate(boundary.Name, "CATEGORY_SOUND_OBJECTS");
+            item->Details.CustomSortKey = 14;
+        }
+        if (item->Details.Type == E_TYPE_COSTUME_MATERIAL || item->Details.Type == E_TYPE_COSTUME)
+        {
+            Translate(boundary.Name, "TG_My_Costumes");
+            item->Details.CustomSortKey = 15;
+        }
+        if (item->Details.Type == E_TYPE_USER_COSTUME)
+        {
+            Translate(boundary.Name, "TG_My_Costumes");
+            item->Details.CustomSortKey = 16;
+        }
+        if (item->Details.Type == E_TYPE_STICKER)
+        {
+            Translate(boundary.Name, "TG_Stickers");
+            item->Details.CustomSortKey = 17;
+        }
+        if (item->Details.Type == E_TYPE_DECORATION)
+        {
+            Translate(boundary.Name, "TG_Decorations");
+            item->Details.CustomSortKey = 18;
+        }
+        if (item->Details.Type == E_TYPE_PAINT)
+        {
+            Translate(boundary.Name, "TG_Paint");
+            item->Details.CustomSortKey = 19;
+        }
+        if (item->Details.Type == E_TYPE_EYETOY)
+        {
+            Translate(boundary.Name, "Eyetoy");
+            item->Details.CustomSortKey = 20;
+        }
+        if (item->Details.Type == E_TYPE_USER_STICKER)
+        {
+            if (item->Details.SubType == E_SUBTYPE_MADE_BY_ME)
+            {
+                Translate(boundary.Name, "POPIT_MY_PHOTOS");
+                item->Details.CustomSortKey = 21;
+            }
+            Translate(boundary.Name, "POPIT_PAGE_COMMUNITY_PHOTOS");
+            item->Details.CustomSortKey = 22;
+        }
+        
+        if (item->Details.CustomSortKey != key)
+        {
+            boundary.Index = i;
+            view->SortTermBoundaries.push_back(boundary);
+
+            key = item->Details.CustomSortKey;
+        }
+    }
+}
 
 struct SortByArtist
 {
@@ -303,6 +536,7 @@ bool IsAlphabeticalCategory(CInventoryView* view)
     if (view->Descriptor.Type & E_TYPE_READYMADE) return true;
     if (view->Descriptor.Type & E_TYPE_STICKER) return true;
     if (view->Descriptor.Type & E_TYPE_DECORATION) return true;
+    if (view->Descriptor.Type & E_TYPE_PAINT) return true;
     if (view->Descriptor.Type & E_TYPE_PRIMITIVE_MATERIAL) return true;
     if (view->Descriptor.Type & E_TYPE_BACKGROUND) return true;
 
@@ -357,6 +591,7 @@ void AttachCustomSortModes()
     // Using the location sort for the artist sort
     TABLE[SORT_ARTIST] = (u32)&_global_artist_hook - (u32)TABLE;
     TABLE[SORT_MEME] = (u32)&_global_pref_hook - (u32)TABLE;
+    TABLE[SORT_TYPE] = (u32)&_global_type_sort_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0091e06c, (u32)TABLE);

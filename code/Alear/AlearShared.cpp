@@ -422,6 +422,11 @@ void GatherUsedPlanDescriptors()
         PRef* ref = thing->GetPRef();
         if (ref != NULL && ref->Plan.IsValid())
             gUsedPlanDescriptors.insert(ref->Plan);
+            
+        PGameplayData* gameplay_data = thing->GetPGameplayData();
+        if (gameplay_data != NULL && gameplay_data->EggLink->IsValid()) 
+        {
+        }
 
         // PCostume* costume = thing->GetPCostume();
         // if (costume != NULL)

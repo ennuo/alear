@@ -35,6 +35,7 @@ extern "C" uintptr_t _popit_close_hook;
 extern "C" uintptr_t _popit_alphabetical_hook;
 
 extern "C" uintptr_t _global_artist_hook;
+extern "C" uintptr_t _global_type_sort_hook;
 extern "C" uintptr_t _global_pref_hook;
 extern "C" uintptr_t _custom_tool_type_hook;
 extern "C" uintptr_t _custom_poppet_message_hook;

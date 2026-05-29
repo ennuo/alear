@@ -986,6 +986,7 @@ namespace TweakShapeNativeFunctions
         CGUID guid = thing->PlanGUID;
 
         PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+        PRef* ref = thing->GetPRef();
         if (mesh != NULL) guid = mesh->PlanGUID;
         else if (!guid)
         {
@@ -996,6 +997,7 @@ namespace TweakShapeNativeFunctions
             if (group != NULL)
                 guid = group->PlanDescriptor.GetGUID();
         }
+        else if (ref != NULL) guid = ref->Plan.GetGUID();
 
         if (!guid) return NULL;
 

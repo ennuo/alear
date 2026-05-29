@@ -16,8 +16,11 @@ void OnSetRenderDistanceToggle();
 bool gPauseGameSim;
 
 ConfigMap gConfigMap;
+CConfigBool gUsePodTransition(L"Pod", L"Interface - Use Pod Transition Mask", false);
+
 CConfigBool gUsePopitGradients(L"Popit", L"Interface - Use Popit Color Gradient", true);
 CConfigBool gCanCollapseCategories(L"Popit", L"Interface - Can Collapse Categories", true);
+CConfigBool gSeparateToys(L"Popit", L"Interface - Separate Toys and Meshes", true);
 CConfigBool gCanHidePopit(L"Popit", L"Interface - Can Hide Tether & UI", false);
 CConfigBool gUseCustomCursors(L"Popit", L"Visual - Use Unique Cursor Sprites", true);
 CConfigBool gColorCustomCursors(L"Popit", L"Visual - Use Player Color Cursor Sprites", false);

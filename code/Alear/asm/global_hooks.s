@@ -43,6 +43,19 @@ _global_artist_hook:
 
     ba 0x000c2cf4
 
+.global _global_type_sort_hook
+_global_type_sort_hook:
+    mr %r3, %r27
+
+    std %r2, 0x28(%r1)
+    lis %r5, _Z10DoTypeSortP14CInventoryView@h      
+    ori %r5, %r5, _Z10DoTypeSortP14CInventoryView@l
+    lwz %r2, 0x4(%r5)
+    bl ._Z10DoTypeSortP14CInventoryView
+    ld %r2, 0x28(%r1)
+
+    ba 0x000c2cf4
+
 .global _global_pref_hook
 _global_pref_hook:
     mr %r3, %r27
