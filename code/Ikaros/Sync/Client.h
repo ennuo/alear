@@ -210,8 +210,6 @@ namespace sync
         const depot* GetDepot(u64 id);
         const depot* GetDepot(const char* id);
     public:
-        void DoUploadTest();
-    public:
         int State;
         union
         {

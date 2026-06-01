@@ -123,17 +123,6 @@ namespace sync
             
             // wait for initial server bringup
             while (sync::Client->IsConnecting()) ThreadSleep(500);
-
-            if (sync::Client->IsConnected())
-            {
-                MMLog("CONNECTED!!!!!\n");
-                sync::Client->DoUploadTest();
-            }
-            else
-            {
-
-            }
-
         }
         
         return true;

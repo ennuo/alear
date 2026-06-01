@@ -1169,12 +1169,6 @@ namespace sync
         }
     }
 
-    void CClient::DoUploadTest()
-    {
-        SYNC_LOG("doing commit test!\n");
-        Commit(CFilePath(FPR_ALEAR, "sync/publish/uploadtest.map"), GetDepot("alear")->DepotID);
-    }
-
     CP<CUploadTask> CClient::Upload(const CRawVector<CFileSource>& sources)
     {
         if (sources.size() == 0) return NULL;
