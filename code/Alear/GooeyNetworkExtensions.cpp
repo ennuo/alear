@@ -584,6 +584,16 @@ namespace TweakSettingNativeFunctions
         return gDebugMaterialTweaks;
     }
 
+    bool SeparateToys()
+    {
+        return gSeparateToys;
+    }
+
+    bool UsePodTransition()
+    {
+        return gUsePodTransition;
+    }
+
     void Register()
     {
         RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
@@ -592,6 +602,8 @@ namespace TweakSettingNativeFunctions
         RegisterNativeFunction("PlayerColour", "UseLegacyKeyColors__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseLegacyKeyColors>);
         RegisterNativeFunction("PlayerColour", "UseNewKeyColorSelection__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseNewKeyColorSelection>);
         RegisterNativeFunction("TweakShape", "AllowDebugTweaks__", true, NVirtualMachine::CNativeFunction0<bool>::Call<DebugMaterialTweaks>);
+        RegisterNativeFunction("Poppet", "SeparateToys__", true, NVirtualMachine::CNativeFunction0<bool>::Call<SeparateToys>);
+        RegisterNativeFunction("Pod", "UsePodTransition__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UsePodTransition>);
     }
 }
 

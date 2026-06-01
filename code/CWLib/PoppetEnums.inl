@@ -24,6 +24,7 @@ typedef enum EInventoryObjectSubType {
     E_SUBTYPE_FULL_COSTUME=2147483648u,
     
     // these are custom subtypes
+    E_SUBTYPE_TOYS=1,
     E_SUBTYPE_POD_CONTROLLER=1,
     E_SUBTYPE_POD_MESH=2,
     E_SUBTYPE_ANIMATION_STYLE=16384,
@@ -82,6 +83,7 @@ typedef enum EInventorySortMode {
     // custom
     SORT_ARTIST = 10,
     SORT_MEME = 11,
+    SORT_TYPE = 12,
     
     NUM_SORT_MODES
 } EInventorySortMode;

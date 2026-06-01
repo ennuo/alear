@@ -9,8 +9,8 @@
 class PGameplayData : public CPart {
 public:
     void SetEggLink(CP<RPlan> const& plan);
-private:
     CEggLink* EggLink;
+private:
     void* KeyLink; // CKeyLink* KeyLink;
     int FluffCost;
     bool CachedHasBeenCollected;
