@@ -197,6 +197,7 @@ namespace sync
         void UpdateSynced();
     public:
         void Download(CP<CSerialisedResource>& csr, int priority);
+        bool DownloadSync(const CResourceDescriptorBase& desc);
         bool SendMessage(u32 channel, u32 message, void* data = NULL, int len = 0);
         CP<CUploadTask> Upload(const CRawVector<CFileSource>& sources);
         CP<CCommitTask> Commit(const CFilePath& fp, u64 depot_id);

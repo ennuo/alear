@@ -67,7 +67,9 @@ void RMaterial::DestroyExtraData()
 
 void RPlan::InitializeExtraData()
 {
-    new (&TemplateLevel) CResourceDescriptor<RLevel>();
+    new (&InventoryData.TemplateLevel) CResourceDescriptor<RLevel>();
+    InventoryData.LoreKey = 0;
+    InventoryData.Flags = 0;
 }
 
 void RGfxMaterial::InitializeExtraData()

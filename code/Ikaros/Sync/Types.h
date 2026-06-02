@@ -211,7 +211,7 @@ namespace sync
         
         inline CFilePath MakeDatabaseFilePath() const
         {
-            CFilePath fp(FPR_GAMEDATA, IsLocal() ? "gamedata/alear/sync/depots/local" : "gamedata/alear/sync/depots/remote");
+            CFilePath fp(FPR_GAMEDATA, IsLocal() ? "gamedata/alear/sync/local" : "gamedata/alear/sync/remote");
             fp.Append(Id);
             fp.AppendRaw(".map");
 

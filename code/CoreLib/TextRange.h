@@ -7,26 +7,38 @@
 template <typename T>
 struct TextRange {
 public:
-	TextRange() {
-		this->Begin = (T*)NULL;
-		this->End = (T*)NULL;
-	}
+    TextRange() : Begin(), End()
+    {
 
-	TextRange(const T* begin) {
-		this->Begin = begin;
-		this->End = Begin + StringLength(begin);
-	}
+    }
 
-	TextRange(const T* begin, const T* end) {
-		this->Begin = begin;
-		this->End = end;
-	}
+    TextRange(const T* begin) : Begin(begin), End(begin + StringLength(begin))
+    {
 
-	inline bool Valid() { return this->End <= this->Begin; }
-	inline bool Empty();
-	inline u32 Length() { return this->End - this->Begin; }
+    }
 
-	void SkipWhite() {
+    TextRange(const T* begin, const T* end) : Begin(begin), End(end)
+    {
+
+    }
+public:
+    bool Valid() const
+    {
+        return Begin < End;
+    }
+
+    bool Empty() const
+    {
+        return Begin == End;
+    }
+
+    u32 Length() const
+    {
+        return End - Begin;
+    }
+
+	void SkipWhite() 
+	{
 		if (this->End <= this->Begin) return;
 		while (IsWhiteSpace(*this->Begin)) {
 			this->Begin++;
@@ -36,30 +48,34 @@ public:
 
 	void SkipWhiteQ();
 
-	void TrimWhite() {
-		if (this->End <= this->Begin) return;
-		while (IsWhiteSpace(*this->Begin)) {
-			this->Begin++;
-			if (this->Begin == this->End) break;
-		}
+    void TrimWhite()
+    {
+        if (End <= Begin) return;
+        while (Begin != End && IsWhiteSpace(*Begin)) Begin++;
 
-		if (this->End <= this->Begin) return;
-		while (IsWhiteSpace(*this->End)) {
-			this->End--;
-			if (this->End == this->Begin) break;
-		}
-	}
+        if (End <= Begin) return;
+        while (End != Begin && IsWhiteSpace(*(End - 1))) End--;
+    }
 
 	void TrimWhiteQ();
 
-	T GetNext() { return *this->Begin++; }
-	T Peek() { return *this->Begin; }
+    T GetNext()
+    {
+        return *Begin++;
+    }
+    
+    T Peek() const
+    {
+        return *Begin;
+    }
 
-	bool Find(T ch, TextRange<T>* match) {
+	bool Find(T ch, TextRange* match) const
+	{
 		if (this->End <= this->Begin) return false;
 		
 		T* index = this->Begin;
-		while (*index != ch) {
+		while (*index != ch) 
+		{
 			if (index == this->End)
 				return false;
 			index++;
@@ -71,35 +87,33 @@ public:
 		return true;
 	}
 
-	bool Find(const T* str, TextRange<T>* match);
-	bool FindOneOf(const T* str, TextRange<T>* match);
+	bool Find(const T* str, TextRange* match);
+	bool FindOneOf(const T* str, TextRange* match);
 	
-	bool Equals(const TextRange<T>& str) {
-		int length = this->End - this->Begin;
-		if (length != (str.Begin - str.End))
-			return false;
+	bool Equals(const TextRange& str) const
+	{
+		int length = this->Length();
+		if (length != str.Length()) return false;
 
-		if (this->Begin < this->End) {
-			for (int i = 0; i < length; ++i) {
-				if (this->Begin[i] != str.Begin[i])
-					return false;
-			}
+		if (this->Empty()) return true;
+
+		for (u32 i = 0; i < length; ++i)
+		{
+			if (this->Begin[i] != str.Begin[i])
+				return false;
 		}
 
 		return true;
 	}
 
-	inline s32 Compare(const TextRange<T>& range)
+	inline s32 Compare(const TextRange& range) const
 	{
-		// this technically has a different implementation but i dont really care
-		u32 len = MIN(range.Length(), Length());
-		return strncmp(Begin, range.Begin, len);
+		return StringCompareN(Begin, range.Begin, MIN(range.Length(), Length()));
 	}
 
-	s32 Compare(const T* str)
+	s32 Compare(const T* str) const
 	{
-		u32 len = MIN(StringLength(str), Length());
-		return strncmp(Begin, str, len);
+		return StringCompareN(Begin, str, MIN(StringLength(str), Length()));
 	}
 	
 	bool StartsWith(const char* str);

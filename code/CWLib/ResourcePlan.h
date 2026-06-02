@@ -17,6 +17,9 @@ public:
     u32 Location;
     u32 Category;
     CP<RTexture> PinnedIcon;
+    CResourceDescriptor<RLevel> TemplateLevel;
+    u32 LoreKey;
+    u32 Flags;
 };
 
 class RPlan : public CResource {
@@ -31,8 +34,6 @@ public:
     u8 CompressionFlags;
     ByteArray ThingData;
     CPlanDetails InventoryData;
-public:
-    CResourceDescriptor<RLevel> TemplateLevel;
 };
 
 #endif // RESOURCE_PLAN_H

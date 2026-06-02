@@ -9,6 +9,8 @@
 #include <mem_stl_buckets.h>
 
 #include <ResourceTranslationTable.h>
+#include <MMString.h>
+#include <TextRange.h>
 
 typedef void (*DebugFn)(void);
 
@@ -20,14 +22,16 @@ enum EConfigOptionType {
 
 class CConfigOption {
 protected:
-    inline CConfigOption(EConfigOptionType type, const wchar_t* category, const wchar_t* name, const char* ini_name) : Next(NULL), Category(category), DisplayName(name), IniName(ini_name), Type(type), Invoke(NULL)
+    inline CConfigOption(EConfigOptionType type, const char* path) :
+    Invoke(), Next(), Sibling(), Path(path), DisplayName(), Type(type)
     {
         AddToRegistry();
     }
 public:
     inline CConfigOption* GetNext() { return Next; }
-    inline wchar_t* GetDisplayName() { return (wchar_t*)DisplayName; }
-    inline const char* GetIniName() const { return IniName; }
+    inline CConfigOption* GetSibling() { return Sibling; }
+    inline wchar_t* GetDisplayName() { return DisplayName.c_str(); }
+    inline const char* GetPath() const { return Path; }
     inline EConfigOptionType GetType() const { return Type; }
 protected:
     void AddToRegistry();
@@ -35,20 +39,24 @@ protected:
     DebugFn Invoke;
 private:
     CConfigOption* Next;
-    const char* IniName;
-    const wchar_t* Category;
-    const wchar_t* DisplayName;
+public:
+    CConfigOption* Sibling;
+private:
+    const char* Path;
+public:
+    MMString<wchar_t> DisplayName;
+private:
     EConfigOptionType Type;
 };
 
 class CConfigBool : public CConfigOption {
 public:
-    inline CConfigBool(const wchar_t* category, const wchar_t* name, const char* ini_name, bool default_value) 
-    : CConfigOption(OPT_BOOL, category, name, ini_name), Value(default_value)
+    inline CConfigBool(const char* path, bool default_value) 
+    : CConfigOption(OPT_BOOL, path), Value(default_value)
     {}
 
-    inline CConfigBool(const wchar_t* category, const wchar_t* name, const char* ini_name, bool default_value, DebugFn invoke) 
-    : CConfigOption(OPT_BOOL, category, name, ini_name), Value(default_value)
+    inline CConfigBool(const char* path, bool default_value, DebugFn invoke) 
+    : CConfigOption(OPT_BOOL, path), Value(default_value)
     {
         Invoke = invoke;
     }
@@ -68,22 +76,22 @@ private:
 
 class CConfigFloat : public CConfigOption {
 public:
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value) : 
-    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value)
+    inline CConfigFloat(const char* path, float default_value) : 
+    CConfigOption(OPT_FLOAT, path), Value(default_value)
     {
         MinValue = NAN;
         MaxValue = NAN;
         Step = 1.0f;
     }
 
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value, float min_value, float max_value, float step) : 
-    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value),
+    inline CConfigFloat(const char* path, float default_value, float min_value, float max_value, float step) : 
+    CConfigOption(OPT_FLOAT, path), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
     }
 
-    inline CConfigFloat(const wchar_t* category, const wchar_t* name, const char* ini_name, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
-    CConfigOption(OPT_FLOAT, category, name, ini_name), Value(default_value),
+    inline CConfigFloat(const char* path, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
+    CConfigOption(OPT_FLOAT, path), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
         Invoke = invoke;
@@ -114,8 +122,20 @@ private:
     float Step;
 };
 
-typedef std::map<const wchar_t*, CConfigOption*, std::less<const wchar_t*>, STLBucketAlloc<std::pair<const wchar_t*, CConfigOption*> > > ConfigMap;
-extern ConfigMap gConfigMap;
+class CConfigFolder {
+public:
+    CConfigFolder();
+
+    MMString<wchar_t> DisplayName;
+    TextRange<char> Path;
+    CConfigOption* Options;
+    u8 NextSibling;
+    u8 FirstChild;
+    bool Hidden;
+    bool Open;
+};
+
+extern CConfigFolder gConfigRoot[];
 
 extern CConfigBool gUseDivergenceCheck;
 extern CConfigBool gUsePopitGradients;
@@ -138,7 +158,7 @@ extern CConfigBool gSeparateToys;
 extern CConfigBool gAllowDebugTooltypes;
 extern CConfigBool gAllowMeshScaling;
 extern CConfigBool gAllowEyedroppingMeshes;
-extern CConfigBool gUsePodTransition;
+extern CConfigBool gEnablePodTransitionMask;
 extern CConfigBool gDebugMaterialTweaks;
 extern CConfigBool gUseLegacyKeyColors;
 extern CConfigBool gUseNewKeyColorSelection;

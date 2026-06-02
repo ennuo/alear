@@ -93,9 +93,8 @@ namespace sync
 
     bool Open()
     {
-        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/publish/"));
-        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/depots/local"));
-        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/depots/remote"));
+        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/local"));
+        DirectoryCreate(CFilePath(FPR_ALEAR, "sync/remote"));
 
         const CFilePath cache_path(FPR_ALEAR, "sync/resourcecache.farc");
         if (!FileExists(cache_path))

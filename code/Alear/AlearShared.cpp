@@ -639,6 +639,15 @@ AUDIO_GROUP gStingerGroup;
 
 FMOD_RESULT LoadAllEventProjects()
 {
+    CVector<CP<RFilename> > files;
+    for (int i = 0; i < CAudio::gFMODFileSize; ++i)
+    {
+        CAudio::FMODFile& file = CAudio::gFMODFiles[i];
+        CFileDBRow* row = FileDB::FindByGUID(file.Key);
+        if (row == NULL) continue;
+        files.push_back(LoadResourceByKey<RFilename>(file.Key));
+    }
+
     for (int i = 0; i < CAudio::gFMODFileSize; ++i)
     {
         CAudio::FMODFile& file = CAudio::gFMODFiles[i];
@@ -646,7 +655,16 @@ FMOD_RESULT LoadAllEventProjects()
         if (row == NULL) continue;
 
         if (strstr(row->FilePathX, ".fev") == NULL) continue;
+        
         CFilePath fp(FPR_GAMEDATA, row->FilePathX);
+        CP<RFilename> r = LoadResourceByKey<RFilename>(file.Key);
+        r->BlockUntilLoaded();
+
+        if (r->IsError())
+        {
+            MMLog("an error occurred loading fmod file, errors may occur: %s\n", row->FilePathX);
+            continue;
+        }
 
         FMOD::EventProject* project;
         FMOD_RESULT result = CAudio::EventSystem->load(fp.c_str(), NULL, &project);
@@ -658,9 +676,9 @@ FMOD_RESULT LoadAllEventProjects()
             return result;
     }
 
-    // FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
-    // if (result != FMOD_OK) return result;
-    // gStingerGroup.Frame = gGraphicsFrameNum;
+    FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
+    if (result != FMOD_OK) MMLog("failed to fetch stinger group\n");
+    else gStingerGroup.Frame = gGraphicsFrameNum;
 
     return FMOD_OK;
 }

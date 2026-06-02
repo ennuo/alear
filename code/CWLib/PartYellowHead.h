@@ -23,6 +23,7 @@ public:
     const CP<RSyncedProfile>& GetSyncedProfile() const;
     const CP<RLocalProfile>& GetLocalProfile() const;
     CInput* GetInput() const;
+    void SetJetpack(CThing* attachment, float length, v2 pos);
 public:
     inline CRenderYellowHead* GetRenderYellowHead() const { return RenderYellowHead; }
 private:
@@ -38,7 +39,12 @@ private:
     char Pad1[0x24];
 public:
     u32 SuicideHoldFrameCount;
-    void SetJetpack(CThing* attachment, float length, v2 pos);
+private:
+    char Pad2[0x400];
+public:
+    u32 LastTimeSlappedAPlayer;
+    u32 AnimSetKey;
+    bool MonstrousHeadScale;
 };
 
 #endif // PART_YELLOW_HEAD_H

@@ -85,7 +85,7 @@ bool AlearEpilogue()
     LoadBallPolygon();
     InitializeExplosiveStyles();
 
-    alear::SaveConfig();
+    alear::LoadConfig();
     
     return true;
 }

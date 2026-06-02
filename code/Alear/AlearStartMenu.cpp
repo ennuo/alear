@@ -538,6 +538,96 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
     }    
 }
 
+void DoConfigOption(CGooeyNodeManager* manager, const CConfigFolder& folder)
+{
+    u8 child = folder.FirstChild;
+    while (child != 0)
+    {
+        const CConfigFolder& f = gConfigRoot[child];
+        DoConfigOption(manager, f);
+        child = f.NextSibling;
+    }
+
+    if (folder.Options == NULL) return;
+
+    DoSectionHeader(manager, folder.DisplayName.c_str());
+    if (manager->StartFrame())
+    {
+        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+        manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_START);
+        manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_END);
+        manager->SetFrameBorders(0.0f, 0.0f);
+        manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
+
+        for (CConfigOption* opt = folder.Options; opt != NULL; opt = opt->GetSibling())
+        {
+            u32 input_mask = 256;
+            if (opt->GetType() == OPT_FLOAT)
+            {
+                input_mask |= 0x40;
+                input_mask |= 0x80;
+            }
+
+            //u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+            
+            switch (opt->GetType())
+            {
+                // DPAD
+                // 0x1
+                // 0x2
+                // 0x4
+                // 0x8
+
+                // STICK
+                // 0x10
+                // 0x20
+                // 0x40
+                // 0x80
+                
+                // 0x100 = CROSS
+                // 0x200 = CIRCLE
+
+
+                case OPT_BOOL:
+                {
+                    CConfigBool& b = *(CConfigBool*)opt;
+                    u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, b ? STATE_TOGGLE : STATE_NORMAL, NULL, input_mask);
+                    if (result & 256) b = !b;
+                    manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+
+                    break;
+                }
+                case OPT_FLOAT:
+                {
+                    u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                    wchar_t fstr[256];
+                    CConfigFloat& f = *(CConfigFloat*)opt;
+                    
+                    if (result & 0x80) f.Increment(); // 0x10 = DPAD_UP
+                                                        // 0x40 = DPAD_LEFT
+                    if (result & 0x40) f.Decrement(); // 0x80 = DPAD_RIGHT
+
+                    FormatString<256>(fstr, L"%.1f", (float)f);
+                    manager->DoText(fstr, GTS_T5);
+                    
+                    break;
+                }
+                default:
+                {
+                    manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                    manager->DoText(L"<N/A>", GTS_T5);
+                    break;
+                }
+            }
+            manager->DoBreak();
+        }
+
+        manager->EndFrame();
+    }
+
+    manager->DoBreak();
+}
+
 void DoConfigSubmenu(CGooeyNodeManager* manager)
 {
     DoSectionHeader(manager, L"Game Mode");
@@ -550,87 +640,7 @@ void DoConfigSubmenu(CGooeyNodeManager* manager)
     if (manager->DoInline(L"Pod Level", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
         *pod_level = !*pod_level;
     manager->DoText(*pod_level ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
-
-    ConfigMap::iterator it;
-    for (it = gConfigMap.begin(); it != gConfigMap.end(); ++it)
-    {
-        DoSectionHeader(manager, (wchar_t*)it->first);
-        if (manager->StartFrame())
-        {
-            manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
-            manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_START);
-            manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_END);
-            manager->SetFrameBorders(0.0f, 0.0f);
-            manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
-
-            for (CConfigOption* opt = it->second; opt != NULL; opt = opt->GetNext())
-            {
-                u32 input_mask = 256;
-                if (opt->GetType() == OPT_FLOAT)
-                {
-                    input_mask |= 0x40;
-                    input_mask |= 0x80;
-                }
-
-                //u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-                
-                switch (opt->GetType())
-                {
-                    // DPAD
-                    // 0x1
-                    // 0x2
-                    // 0x4
-                    // 0x8
-
-                    // STICK
-                    // 0x10
-                    // 0x20
-                    // 0x40
-                    // 0x80
-                    
-                    // 0x100 = CROSS
-                    // 0x200 = CIRCLE
-
-
-                    case OPT_BOOL:
-                    {
-                        CConfigBool& b = *(CConfigBool*)opt;
-                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, b ? STATE_TOGGLE : STATE_NORMAL, NULL, input_mask);
-                        if (result & 256) b = !b;
-                        manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
-
-                        break;
-                    }
-                    case OPT_FLOAT:
-                    {
-                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-                        wchar_t fstr[256];
-                        CConfigFloat& f = *(CConfigFloat*)opt;
-                        
-                        if (result & 0x80) f.Increment(); // 0x10 = DPAD_UP
-                                                          // 0x40 = DPAD_LEFT
-                        if (result & 0x40) f.Decrement(); // 0x80 = DPAD_RIGHT
-
-                        FormatString<256>(fstr, L"%.1f", (float)f);
-                        manager->DoText(fstr, GTS_T5);
-                        
-                        break;
-                    }
-                    default:
-                    {
-                        manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-                        manager->DoText(L"<N/A>", GTS_T5);
-                        break;
-                    }
-                }
-                manager->DoBreak();
-            }
-
-            manager->EndFrame();
-        }
-
-        manager->DoBreak();
-    }
+    DoConfigOption(manager, *gConfigRoot);
 }
 
 enum AlearPageType {
