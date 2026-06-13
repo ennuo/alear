@@ -65,7 +65,6 @@ namespace sync
     public:
         CP<CSerialisedResource> CSR;
         int Priority;
-        CFilePath FilePath;
         sockaddr_in Server;
         token Token;
         u32 DownloadSize;
@@ -208,8 +207,8 @@ namespace sync
         void UpdateUploadTasks();
         void UpdateCommitTask();
     public:
-        const depot* GetDepot(u64 id);
-        const depot* GetDepot(const char* id);
+        depot* GetDepot(u64 id);
+        depot* GetDepot(const char* id);
     public:
         int State;
         union

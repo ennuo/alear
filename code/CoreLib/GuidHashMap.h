@@ -7,6 +7,7 @@
 
 #include "GuidHash.h"
 #include "SerialiseEnums.h"
+#include <mem_pool_simple.h>
 
 class CFileDBRow {
 public:
@@ -22,7 +23,7 @@ public:
     void Update(const CHash& hash, u32 size);
     void Init(CGUID guid, const char* path);
 public:
-    char* FilePathX;
+    const char* FilePathX;
     CHash FileHash;
     CGUID FileGuid;
     u32 FileSize;
@@ -68,7 +69,7 @@ struct SCompareGUID
 
 class CFileDB {
 public:
-    inline CFileDB(const CFilePath& fp) : Path(fp), Files(), SortedIndex()
+    inline CFileDB(const CFilePath& fp) : Path(fp), Files(), SortedIndex(), StringAllocator(0x4000)
     {
         
     }
@@ -81,13 +82,12 @@ public:
     inline virtual void Patch(const CHash& hash, const CGUID& guid, const CFilePath& path) {}
     inline virtual void ValidateFiles() {}
 public:
-    static CFileDB* Construct(CFilePath& path);
-public:
     ReflectReturn Load();
 public:
     CFilePath Path;
     V_CFileDBRow Files;
     u32 SortedIndex;
+    CMemPoolSimple StringAllocator;
 };
 
 typedef CVector<CFileDB*> V_CFileDB;

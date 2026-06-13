@@ -44,6 +44,24 @@ struct SConvertScriptTypes<const char*>
 };
 
 template <>
+struct SConvertScriptTypes<const wchar_t*>
+{
+    typedef const wchar_t* NativeType;
+    typedef ScriptObjectUID VMType;
+
+    static void VMToNative(NativeType& out, CScriptContext* context, VMType& in)
+    {
+        // todo: add this later when needed
+        out = NULL;
+    }
+
+    static void NativeToVM(VMType& out, CScriptContext* context, NativeType& in)
+    {
+        out.UID = gScriptObjectManager->RegisterStringW(in).UID;
+    }
+};
+
+template <>
 struct SConvertScriptTypes<CThing*>
 {
     typedef CThing* NativeType;

@@ -474,3 +474,17 @@ void CSackBoyAnim::InitExtraAnimData()
     *((CP<RMesh>*)&BurntBodyMesh) = LoadResourceByKey<RMesh>(19954u, 0, STREAM_PRIORITY_DEFAULT);
     *((CP<RMesh>*)&FrozenBodyMesh) = LoadResourceByKey<RMesh>(19954u, 0, STREAM_PRIORITY_DEFAULT);
 }
+
+void CSackBoyAnim::PostAnimUpdate()
+{
+    CRenderYellowHead* render = GetRenderYellowHead();
+    PYellowHead* part = Thing->GetPYellowHead();
+    RPSAnimData* comp = *(RPSAnimData**)((char*)render + 0x3b4);
+
+    for (u32 i = 0; i < comp->Scale.size(); ++i)
+        comp->Scale[i] = Vectormath::Aos::mulPerElem(comp->Scale[i], part->AnimBoneScale[i]);
+    for (u32 i = 0; i < comp->Pos.size(); ++i)
+        comp->Pos[i] += part->AnimBonePos[i];
+    for (u32 i = 0; i < comp->Morph.size(); ++i)
+        comp->Morph[i] += part->AnimMorph[i];
+}

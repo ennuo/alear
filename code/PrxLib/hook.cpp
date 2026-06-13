@@ -38,7 +38,7 @@ u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size)
 ps3_write gWriteCache[MAX_WRITES];
 u32 gNumWrites;
 
-static u8 g_StubData[4096] __attribute__((section(".text#"))) = { 0 };
+static u8 g_StubData[8192] __attribute__((section(".text#"))) = { 0 };
 u8* gStubBaseAddress = g_StubData;
 static u8* g_StubAddress = g_StubData;
 static bool g_HookInit = false;

@@ -41,11 +41,15 @@ bool LoadSlapStyles()
     gSlapMeshes.clear();
 
     CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_SLAP_STYLES_KEY, 0, STREAM_PRIORITY_DEFAULT);
-    *((CP<RFileOfBytes>*)&gSlapStyleData) = file;
-    
-    file->BlockUntilLoaded();
-    if (!file->IsLoaded()) return false;
+    gSlapStyleData = file;
 
+    file->BlockUntilLoaded();
+    if (!file->IsLoaded())
+    {
+        MMLog("No slap style configuration file found\n");
+        return true;
+    }
+    
     ByteArray& b = file->GetData();
     CGatherVariables variables;
     Init<CSlapStyles>(variables, (CSlapStyles*)&gSlapMeshes);

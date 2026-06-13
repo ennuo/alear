@@ -356,19 +356,23 @@ void CPoppet::InitializeExtraData()
 {
     new (&HiddenList) CVector<CThingPtr>();
     new (&DotToDot) CDotToDotState();
+    new (&Looks) CLooksMenuState();
     StampMode = STAMP_DEFAULT;
     CustomPoppetOffset = v2(0.0f);
     CustomPoppetSize = v2(512.0f, 544.0f);
     ShowTether = true;
     HidePoppetGooey = false;
+    CaptureSubType = NCapture::SUBTYPE_COSTUME_MORPH;
 
     DotToDot.SetParent(this);
+    Looks.SetParent(this);
 }
 
 void CPoppet::DestroyExtraData()
 {
     HiddenList.~CVector();
     DotToDot.~CDotToDotState();
+    Looks.~CLooksMenuState();
 }
 
 CSwitchOutput* CThing::GetInput(int port) const

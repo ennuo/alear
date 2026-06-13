@@ -17,6 +17,7 @@
 
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
+#include <ResourceSystem.h>
 #include <thing.h>
 #include <PartPhysicsWorld.h>
 #include <TextStream.h>
@@ -116,19 +117,15 @@ public:
 protected:
     void DoFileContents(MMOTextStreamA& stream, const char* path)
     {
-        CFilePath fp(path);
-        CFileDBRow* row = FileDB::FindByPath(fp, false);
-        if (row == NULL) return;
-
-        ByteArray b;
-        if (!GetFileDataFromCaches(row->FileHash, b))
+        CP<RFileOfBytes> file = LoadResourceByFilename<RFileOfBytes>(path);
+        file->BlockUntilLoaded();
+        
+        if (file->IsLoaded())
         {
-            fp.Assign(FPR_GAMEDATA, row->FilePathX);
-            FileLoad(fp, b);
+            ByteArray& d = file->GetData();
+            if (!d.empty())
+                stream.OutputData((const void*)d.begin(), d.size());
         }
-
-        if (b.empty()) return;
-        stream.OutputData((const void*)b.begin(), b.size());
     }
 private:
     CWebternate* Webternate;

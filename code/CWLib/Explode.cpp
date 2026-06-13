@@ -231,9 +231,7 @@ void zz_AddExplosionBits(const CThing* thing, m44 pos)
 {
     CScopedVariable<CP<RFluidSettings> > _scoped_fluid_settings;
     CScopedVariable<CP<RMesh> > _scoped_explosion_mesh;
-
-    CP<RMaterial> material;
-
+    
     CExplosionParams* params = GetExplosionParams(thing);
     if (params)
     {

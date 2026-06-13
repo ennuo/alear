@@ -289,7 +289,7 @@ public:
         return append(s);
     }
 
-    inline int compare(T* s)
+    inline int compare(T* s) const
     {
         return StringCompare(c_str(), s);
     }

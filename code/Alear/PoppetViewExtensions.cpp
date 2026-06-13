@@ -42,6 +42,8 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
     u32 type = view->Descriptor.Type;
     u32 subtype = view->Descriptor.SubType;
 
+    if (type == E_TYPE_PLAYER_COLOUR) return false;
+    
     switch (tool_type)
     {
         case TOOL_COSTUME_RESET:
@@ -49,7 +51,7 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_COSTUME_SAVE:
         case TOOL_COSTUME_WASH:
         {
-            return (type & (E_TYPE_COSTUME_TOOL)) != 0;
+            return (type & (E_TYPE_COSTUME_TOOL)) != 0 || (subtype & E_SUBTYPE_ANIMATION_STYLE) != 0;
         }
         
         case TOOL_STICKER_PICK:
@@ -146,6 +148,13 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_DOT_TO_DOT:
         {
             return (type & (E_TYPE_TOOL | E_TYPE_FLOOD_FILL)) != 0 && edit;
+        }
+
+        case TOOL_MORPH_RESET:
+        case TOOL_MORPH_SAVE:
+        case TOOL_MORPH_EDIT:
+        {
+            return (subtype & E_SUBTYPE_MORPH) != 0;
         }
 
         default: return false;

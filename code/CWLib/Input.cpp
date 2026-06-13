@@ -88,7 +88,23 @@ static EButtonPrompts gButtonPrompts[] =
     BP_L3, // BUTTON_CONFIG_POPPET_SWITCH_STAMP_MODE,
     BP_R3, // BUTTON_CONFIG_POPPET_TOGGLE_TETHER_UI
     BP_L3, // BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI
+
+    BP_R1, // BUTTON_CONFIG_LOOKSMENU_NEXT
+    BP_L1, // BUTTON_CONFIG_LOOKSMENU_PREVIOUS
+    BP_SQUARE, // BUTTON_CONFIG_LOOKSMENU_CHANGE_MODE
+    BP_DPAD_DOWN, // BUTTON_CONFIG_LOOKSMENU_CHANGE_SCALING_MODE
+    BP_TRIANGLE, // BUTTON_CONFIG_LOOKSMENU_RESET
+    BP_CIRCLE // BUTTON_CONFIG_LOOKSMENU_EXIT
 };
+
+v4 CInput::GetStick(u32 listener_type, EStick stick) const
+{
+    // not proper implementation, but i dont really give a shit
+    if ((listener_type & InputMode) == 0)
+        return v4(0.0f);
+
+    return LeftStick;
+}
 
 bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
 {
@@ -136,6 +152,18 @@ bool CInput::IsClicked(EButtonConfig button_config, u32 buttons) const
             return (buttons & PAD_BUTTON_R3) != 0;
         case BUTTON_CONFIG_POPPET_TOGGLE_INVENTORY_UI:
             return (buttons & PAD_BUTTON_L3) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_NEXT:
+            return (buttons & PAD_BUTTON_R1) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_PREVIOUS:
+            return (buttons & PAD_BUTTON_L1) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_CHANGE_MODE:
+            return (buttons & PAD_BUTTON_SQUARE) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_CHANGE_SCALING_MODE:
+            return (buttons & PAD_BUTTON_DPAD_DOWN) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_RESET:
+            return (buttons & PAD_BUTTON_TRIANGLE) != 0;
+        case BUTTON_CONFIG_LOOKSMENU_EXIT:
+            return (buttons & PAD_BUTTON_CIRCLE) != 0;
         default: return false;
     }
 }
@@ -185,6 +213,13 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_REMOVE_HAIRDRYER:
             return INPUT_SACKBOY;
 
+        case BUTTON_CONFIG_LOOKSMENU_NEXT:
+        case BUTTON_CONFIG_LOOKSMENU_PREVIOUS:
+        case BUTTON_CONFIG_LOOKSMENU_CHANGE_MODE:
+        case BUTTON_CONFIG_LOOKSMENU_RESET:
+        case BUTTON_CONFIG_LOOKSMENU_EXIT:
+            return INPUT_LOOKS_MENU;
+        
         case BUTTON_CONFIG_PODCOMPUTER_SELECT:
         case BUTTON_CONFIG_PODCOMPUTER_CANCEL:
             return INPUT_POD_COMPUTER;

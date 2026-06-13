@@ -11,6 +11,42 @@
 
 CSRQueue CSRsForSync;
 
+MAKE_THREAD_FUNCTION(MainSlowThread)
+{
+    while (!CSRsForSlow->Aborted())
+    {
+        CP<CSerialisedResource> csr;
+        int priority;
+
+        if (!CSRsForSlow->Pop(priority, csr, -1)) 
+            continue;
+
+        if (WantQuit())
+        {
+            SetResourceError(csr, (EResourceLoadState)REFLECT_APPLICATION_QUITTING);
+            continue;
+        }
+
+        bool has_source = false;
+        if (csr->LoosePath.IsEmpty())
+        {
+            SResourceReader reader;
+            if (GetResourceReader(csr->GetDescriptor(), reader, csr->LoosePath))
+                has_source = FileLoad(reader, csr->Data);
+        }
+        else has_source = FileLoad(csr->LoosePath, csr->Data);
+
+        if (!has_source)
+        {
+            SetResourceError(csr, LOAD_STATE_ERROR_FILENOTFOUND);
+        }
+        else
+        {
+            AddCSRToDoneQueue(csr, priority);
+        }
+    }
+}
+
 MAKE_THREAD_FUNCTION(MainLoadingThread)
 {
     while (!CSRsForStaging->Aborted())
@@ -33,13 +69,14 @@ MAKE_THREAD_FUNCTION(MainLoadingThread)
         CHash latest = csr->GetDescriptor().LatestHash();
         StringifyHash bytes(latest);
 
+        ESerialisationType st = GetPreferredSerialisationType(csr->GetDescriptor().GetType());
         while (!WantQuit())
         {
             SResourceReader reader;
             if (!GetResourceReader(csr->GetDescriptor(), reader, csr->LoosePath))
                 break;
 
-            if (GetPreferredSerialisationType(csr->GetDescriptor().GetType()) == PREFER_FILE)
+            if (st == PREFER_FILE)
             {
                 if (!csr->LoosePath.IsEmpty())
                 {

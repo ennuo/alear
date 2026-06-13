@@ -16,6 +16,8 @@
 #include <PlayerColours.h>
 #include <vector.h>
 
+class CGooeyNodeManager;
+
 struct SDrawObjectEdgesScratch
 {
     CRawVector<v2, CAllocatorMMAligned128> Poly;
@@ -52,6 +54,20 @@ public:
     float Depth;
 };
 
+class CLooksMenuState : public CPoppetChild {
+public:
+    CLooksMenuState();
+    ~CLooksMenuState();
+public:
+    void Render();
+    void Update();
+public:
+    int Mode;
+    int EditBone;
+    int EditMorph;
+    bool UniformScaling;
+};
+
 class RLocalProfile;
 
 class CPoppet : public CReflectionVisitable {
@@ -59,7 +75,7 @@ friend void CustomRaycastAgainstSwitches(CPoppet* poppet);
 public:
     void EyedropperPick(CThing* thing);
     void EyedropperPickMesh(CThing* thing);
-
+public:
     void ClearHiddenList();
     void InitializeExtraData();
     void DestroyExtraData();
@@ -120,13 +136,18 @@ public:
 private:
     char Pad4[0x1f4];
 public:
+    // DONT MOVE THESE!!!
+    bool HidePoppetGooey;
+    bool ShowTether;
+    //
+
+    CLooksMenuState Looks;
     CDotToDotState DotToDot;
     CVector<CThingPtr> HiddenList;
     EStampMode StampMode;
     v2 CustomPoppetSize;
     v2 CustomPoppetOffset;
-    bool HidePoppetGooey;
-    bool ShowTether;
+    NCapture::ESubType CaptureSubType;
 };
 
 bool CanScaleMesh(CGUID mesh_guid);

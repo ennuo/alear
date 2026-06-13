@@ -390,7 +390,7 @@ ReflectReturn CompressedReflectVectorContents(R& r, D& d, u32 size)
     ReflectReturn rv;
     
     u8 bytes = 0;
-    if (r.GetSaving()) bytes = elemsz; // for now just disable it when saving
+    if (r.GetSaving()) bytes = (u8)elemsz; // for now just disable it when saving
 
     if ((rv = Reflect(r, bytes)) != REFLECT_OK) return rv;
 

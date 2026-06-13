@@ -10,7 +10,16 @@ public:
 
     }
 
-    ~CMemPoolSimple();
+    inline ~CMemPoolSimple()
+    {
+        SBlock* block = FirstBlock;
+        while (block != NULL)
+        {
+            SBlock* next = block->Next;
+            CAllocatorMM::Free(gOtherBucket, block);
+            block = next;
+        }
+    }
 public:
     inline void* alloc(u32 size)
     {
@@ -19,14 +28,14 @@ public:
         {
             block = (SBlock*)CAllocatorMM::Malloc(gOtherBucket, BlockSize);
             block->Next = FirstBlock;
-            CurrentPtr = block + 1;
+            CurrentPtr = (u8*)(block + 1);
             FirstBlock = block;
             CurrentPtrEnd = (u8*)block + BlockSize;
         }
 
-        block = (SBlock*)CurrentPtr;
-        block->Next = (SBlock*)(CurrentPtr + size);
-        return block;
+        void* data = (void*)CurrentPtr;
+        CurrentPtr += size;
+        return data;
     }
 private:
     u32 BlockSize;

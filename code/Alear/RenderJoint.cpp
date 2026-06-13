@@ -58,7 +58,8 @@ bool LoadJointMeshes()
     for (int i = 0; i <= JOINT_TYPE_MAX; ++i)
         lookup.insert(tGatherElementMap::value_type(gJointNames[i], i));
 
-    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_JOINTS_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_JOINTS_KEY);
+    
 
     file->BlockUntilLoaded();
     if (!file->IsLoaded()) return false;

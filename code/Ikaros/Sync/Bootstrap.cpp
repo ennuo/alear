@@ -20,6 +20,7 @@ namespace sync
     CIniSettings Config;
     CSyncDatabase Database;
     CVector<depot> Depots;
+    CVector<TextRange<char> > DefinedBranches;
     CCriticalSec DepotMutex("DepotMutex");
 
     static THREAD ResourceThread;
@@ -29,13 +30,46 @@ namespace sync
         return CFilePath(FPR_ALEAR, "sync/depotcache");
     }
 
+    bool IsBranchDefined(const TextRange<char>& branch)
+    {
+        for (u32 i = 0; i < DefinedBranches.size(); ++i)
+        {
+            if (DefinedBranches[i].Equals(branch))
+                return true;
+        }
+
+        return false;
+    }
+
     void LinkDepots()
     {
         CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
         for (u32 i = 0; i < Depots.size(); ++i)
         {
             depot& d = Depots[i];
-            if (d.Database == NULL)
+
+            d.Flags &= ~eDepotFlags_Disabled;
+            if (d.IsBranched() && !IsBranchDefined(d.Branch))
+                d.Flags |= eDepotFlags_Disabled;
+
+            if (d.IsDisabled())
+            {
+                if (d.Database != NULL)
+                    delete d.Database;
+            }
+            else if (d.WantReload())
+            {
+                CFileDB* database = new CFileDB(d.MakeDatabaseFilePath());
+                database->Load();
+
+                if (d.Database != NULL) delete d.Database;
+
+                ReloadModifiedResources(d.Database, NULL);
+
+                d.Flags &= ~eDepotFlags_WantReload;
+                d.Database = database;
+            }
+            else if (d.Database == NULL)
             {
                 d.Database = new CFileDB(d.MakeDatabaseFilePath());
                 d.Database->Load();
@@ -110,10 +144,27 @@ namespace sync
 
         gCaches[CT_SYNC] = new CMutableCache(cache_path);
 
+        Config.ReadIniFile(CFilePath(FPR_ALEAR, "config/sync.ini"));
+
+        const char* begin = Config.GetString("branches");
+        if (begin != NULL && StringLength(begin) > 0)
+        {
+            const char* end = NULL;
+            while ((end = strchr(begin, ',')) != NULL)
+            {
+                DefinedBranches.push_back(TextRange<char>(begin, end));
+                begin = end + 1;
+            }
+
+            DefinedBranches.push_back(TextRange<char>(begin));
+
+            for (u32 i = 0; i < DefinedBranches.size(); ++i)
+                DefinedBranches[i].TrimWhite();
+        }
+
         LoadDepotCache();
         LinkDepots();
 
-        Config.ReadIniFile(CFilePath(FPR_ALEAR, "config/sync.ini"));
         if (Config.GetBool("enabled", true))
         {
             DownloadJobManager = new CJobManager(kMaxConcurrentDownloads, "alear sync download job worker");

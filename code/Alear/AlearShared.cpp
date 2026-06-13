@@ -117,20 +117,8 @@ void CPoppet::ClearHiddenList()
     HiddenList.clear();
 }
 
-void OnUpdateLevel()
+void OnUpdateLockStepped()
 {
-    // Tick Mario's in the world if enabled.
-    #ifdef __SM64__
-    UpdateMarioAvatars();
-    #endif
-
-    // Handle any reloads for databases and caches,
-    // if anything was changed on disk or requested from
-    // a local network.
-    ReloadPendingDatabases();
-    ProcessStartMenuNotifications();
-
-    // Check if there are any mesh export requests from a player in the world
     PWorld* world = gGame->Level->WorldThing->GetPWorld();
     PYellowHead** it = world->ListPYellowHead.begin();
     for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
@@ -142,22 +130,8 @@ void OnUpdateLevel()
         CInput* input = yellowhead->GetInput();
         if (input == NULL) continue;
 
-        // CThing* player = yellowhead->GetThing();
-        // if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
-        // {
-        //     ExplosionInfo info;
-        //     GetExplosionInfo(player, info);
-        //     info.Center = info.Center + v2(0.0f, -50.0f, 0.0f, 0.0f);
-        //     info.IgnoreYellowHead = true;
-
-        //     info.OuterRadius = 250.0f;
-        //     info.InnerRadius = 250.0f;
-        //     info.MaxVel = 100.0f;
-        //     info.MaxForce = 1500.0f;
-        //     info.MaxAngVel = 1.0f;
-
-        //     ApplyRadialForce(info);
-        // }
+        if (poppet->GetMode() == MODE_LOOKS)
+            poppet->Looks.Update();
 
         CThing* hover = poppet->Edit.LastHoverThing;
 
@@ -213,8 +187,21 @@ void OnUpdateLevel()
         {
             // DumpMeshToFile(hover);
         }
-
     }
+}
+
+void OnUpdateLevel()
+{
+    // Tick Mario's in the world if enabled.
+    #ifdef __SM64__
+    UpdateMarioAvatars();
+    #endif
+
+    // Handle any reloads for databases and caches,
+    // if anything was changed on disk or requested from
+    // a local network.
+    ReloadPendingDatabases();
+    ProcessStartMenuNotifications();
 
     UpdateItemRequest();
 
@@ -325,54 +312,26 @@ void OnUpdateHttpTasks()
 CVector<CP<RTranslationTable> > gTranslations;
 bool CustomTryTranslate(u32 key, tchar_t const*& out)
 {
-    if (key == MakeLamsKeyID("BP_", "HIDE_TETHER"))
-    {
-        out = (tchar_t*)L"Hide Tether";
-        return true;
-    }
-
-    if (key == MakeLamsKeyID("BP_", "HIDE_POPPET_UI"))
-    {
-        out = (tchar_t*)L"Hide Poppet UI";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MATERIAL)
-    {
-        out = (tchar_t*)L"Material";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MESH)
-    {
-        out = (tchar_t*)L"Mesh";
-        return true;
-    }
-    
-    if (key == E_LAMS_TWEAKABLE_DECAL)
-    {
-        out = (tchar_t*)L"Decal";
-        return true;
-    }
-
     static tchar_t EMPTY_STRING[] = { 0x20 };
 
     if (gTranslations.size() == 0)
     {
-        CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_TRANSLATIONS_RLST, 0, STREAM_PRIORITY_DEFAULT);
+        CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_TRANSLATIONS_RLST);
         rlst->BlockUntilLoaded();
 
-        CVector<MMString<char> > lines;
-        LinesLoad(rlst->GetData(), lines);
-
-        for (int i = 0; i < lines.size(); ++i)
+        if (rlst->IsLoaded())
         {
-            MMString<char>& line = lines[i];
-            CFilePath fp(FPR_BLURAY, line.c_str());
-            CP<RTranslationTable> subst = LoadResourceByFilename<RTranslationTable>(fp, 0, STREAM_PRIORITY_DEFAULT, false); 
-            gTranslations.push_back(subst);
+            CVector<MMString<char> > lines;
+            LinesLoad(rlst->GetData(), lines);
+
+            for (int i = 0; i < lines.size(); ++i)
+                gTranslations.push_back(LoadResourceByFilename<RTranslationTable>(lines[i].c_str()));
         }
-        
+        else
+        {
+            MMLog("couldn't find translations.rlst, not loading extra translations\n");
+        }
+
         gTranslations.push_back(gPatchTrans);
         gTranslations.push_back(gTranslationTable);
 
@@ -529,8 +488,14 @@ void OnLoadSubstTablesFinished()
 {
     gSubsts.clear();
 
-    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_GSUB_RLST, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_GSUB_RLST);
     rlst->BlockUntilLoaded();
+
+    if (rlst->IsError())
+    {
+        MMLog("Skipping load of substitutions as configuration doesn't exist!\n");
+        return;
+    }
 
     CVector<MMString<char> > lines;
     LinesLoad(rlst->GetData(), lines);
@@ -1141,6 +1106,8 @@ void OnBackdropChange(PWorld* world)
 }
 
 extern "C" uintptr_t _shadow_call_hook;
+extern "C" uintptr_t _popit_has_cursor_hook;
+extern "C" uintptr_t _popit_decorating_player_hook;
 void InitSharedHooks()
 {
     MH_PokeBranch(0x001f0e8c, &_shadow_call_hook);
@@ -1252,11 +1219,11 @@ void InitSharedHooks()
     
     // allow disabling rendering popit tether
     // DrawForBloom
-    MH_Poke32(0x0034c870, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
-    MH_Poke32(0x0034c604, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
+    MH_Poke32(0x0034c870, 0x891b1b01 /* lbz %r8, 0x1b01(%r27) */);
+    MH_Poke32(0x0034c604, 0x891b1b01 /* lbz %r8, 0x1b01(%r27) */);
     // RenderUI
-    MH_Poke32(0x00345d84, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
-    MH_Poke32(0x00345dc0, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
+    MH_Poke32(0x00345d84, 0x891d1b01 /* lbz %r8, 0x1b01(%r29) */);
+    MH_Poke32(0x00345dc0, 0x891d1b01 /* lbz %r8, 0x1b01(%r29) */);
 
     MH_PokeBranch(0x00345a9c, &_popit_render_ui_debug_hook);
 
@@ -1264,6 +1231,11 @@ void InitSharedHooks()
     MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
 
     MH_PokeHook(0x0009a634, IsGamePaused);
+
+    MH_PokeBranch(0x00345648, &_popit_has_cursor_hook);
+    MH_PokeBranch(0x00347030, &_popit_decorating_player_hook);
+
+    MH_PokeCall(0x000b1410, OnUpdateLockStepped);
 }
 
 // Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

@@ -1,3 +1,5 @@
+.include "asm/macros/fnptr.s"
+
 .global _popit_update_menu_shape_hook
 _popit_update_menu_shape_hook:
     mr %r3, %r30
@@ -108,7 +110,7 @@ _popit_draw_cursor_hook:
 
 .global _popit_render_ui_debug_hook
 _popit_render_ui_debug_hook:
-    lbz %r3, 0x1b30(%r30)
+    lbz %r3, 0x1b00(%r30)
     cmpwi %cr7, %r3, 0x0
     beq %cr7, RenderPoppetUI
     ba 0x00345aa8
@@ -136,3 +138,64 @@ _popit_attempt_tweak_hook:
     cmpwi %cr7, %r4, 0x0
 
     ba 0x0034fcdc
+
+.global _popit_has_cursor_hook
+_popit_has_cursor_hook:
+.set MODE_LOOKS, 7
+    cmpwi %cr7, %r31, MODE_LOOKS
+    beq %cr7, NoCursor
+
+    mr %r3, %r30
+    ba 0x0034564c
+
+NoCursor:
+    ba 0x00345614
+
+.global _popit_decorating_player_hook
+_popit_decorating_player_hook:
+.set MODE_LOOKS, 7
+.set CPoppet_GetMode, 0x0033efa8
+    mr %r3, %r31
+    bla CPoppet_GetMode
+    cmpwi %cr7, %r3, MODE_LOOKS
+    beq %cr7, IsDecorating
+    mr %r3, %r31
+    lwz %r0, 0x4c(%r30)
+    ba 0x00347034
+IsDecorating:
+    ba 0x003470bc
+
+.global _popit_update_shape_looks_menu_hook
+_popit_update_shape_looks_menu_hook:
+.set MODE_LOOKS, 7
+    cmpwi %cr7, %r3, MODE_LOOKS
+    beq %cr7, UpdateMenuShape 
+    ba 0x0035b264
+UpdateMenuShape:
+    ba 0x0035b410
+
+.global _popit_on_sanitize_inventory_item_hook
+_popit_on_sanitize_inventory_item_hook:
+    mr %r3, %r29
+    call _Z26OnSanitizeNewInventoryItemP16CPoppetInventory
+    ba 0x00388554
+
+.global _popit_on_refresh_plan_details_hook
+_popit_on_refresh_plan_details_hook:
+    mr %r3, %r29
+    mr %r4, %r28
+    call _Z20OnRefreshPlanDetailsP12CPlanDetailsP6CThing
+    ld %r0, 0xa0(%r1)
+    ba 0x00097c7c
+
+.global _on_calculate_input_mode_hook
+_on_calculate_input_mode_hook:
+.set INPUT_LOOKS_MENU, 8192
+.set MODE_LOOKS, 7
+    cmpwi %cr7, %r29, MODE_LOOKS
+    beq %cr7, IsLooksMenu
+    li %r8, 0x100
+    ba 0x00221f64
+IsLooksMenu:
+    li %r8, INPUT_LOOKS_MENU
+    ba 0x00221e50

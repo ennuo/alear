@@ -84,7 +84,12 @@ _global_icon_size_hook:
     rlwinm %r9, %r0, 0x0, 0x0, 0x0
     cmpwi %cr7, %r9, 0
     bne %cr7, UseLargeIcons
-    
+
+    # Morphs also use large icons
+    rlwinm %r9, %r0, 0x0, 0xf, 0xf
+    cmpwi %cr7, %r9, 0
+    bne %cr7, UseLargeIcons
+
     # User Stickers
     lwz %r0, 0x40(%r27)
     # rlwinm %r9, %r0, 0x0, 0x15, 0x15
@@ -458,6 +463,12 @@ _initextradata_part_switch:
     call _ZN7PSwitch19InitializeExtraDataEv
     ld %r0, 0x100(%r1)
     ba 0x0005e6ac
+
+.global _initextradata_part_yellowhead
+_initextradata_part_yellowhead:
+    mr %r3, %r27
+    call _ZN11PYellowHead19InitializeExtraDataEv
+    ba 0x00031754
 
 .global _initextradata_part_generatedmesh
 _initextradata_part_generatedmesh:
@@ -884,4 +895,14 @@ NormalShadowPass:
     lhz %r0, 0x19a(%r27)
     lwz %r11, 0xf0(%r27)
     mr %r4, %r11
+    ret
+
+create_hook on_update_creature_water_depth_hook, 0x000a59fc
+    mr %r3, %r26
+    call _Z18OnSubmergeCreatureP9PCreature
+    ret
+
+create_hook on_post_sackboy_animation_update_hook, 0x000ebc70
+    lwz %r3, 0x458(%r31)
+    call _ZN12CSackBoyAnim14PostAnimUpdateEv
     ret

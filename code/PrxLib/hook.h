@@ -80,4 +80,5 @@ type(*name)(__VA_ARGS__) = (type (*)(__VA_ARGS__))&_##name;
 #define MH_PokeMemberHook(address, function) MH_InitHook((void*)address, (void*)GetFunctionPointer(&function)) 
 #define MH_PokeCall(address, function) MH_InitCall((void*)address, (void*)&function)
 
+
 #endif // HOOK_H

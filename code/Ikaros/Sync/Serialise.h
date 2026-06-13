@@ -104,8 +104,15 @@ ReflectReturn Reflect(R& r, depot& d)
     if ((rv = r.ReadWrite(d.Name, len)) != REFLECT_OK) return rv;
     if (r.GetLoading()) d.Name[len] = '\0';
     
+    len = StringLength(d.Branch);
+    if ((rv = Reflect(r, len)) != REFLECT_OK) return rv;
+    if ((rv = r.ReadWrite(d.Branch, len)) != REFLECT_OK) return rv;
+    if (r.GetLoading()) d.Branch[len] = '\0';
+
+
     ADD(Priority);
     ADD(Flags);
+
     return rv;
 }
 
@@ -255,6 +262,63 @@ ReflectReturn Reflect(R& r, msg_commit& d)
 {
     ReflectReturn rv = REFLECT_OK;
     ADD(DepotID);
+    ADD(Files);
+    return rv;
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, commit_file& d)
+{
+    ReflectReturn rv;
+    ADD(Flags);
+    ADD(FileGuid);
+
+    if (d.Flags == eCommitFlags_Deleted)
+    {
+        ADD(OldFilePath);
+        ADD(OldFileSize);
+        ADD(OldFileHash);
+        ADD(OldFileTimestamp);
+    }
+    else if (d.Flags == eCommitFlags_Added)
+    {
+        ADD(NewFilePath);
+        ADD(NewFileSize);
+        ADD(NewFileHash);
+        ADD(NewFileTimestamp);
+    }
+    else
+    {
+        if ((d.Flags & eCommitFlags_PathChanged) != 0)
+        {
+            ADD(OldFilePath);
+            ADD(NewFilePath);
+        }
+
+        if ((d.Flags & eCommitFlags_DataChanged) != 0)
+        {
+            ADD(OldFileSize);
+            ADD(OldFileHash);
+        }
+
+        ADD(OldFileTimestamp);
+        ADD(NewFileTimestamp);
+    }
+
+    return rv;
+}
+
+template <typename R>
+ReflectReturn Reflect(R& r, commit_info& d)
+{
+    ReflectReturn rv;
+    ADD(Revision);
+    ADD(DepotId);
+    ADD(CommitId);
+    ADD(UserId);
+    ADD(FilesAdded);
+    ADD(FilesChanged);
+    ADD(FilesDeleted);
     ADD(Files);
     return rv;
 }

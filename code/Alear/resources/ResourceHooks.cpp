@@ -703,6 +703,16 @@ void AttachResourceTextSerializationHooks()
     MH_Poke32(0x0092e18c, (u32)TABLE);
 }
 
+void* AllocateAlignedData(CAllocatorBucket& bucket, u32 size)
+{
+    return CAllocatorMMAligned128::Malloc(bucket, size);
+}
+
+void DeallocateAlignedData(CAllocatorBucket& bucket, void* data)
+{
+    CAllocatorMMAligned128::Free(bucket, data);
+}
+
 void AttachCustomRevisionHooks()
 {
     // Store compression version in custom revision field of CReflectionLoadVector,
@@ -722,6 +732,11 @@ void AttachCustomRevisionHooks()
 
     MH_Poke32(0x00021438, LI(4, sizeof(PSwitch)));
     MH_Poke32(0x0073c53c, LI(4, sizeof(PSwitch)));
+
+    MH_PokeCall(0x00020bc8, AllocateAlignedData);
+    MH_PokeCall(0x0073c024, AllocateAlignedData);
+    MH_Poke32(0x00020bc0, LI(4, sizeof(PYellowHead)));
+    MH_Poke32(0x0073c00c, LI(4, sizeof(PYellowHead)));
 
     // Some hooks to initialize extra data from resource constructors
     MH_PokeBranch(0x000ba1cc, &_initextradata_localprofile);
@@ -808,6 +823,58 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
 
         switch (chunk)
         {
+            case 0x5341434b: /* SACK */
+            {
+                PYellowHead* yellowhead = thing->GetPYellowHead();
+                if (yellowhead == NULL) return REFLECT_UNINITIALISED;
+
+                if ((rv = Reflect(r, yellowhead->LastTimeSlappedAPlayer)) != REFLECT_OK) return rv;
+                if ((rv = Reflect(r, yellowhead->AnimSetKey)) != REFLECT_OK) return rv;
+
+                u64 pos_bits, rot_bits, scale_bits;
+                u32 morph_bits;
+
+                if ((rv = Reflect(r, pos_bits)) != REFLECT_OK) return rv;
+                if ((rv = Reflect(r, rot_bits)) != REFLECT_OK) return rv;
+                if ((rv = Reflect(r, scale_bits)) != REFLECT_OK) return rv;
+                if ((rv = Reflect(r, morph_bits)) != REFLECT_OK) return rv;
+
+                for (int i = 0; i < 64; ++i)
+                {
+                    if (pos_bits & (1ul << i))
+                    {
+                        if ((rv = Reflect(r, yellowhead->AnimBonePos[i])) != REFLECT_OK)
+                            return rv;
+                    }
+                    else yellowhead->AnimBonePos[i] = v4(0.0f);
+
+                    if (rot_bits & (1ul << i))
+                    {
+                        if ((rv = Reflect(r, yellowhead->AnimBoneRot[i])) != REFLECT_OK)
+                            return rv;
+                    }
+                    else yellowhead->AnimBoneRot[i] = v4(0.0f, 0.0f, 0.0f, 1.0f);
+
+                    if (scale_bits & (1ul << i))
+                    {
+                        if ((rv = Reflect(r, yellowhead->AnimBoneScale[i])) != REFLECT_OK)
+                            return rv;
+                    }
+                    else yellowhead->AnimBoneScale[i] = v4(1.0f);
+                }
+
+                for (int i = 0; i < 32; ++i)
+                {
+                    if (morph_bits & (1 << i))
+                    {
+                        if ((rv = Reflect(r, yellowhead->AnimMorph[i])) != REFLECT_OK)
+                            return rv;
+                    }
+                    else yellowhead->AnimMorph[i] = 0.0f;
+                }
+
+                break;
+            }
             case 0x4746584D: /* GFXM */
             {
                 PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
@@ -920,6 +987,56 @@ ReflectReturn PScriptName::WriteAlearData()
 
     r.SetCompressionFlags(flags & 7);
 
+    PYellowHead* part_yellowhead = thing->GetPYellowHead();
+    if (part_yellowhead != NULL)
+    {
+        u32 magic = 0x5341434B;
+
+        if ((rv = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return rv; 
+        if ((rv = Reflect(r, part_yellowhead->LastTimeSlappedAPlayer)) != REFLECT_OK) return rv;
+        if ((rv = Reflect(r, part_yellowhead->AnimSetKey)) != REFLECT_OK) return rv;
+
+        u64 pos_bits = 0xFFFFFFFFFFull;
+        u64 rot_bits = 0xFFFFFFFFFFull;
+        u64 scale_bits = 0xFFFFFFFFFFull;
+        u32 morph_bits = 0xFFFFFFFFul;
+
+        if ((rv = Reflect(r, pos_bits)) != REFLECT_OK) return rv;
+        if ((rv = Reflect(r, rot_bits)) != REFLECT_OK) return rv;
+        if ((rv = Reflect(r, scale_bits)) != REFLECT_OK) return rv;
+        if ((rv = Reflect(r, morph_bits)) != REFLECT_OK) return rv;
+
+        for (u32 i = 0; i < 64; ++i)
+        {
+            if (pos_bits & (1ul << i))
+            {
+                if ((rv = Reflect(r, part_yellowhead->AnimBonePos[i])) != REFLECT_OK)
+                    return rv;
+            }
+
+            if (rot_bits & (1ul << i))
+            {
+                if ((rv = Reflect(r, part_yellowhead->AnimBoneRot[i])) != REFLECT_OK)
+                    return rv;
+            }
+
+            if (scale_bits & (1ul << i))
+            {
+                if ((rv = Reflect(r, part_yellowhead->AnimBoneScale[i])) != REFLECT_OK)
+                    return rv;
+            }
+        }
+
+        for (u32 i = 0; i < 32; ++i)
+        {
+            if (morph_bits & (1ul << i))
+            {
+                if ((rv = Reflect(r, part_yellowhead->AnimMorph[i])) != REFLECT_OK)
+                    return rv;
+            }
+        }
+    }
+
     PMaterialOverride* part_override = thing->GetPMaterialOverride(); 
     if (part_override != NULL) 
     { 
@@ -998,6 +1115,7 @@ bool CThing::HasCustomPartData()
     if (GetPSwitch() != NULL) return true;
 #endif
 
+    if (GetPYellowHead() != NULL) return true;
     if (GetPMaterialOverride() != NULL) return true;
 
     PGeneratedMesh* mesh = GetPGeneratedMesh();
@@ -1585,4 +1703,5 @@ void InitResourceHooks()
     MH_PokeBranch(0x003c4224, &_on_fixup_thing_hook);
     MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
     MH_PokeBranch(0x0005e6a8, &_initextradata_part_switch);
+    MH_PokeBranch(0x00031750, &_initextradata_part_yellowhead);
 }

@@ -18,11 +18,10 @@ namespace sync
     enum
     {
         eCommitFlags_None,
-        eCommitFlags_FilePathChanged = (1 << 0),
-        eCommitFlags_SizeChanged = (1 << 1),
-        eCommitFlags_HashChanged = (1 << 2),
-        eCommitFlags_Deleted = (1 << 3),
-        eCommitFlags_Added = (1 << 4) | eCommitFlags_FilePathChanged | eCommitFlags_SizeChanged | eCommitFlags_HashChanged
+        eCommitFlags_PathChanged = (1 << 0),
+        eCommitFlags_DataChanged = (1 << 1),
+        eCommitFlags_Deleted = (1 << 3) | eCommitFlags_PathChanged | eCommitFlags_DataChanged,
+        eCommitFlags_Added = (1 << 4) | eCommitFlags_PathChanged | eCommitFlags_DataChanged
     };
 
     enum Permissions
@@ -130,7 +129,9 @@ namespace sync
 
     enum
     {
-        eDepotFlags_Local = (1 << 0)
+        eDepotFlags_Local = (1 << 0),
+        eDepotFlags_Disabled = (1 << 1),
+        eDepotFlags_WantReload = (1 << 2)
     };
     
     struct packet
@@ -143,6 +144,7 @@ namespace sync
 
     struct commit_file
     {
+        u32 Flags;
         CGUID FileGuid;
         CFilePath OldFilePath;
         CFilePath NewFilePath;
@@ -194,7 +196,7 @@ namespace sync
 
     struct depot
     {
-        inline depot() : DepotID(), CommitID(), Name(), Id(), Priority(), Database(), Flags()
+        inline depot() : DepotID(), CommitID(), Name(), Id(), Priority(), Database(), Branch(), Flags()
         {
 
         }
@@ -207,6 +209,21 @@ namespace sync
         inline bool IsRemote() const
         {
             return (Flags & eDepotFlags_Local) == 0;
+        }
+
+        inline bool IsDisabled() const
+        {
+            return (Flags & eDepotFlags_Disabled) != 0;
+        }
+
+        inline bool IsBranched() const
+        {
+            return *Branch != '\0';
+        }
+
+        inline bool WantReload() const
+        {
+            return (Flags & eDepotFlags_WantReload) != 0;
         }
         
         inline CFilePath MakeDatabaseFilePath() const
@@ -223,6 +240,7 @@ namespace sync
         u64 CommitID;
         char Name[128];
         char Id[32];
+        char Branch[32];
         u32 Priority;
         CFileDB* Database;
         u32 Flags;

@@ -17,6 +17,7 @@
 #include "OutfitSystem.h"
 #include "RenderJoint.h"
 #include "Sync/Bootstrap.h"
+#include <LooksMenu.h>
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -36,6 +37,7 @@
 #include <FartRO.h>
 #include <System.h>
 #include <resources/ResourceAnimatedTexture.h>
+#include <AlearHooks.h>
 
 extern "C" void _gfxbind_hook_naked();
 extern void InitGooeyNetworkHooks();
@@ -44,6 +46,7 @@ extern void LoadSackboyPolygon();
 extern void LoadBallPolygon();
 extern bool InitializeExplosiveStyles();
 extern void AttachWebternateHooks();
+extern void AttachFloatyFluidHooks();
 
 bool AlearCheckPatch();
 
@@ -117,19 +120,44 @@ CInitStep gAlearInitSteps[] =
 void AlearSetupDatabase()
 {
     CCSLock _the_lock(&FileDB::Mutex, __FILE__, __LINE__);
-
-    FileDB::DBs.push_back(&sync::Database);
     sync::Database.Path = CFilePath(FPR_ALEAR, "sync/cache.map");
-    
-    if (gGameDataReady)
+
+    CVector<MMString<char> > paths;
+    if (!FileLoad(CFilePath(FPR_ALEAR, "config/databases.txt"), paths));
     {
-        CFilePath patch_fp(FPR_GAMEDATA, "/output/brg_patch.map");
-        if (FileExists(patch_fp))
-            FileDB::DBs.push_back(CFileDB::Construct(patch_fp));
+        paths.push_back("output/brg_patch.map");
+        paths.push_back("output/blurayguids.map");
     }
 
-    CFilePath fp(FPR_BLURAY, "/output/blurayguids.map");
-    FileDB::DBs.push_back(CFileDB::Construct(fp));
+    for (u32 i = 0; i < paths.size(); ++i)
+    {
+        const MMString<char>& path = paths[i];
+        CFilePath fp;
+
+        if (path.compare("output/blurayguids.map") == 0)
+            fp = CFilePath(FPR_BLURAY, "output/blurayguids.map");
+        else if (gGameDataReady)
+            fp = CFilePath(FPR_GAMEDATA, path.c_str());
+        else
+        {
+            MMLog("Skipping load of database %s as gamedata isn't ready\n", path.c_str());
+            continue;
+        }
+
+        if (fp == sync::Database.Path)
+        {
+            FileDB::DBs.push_back(&sync::Database);
+            continue;
+        }
+
+        if (!FileExists(fp))
+        {
+            MMLog("Skipping load of database %s as file does not exist locally\n", path.c_str());
+            continue;
+        }
+
+        FileDB::DBs.push_back(new CFileDB(fp));
+    }
 
     for (int i = 0; i < FileDB::DBs.size(); ++i)
         FileDB::DBs[i]->Load();
@@ -169,6 +197,8 @@ void AlearStartup()
     InitOutfitHooks();
     InitAlearOptUiHooks();
     AttachWebternateHooks();
+    AttachFloatyFluidHooks();
+    AttachLooksMenuHooks();
 
     MH_PokeHook(0x0040b678, SetJetpackTether);
     MH_PokeHook(0x0040a9f4, CollectGun);
@@ -177,6 +207,7 @@ void AlearStartup()
     MH_PokeHook(0x00090538, MainLoadingThread);
 
     MH_Poke32(0x0001da24, 0x39200001);
+    MH_PokeBranch(0x000ebc6c, &_on_post_sackboy_animation_update_hook);
     
 
     // This module gets initialized by replacing the function that normally

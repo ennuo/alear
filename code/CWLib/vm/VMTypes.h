@@ -111,18 +111,23 @@ struct NativeTypeMangle<type> \
 NATIVE_TYPE_MANGLE(unsigned int, "i"); // 249
 NATIVE_TYPE_MANGLE(void, "v");
 
-template <typename Type>
-struct Arg
-{
-    const char* Name;
-    
-    Arg()
-    {
-        Name = "abc";
-    }
+template <typename T> struct Arg; 
 
-    const char* GetName() { return Name; }
-};
+#define MAKE_ARG_TEMPLATE(type, mangled) template <> struct Arg<type> { const char* Name; const char* GetName() const { return Name; } Arg() { Name = mangled; } };
+
+class CThing;
+
+MAKE_ARG_TEMPLATE(CThing*, "Q5Thing");
+MAKE_ARG_TEMPLATE(s32, "i");
+MAKE_ARG_TEMPLATE(u32, "i");
+MAKE_ARG_TEMPLATE(float, "f");
+MAKE_ARG_TEMPLATE(v4, "r");
+MAKE_ARG_TEMPLATE(bool, "b");
+MAKE_ARG_TEMPLATE(wchar_t, "c");
+MAKE_ARG_TEMPLATE(s64, "j");
+MAKE_ARG_TEMPLATE(double, "d");
+
+#undef MAKE_ARG_TEMPLATE
 
 struct ScriptObjectUID {
     u32 UID;

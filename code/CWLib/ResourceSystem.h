@@ -46,7 +46,7 @@ CP<T> LoadResource(CResourceDescriptor<T> const& desc, u32 flags = 0, CStreamPri
 }
 
 template<typename T>
-CP<T> LoadResourceByFilename(CFilePath const& filename, unsigned int flags, CStreamPriority stream_priority_override, bool can_create)
+CP<T> LoadResourceByFilename(CFilePath const& filename, u32 flags = 0, CStreamPriority stream_priority_override = STREAM_PRIORITY_DEFAULT, bool can_create = false)
 {
     CP<CResource> resource = LoadResourceByFilenameGeneric(filename, GetResourceType<T>(), flags, stream_priority_override, can_create);
     return CP<T>((T*)resource.GetRef());

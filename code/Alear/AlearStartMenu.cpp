@@ -234,8 +234,8 @@ void ReloadSyncFilesystem()
     {
         CFolderNode* node = &gRootFolder;
 
-        char* path = row->FilePathX;
-        char* index = strchr(path, '/');
+        const char* path = row->GetPath();
+        const char* index = strchr(path, '/');
         while (index != NULL)
         {
             int len = index - path;
@@ -516,11 +516,8 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
             CFilePath fp = database->Path;
             GetRelativePath(wstr, fp);
             u32 ret = manager->DoInline(wstr.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
-            if (ret & 256)
+            if (ret & 256 && database != &sync::Database)
             {
-                delete database;
-                database = CFileDB::Construct(fp);
-                FileDB::DBs[i] = database;
                 if (FileExists(fp))
                 {
                     DebugLog("Reloading %s from disk...\n", fp.c_str());
@@ -772,16 +769,7 @@ void ReloadDatabase(CFilePath& fp)
 
     CCSLock lock(mutex, __FILE__, __LINE__);
     MMLog("Reloading %s from disk...\n", fp.c_str());
-
-    database->Files.resize(0);
-    database->SortedIndex = 0;
-
     database->Load();
-
-    // Not sure why they don't just sort it instead
-    // of using the sorted index, but whatever.
-    std::sort(database->Files.begin(), database->Files.end(), SCompareGUID());
-    database->SortedIndex = database->Files.size();
 }
 
 bool gCachesDirty = true;
@@ -914,11 +902,13 @@ namespace AlearOptNativeFunctions
 #include <Hash.h>
 #include "TweakShape.h"
 #include "DrawFluids.h"
+#include <LooksMenu.h>
 extern "C" void _alear_levelupdate_hook();
 void InitAlearOptUiHooks()
 {
     AlearOptNativeFunctions::Register();
     TweakShapeNativeFunctions::Register();
     DrawFluidsNativeFunctions::Register();
+    LooksMenuNativeFunctions::Register();
     MH_Poke32(0x00015874, B(&_alear_levelupdate_hook, 0x00015874));
 }

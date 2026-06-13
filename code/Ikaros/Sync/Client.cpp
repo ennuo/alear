@@ -232,7 +232,7 @@ namespace sync
     }
 
     CDownloadJob::CDownloadJob() : CBaseCounted(),
-    CSR(), FilePath(), Server(), Token(), DownloadSize(),
+    CSR(), Server(), Token(), DownloadSize(),
     BytesDownloaded(), JobID(), State(kDownloadState_Inactive), Priority(STREAM_NO_STREAMING)
     {
         Reset();
@@ -248,7 +248,6 @@ namespace sync
     void CDownloadJob::Reset()
     {
         CSR = NULL;
-        FilePath.Clear();
         memset(&Server, 0, sizeof(sockaddr_in));
         memset(&Token, 0, sizeof(Token));
         DownloadSize = 0;
@@ -271,6 +270,20 @@ namespace sync
             if (gCaches[CT_SYNC]->GetSize(desc.GetHash(), size))
             {
                 State = kDownloadState_Success;
+                Finish();
+                return;
+            }
+        }
+        else
+        {
+            CFileDBRow* row = FileDB::FindByGUID(desc.GetGUID());
+            if (row != NULL) 
+            {
+                csr->LoosePath = CFilePath(FPR_GAMEDATA, row->FilePathX);
+            }
+            else
+            {
+                State = kDownloadState_NoDataSource;
                 Finish();
                 return;
             }
@@ -454,13 +467,19 @@ namespace sync
             return true;
         }
 
-        bool StreamToFile(const CFilePath& fp)
+        bool StreamToFile()
         {
             FileHandle fd;
+            const CFilePath& fp = Owner->CSR->LoosePath;
+
+            MMLog("streaming file %s\n", fp.c_str());
             
             DirectoryCreate(fp);
             if (!FileOpen(fp, fd, OPEN_WRITE))
+            {
+                MMLog("failed to stream file!\n");
                 return false;
+            }
 
             const int kBufferSize = 4096;
             CSHA1Context sha1;
@@ -469,7 +488,8 @@ namespace sync
             int n = 0;
             while (n < Response.FileSize)
             {
-                bool rv = recv_exactly(Socket, buf, MIN(Response.FileSize - n, kBufferSize));
+                int size = MIN(Response.FileSize - n, kBufferSize);
+                bool rv = recv_exactly(Socket, buf, size);
                 if (!rv)
                 {
                     FileClose(fd);
@@ -477,9 +497,9 @@ namespace sync
                     return false;
                 }
 
-                sha1.AddData((const u8*)buf, rv);
-                FileWrite(fd, (void*)buf, rv);
-                n += rv;
+                sha1.AddData((const u8*)buf, size);
+                FileWrite(fd, (void*)buf, size);
+                n += size;
             }
 
             FileClose(fd);
@@ -525,10 +545,7 @@ namespace sync
             else
             {
                 if (GetPreferredSerialisationType(desc.GetType()) == PREFER_FILE)
-                {
-                    CFilePath fp;
-                    StreamToFile(fp);
-                }
+                    return StreamToFile();
                 else
                 {
                     ByteArray data;
@@ -813,9 +830,68 @@ namespace sync
                 break;
             }
 
+            case eMessageType_Depot:
+            {
+                CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+
+                if (packet.Status != kResponse_Ok)
+                {
+                    SYNC_ERROR("failed to fetch depot!\n");
+                    return;
+                }
+
+                msg_depot_response resp;
+                if (!parsemsg(data, resp))
+                {
+                    SYNC_ERROR("failed to parse depot reply from server!\n");
+                    return;
+                }
+
+                depot* depot = GetDepot(resp.DepotID);
+                depot->Flags |= eDepotFlags_WantReload;
+                CFilePath fp = depot->MakeDatabaseFilePath();
+                DirectoryCreate(fp);
+                
+                int fd;
+                if (FileOpen(fp, fd, OPEN_WRITE))
+                {
+                    FileWrite(fd, resp.FileData.begin(), resp.FileData.size());
+                    FileClose(fd);
+                }
+
+                LinkDepots();
+
+                break;
+
+            }
+
             case eEventType_Commit:
             {
-                // blah blah parse database response
+                CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
+
+                commit_info info;
+                if (!parsemsg(data, info))
+                {
+                    SYNC_ERROR("Failed to parse commit event from server!\n");
+                    return;
+                }
+
+                const depot* depot = GetDepot(info.DepotId);
+                if (depot == NULL)
+                {
+                    SYNC_LOG("Ignoring commit event since depot doesn't exist locally!\n");
+                    return;
+                }
+
+                if (depot->IsDisabled())
+                {
+                    SYNC_LOG("Ignoring commit event since depot is disabled!\n");
+                    return;
+                }
+
+                sendmsg(Socket, eChannel_Sync, eMessageType_Depot, (void*)&depot->DepotID, sizeof(u64));
+                SYNC_LOG("got commit for %s with %d changes, %d additions, %d deletions\n", depot->Name, info.FilesChanged, info.FilesAdded, info.FilesDeleted);
+
                 break;
             }
         }
@@ -1041,11 +1117,17 @@ namespace sync
                         SYNC_LOG("Depots:\n");
                         for (u32 i = 0; i < server_depots.size(); ++i)
                         {
-                            const depot& d = server_depots[i];
+                            depot& d = server_depots[i];
 
                             const depot* c = GetDepot(d.DepotID);
 
                             bool download = c == NULL || c->CommitID != d.CommitID || !FileExists(c->MakeDatabaseFilePath());
+                            if (d.IsBranched() && !IsBranchDefined(d.Branch))
+                                d.Flags |= eDepotFlags_Disabled;
+
+                            if (d.IsDisabled())
+                                continue;
+                            
                             if (download)
                             {
                                 sendmsg(Socket, eChannel_Sync, eMessageType_Depot, (void*)&d.DepotID, sizeof(u64));
@@ -1186,12 +1268,12 @@ namespace sync
         return next;
     }
 
-    const depot* CClient::GetDepot(const char* id)
+    depot* CClient::GetDepot(const char* id)
     {
         CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
         for (u32 i = 0; i < Depots.size(); ++i)
         {
-            const depot& depot = Depots[i];
+            depot& depot = Depots[i];
             if (StringCompare(depot.Id, id) == 0)
                 return &depot;
         }
@@ -1199,12 +1281,12 @@ namespace sync
         return NULL;
     }
 
-    const depot* CClient::GetDepot(u64 id)
+    depot* CClient::GetDepot(u64 id)
     {
         CCSLock _lock(&DepotMutex, __FILE__, __LINE__);
         for (u32 i = 0; i < Depots.size(); ++i)
         {
-            const depot& depot = Depots[i];
+            depot& depot = Depots[i];
             if (depot.DepotID == id)
                 return &depot;
         }
