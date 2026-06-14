@@ -57,18 +57,6 @@ namespace sync
                 if (d.Database != NULL)
                     delete d.Database;
             }
-            else if (d.WantReload())
-            {
-                CFileDB* database = new CFileDB(d.MakeDatabaseFilePath());
-                database->Load();
-
-                if (d.Database != NULL) delete d.Database;
-
-                ReloadModifiedResources(d.Database, NULL);
-
-                d.Flags &= ~eDepotFlags_WantReload;
-                d.Database = database;
-            }
             else if (d.Database == NULL)
             {
                 d.Database = new CFileDB(d.MakeDatabaseFilePath());

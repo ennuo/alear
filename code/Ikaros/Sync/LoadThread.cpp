@@ -11,6 +11,26 @@
 
 CSRQueue CSRsForSync;
 
+CResource* _FindResourceInList(const CSerialisedResource* csr)
+{
+    CCSLock _lock(gResourceCS, __FILE__, __LINE__);
+    CResource* rv = FindResourceInList(csr->GetDescriptor());
+    if (rv == NULL || rv->CSR != csr)
+    {
+        for (CResource** itr = gResourceArray.begin(); itr != gResourceArray.end(); ++itr)
+        {
+            rv = *itr;
+            if (rv->CSR == csr)
+                return rv;
+        }
+
+        return NULL;
+    }
+
+    return rv;
+
+}
+
 MAKE_THREAD_FUNCTION(MainSlowThread)
 {
     while (!CSRsForSlow->Aborted())
@@ -27,14 +47,21 @@ MAKE_THREAD_FUNCTION(MainSlowThread)
             continue;
         }
 
+        CResource* r = _FindResourceInList(csr);
+        CHash* loaded_hash = r != NULL ? &r->GetLoadedHash() : NULL;
+
         bool has_source = false;
         if (csr->LoosePath.IsEmpty())
         {
             SResourceReader reader;
             if (GetResourceReader(csr->GetDescriptor(), reader, csr->LoosePath))
+            {
                 has_source = FileLoad(reader, csr->Data);
+                if (has_source && loaded_hash)
+                    reader.RollingHash.Result((u8*)loaded_hash);
+            }
         }
-        else has_source = FileLoad(csr->LoosePath, csr->Data);
+        else has_source = FileLoad(csr->LoosePath, csr->Data, loaded_hash);
 
         if (!has_source)
         {

@@ -5,6 +5,7 @@
 #include "cell/DebugLog.h"
 #include "vm/NativeRegistry.h"
 #include "vm/NativeFunctionCracker.h"
+#include <ReadINI.h>
 
 CServerSwitcher* gServerSwitcher;
 
@@ -18,11 +19,67 @@ CServerSwitcher::CServerSwitcher() : Servers()
 
 bool CServerSwitcher::LoadFromFile(CFilePath& file)
 {
-    char* json = FileLoadText(file);
-    if (json == NULL) return false;
-    bool ret = LoadFromJSON(json);
-    delete json;
-    return ret;
+    CVector<MMString<char> > lines;
+    if (!FileLoad(file, lines))
+        return false;
+
+    CVector<MMString<char> >::iterator itr = lines.begin();
+    CVector<MMString<char> >::iterator end = lines.end();
+
+    SServerConfiguration* srv = NULL;
+
+    char key[256] = {0};
+    char val[256] = {0};
+    char valspaces[256] = {0};
+    char path[256] = {0};
+
+    for (; itr != end; ++itr)
+    {
+        const char* s = itr->c_str();
+        if (*s == '[') 
+        {
+            s = copyupto(path, s + 1, false);
+            srv = &Servers[Size++];
+            MultiByteToWChar(srv->Name, path, NULL);
+
+            DebugLog("Adding Server\n");
+            DebugLog("\tName=%s\n", path);
+        }
+
+        s = copyupto(key, s, false);
+
+        *valspaces = '\0';
+        if (*s == '=')
+            s = copyupto(valspaces, s + 1, true);
+
+        copyupto(val, valspaces, false);
+
+        if (*key != '\0' && srv != NULL)
+        {
+            if (StringCompare(key, "http") == 0)
+            {
+                DebugLog("\tHTTP=%s\n", val);
+                strcpy(srv->HttpUrl, val);
+            }
+            else if (StringCompare(key, "https") == 0)
+            {
+                DebugLog("\tSecure=%s\n", val);
+                strcpy(srv->SecureUrl, val);
+            }
+            else if (StringCompare(key, "digest") == 0)
+            {
+                DebugLog("\tDigest=%s\n", val);
+                strcpy(srv->Digest, val);
+            }
+            else if (StringCompare(key, "useragent") == 0)
+            {
+                DebugLog("\tUserAgent=%s\n", val);
+                strcpy(srv->UserAgent, val);
+            }
+        }
+    }
+
+    return true;
 }
 
 bool CServerSwitcher::LoadFromJSON(char* json)
@@ -129,6 +186,7 @@ bool CServerSwitcher::Switch(int index)
     gServerURL = config.HttpUrl;
     gServerSecureURL = config.SecureUrl;
     gServerDigest = config.Digest;
+    gUserAgent = config.UserAgent;
 
     return true;
 }
@@ -157,7 +215,7 @@ bool AlearInitServerSwitcher()
 {
     DebugLog("Initializing Server Switcher\n");
     gServerSwitcher = new CServerSwitcher();
-    CFilePath fp(FPR_ALEAR, "servers.json");
+    CFilePath fp(FPR_ALEAR, "config/servers.ini");
     if (FileExists(fp))
     {
         DebugLog("Loading server configuration file at %s\n", fp.c_str());

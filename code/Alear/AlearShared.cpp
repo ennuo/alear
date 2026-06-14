@@ -10,6 +10,7 @@
 #include "PoppetOutlineShapes.h"
 #include "RenderJoint.h"
 #include "AlearSerialization.h"
+#include <Sync/Bootstrap.h>
 
 #include "customization/SlapStyles.h"
 #include "customization/Emotes.h"
@@ -202,6 +203,7 @@ void OnUpdateLevel()
     // a local network.
     ReloadPendingDatabases();
     ProcessStartMenuNotifications();
+    sync::Update();
 
     UpdateItemRequest();
 

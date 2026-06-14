@@ -131,7 +131,7 @@ public:
     CConfigOption* Options;
     u8 NextSibling;
     u8 FirstChild;
-    bool Hidden;
+    u8 Parent;
     bool Open;
 };
 

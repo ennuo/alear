@@ -16,6 +16,7 @@
 #include <Directory.h>
 #include <network/NetworkManager.h>
 #include <network/RNPManager.h>
+#include <AlearStartMenu.h>
 
 #include <mem_stl_buckets.h>
 
@@ -859,8 +860,6 @@ namespace sync
                     FileClose(fd);
                 }
 
-                LinkDepots();
-
                 break;
 
             }
@@ -943,9 +942,21 @@ namespace sync
 
     void CClient::UpdateSynced()
     {
-        // CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(1);
-        // if (file->IsLoaded())
-        //     SYNC_LOG("%s\n", (const char*)file->Data.begin());
+        CCSLock lock(&DepotMutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < Depots.size(); ++i)
+        {
+            depot& d = Depots[i];
+            if (!d.WantReload()) continue;
+
+            CFileDB* database = new CFileDB(d.MakeDatabaseFilePath());
+            database->Load();
+
+            if (d.Database != NULL) delete d.Database;
+            d.Database = database;
+            d.Flags &= ~eDepotFlags_WantReload;
+
+            ReloadModifiedResources(database, NULL);
+        }
     }
 
     void CClient::Update()

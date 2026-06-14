@@ -98,7 +98,7 @@ void OnSetRenderDistanceToggle()
 tchar_t EMPTY_STRING[] = { 0x20 };
 
 CConfigFolder::CConfigFolder() : Path(), DisplayName(), Options(),
-NextSibling(), FirstChild(), Hidden(), Open()
+NextSibling(), FirstChild(), Parent(), Open()
 {
 
 }
@@ -117,6 +117,7 @@ CConfigFolder* FindOrCreateFolder(const TextRange<char>& name, CConfigFolder& pa
     u8 i = gConfigAllocator++;
     CConfigFolder& f = gConfigRoot[i];
     f.Path = name;
+    f.Parent = &parent - gConfigRoot;
     MultiByteToWChar(f.DisplayName, name.Begin, name.End);
     f.NextSibling = parent.FirstChild;
     parent.FirstChild = i;
@@ -128,6 +129,7 @@ namespace alear
 {
     void SetupConfigTables()
     {
+        gConfigRoot->Open = true;
         for (CConfigOption* opt = gConfigHead; opt != NULL; opt = opt->GetNext())
         {
             CConfigFolder* parent = gConfigRoot;

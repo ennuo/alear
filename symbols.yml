@@ -91,3 +91,4 @@ gRNPManager: 0x009c0040
 gGameDataPath: 0x00a1e531
 gBaseDir: 0x00a1e731
 gSysCachePath: 0x00a1e631
+gUserAgent: 0x00936ff0

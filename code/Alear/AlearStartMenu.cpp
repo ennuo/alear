@@ -53,6 +53,7 @@
 #include <Sync/Client.h>
 #include <Sync/Database.h>
 #include <Sync/Shared.h>
+#include <OverlayUI.h>
 
 
 #ifdef __SM64__
@@ -380,8 +381,11 @@ void ReloadModifiedResources(CFileDB* database, CFileDB* old_database)
             if (row == NULL) continue;
             
             CHash& loaded_hash = resource->GetLoadedHash();
-            CHash& file_hash = row->FileHash;
-            if (!loaded_hash || file_hash != loaded_hash)
+            CHash file_hash = row->FileHash;
+            if (!file_hash)
+                FileHash(CFilePath(FPR_GAMEDATA, row->FilePathX), &file_hash);
+            
+            if (file_hash != loaded_hash)
             {
                 if (type == RTYPE_SCRIPT) 
                 {
@@ -535,88 +539,114 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
     }    
 }
 
-void DoConfigOption(CGooeyNodeManager* manager, const CConfigFolder& folder)
+void DoConfigOption(CGooeyNodeManager* manager, CConfigFolder& folder, bool& needs_update)
 {
-    u8 child = folder.FirstChild;
-    while (child != 0)
+    bool open = folder.Open;
+
+    for (u8 itr = folder.Parent; itr != 0; itr = gConfigRoot[itr].Parent)
     {
-        const CConfigFolder& f = gConfigRoot[child];
-        DoConfigOption(manager, f);
-        child = f.NextSibling;
+        if (!gConfigRoot[itr].Open)
+        {
+            open = false;
+            break;
+        }
     }
 
-    if (folder.Options == NULL) return;
+    u32 result = manager->DoInline(folder.DisplayName.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
+    if (result & 256)
+    {
+        folder.Open = !folder.Open;
+        needs_update = true;
+    }
 
-    DoSectionHeader(manager, folder.DisplayName.c_str());
-    if (manager->StartFrame())
+    manager->DoBreak();
+
+    if (open && manager->StartFrame())
     {
         manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
-        manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_START);
-        manager->AddFrameColumn(SizingBehaviour::Relative(0.5f), LM_JUSTIFY_END);
-        manager->SetFrameBorders(0.0f, 0.0f);
+        manager->SetFrameBorders(32.0f, 0.0f, 0.0f, 0.0f);
         manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
 
-        for (CConfigOption* opt = folder.Options; opt != NULL; opt = opt->GetSibling())
+        u8 child = folder.FirstChild;
+        while (child != 0)
         {
-            u32 input_mask = 256;
-            if (opt->GetType() == OPT_FLOAT)
-            {
-                input_mask |= 0x40;
-                input_mask |= 0x80;
-            }
+            CConfigFolder& f = gConfigRoot[child];
+            DoConfigOption(manager, f, needs_update);
+            child = f.NextSibling;
+        }
+        
+        if (folder.Options != NULL && manager->StartFrame())
+        {
+            manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+            manager->SetFrameBorders(0.0f, 0.0f);
+            manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
+            manager->AddFrameColumn(SizingBehaviour::Contents(), LM_JUSTIFY_START);
+            manager->AddFrameColumn(0.0f, LM_JUSTIFY_END);
 
-            //u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-            
-            switch (opt->GetType())
+            for (CConfigOption* opt = folder.Options; opt != NULL; opt = opt->GetSibling())
             {
-                // DPAD
-                // 0x1
-                // 0x2
-                // 0x4
-                // 0x8
+                u32 input_mask = 256;
+                if (opt->GetType() == OPT_FLOAT)
+                {
+                    input_mask |= 0x40;
+                    input_mask |= 0x80;
+                }
 
-                // STICK
-                // 0x10
-                // 0x20
-                // 0x40
-                // 0x80
+                //u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
                 
-                // 0x100 = CROSS
-                // 0x200 = CIRCLE
-
-
-                case OPT_BOOL:
+                switch (opt->GetType())
                 {
-                    CConfigBool& b = *(CConfigBool*)opt;
-                    u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, b ? STATE_TOGGLE : STATE_NORMAL, NULL, input_mask);
-                    if (result & 256) b = !b;
-                    manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+                    // DPAD
+                    // 0x1
+                    // 0x2
+                    // 0x4
+                    // 0x8
 
-                    break;
-                }
-                case OPT_FLOAT:
-                {
-                    u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-                    wchar_t fstr[256];
-                    CConfigFloat& f = *(CConfigFloat*)opt;
+                    // STICK
+                    // 0x10
+                    // 0x20
+                    // 0x40
+                    // 0x80
                     
-                    if (result & 0x80) f.Increment(); // 0x10 = DPAD_UP
-                                                        // 0x40 = DPAD_LEFT
-                    if (result & 0x40) f.Decrement(); // 0x80 = DPAD_RIGHT
+                    // 0x100 = CROSS
+                    // 0x200 = CIRCLE
 
-                    FormatString<256>(fstr, L"%.1f", (float)f);
-                    manager->DoText(fstr, GTS_T5);
-                    
-                    break;
+
+                    case OPT_BOOL:
+                    {
+                        CConfigBool& b = *(CConfigBool*)opt;
+                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                        if (result & 256) b = !b;
+                        manager->DoText(b ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+
+                        break;
+                    }
+                    case OPT_FLOAT:
+                    {
+                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                        wchar_t fstr[256];
+                        CConfigFloat& f = *(CConfigFloat*)opt;
+                        
+                        if (result & 0x80) f.Increment(); // 0x10 = DPAD_UP
+                                                            // 0x40 = DPAD_LEFT
+                        if (result & 0x40) f.Decrement(); // 0x80 = DPAD_RIGHT
+
+                        FormatString<256>(fstr, L"%.1f", (float)f);
+                        manager->DoText(fstr, GTS_T5);
+                        
+                        break;
+                    }
+                    default:
+                    {
+                        manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                        manager->DoText(L"<N/A>", GTS_T5);
+                        break;
+                    }
                 }
-                default:
-                {
-                    manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
-                    manager->DoText(L"<N/A>", GTS_T5);
-                    break;
-                }
+                // manager->DoBreak();
             }
-            manager->DoBreak();
+
+            manager->EndFrame();
         }
 
         manager->EndFrame();
@@ -625,19 +655,24 @@ void DoConfigOption(CGooeyNodeManager* manager, const CConfigFolder& folder)
     manager->DoBreak();
 }
 
-void DoConfigSubmenu(CGooeyNodeManager* manager)
+bool DoConfigSubmenu(CGooeyNodeManager* manager)
 {
-    DoSectionHeader(manager, L"Game Mode");
-    bool* pod_level = ((bool*)gGame) + 0x161;
+    // DoSectionHeader(manager, L"Game Mode");
+    // bool* pod_level = ((bool*)gGame) + 0x161;
 
-    if (manager->DoInline(L"Edit Mode", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-        gGame->EditMode = !gGame->EditMode;
-    manager->DoText(gGame->EditMode ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+    // if (manager->DoInline(L"Edit Mode", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+    //     gGame->EditMode = !gGame->EditMode;
+    // manager->DoText(gGame->EditMode ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+    // manager->DoBreak();
+    // if (manager->DoInline(L"Pod Level", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
+    //     *pod_level = !*pod_level;
+    // manager->DoText(*pod_level ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
+
     manager->DoBreak();
-    if (manager->DoInline(L"Pod Level", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-        *pod_level = !*pod_level;
-    manager->DoText(*pod_level ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
-    DoConfigOption(manager, *gConfigRoot);
+    bool needs_update = false;
+    for (u32 itr = gConfigRoot->FirstChild; itr != 0; itr = gConfigRoot[itr].NextSibling)
+        DoConfigOption(manager, gConfigRoot[itr], needs_update);
+    return needs_update;
 }
 
 enum AlearPageType {
@@ -870,12 +905,12 @@ namespace AlearOptNativeFunctions
         return DoSyncSubpage(wrapper->Manager, subpage, first_open);
     }
 
-    void DoConfigSubmenu(CScriptObjectGooey* gooey)
+    bool DoConfigSubmenu(CScriptObjectGooey* gooey)
     {
-        if (gooey == NULL) return;
+        if (gooey == NULL) return false;
         CScriptedGooeyWrapper* wrapper = gooey->GetNativeObject();
-        if (wrapper == NULL) return;
-        DoConfigSubmenu(wrapper->Manager);
+        if (wrapper == NULL) return false;
+        return DoConfigSubmenu(wrapper->Manager);
     }
 
     void DoServersSubmenu(CScriptObjectGooey* gooey)
@@ -889,7 +924,7 @@ namespace AlearOptNativeFunctions
     void Register()
     {
         RegisterNativeFunction("Start_Menu", "DoGamedataSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoGamedataSubmenu>);
-        RegisterNativeFunction("Start_Menu", "DoConfigSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoConfigSubmenu>);
+        RegisterNativeFunction("Start_Menu", "DoConfigSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1<bool, CScriptObjectGooey*>::Call<DoConfigSubmenu>);
         RegisterNativeFunction("Start_Menu", "DoServersSubmenu__Q5Gooey", true, NVirtualMachine::CNativeFunction1V<CScriptObjectGooey*>::Call<DoServersSubmenu>);
         RegisterNativeFunction("Start_Menu", "DoSyncSubpage__Q5Gooeyib", true, NVirtualMachine::CNativeFunction3<int, CScriptObjectGooey*, AlearSubPageType, bool>::Call<DoSyncSubpage>);
         
