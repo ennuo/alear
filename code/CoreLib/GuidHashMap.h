@@ -26,7 +26,11 @@ public:
     const char* FilePathX;
     CHash FileHash;
     CGUID FileGuid;
-    u32 FileSize;
+    union
+    {
+        u32 FileSize;
+        u32 LocalGuid;
+    };
 };
 
 typedef CVector<CFileDBRow> V_CFileDBRow;
@@ -96,6 +100,7 @@ namespace FileDB
 {
     extern CFileDBRow* (*FindByGUID)(const CGUID& guid);
     extern CFileDBRow* (*FindByPath)(const CFilePath& fp, bool create);
+    bool RemapLocalGUID(const CGUID& in, CGUID& out);
     extern CCriticalSec Mutex;
     extern V_CFileDB DBs;
 }

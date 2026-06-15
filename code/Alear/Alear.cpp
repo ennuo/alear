@@ -205,7 +205,8 @@ void AlearStartup()
     MH_PokeHook(0x0040a92c, SetScubaGear);
 
     MH_PokeHook(0x00090538, MainLoadingThread);
-
+    MH_PokeHook(0x0057d008, FileDB::RemapLocalGUID);
+    
     MH_Poke32(0x0001da24, 0x39200001);
     MH_PokeBranch(0x000ebc6c, &_on_post_sackboy_animation_update_hook);
     

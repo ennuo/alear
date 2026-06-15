@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 #include <Serialise.h>
+#include <mmalex.h>
 
 CFileDBRow::CFileDBRow()
 {
@@ -46,6 +47,7 @@ const char* CFileDBRow::GetFilename() const
 void CFileDBRow::SetPath(const char* path)
 {
     FilePathX = path;
+    LocalGuid = 0x80000000ul | mmalex::crc32(0, FilePathX, StringLength(FilePathX));
 }
 
 CFileDB::~CFileDB()
@@ -177,4 +179,30 @@ ReflectReturn CFileDB::Load()
     SortedIndex = Files.size();
 
     return REFLECT_OK;
+}
+
+bool FileDB::RemapLocalGUID(const CGUID& in, CGUID& out)
+{
+    if (in < 0)
+    {
+        const CFileDBRow* row = FindByGUID(in);
+        if (row != NULL) return false;
+
+        CCSLock _lock(&FileDB::Mutex, __FILE__, __LINE__);
+        for (u32 i = 0; i < FileDB::DBs.size(); ++i)
+        {
+            CFileDB* database = FileDB::DBs[i];
+            for (u32 j = 0; j < database->Files.size(); ++j)
+            {
+                CFileDBRow& file = database->Files[j];
+                if (CGUID(file.LocalGuid) == in)
+                {
+                    out = file.FileGuid;
+                    return true;
+                }
+            }   
+        }
+    }
+
+    return false;
 }
