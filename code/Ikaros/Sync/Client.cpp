@@ -132,7 +132,20 @@ namespace sync
     {
         packet p;
         ByteArray data;
-        if (!recvmsg(s, p, data) || p.Status != kResponse_Ok || p.Message != GetMessageType<T>() || p.Channel != GetChannel<T>()) return false;
+        if (!recvmsg(s, p, data)) return false;
+
+        if (p.Message != GetMessageType<T>() || p.Channel != GetChannel<T>())
+        {
+            SYNC_LOG("recv'd unexpected message in response\n");
+            return false;
+        }
+
+        if (p.Status != kResponse_Ok)
+        {
+            SYNC_LOG("msg had failed status (%04x)\n", p.Status);
+            return false;
+        }
+        
         return parsemsg(data, msg);
     }
 
@@ -531,10 +544,16 @@ namespace sync
             rqst.Token = Owner->Token;
 
             if (!sendmsg(Socket, rqst))
+            {
+                SYNC_LOG("failed to send download request to server\n");
                 return false;
-            
+            }
+
             if (!recvmsg(Socket, Response))
+            {
+                SYNC_LOG("failed to receive download response from server\n");
                 return false;
+            }
             
             SYNC_LOG("download worker got fileinfo size=%d, hash=%s, is_compressed=%s", Response.FileSize, StringifyHash(Response.FileHash).c_str(), Response.IsCompressed ? "true" : "false");
 
@@ -558,7 +577,10 @@ namespace sync
                     }
 
                     if (!StreamToCache(data))
+                    {
+                        SYNC_LOG("failed to stream to cache\n");
                         return false;
+                    }
 
                     Owner->CSR->Data.swap(data);
                     return true;
@@ -582,9 +604,9 @@ namespace sync
 
         if (!client.Work())
         {
+            SYNC_LOG("DOWNLOAD FAILED!!! (%d)\n", d->State);
             if (d->State < kDownloadState_Failed)
                 d->State = kDownloadState_NoDataSource;
-            SYNC_LOG("DOWNLOAD FAILED!!!\n");
         }
         else
         {

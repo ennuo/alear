@@ -541,30 +541,41 @@ void DoGamedataSubmenu(CGooeyNodeManager* manager)
 
 void DoConfigOption(CGooeyNodeManager* manager, CConfigFolder& folder, bool& needs_update)
 {
-    bool open = folder.Open;
-
-    for (u8 itr = folder.Parent; itr != 0; itr = gConfigRoot[itr].Parent)
+    bool open, root;
+    if (&folder == gConfigRoot)
     {
-        if (!gConfigRoot[itr].Open)
+        open = true;
+        root = true;
+    }
+    else
+    {
+        root = false;
+        open = folder.Open;
+
+        for (u8 itr = folder.Parent; itr != 0; itr = gConfigRoot[itr].Parent)
         {
-            open = false;
-            break;
+            if (!gConfigRoot[itr].Open)
+            {
+                open = false;
+                break;
+            }
         }
-    }
 
-    u32 result = manager->DoInline(folder.DisplayName.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
-    if (result & 256)
-    {
-        folder.Open = !folder.Open;
-        needs_update = true;
-    }
+        u32 result = manager->DoInline(folder.DisplayName.c_str(), GTS_T5, STATE_NORMAL, NULL, 256);
+        if (result & 256)
+        {
+            folder.Open = !folder.Open;
+            needs_update = true;
+        }
 
-    manager->DoBreak();
+        manager->DoBreak();
+    }
 
     if (open && manager->StartFrame())
     {
         manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
-        manager->SetFrameBorders(32.0f, 0.0f, 0.0f, 0.0f);
+        if (!root)
+            manager->SetFrameBorders(32.0f, 0.0f, 0.0f, 0.0f);
         manager->SetFrameDefaultChildSpacing(32.0f, 16.0f);
 
         u8 child = folder.FirstChild;
@@ -636,6 +647,14 @@ void DoConfigOption(CGooeyNodeManager* manager, CConfigFolder& folder, bool& nee
                         
                         break;
                     }
+                    case OPT_FUNCTION:
+                    {
+                        u32 result = manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
+                        if (result & 256)
+                            ((CConfigFunction*)opt)->PerformAction();
+                        manager->DoSpacer();
+                        break;
+                    }
                     default:
                     {
                         manager->DoInline(opt->GetDisplayName(), GTS_T5, STATE_NORMAL, NULL, input_mask);
@@ -657,21 +676,9 @@ void DoConfigOption(CGooeyNodeManager* manager, CConfigFolder& folder, bool& nee
 
 bool DoConfigSubmenu(CGooeyNodeManager* manager)
 {
-    // DoSectionHeader(manager, L"Game Mode");
-    // bool* pod_level = ((bool*)gGame) + 0x161;
-
-    // if (manager->DoInline(L"Edit Mode", GTS_T5, gGame->EditMode ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-    //     gGame->EditMode = !gGame->EditMode;
-    // manager->DoText(gGame->EditMode ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
-    // manager->DoBreak();
-    // if (manager->DoInline(L"Pod Level", GTS_T5, *pod_level ? STATE_TOGGLE : STATE_NORMAL, NULL, 256) & 256)
-    //     *pod_level = !*pod_level;
-    // manager->DoText(*pod_level ? (wchar_t*)L"true" : (wchar_t*)L"false", GTS_T5);
-
-    manager->DoBreak();
+    manager->DoHorizontalBreak(GBS_SOLID, v2(0.5f));
     bool needs_update = false;
-    for (u32 itr = gConfigRoot->FirstChild; itr != 0; itr = gConfigRoot[itr].NextSibling)
-        DoConfigOption(manager, gConfigRoot[itr], needs_update);
+    DoConfigOption(manager, *gConfigRoot, needs_update);
     return needs_update;
 }
 

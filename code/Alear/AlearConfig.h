@@ -17,13 +17,14 @@ typedef void (*DebugFn)(void);
 enum EConfigOptionType {
     OPT_INVALID,
     OPT_BOOL,
-    OPT_FLOAT
+    OPT_FLOAT,
+    OPT_FUNCTION
 };
 
 class CConfigOption {
 protected:
-    inline CConfigOption(EConfigOptionType type, const char* path) :
-    Invoke(), Next(), Sibling(), Path(path), DisplayName(), Type(type)
+    inline CConfigOption(EConfigOptionType type, const char* path, const char* ini_file_name) :
+    Invoke(), Next(), Sibling(), Path(path), IniFileName(ini_file_name), DisplayName(), Type(type)
     {
         AddToRegistry();
     }
@@ -32,6 +33,7 @@ public:
     inline CConfigOption* GetSibling() { return Sibling; }
     inline wchar_t* GetDisplayName() { return DisplayName.c_str(); }
     inline const char* GetPath() const { return Path; }
+    inline const char* GetIniFileName() const { return IniFileName; }
     inline EConfigOptionType GetType() const { return Type; }
 protected:
     void AddToRegistry();
@@ -43,20 +45,36 @@ public:
     CConfigOption* Sibling;
 private:
     const char* Path;
+    const char* IniFileName;
 public:
     MMString<wchar_t> DisplayName;
 private:
     EConfigOptionType Type;
 };
 
+class CConfigFunction : public CConfigOption {
+public:
+    inline CConfigFunction(const char* path, DebugFn invoke)
+    : CConfigOption(OPT_FUNCTION, path, NULL)
+    {
+        Invoke = invoke;
+    }
+public:
+    void PerformAction()
+    {
+        if (Invoke != NULL)
+            Invoke();
+    }
+};
+
 class CConfigBool : public CConfigOption {
 public:
-    inline CConfigBool(const char* path, bool default_value) 
-    : CConfigOption(OPT_BOOL, path), Value(default_value)
+    inline CConfigBool(const char* path, const char* ini, bool default_value) 
+    : CConfigOption(OPT_BOOL, path, ini), Value(default_value)
     {}
 
-    inline CConfigBool(const char* path, bool default_value, DebugFn invoke) 
-    : CConfigOption(OPT_BOOL, path), Value(default_value)
+    inline CConfigBool(const char* path, const char* ini, bool default_value, DebugFn invoke) 
+    : CConfigOption(OPT_BOOL, path, ini), Value(default_value)
     {
         Invoke = invoke;
     }
@@ -76,22 +94,22 @@ private:
 
 class CConfigFloat : public CConfigOption {
 public:
-    inline CConfigFloat(const char* path, float default_value) : 
-    CConfigOption(OPT_FLOAT, path), Value(default_value)
+    inline CConfigFloat(const char* path, const char* ini, float default_value) : 
+    CConfigOption(OPT_FLOAT, path, ini), Value(default_value)
     {
         MinValue = NAN;
         MaxValue = NAN;
         Step = 1.0f;
     }
 
-    inline CConfigFloat(const char* path, float default_value, float min_value, float max_value, float step) : 
-    CConfigOption(OPT_FLOAT, path), Value(default_value),
+    inline CConfigFloat(const char* path, const char* ini, float default_value, float min_value, float max_value, float step) : 
+    CConfigOption(OPT_FLOAT, path, ini), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
     }
 
-    inline CConfigFloat(const char* path, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
-    CConfigOption(OPT_FLOAT, path), Value(default_value),
+    inline CConfigFloat(const char* path, const char* ini, float default_value, float min_value, float max_value, float step, DebugFn invoke) : 
+    CConfigOption(OPT_FLOAT, path, ini), Value(default_value),
     MinValue(min_value), MaxValue(max_value), Step(step)
     {
         Invoke = invoke;

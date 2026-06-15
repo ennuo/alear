@@ -11,49 +11,59 @@
 #include <ReadINI.h>
 #include <vector.h>
 #include <filepath.h>
+#include <mmalex.h>
 
 void OnSetRenderDistanceToggle();
 
 bool gPauseGameSim;
 
-CConfigBool gEnablePodTransitionMask("Pod/Interface/Enable Pod Transition Mask", true);
+CConfigBool gEnablePodTransitionMask("Pod/Interface/Enable Pod Transition Mask", "EnablePodTransitionMask", false);
 
-CConfigBool gUsePopitGradients("Popit/Interface/Use Popit Color Gradient", true);
-CConfigBool gCanCollapseCategories("Popit/Interface/Can Collapse Categories", true);
-CConfigBool gSeparateToys("Popit/Interface/Separate Toys and Meshes", true);
-CConfigBool gCanHidePopit("Popit/Interface/Can Hide Tether & UI", false);
-CConfigBool gUseCustomCursors("Popit/Visual/Use Unique Cursor Sprites", true);
-CConfigBool gColorCustomCursors("Popit/Visual/Use Player Color Cursor Sprites", false);
-CConfigBool gAllowDebugTooltypes("Popit/Function/Allow Debug Tooltypes", true);
-CConfigBool gAllowMeshScaling("Popit/Function/Allow Mesh Scaling", false);
-CConfigBool gAllowEyedroppingMeshes("Popit/Function/Allow Eyedropping Meshes", false);
+CConfigBool gUsePopitGradients("Popit/Interface/Use Popit Color Gradient", "PopitGradient", true);
+CConfigBool gCanCollapseCategories("Popit/Interface/Can Collapse Categories", "CollapsibleCategories", true);
+CConfigBool gSeparateToys("Popit/Interface/Separate Toys and Meshes", "SeparateToysAndMeshes", true);
+CConfigBool gCanHidePopit("Popit/Interface/Can Hide Tether & UI", "EnableHideTether", false);
+CConfigBool gUseCustomCursors("Popit/Visual/Use Unique Cursor Sprites", "UniqueCursorSprites", true);
+CConfigBool gColorCustomCursors("Popit/Visual/Use Player Color Cursor Sprites", "ColourCursorSprites", false);
+CConfigBool gAllowDebugTooltypes("Popit/Function/Allow Debug Tooltypes", "DebugTooltypes", true);
+CConfigBool gAllowMeshScaling("Popit/Function/Allow Mesh Scaling", "AllowMeshScaling", false);
+CConfigBool gAllowEyedroppingMeshes("Popit/Function/Allow Eyedropping Meshes", "AllowEyedroppingMeshes", false);
 
-CConfigBool gDebugMaterialTweaks("Editor/Materials/Use Debug Tweak Options", false);
-CConfigBool gUseLegacyKeyColors("Editor/Gadgets/Use Legacy Key Colors", true);
-CConfigBool gUseNewKeyColorSelection("Editor/Gadgets/Use New Key Color Selection", true);
+CConfigBool gDebugMaterialTweaks("Editor/Materials/Use Debug Tweak Options", "DebugTweakOptions", false);
+CConfigBool gUseLegacyKeyColors("Editor/Gadgets/Use Legacy Key Colors", "LegacyKeyColors", true);
+CConfigBool gUseNewKeyColorSelection("Editor/Gadgets/Use New Key Color Selection", "NewKeyColorSelection", true);
 
-CConfigBool gResetLevelSettings("Loading/LevelSettings/Force Default", false);
-CConfigBool gForceLoadEditable("Loading/Shapes/Force Editable On Load", false);
-CConfigBool gUnlethalizeAllLethals("Loading/Shapes/Disable Lethals", false);
-CConfigBool gForceGFXShapes("Loading/Shapes/Turn into GFX", false);
-CConfigBool gPhysicsToGFX("Loading/Shapes/Visualize Physics", false);
-CConfigBool gForceMeshGFX("Loading/Objects/Turn into GFX", false);
-CConfigBool gLoadDefaultMaterial("Loading/Materials/Render Invisible GFX", false);
-CConfigBool gForcePlainGFX("Loading/Materials/Use Plain GFX", false);
-CConfigBool gForcePlainBevels("Loading/Materials/Use Plain Bevels", false);
-CConfigBool gLoadRemoveAllStickers("Loading/Stickers/Remove all", false);
-CConfigBool gLoadRemoveAllDecorations("Loading/Decorations/Remove all", false);
-CConfigBool gLoadRemoveAllLights("Loading/Lights/Remove all", false);
-CConfigBool gRemoveBurningScripts("Loading/Scripts/Remove Unused", true);
-CConfigBool gFixupEmitters("Loading/Emitters/Fixup Invisible", false);
-CConfigBool gUseAlternateJointMeshes("Loading/Joints/Use Alternate Meshes", true);
+CConfigBool gResetLevelSettings("Loading/LevelSettings/Force Default", "ForceDefaultLevelSettings", false);
+CConfigBool gForceLoadEditable("Loading/Shapes/Force Editable On Load", "ForceShapesEditableOnLoad", false);
+CConfigBool gUnlethalizeAllLethals("Loading/Shapes/Disable Lethals", "DisableShapeLethalsOnLoad", false);
+CConfigBool gForceGFXShapes("Loading/Shapes/Turn into GFX", NULL, false);
+CConfigBool gPhysicsToGFX("Loading/Shapes/Visualize Physics", NULL, false);
+CConfigBool gForceMeshGFX("Loading/Objects/Turn into GFX", NULL, false);
+CConfigBool gLoadDefaultMaterial("Loading/Materials/Render Invisible GFX", NULL, false);
+CConfigBool gForcePlainGFX("Loading/Materials/Use Plain GFX", NULL, false);
+CConfigBool gForcePlainBevels("Loading/Materials/Use Plain Bevels", NULL, false);
+CConfigBool gLoadRemoveAllStickers("Loading/Stickers/Remove all", "RemoveAllStickersOnLoad", false);
+CConfigBool gLoadRemoveAllDecorations("Loading/Decorations/Remove all", "RemoveAllDecorationsOnLoad", false);
+CConfigBool gLoadRemoveAllLights("Loading/Lights/Remove all", "RemoveAllLightsOnLoad", false);
+CConfigBool gRemoveBurningScripts("Loading/Scripts/Remove Unused", "RemoveUnusedScriptsOnLoad", true);
+CConfigBool gFixupEmitters("Loading/Emitters/Fixup Invisible", "FixupInvisibleEmitters", false);
+CConfigBool gUseAlternateJointMeshes("Loading/Joints/Use Alternate Meshes", "AlternateJointMeshes", true);
 
-CConfigBool gPlayBackgroundStings("Audio/Play Background Stings", true);
+CConfigBool gPlayBackgroundStings("Audio/Play Background Stings", "EnableBackgroundStings", true);
 
-CConfigFloat gRenderDistance("Render/Visual/Render Distance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
+CConfigFloat gRenderDistance("Render/Visual/Render Distance", "RenderDistance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
-CConfigBool gUseDivergenceCheck("Gameplay/Divergence Check", true);
-CConfigBool gUseIceAccessibility("Gameplay/Ice Shake Mode", false);
+CConfigBool gUseDivergenceCheck("Gameplay/Divergence Check", "DivergenceCheck", true);
+CConfigBool gUseIceAccessibility("Gameplay/Ice Shake Mode", "IceShakeMode", false);
+
+
+void ToggleEditOrPlayMode()
+{
+    gGame->EditMode = !gGame->EditMode;
+}
+
+static CConfigFunction gSaveConfig("Save Config", alear::SaveConfig);
+static CConfigFunction gToggleEditOrPlayMode("Toggle Edit or Play Mode", ToggleEditOrPlayMode);
 
 static CConfigOption* gConfigHead;
 CConfigFolder gConfigRoot[128];
@@ -149,92 +159,99 @@ namespace alear
         }
     }
 
+    CConfigOption* FindConfigOption(const char* ini_file_name)
+    {
+        for (CConfigOption* opt = gConfigHead; opt != NULL; opt = opt->GetNext())
+        {
+            const char* opt_name = opt->GetIniFileName();
+            if (opt_name == NULL) continue;
+
+            if (StringCompare(ini_file_name, opt_name) == 0)
+                return opt;
+        }
+
+        return NULL;
+    }
+
     void LoadConfig()
     {
         SetupConfigTables();
-        MMLog("config: %08x\n", (uintptr_t)&gConfigRoot[0]);
 
-        // CFilePath fp(FPR_ALEAR, "config/gamevars.ini");
-        // CVector<MMString<char> > lines;
-        // if (!FileLoad(fp, lines)) return;
+        CFilePath fp(FPR_ALEAR, "config/gamevars.ini");
+        CVector<MMString<char> > lines;
+        if (!FileLoad(fp, lines)) return;
 
-        // char key[256] = {0};
-        // char val[256] = {0};
-        // char valspaces[256] = {0};
-        // char path[256] = {0};
+        char key[256] = {0};
+        char val[256] = {0};
+        char valspaces[256] = {0};
+        char path[256] = {0};
 
-        // CVector<MMString<char> >::iterator itr = lines.begin();
-        // CVector<MMString<char> >::iterator end = lines.end();
-        // for (; itr != end; ++itr)
-        // {
-        //     const char* s = itr->c_str();
+        CVector<MMString<char> >::iterator itr = lines.begin();
+        CVector<MMString<char> >::iterator end = lines.end();
+        for (; itr != end; ++itr)
+        {
+            const char* s = itr->c_str();
 
-        //     if (*s == '[') s = copyupto(path, s + 1, false);
+            s = copyupto(key, s, false);
 
-        //     s = copyupto(key, s, false);
-
-        //     *valspaces = '\0';
-        //     if (*s == '=')
-        //         s = copyupto(valspaces, s + 1, true);
+            *valspaces = '\0';
+            if (*s == '=')
+                s = copyupto(valspaces, s + 1, true);
             
-        //     copyupto(val, valspaces, false);
+            copyupto(val, valspaces, false);
 
-        //     if (*key == '\0') continue;
+            if (*key == '\0') continue;
 
-        //     // typename ConfigMap::iterator category = gConfigMap.find(path);
-        //     // if (category == gConfigMap.end())
-        //     // {
-        //     //     MMLog("config parser skipping %s because category %s does not exist\n", key, path);
-        //     //     continue;
-        //     // }
-
-
-        // }
+            CConfigOption* opt = FindConfigOption(key);
+            if (opt != NULL)
+            {
+                switch (opt->GetType())
+                {
+                    case OPT_BOOL:
+                        *((CConfigBool*)opt) = StringCompare(val, "true") == 0;
+                        break;
+                    case OPT_FLOAT:
+                        *((CConfigFloat*)opt) = mmalex::strtod(val, NULL);
+                        break;
+                }
+            }
+        }
     }
 
     void SaveConfig()
     {
-        // MMString<char> ini;
-        // char buf[256];
-        // for (ConfigMap::iterator it = gConfigMap.begin(); it != gConfigMap.end(); ++it)
-        // {
-        //     ini += "[";
-        //     WCharToMultiByteAppend(ini, it->first);
-        //     ini += "]\n";
+        MMString<char> ini;
+        char buf[256];
+        for (CConfigOption* opt = gConfigHead; opt != NULL; opt = opt->GetNext())
+        {
+            if (opt->GetType() == OPT_FUNCTION || opt->GetIniFileName() == NULL) continue;
 
-        //     CConfigOption* opt = it->second;
-        //     while (opt)
-        //     {
-        //         ini += opt->GetIniName();
-        //         ini += "=";
+            ini += opt->GetIniFileName();
+            ini += "=";
+            switch (opt->GetType())
+            {
+                case OPT_BOOL:
+                {
+                    ini += (bool)*((CConfigBool*)opt) ? "true" : "false";
+                    break;
+                }
+                case OPT_FLOAT:
+                {
+                    sprintf(buf, "%f", (float)*((CConfigFloat*)opt));
+                    ini += buf;
+                    break;
+                }
+            }
 
-        //         switch (opt->GetType())
-        //         {
-        //             case OPT_BOOL:
-        //             {
-        //                 ini += (bool)*((CConfigBool*)opt) ? "true" : "false";
-        //                 break;
-        //             }
-        //             case OPT_FLOAT:
-        //             {
-        //                 sprintf(buf, "%f", (float)*((CConfigFloat*)opt));
-        //                 ini += buf;
-        //                 break;
-        //             }
-        //         }
+            ini += "\n";
+        }
 
-        //         ini += "\n";
-
-        //         opt = opt->GetNext();
-        //     }
-        // }
-
-        // int fd;
-        // if (FileOpen(CFilePath(FPR_ALEAR, "config/gamevars.ini"), fd, OPEN_WRITE))
-        // {
-        //     FileWrite(fd, ini.begin(), ini.length());
-        //     FileClose(fd);
-        // }
+        int fd;
+        if (FileOpen(CFilePath(FPR_ALEAR, "config/gamevars.ini"), fd, OPEN_WRITE))
+        {
+            FileWrite(fd, ini.begin(), ini.length());
+            FileClose(fd);
+        }
     }
 }
 
