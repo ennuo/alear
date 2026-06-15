@@ -6,7 +6,7 @@
 
 #include <GooeyNetworkAction.h>
 #include <PlayerNumber.inl>
-#include <hook.h>
+
 #include <ResourceGame.h>
 #include <ResourceLevel.h>
 #include <ResourceGFXTexture.h>
@@ -589,11 +589,6 @@ namespace TweakSettingNativeFunctions
         return gSeparateToys;
     }
 
-    bool UsePodTransition()
-    {
-        return gUsePodTransition;
-    }
-
     void Register()
     {
         RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
@@ -603,7 +598,6 @@ namespace TweakSettingNativeFunctions
         RegisterNativeFunction("PlayerColour", "UseNewKeyColorSelection__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseNewKeyColorSelection>);
         RegisterNativeFunction("TweakShape", "AllowDebugTweaks__", true, NVirtualMachine::CNativeFunction0<bool>::Call<DebugMaterialTweaks>);
         RegisterNativeFunction("Poppet", "SeparateToys__", true, NVirtualMachine::CNativeFunction0<bool>::Call<SeparateToys>);
-        RegisterNativeFunction("Pod", "UsePodTransition__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UsePodTransition>);
     }
 }
 

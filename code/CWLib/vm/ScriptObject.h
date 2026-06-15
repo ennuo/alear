@@ -7,6 +7,7 @@
 #include <ReflectionVisitable.h>
 #include <MMString.h>
 #include <vector.h>
+#include <mem_stl_buckets.h>
 
 #include "vm/VMTypes.h"
 #include "vm/ScriptInstance.h"
@@ -128,13 +129,13 @@ private:
 
 class CScriptObjectInstance : public CScriptObject {
 public:
-    CScriptObjectInstance(CP<RScript>& script);
+    CScriptObjectInstance(const CP<RScript>& script);
 public:
     inline bool IsInstance() { return true; }
     inline EScriptObjectType GetType() { return SO_INSTANCE; }
     inline void Stream() {};
 public:
-    static CScriptObjectInstance* Create(CP<RScript>& script, PWorld* pworld, bool default_construct);
+    static CScriptObjectInstance* Create(const CP<RScript>& script, PWorld* pworld, bool default_construct);
 public:
     bool InvokeSync(PWorld* pworld, CSignature const& signature, CScriptArguments const& arguments, CScriptVariant* return_value);
 public:

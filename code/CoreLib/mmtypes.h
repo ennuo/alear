@@ -1,6 +1,7 @@
 #ifndef MM_TYPES_H
 #define MM_TYPES_H
 
+#include <printf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -18,6 +19,8 @@
 #define ARRAY_LENGTH(x) sizeof(x) / sizeof(x[0])
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
+
+#define SATURATE(x) MAX(0.0f, MIN(x, 1.0f))
 
 
 typedef int8_t s8;
@@ -39,5 +42,7 @@ typedef Vectormath::Aos::Quat q4;
 typedef Vectormath::Aos::Vector3 v3;
 typedef Vectormath::Aos::Vector4 v4;
 typedef Vectormath::Aos::Matrix4 m44;
+
+#include <hook.h>
 
 #endif // MM_TYPES_H

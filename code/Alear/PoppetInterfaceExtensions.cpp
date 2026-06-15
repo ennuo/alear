@@ -1,7 +1,7 @@
 #include "AlearShared.h"
 #include "AlearConfig.h"
 
-#include <hook.h>
+
 #include <refcount.h>
 #include <Hash.h>
 
@@ -67,16 +67,19 @@ u32 DoCustomInventoryPage(CPoppetChild* gooey, CInventoryCollection* current_cac
         manager->SetFrameBorders(16.0f, 8.0f, 16.0f, 8.0f);
         manager->SetFrameConstrainFocus(true);
 
-        CSignature signature("UpdateGlobalUI__Q5Gooeyi");
         PWorld* world = gGame->GetWorld();
-        CScriptArguments args;
-
-        CScriptVariant arg1(so_gooey);
-        CScriptVariant arg2(page->CustomID);
-
-        args.AppendArg(arg1);
-        args.AppendArg(arg2);
         
+        CSignature signature;
+        CScriptArguments args;
+        args.AppendArg(so_gooey);
+
+        if (page->CustomID == 0x4D525048) signature = CSignature("UpdateMorphUI__Q5Gooey");
+        else
+        {
+            signature = CSignature("UpdateGlobalUI__Q5Gooeyi");
+            args.AppendArg(page->CustomID);
+        }
+
         so_poppet->InvokeSync(world, signature, args, NULL);
 
         manager->EndFrame();
@@ -220,7 +223,14 @@ void CustomDoPoppetSection(
 
     bool is_hidden = false;
     bool can_hide = category_id != gFunctionCategoryID;
-    if(!gCanCollapseCategories) { can_hide = false; }
+    if (!gCanCollapseCategories) 
+        can_hide = false;
+    
+    bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
+    bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
+    hide_section_titles = settings.IsPlayerColourPage || backgrounds || sound_objects;
+    
+    if (hide_section_titles) can_hide = false;
 
     if (can_hide)
     {
@@ -234,16 +244,9 @@ void CustomDoPoppetSection(
         }
     }
     
-    bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
-    bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
 
-    if (settings.IsPlayerColourPage || backgrounds || sound_objects)
+    if (!hide_section_titles)
     {
-        is_hidden = false;
-    }
-    //if (!settings.IsPlayerColourPage && !backgrounds && !sound_objects)
-    // if (!hide_section_titles)
-    //{
         // float height = is_hidden ? 2.0f : 24.0f;
         float height = 24.0f;
         manager->SetFrameBorders(0.0f, height, 0.0f, height);
@@ -288,8 +291,8 @@ void CustomDoPoppetSection(
         }
 
         manager->DoBreak();
-    //}
-
+    } 
+    
     first_section_break = false;
 
     if (!is_hidden)

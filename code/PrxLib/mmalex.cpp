@@ -1,6 +1,6 @@
 #include "mmalex.h"
 
-#include <hook.h>
+
 
 namespace mmalex {
     MH_DefineFunc(__stod, 0x0059c400, TOC1, double, const char*, char**, long);

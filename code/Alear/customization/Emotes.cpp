@@ -5,7 +5,7 @@
 #include <refcount.h>
 #include <cell/DebugLog.h>
 #include <MMAudio.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 #include <SackBoyAnim.h>
 #include <RenderYellowHead.h>
 #include <Resource.h>
@@ -19,6 +19,52 @@
 CVector<CEmote> gEmotes;
 CVector<CAnimBank*> gAnimBanks;
 CStyleBank gStyleBank;
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmote& d)
+{
+    ReflectReturn rv;
+    ADD(Plan);
+    ADD(Anim);
+    ADD(Sounds);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmoteSound& d)
+{
+    ReflectReturn rv;
+    ADD(Frame);
+    ADD(Sound);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CEmoteBank& d)
+{
+    ReflectReturn rv;
+    ADD(Emotes);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CAnimStyle& d)
+{
+    ReflectReturn rv;
+    ADD(ID);
+    ADD(Gsub);
+    return rv;
+}
+
+
+template<typename R>
+ReflectReturn Reflect(R& r, CStyleBank& d)
+{
+    ReflectReturn rv;
+    ADD(Styles);
+    return rv;
+}
+
 
 CAnimStyle* GetAnimStyle(const char* id)
 {
@@ -56,16 +102,22 @@ bool CustomInitAnims()
 {
     if (gAnimBanks.size() != 0) return true;
 
-    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_ANIM_STYLES_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_ANIM_STYLES_KEY);
     file->BlockUntilLoaded();
-    if (!file->IsLoaded()) return false;
-
-    CGatherVariables variables;
-    variables.Init<CStyleBank>(&gStyleBank);
-    if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
+    if (file->IsLoaded())
     {
-        DebugLog("An error occurred while loading data for animation styles!\n");
-        return false;
+        CGatherVariables variables;
+        Init<CStyleBank>(variables, &gStyleBank);
+        if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
+        {
+            DebugLog("An error occurred while loading data for animation styles!\n");
+            return false;
+        }
+    }
+    else
+    {
+        MMLog("Animation style configuration doesn't exist\n");
+        gStyleBank.Styles.push_back(CAnimStyle("sackboy"));
     }
 
     for (int i = 0; i < gStyleBank.Styles.size(); ++i)
@@ -128,13 +180,17 @@ void SetInventoryAnimationStyle(CPoppetInventory* inventory, CThing* world, RPla
 
 bool LoadEmotes()
 {
-    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_EMOTES_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_EMOTES_KEY);
     file->BlockUntilLoaded();
-    if (file->LoadState == LOAD_STATE_ERROR_NO_DATA_SOURCE || file->LoadState == LOAD_STATE_ERROR_FAILED_LOAD_BLURAY || file->LoadState == LOAD_STATE_ERROR_FILENOTFOUND) return true;
-    if (!file->IsLoaded()) return false;
 
+    if (!file->IsLoaded())
+    {
+        MMLog("Skipping load of emotes as configuration does not exist\n");
+        return true;
+    }
+    
     CGatherVariables variables;
-    variables.Init<CEmoteBank>((CEmoteBank*)&gEmotes);
+    Init<CEmoteBank>(variables, (CEmoteBank*)&gEmotes);
     if (GatherVariablesLoad(file->GetData(), variables, true, NULL) != REFLECT_OK)
     {
         DebugLog("An error occurred while loading data for emotes!\n");

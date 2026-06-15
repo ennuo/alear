@@ -3,7 +3,7 @@
 #include "thing.h"
 
 
-#include <hook.h>
+
 
 namespace NPoppetUtils {
     MH_DefineFunc(IsHeldByAnyPlayer, 0x003a566c, TOC1, bool, CThing const* thing, CThing const* player_ignore);

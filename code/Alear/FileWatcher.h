@@ -24,6 +24,7 @@ public:
     }
 public:
     bool AddFile(CFilePath& fp, FileWatchCallback cb);
+    void RemoveFile(const CFilePath& fp);
 private:
     static void WorkerThreadFunctionStatic(u64 arg);
 private:

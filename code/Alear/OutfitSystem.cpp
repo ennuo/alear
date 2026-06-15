@@ -1,6 +1,6 @@
 #include "OutfitSystem.h"
 
-#include <hook.h>
+
 
 #include <refcount.h>
 #include <filepath.h>
@@ -14,20 +14,26 @@
 #include <PoppetEnums.inl>
 #include <Player.h>
 
+#include <DebugLog.h>
+
 const u32 E_OUTFITS_RLST = 4052493349u;
 
 bool LoadOutfits()
 {
-    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_OUTFITS_RLST, 0, STREAM_PRIORITY_DEFAULT);
-    rlst->BlockUntilLoaded();
+    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_OUTFITS_RLST);
+    if (!rlst->IsLoaded())
+    {
+        MMLog("Skipping load of outfits as no configuration file exists\n");
+        return true;
+    }
 
     CVector<MMString<char> > lines;
-    LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+    LinesLoad(rlst->GetData(), lines);
     for (int i = 0; i < lines.size(); ++i)
     {
         MMString<char>& line = lines[i];
         CFilePath fp(FPR_BLURAY, line.c_str());
-        CP<ROutfitList> outfit_list = LoadResourceByFilename<ROutfitList>(fp, 0, STREAM_PRIORITY_DEFAULT, false);
+        CP<ROutfitList> outfit_list = LoadResourceByFilename<ROutfitList>(fp);
         gOutfitLists.push_back(outfit_list);
     }
 

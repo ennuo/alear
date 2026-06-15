@@ -35,6 +35,20 @@ namespace NVirtualMachine
     template <typename ReturnType, typename Arg1>
     class CNativeFunction1 {
     public:
+        static CSignature GetStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name, Arg<Arg1>().GetName());
+            return sig;
+        }
+
+        static CSignature GetNonStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name);
+            return sig;
+        }
+    public:
         template <ReturnType (&Fn)(Arg1)>
         static void Call(CScriptContext* context, void* ret, u8* arguments)
         {
@@ -52,6 +66,20 @@ namespace NVirtualMachine
 
     template <typename ReturnType, typename Arg1, typename Arg2>
     class CNativeFunction2 {
+    public:
+        static CSignature GetStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name, Arg<Arg1>().GetName(), Arg<Arg2>().GetName());
+            return sig;
+        }
+
+        static CSignature GetNonStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name, Arg<Arg2>().GetName());
+            return sig;
+        }
     public:
         template <ReturnType (&Fn)(Arg1, Arg2)>
         static void Call(CScriptContext* context, void* ret, u8* arguments)
@@ -72,6 +100,20 @@ namespace NVirtualMachine
 
     class CNativeFunction0V {
     public:
+        static CSignature GetStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name);
+            return sig;
+        }
+
+        static CSignature GetNonStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name);
+            return sig;
+        }
+    public:
         template <void (&Fn)()>
         static void Call(CScriptContext* context, void* ret, u8* arguments)
         {
@@ -81,6 +123,20 @@ namespace NVirtualMachine
 
     template <typename Arg1>
     class CNativeFunction1V {
+    public:
+        static CSignature GetStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name, Arg<Arg1>().GetName());
+            return sig;
+        }
+
+        static CSignature GetNonStaticSignature(const char* name)
+        {
+            CSignature sig;
+            sig.MakeName(name, Arg<Arg1>().GetName());
+            return sig;
+        }
     public:
         template <void (&Fn)(Arg1)>
         static void Call(CScriptContext* context, void* ret, u8* arguments)
@@ -276,6 +332,27 @@ namespace NVirtualMachine
             ConvertReturnValue<ReturnType>(ret, context, value);
         }
     };
+
+    inline CNativeFunction0V GetCallStruct(void(*func_ptr)())  { return CNativeFunction0V(); }
+
+    template <typename Arg1>
+    inline CNativeFunction1V<Arg1> GetCallStruct(void(*func_ptr)(Arg1)) { return CNativeFunction1V<Arg1>(); }
+
+    template <typename ReturnType>
+    inline CNativeFunction0<ReturnType> GetCallStruct(ReturnType(*func_ptr)()) { return CNativeFunction0<ReturnType>(); }
+
+    template <typename ReturnType, typename Arg1>
+    inline CNativeFunction1<ReturnType, Arg1> GetCallStruct(ReturnType(*func_ptr)(Arg1)) { return CNativeFunction1<ReturnType, Arg1>(); }
+
+    template <typename ReturnType, typename Arg1, typename Arg2>
+    inline CNativeFunction2<ReturnType, Arg1, Arg2> GetCallStruct(ReturnType(*func_ptr)(Arg1, Arg2)) { return CNativeFunction2<ReturnType, Arg1, Arg2>(); }
+
+
+    #define REGISTER_NATIVE_FUNCTION(class_name, function) \
+        RegisterNativeFunction(class_name, NVirtualMachine::GetCallStruct(&function).GetNonStaticSignature(#function), false, NVirtualMachine::GetCallStruct(&function).Call<function>);
+
+    #define REGISTER_NATIVE_FUNCTION_STATIC(class_name, function) \
+        RegisterNativeFunction(class_name, NVirtualMachine::GetCallStruct(&function).GetStaticSignature(#function), true, NVirtualMachine::GetCallStruct(&function).Call<function>);
 }
 
 

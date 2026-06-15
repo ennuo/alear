@@ -84,7 +84,12 @@ _global_icon_size_hook:
     rlwinm %r9, %r0, 0x0, 0x0, 0x0
     cmpwi %cr7, %r9, 0
     bne %cr7, UseLargeIcons
-    
+
+    # Morphs also use large icons
+    rlwinm %r9, %r0, 0x0, 0xf, 0xf
+    cmpwi %cr7, %r9, 0
+    bne %cr7, UseLargeIcons
+
     # User Stickers
     lwz %r0, 0x40(%r27)
     # rlwinm %r9, %r0, 0x0, 0x15, 0x15
@@ -380,26 +385,6 @@ _custom_event_projects_hook:
 
     ba 0x001a4acc
 
-.global _run_frame_hook
-_run_frame_hook:
-    stw %r2, 0x2c(%r1)
-    lis %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@h      
-    ori %r2, %r2, _Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb@l
-    lwz %r2, 0x4(%r2)
-    bl ._Z10OnRunFrameP5RGameRK10CRawVectorI13CNetworkInput12CAllocatorMMEb
-    lwz %r2, 0x2c(%r1)
-
-    cmpwi %cr7, %r3, 0x0
-    beq %cr7, ExitFrameHook
-    
-    # continue executing frame
-    ba 0x000b1328
-
-ExitFrameHook:
-    # branch to function epilogue
-    li %r0, 0xe0
-    ba 0x000b1990
-
 .global _base_profile_load_hook
 _base_profile_load_hook:
     std %r2, 0x28(%r1)
@@ -479,6 +464,12 @@ _initextradata_part_switch:
     ld %r0, 0x100(%r1)
     ba 0x0005e6ac
 
+.global _initextradata_part_yellowhead
+_initextradata_part_yellowhead:
+    mr %r3, %r27
+    call _ZN11PYellowHead19InitializeExtraDataEv
+    ba 0x00031754
+
 .global _initextradata_part_generatedmesh
 _initextradata_part_generatedmesh:
     mr %r3, %r28
@@ -498,6 +489,12 @@ create_hook on_fixup_thing_hook, 0x003c4228
     mr %r4, %r20
     call _ZN6CThing7OnFixupEj
     rldicl %r9, %r28, 0x0, 0x20
+    ret
+
+create_hook on_fixup_script_hook, 0x000cc0b0
+    mr %r3, %r30
+    call _ZN7RScript19FixupStaticInstanceEv
+    lwz %r0, 0x4(%r29)
     ret
 
 .global _custom_gooey_network_action_hook
@@ -898,4 +895,14 @@ NormalShadowPass:
     lhz %r0, 0x19a(%r27)
     lwz %r11, 0xf0(%r27)
     mr %r4, %r11
+    ret
+
+create_hook on_update_creature_water_depth_hook, 0x000a59fc
+    mr %r3, %r26
+    call _Z18OnSubmergeCreatureP9PCreature
+    ret
+
+create_hook on_post_sackboy_animation_update_hook, 0x000ebc70
+    lwz %r3, 0x458(%r31)
+    call _ZN12CSackBoyAnim14PostAnimUpdateEv
     ret

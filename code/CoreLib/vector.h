@@ -136,34 +136,6 @@ public:
 	}
 };
 
-template <typename T, typename Allocator = CAllocatorMM>
-class CParasiticVector : public CBaseVectorPolicy<T, Allocator> {
-public:
-    CParasiticVector() : CBaseVectorPolicy<T, Allocator>() {}
-    CParasiticVector(T* data, u32 size, u32 max_size)
-    {
-        this->Data = data;
-        this->Size = size;
-        this->MaxSize = max_size;
-    }
-
-	CParasiticVector(CParasiticVector const& vec) : CBaseVectorPolicy<T, Allocator>()
-	{
-		*this = vec;
-	}
-
-	CParasiticVector& operator=(const CParasiticVector& vec)
-	{
-		if (&vec == this) return *this;
-
-        this->Data = vec.Data;
-        this->Size = vec.Size;
-        this->MaxSize = vec.MaxSize;
-
-		return *this;
-	}
-};
-
 /* vector.h: 189 */
 template <typename T, typename Allocator = CAllocatorMM>
 class CRawVector : public CBaseVectorPolicy<T, Allocator> {
@@ -400,7 +372,7 @@ public:
 		}
 		else
 		{
-			for (int i = index; i < this->Size; ++i)
+			for (int i = this->Size - 1; i >= index; --i)
 			{
 				new (this->Data + i + 1) T(this->Data[i]);
 				(this->Data + i)->~T();
@@ -481,6 +453,22 @@ public:
 		this->Size = new_size;
 		return true;
 	}
+	
+	void swap(CVector<T, Allocator>& rhs)
+	{
+		T* data = rhs.Data;
+		u32 size = rhs.Size;
+		u32 max_size = rhs.MaxSize;
+
+		rhs.Data = this->Data;
+		rhs.Size = this->Size;
+		rhs.MaxSize = this->MaxSize;
+
+		this->Data = data;
+		this->Size = size;
+		this->MaxSize = max_size;
+	}
+
 };
 
 typedef CRawVector<char, CAllocatorMMAligned128> ByteArray;

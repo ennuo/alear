@@ -3,7 +3,7 @@
 #include "PartPhysicsWorld.h"
 #include "thing.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(RGame_TeleportPlayer, 0x000aa008, TOC0, void, RGame*, CThing*, v2 const&);
 void RGame::TeleportPlayer(CThing* player, v2 const& pos)

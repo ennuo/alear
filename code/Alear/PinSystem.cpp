@@ -12,7 +12,7 @@
 #include <MMAudio.h>
 
 
-#include <hook.h>
+
 #include <ppcasm.h>
 
 template <typename T>

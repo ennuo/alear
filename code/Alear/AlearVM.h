@@ -1,10 +1,7 @@
-#ifndef ALEAR_VM_H
-#define ALEAR_VM_H
+#pragma once 
 
-
-#include "cwlib.h"
+#include <vm/ScriptObject.h>
+#include <vm/ScriptContext.h>
 
 void AlearHandleVM(ExecutionState* state);
 void AlearInitVMHook();
-
-#endif // ALEAR_VM_H

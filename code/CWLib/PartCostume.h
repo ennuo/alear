@@ -52,6 +52,8 @@ public:
     void SetPowerup(RMesh* mesh, CResourceDescriptor<RPlan>& original_plan);
     void RemovePowerup(CResourceDescriptor<RPlan>& original_plan);
     void SetMaterial(RGfxMaterial const* mat, CResourceDescriptor<RPlan> const& plan);
+    void GetNakedBaby();
+    void Remove(ECostumePieceCategory category);
 public:
     inline CP<RGfxMaterial> GetCurrentMaterial() const { return Mat; }
     inline const CResourceDescriptor<RPlan>& GetCurrentMaterialPlan() const { return MatPlan; }

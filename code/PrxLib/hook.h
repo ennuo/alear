@@ -1,8 +1,6 @@
 #ifndef HOOK_H
 #define HOOK_H
 
-#include "ppcasm.h"
-
 #define TOC0 (0x009230b8)
 #define TOC1 (0x00932B50)
 
@@ -74,9 +72,13 @@ void MH_InitHook(void* address, void* hook);
 static shkOpd _##name = { (void*)(address), (void*)(toc) }; \
 type(*name)(__VA_ARGS__) = (type (*)(__VA_ARGS__))&_##name;
 
-#define MH_PokeBranch(address, target) MH_Poke32(address, B(target, address))
+
+#define _PPCASM_BRANCH(dest, src) (0x48000000 + (((uint32_t)(dest) - (uint32_t)(src)) & 0x3ffffff))
+
+#define MH_PokeBranch(address, target) MH_Poke32(address, _PPCASM_BRANCH(target, address))
 #define MH_PokeHook(address, function) MH_InitHook((void*)address, (void*)&function)
 #define MH_PokeMemberHook(address, function) MH_InitHook((void*)address, (void*)GetFunctionPointer(&function)) 
 #define MH_PokeCall(address, function) MH_InitCall((void*)address, (void*)&function)
+
 
 #endif // HOOK_H

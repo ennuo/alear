@@ -1,5 +1,5 @@
 #include "PoppetBubble.h"
-#include <hook.h>
+
 
 MH_DefineFunc(CPoppetBubble_SetBubblePolygon, 0x00358730, TOC1, void, CPoppetBubble*, const CRawVector<v2, CAllocatorMMAligned128>&);
 MH_DefineFunc(CPoppetBubble_SetBubbleSticker, 0x0035a9b0, TOC1, void, CPoppetBubble*);

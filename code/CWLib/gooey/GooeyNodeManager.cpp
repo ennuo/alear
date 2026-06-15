@@ -1,6 +1,6 @@
 #include "gooey/GooeyNodeManager.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(CGooeyNodeManager_CGooeyNodeManager, 0x00301ce0, TOC0, void, CGooeyNodeManager*, EInputMode, EGooeyNodeManagerNetworkID);
 CGooeyNodeManager::CGooeyNodeManager(EInputMode input_type, EGooeyNodeManagerNetworkID network_id)

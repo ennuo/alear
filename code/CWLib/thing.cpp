@@ -1,7 +1,8 @@
 #include "thing.h"
 #include "ResourceSystem.h"
+#include <ResourceScript.h>
 #include "MatrixUtils.h"
-#include <hook.h>
+
 
 #include "AlearConfig.h"
 #include <PartSwitch.h>

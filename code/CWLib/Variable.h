@@ -1,11 +1,15 @@
-#ifndef VARIABLE_H
-#define VARIABLE_H
+#pragma once
 
-#include "SerialiseEnums.h"
-#include "PartPhysicsWorld.h"
-#include "ResourceDescriptor.h"
-#include <MMString.h>
 #include <map>
+
+#include <ResourceDescriptor.h>
+#include <Resource.h>
+#include <SerialiseEnums.h>
+#include <ReflectionVisitable.h>
+#include <MMString.h>
+#include <vector.h>
+#include <Serialise.h>
+#include <GuidHashMap.h>
 
 #include "hack_thingptr.h"
 
@@ -13,6 +17,9 @@
 #include <PoppetOutlineShapes.h>
 #include <RenderJoint.h>
 
+class PWorld;
+class CThing;
+class CResource;
 
 enum EGatherType {
     GATHER_TYPE_GATHER,
@@ -64,96 +71,6 @@ public:
     static void DeleteFn(CReflectionVisitable* ptr) { delete ptr; }
 };
 
-// TEMP SHIT UNTIL I FIGURE OUT THE REFLECTION NONSENSE
-#include "customization/SlapStyles.h"
-#include "customization/Emotes.h"
-#include <cell/DebugLog.h>
-
-// these ones are defined all over the place
-template<typename R>
-ReflectReturn Reflect(R& r, CSlapMesh& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CSlapStyles& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CEmote& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CEmoteBank& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CEmoteSound& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CAnimStyle& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CStyleBank& d);
-template<typename R>
-ReflectReturn Reflect(R& r, CThingPtr& d);
-template <typename R>
-ReflectReturn Reflect(R& r, CPoppetOutlineConfig& d);
-template <typename R>
-ReflectReturn Reflect(R& r, CPoppetOutline& d);
-template <typename R>
-ReflectReturn Reflect(R& r, CRenderJoint& d);
-template <typename R>
-ReflectReturn Reflect(R& r, CRenderJoints& d);
-
-
-// variable.h: 147
-template<typename R, typename D>
-ReflectReturn ReflectWrapper(R& r, D& d)
-{
-    return Reflect(r, d);
-}
-
-template <typename D>
-ReflectReturn Add(CGatherVariables& r, D& d, char* c);
-
-// variable.h: 884
-template<typename R, typename D>
-ReflectReturn ReflectVector(R& r, D& d)
-{
-    ReflectReturn ret;
-
-    u32& size = d.GetSizeForSerialisation();
-    if (!r.IsGatherVariables())
-    {
-        ret = Reflect(r, size);
-        if (ret != REFLECT_OK) return ret;
-        DebugLog("attempting to serialize vector with %d elements...\n", size);
-
-        if (!r.RequestToAllocate(size * sizeof(D)))
-            return REFLECT_EXCESSIVE_ALLOCATIONS;
-    }
-
-    u32 len = size;
-    
-    if ((r.GetLoading() && d.begin() == NULL) || d.begin() == NULL)
-    {
-        if (size != 0)
-        {
-            size = 0;
-            d.try_resize(len);
-        }
-    }
-
-    if (r.GetLoading())
-    {
-        d.clear();
-        d.try_resize(len);
-    }
-    
-    for (u32 i = 0; i < size; ++i)
-    {
-        ret = Add(r, d[i], NULL);
-        if (ret != REFLECT_OK) return ret;
-    }
-    
-    return ret;
-}
-
-template<typename R, typename D>
-ReflectReturn Reflect(R& r, CVector<D>& d)
-{
-    return ReflectVector<R, CVector<D> >(r, d);
-}
 
 template<typename R>
 ReflectReturn ReflectGP(R& r, CReflectionVisitable*& d, CreateFunc cf, DeleteFunc df, unsigned int size, bool& add);
@@ -179,23 +96,42 @@ ReflectReturn Reflect(R& r, D*& d)
     return ret;
 }
 
-template <typename T, bool some_bool>
-class GetReflectFunction {
-public:
-    static ReflectReturn (*Get())(CGatherVariables&, T&)
-    {
-        return ReflectWrapper<CGatherVariables, T>;
-    }
-};
-
 class CGatherVariables {
+public:
+    typedef ReflectReturn (*ReflectFunctionPtr)(CGatherVariables&, void*);
 public:
     inline CGatherVariables() :
     Data(NULL), Type(VARIABLE_TYPE_NUL), Purpose(GATHER_TYPE_GATHER), ResourceType(RTYPE_INVALID),
     ReflectFunction(), Visited(), Children(), World(NULL), TempString(), LazyCPPriority(STREAM_PRIORITY_DEFAULT),
     Name(NULL), DynamicName(false)
     {
+    }
 
+    inline CGatherVariables(const CGatherVariables& rhs) :
+    Data(NULL), Type(VARIABLE_TYPE_NUL), Purpose(GATHER_TYPE_GATHER), ResourceType(RTYPE_INVALID),
+    ReflectFunction(), Visited(), Children(), World(NULL), TempString(), LazyCPPriority(STREAM_PRIORITY_DEFAULT),
+    Name(NULL), DynamicName(false)
+    {
+        *this = rhs;
+    }
+
+    CGatherVariables& operator=(const CGatherVariables& rhs)
+    {
+        if (this == &rhs) return *this;
+        
+        Data = rhs.Data;
+        Type = rhs.Type;
+        Purpose = rhs.Purpose;
+        ResourceType = rhs.ResourceType;
+        ReflectFunction = rhs.ReflectFunction;
+        Visited = rhs.Visited;
+        Children = rhs.Children;
+        LazyCPPriority = rhs.LazyCPPriority;
+
+        if (rhs.DynamicName) CopyName(rhs.Name);
+        else SetName(rhs.Name);
+
+        return *this;
     }
 
     inline ~CGatherVariables()
@@ -203,6 +139,125 @@ public:
         ClearName();
     }
 public:
+    inline void Set(char const* name, void* data, EVariableType type, ReflectFunctionPtr fn, CGatherVariables& parent)
+    {
+        World = parent.World;
+        LazyCPPriority = STREAM_PRIORITY_DEFAULT;
+        Data = data;
+        Type = type;
+        Purpose = parent.Purpose;
+        ReflectFunction = fn;
+        Visited = parent.Visited;
+        Name = name;
+        DynamicName = false;
+        ResourceType = RTYPE_INVALID;
+    }
+
+    inline void Set(const char* name, void* data, EVariableType type, ReflectFunctionPtr fn, CGatherVariables& parent, EResourceType resource_type, bool dynamic_name)
+    {
+        World = parent.World;
+        LazyCPPriority = STREAM_PRIORITY_DEFAULT;
+        Data = data;
+        Type = type;
+        Purpose = parent.Purpose;
+        ReflectFunction = fn;
+        Visited = parent.Visited;
+        Name = name;
+        DynamicName = dynamic_name;
+        ResourceType = resource_type;
+    }
+
+    ReflectReturn Expand();
+    void Collapse();
+    CGatherVariables* GetChild(const char*);
+    void TakeReflectionCS();
+    bool GetLimitThingRecursion();
+    bool GetThingPtrAsUID();
+    u32 MakeUID();
+    bool CanVisitThing(CThing*);
+    void* GetVisited(void*);
+    void SetVisited(void*, void*);
+
+    inline CStreamPriority GetLazyCPPriority() const
+    {
+        return LazyCPPriority;
+    }
+
+    inline CStreamPriority* GetLazyCPPriorityPtr()
+    {
+        return &LazyCPPriority;
+    }
+    
+    inline void SetLazyCPPriority(CStreamPriority prio)
+    {
+        LazyCPPriority = prio;
+    }
+
+    bool GetReflectFast();
+    inline bool GetSaving() { return Purpose == GATHER_TYPE_SAVE; }
+    inline bool GetLoading() { return Purpose == GATHER_TYPE_LOAD; }
+    inline u32 GetRevision() { return gHeadRevision.Revision; }
+    inline u16 GetResourceVersion() { return ALEAR_LATEST;}
+    inline u32 GetCustomVersion() { return ALEAR_BR1_LATEST; }
+    inline void SetResourceVersion(u16 version) {}
+    inline void SetCustomVersion(u32 version) {}
+
+    u32 GetBranchDescription();
+    u16 GetBranchID();
+    u16 GetBranchRevision();
+
+    inline u8 GetCompressionFlags() { return 0; }
+    inline void SetCompressionFlags(u8) {}
+    inline bool IsGatherVariables() { return true; }
+    inline ReflectReturn ReadWrite(void*, int) { return REFLECT_OK; }
+
+    bool RequestToAllocate(u64) { return true; }
+    bool AllowNullEntries();
+    void RegisterResource(CResource*);
+
+    bool GetString(char* str);
+
+    void AddDependency(CDependencyWalkable*, int, const CHash&, const CGUID&);
+    bool ToggleDependencies(bool);
+    inline bool GetCompressInts() const { return false; }
+    inline bool GetCompressVectors() const { return false; }
+    inline bool GetCompressMatrices() const { return false; }
+
+    inline const char* GetName() const
+    {
+        return Name;
+    }
+
+    inline bool HasName() const
+    {
+        return Name != NULL;
+    }
+
+    bool IsName(const char*) const;
+
+    void SetName(const char* name)
+    {
+        ClearName();
+        if (name != NULL)
+        {
+            Name = name;
+            DynamicName = false;
+        }
+    }
+
+    void CopyName(const char* name)
+    {
+        ClearName();
+        if (name != NULL)
+        {
+            char* dyn = new char[strlen(name + 1)];
+            strcpy(dyn, name);
+
+            Name = dyn;
+            DynamicName = true;
+        }
+    }
+
     inline void ClearName()
     {
         if (DynamicName)
@@ -216,72 +271,11 @@ public:
         Name = NULL;
     }
 
-    inline u32 GetRevision() { return 0x272; }
-
-    inline u16 GetResourceVersion() { return ALEAR_LATEST_PLUS_ONE - 1;}
-    inline u32 GetCustomVersion() { return ALEAR_BR1_LATEST_PLUS_ONE - 1; }
-
-    inline void SetResourceVersion(u16 version) {}
-    inline void SetCustomVersion(u32 version) {}
-
-    inline bool IsGatherVariables() { return true; }
-    inline bool GetLoading() { return Purpose == GATHER_TYPE_LOAD; }
-    inline bool GetSaving() { return Purpose == GATHER_TYPE_SAVE; }
-    inline bool GetCompressInts() { return false; }
-    inline bool RequestToAllocate(u64 size) { return true; }
-
-    inline ReflectReturn Align(int a) { return REFLECT_OK; }
-    inline ReflectReturn CleanupDecompression() { return REFLECT_NOT_IMPLEMENTED; }
-    inline ReflectReturn LoadCompressionData(u32* totalsize) { return REFLECT_NOT_IMPLEMENTED; }
-    inline u32 GetVecLeft() { return 0; }
-    inline u8 GetCompressionFlags() { return 0; }
-    inline void SetCompressionFlags(u8 flags) { }
-    inline ReflectReturn StartCompressing() { return REFLECT_NOT_IMPLEMENTED; }
-    inline ReflectReturn FinishCompressing() { return REFLECT_NOT_IMPLEMENTED; }
-
-
-
-
-    inline ReflectReturn ReadWrite(void*, int) { return REFLECT_OK; }
     inline CGatherVariables& AddChild() 
     { 
         Children.try_resize(Children.size() + 1);
         return Children[Children.size() - 1];
     }
-
-    inline void Set(char const* name, void* data, EVariableType type, ReflectFunctionPtr fn, CGatherVariables& parent)
-    {
-        World = parent.World;
-        LazyCPPriority = STREAM_PRIORITY_DEFAULT;
-        Data = data;
-        Type = type;
-        Purpose = parent.Purpose;
-        ReflectFunction = fn;
-        Visited = Visited;
-        Name = name;
-        DynamicName = false;
-        ResourceType = RTYPE_INVALID;
-    }
-
-    inline void SetName(const char* name)
-    {
-        ClearName();
-        if (name != NULL)
-        {
-            Name = name;
-            DynamicName = false;
-        }
-    }
-
-    template <typename T>
-    void Init(T* data)
-    {
-        SetName("<Root>");
-        Type = VARIABLE_TYPE_STRUCT;
-        Data = (void*)data;
-        ReflectFunction = (ReflectFunctionPtr)GetReflectFunction<T, false>::Get();
-    }
-
 public:
     void* Data;
     EVariableType Type;
@@ -292,9 +286,26 @@ public:
     CVector<CGatherVariables> Children;
     PWorld* World;
     MMString<char> TempString;
+private:
     CStreamPriority LazyCPPriority;
+public:
     const char* Name;
     bool DynamicName;
+};
+
+template<typename R, typename D>
+ReflectReturn ReflectWrapper(R& r, D& d) // 147
+{
+    return Reflect(r, d);
+}
+
+template <typename T, bool some_bool>
+class GetReflectFunction {
+public:
+    static ReflectReturn (*Get())(CGatherVariables&, T&)
+    {
+        return ReflectWrapper<CGatherVariables, T>;
+    }
 };
 
 template <typename T> struct variable_type { static const EVariableType value = VARIABLE_TYPE_STRUCT; };
@@ -317,7 +328,7 @@ template <> struct variable_type<CGUID> { static const EVariableType value = VAR
 
 // variable.h: 288, all defined here
 template <typename D>
-ReflectReturn Add(CGatherVariables& r, D& d, char* c)
+ReflectReturn Add(CGatherVariables& r, D& d, const char* c)
 {
     const EVariableType type = variable_type<D>::value;
     ReflectFunctionPtr ptr = NULL;
@@ -327,6 +338,13 @@ ReflectReturn Add(CGatherVariables& r, D& d, char* c)
     return REFLECT_OK;
 }
 
-extern ReflectReturn (*GatherVariablesLoad)(ByteArray& v, CGatherVariables& variables, bool ignore_head, char* header_4bytes);
+template <typename T>
+void Init(CGatherVariables& variables, T* data)
+{
+    variables.SetName("<Root>");
+    variables.ReflectFunction = (ReflectFunctionPtr)GetReflectFunction<T, false>::Get();
+    variables.Data = (void*)data;
+    variables.Type = VARIABLE_TYPE_STRUCT;
+}
 
-#endif // VARIABLE_H
+extern ReflectReturn (*GatherVariablesLoad)(ByteArray& v, CGatherVariables& variables, bool ignore_head, char* header_4bytes);

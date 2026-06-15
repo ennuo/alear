@@ -32,6 +32,7 @@ extern CVector<CAnimBank*> gAnimBanks;
 class CAnimStyle {
 public:
     inline CAnimStyle() : ID(), Bank(NULL), Gsub(0) {}
+    inline CAnimStyle(const char* id) : ID(id), Bank(), Gsub(0) {}
 public:
     MMString<char> ID;
     CAnimBank* Bank;
@@ -51,7 +52,7 @@ bool IsEmoteItem(CGUID guid);
 
 extern CStyleBank gStyleBank;
 
-#define E_EMOTES_KEY (3109897709)
-#define E_ANIM_STYLES_KEY (3149445767)
+#define E_EMOTES_KEY (3109897709ul)
+#define E_ANIM_STYLES_KEY (3149445767ul)
 
 #endif // EMOTES_H

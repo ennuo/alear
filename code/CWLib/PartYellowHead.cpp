@@ -43,3 +43,19 @@ void PYellowHead::SetJetpack(CThing* attachment, float length, v2 pos)
 {
     return PYellowHead_SetJetpack(this, attachment, length, pos);
 }
+
+void PYellowHead::InitializeExtraData()
+{
+    LastTimeSlappedAPlayer = 0;
+    AnimSetKey = 0;
+    for (u32 i = 0; i < 64; ++i)
+    {
+        AnimBonePos[i] = v4::wAxis();
+        AnimBoneRot[i] = v4::wAxis();
+        AnimBoneScale[i] = v4(1.0f);
+    }
+    
+    memset(AnimMorph, 0, sizeof(AnimMorph));
+
+    // AnimBoneScale[12] = v4(1.75f, 1.75f, 1.75f, 1.0f);
+}

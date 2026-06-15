@@ -23,6 +23,7 @@ file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/code/CoreLib/**.cpp"
     "${PROJECT_SOURCE_DIR}/code/CWLib/**.cpp"
     "${PROJECT_SOURCE_DIR}/code/Alear/**.cpp"
+    "${PROJECT_SOURCE_DIR}/code/Ikaros/**.cpp"
     "${PROJECT_SOURCE_DIR}/code/main.cpp"
 )
 
@@ -42,6 +43,7 @@ add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES} ${SM64_SRC_FILES} ${ASSEMBLY_F
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/code/Alear
+    ${PROJECT_SOURCE_DIR}/code/Ikaros
     ${PROJECT_SOURCE_DIR}/code/SM64
     ${PROJECT_SOURCE_DIR}/code/CWLib
     ${PROJECT_SOURCE_DIR}/code/Spuge
@@ -86,7 +88,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd gcm_sys_stub http_stub http_util_stub net_stub)
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd gcm_sys_stub http_stub http_util_stub net_stub sysutil_np_stub)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR}

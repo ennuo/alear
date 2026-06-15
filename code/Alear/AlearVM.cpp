@@ -1,6 +1,14 @@
-#include "AlearVM.h"
-#include "hook.h"
-#include "cwlib.h"
+#include <AlearVM.h>
+#include <thing.h>
+#include <DebugLog.h>
+#include <GameUpdateStage.h>
+#include <vm/VirtualMachine.h>
+
+
+using namespace NVirtualMachine;
+
+typedef std::map<CGUID, CScriptInstance*, std::less<CGUID>, STLBucketAlloc<std::pair<CGUID, CScriptInstance*> > > InstanceMap;
+InstanceMap gScriptObjectStatics;
 
 static void* g_ElfTocTable[] =
 {
@@ -57,15 +65,128 @@ void InvokeAndStore(ExecutionState* state, shkOpd* fn, u8* storage)
     *((T*)storage) = ret;
 }
 
+void GatherInstanceHints(const RScript* script, u32& instance_size, u32& num_fields)
+{
+    instance_size = 0;
+    num_fields = 0;
+
+    for (u32 i = 0; i < script->GetNumFields(); ++i)
+    {
+        const CFieldDefinitionRow* field = script->GetField(i);
+        if (field->Modifiers.IsSet(MT_NATIVE) || !field->Modifiers.IsSet(MT_STATIC)) continue;
+        
+        const CTypeReferenceRow* type_ref = script->GetType(field->TypeReferenceIdx);
+        u32 type_size = GetTypeSize(type_ref->GetMachineType());
+
+        instance_size = RoundUpPow2(instance_size, type_size) + type_size;
+        num_fields += 1;
+    }
+}
+
+CScriptInstance* GetOrCreateStaticInstance(const RScript* script, bool reload_if_exists = false)
+{
+    CScriptInstance* old_instance = NULL;
+
+    // We'll basically handle all static members by initializing an instance
+    // of the script, but only calling the static initializer.
+    InstanceMap::iterator it = gScriptObjectStatics.find(script->GetGUID());
+    if (it != gScriptObjectStatics.end())
+        old_instance = it->second;
+
+    if (!reload_if_exists)
+        return old_instance;
+    
+    u32 num_static_fields, instance_size;
+    GatherInstanceHints(script, instance_size, num_static_fields);
+
+    CScriptInstance* instance = new CScriptInstance((RScript*)script);
+    instance->InstanceLayout = new CInstanceLayout(instance_size, num_static_fields);
+    const CP<CInstanceLayout>& layout = instance->GetInstanceLayout();
+
+    u32 instance_offset = 0;
+    for (u32 i = 0; i < script->GetNumFields(); ++i)
+    {
+        const CFieldDefinitionRow* field = script->GetField(i);
+        if (field->Modifiers.IsSet(MT_NATIVE) || !field->Modifiers.IsSet(MT_STATIC)) continue;
+        
+        const CTypeReferenceRow* type_ref = script->GetType(field->TypeReferenceIdx);
+        u32 type_size = GetTypeSize(type_ref->GetMachineType());
+
+        instance_offset = RoundUpPow2(instance_size, type_size);
+
+        layout->AddField(
+            script->LookupStringA(field->NameStringIdx),
+            field->Modifiers,
+            type_ref->GetFishType(),
+            type_ref->GetMachineType(),
+            type_ref->DimensionCount,
+            type_ref->GetArrayBaseMachineType(),
+            field->InstanceOffset,
+            field->FieldNameHash
+        );
+
+        instance_offset += type_size;
+    }
+
+    CRawVector<unsigned char>& members = instance->MemberVariables;
+    members.resize(instance_size);
+    if (instance_size != 0)
+        memset(members.begin(), 0, instance_size);
+    
+    if (old_instance)
+    {
+        it->second = instance;
+        delete old_instance;
+    }
+    else
+    {
+        gScriptObjectStatics.insert(InstanceMap::value_type(script->GetGUID(), instance));
+    }
+    
+    {
+        CMainGameStageOverride _stage_override(E_UPDATE_STAGE_OTHER_WORLD);
+        CScriptArguments args;
+        
+        CThing* world = new CThing();
+        world->AddPart(PART_TYPE_WORLD);
+
+        NVirtualMachine::ExecuteStatic(world, script->GetGUID(), ".static_init__", args, true, NULL);
+        NVirtualMachine::ExecuteStatic(world, script->GetGUID(), ".static_ctor__", args, true, NULL);
+
+        delete world;
+    }
+
+    return instance;
+}
+
+void EnsureStaticInstanceExists(const RScript* script)
+{
+    GetOrCreateStaticInstance(script, true);
+}
+
 void AlearHandleVM(ExecutionState* state)
 {
     Instruction instruction = state->Bytecode[state->PC];
     switch (instruction.Bits & 0xff)
     {
+        case IT_EXT_GET_STATIC_MEMBER:
+        {
+            const CFieldReferenceRow* field = state->Script->GetFieldReference(instruction.GetMember.FieldRef);
+            CScriptInstance* instance = GetOrCreateStaticInstance(state->Script);
+            memcpy(state->Storage + instruction.GetMember.DstIdx, instance->GetMembers().begin() + field->InstanceOffset, GetTypeSize((EMachineType)instruction.GetMember.Type));
+            break;
+        }
+        case IT_EXT_SET_STATIC_MEMBER:
+        {
+            const CFieldReferenceRow* field = state->Script->GetFieldReference(instruction.SetMember.FieldRef);
+            CScriptInstance* instance = GetOrCreateStaticInstance(state->Script);
+            memcpy(instance->GetMembers().begin() + field->InstanceOffset, state->Storage + instruction.SetMember.SrcIdx, GetTypeSize((EMachineType)instruction.SetMember.Type));
+            break;
+        }
         case IT_EXT_ADDRESS:
         {
             #ifdef SCRIPT_DEBUG
-            DebugLogChF(DC_SCRIPT_DEBUG, "[IT_EXT_ADDRESS] Getting address of variable at r%d\n", instruction.Unary.DstIdx);
+            MMLogCh(DC_SCRIPT_DEBUG, "[IT_EXT_ADDRESS] Getting address of variable at r%d\n", instruction.Unary.DstIdx);
             #endif
 
             u32* dst = (u32*)(state->Storage + instruction.Unary.DstIdx);
@@ -78,7 +199,7 @@ void AlearHandleVM(ExecutionState* state)
             void* ptr = (void*)(*(u32**)(state->Storage + instruction.Memory.SrcIdx));
 
             #ifdef SCRIPT_DEBUG
-            DebugLogChF(DC_SCRIPT_DEBUG, "[IT_EXT_LOAD] Loading %s from r%d(%08x) into r%d\n",
+            MMLogCh(DC_SCRIPT_DEBUG, "[IT_EXT_LOAD] Loading %s from r%d(%08x) into r%d\n",
                 GetTypeName((EMachineType)instruction.Memory.Type),
                 instruction.Memory.SrcIdx,
                 ptr, 
@@ -95,7 +216,7 @@ void AlearHandleVM(ExecutionState* state)
             void* ptr = (void*)(state->Storage + instruction.Memory.SrcIdx);
 
             #ifdef SCRIPT_DEBUG
-            DebugLogChF(DC_SCRIPT_DEBUG, "[IT_EXT_STORE] Storing %s from r%d to r%d(%08x)\n",
+            MMLogCh(DC_SCRIPT_DEBUG, "[IT_EXT_STORE] Storing %s from r%d to r%d(%08x)\n",
                 GetTypeName((EMachineType)instruction.Memory.Type),
                 instruction.Memory.SrcIdx, 
                 instruction.Memory.DstIdx,
@@ -109,7 +230,7 @@ void AlearHandleVM(ExecutionState* state)
         case IT_EXT_INVOKE_CONSTANT:
         {
             #ifdef SCRIPT_DEBUG
-            DebugLogChF(DC_SCRIPT_DEBUG, "[IT_EXT_INVOKE_CONSTANT] Invoking (%s)(%08x) and storing result in r%d\n",
+            MMLogCh(DC_SCRIPT_DEBUG, "[IT_EXT_INVOKE_CONSTANT] Invoking (%s)(%08x) and storing result in r%d\n",
                 GetTypeName((EMachineType) instruction.Invoke.Type),
                 instruction.Invoke.SrcOrIdx,
                 instruction.Invoke.DstIdx
@@ -148,8 +269,13 @@ static s32 gSwitchTable[NUM_INSTRUCTION_TYPES];
 const int g_RetailInstructionCount = IT_ASSERT + 1;
 
 extern "C" void _alearvm_hook_naked();
+extern "C" void _on_fixup_script_hook();
 void AlearInitVMHook()
 {
+
+    MH_PokeMemberHook(0x00098edc, RScript::FixupFieldDefinitions);
+    MH_PokeBranch(0x000cc0ac, &_on_fixup_script_hook);
+
     MH_Poke32(0x00189880, 0x2b850000 + NUM_INSTRUCTION_TYPES /* cmplwi %cr7, %r5, NUM_INSTRUCTION_TYPES */);
 
     // Going to just switch out the switch case table with our own,

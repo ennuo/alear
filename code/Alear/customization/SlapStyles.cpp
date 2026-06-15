@@ -7,26 +7,52 @@
 #include <MMAudio.h>
 #include <PartCostume.h>
 #include <ResourceGFXMesh.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 #include <ResourceFileOfBytes.h>
 #include <ResourceSystem.h>
 
 CVector<CSlapMesh> gSlapMeshes;
 StaticCP<RFileOfBytes> gSlapStyleData;
 
+template<typename R>
+ReflectReturn Reflect(R& r, CSlapMesh& d)
+{
+    ReflectReturn rv;
+    ADD(Sound);
+    ADD(GUID);
+    ADD(HorizontalForce);
+    ADD(VerticalForce);
+    ADD(LeftHand);
+    ADD(RightHand);
+    ADD(Kill);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CSlapStyles& d)
+{
+    ReflectReturn rv;
+    ADD(Meshes);
+    return rv;
+}
+
 bool LoadSlapStyles()
 {
     gSlapMeshes.clear();
 
     CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_SLAP_STYLES_KEY, 0, STREAM_PRIORITY_DEFAULT);
-    *((CP<RFileOfBytes>*)&gSlapStyleData) = file;
-    
-    file->BlockUntilLoaded();
-    if (!file->IsLoaded()) return false;
+    gSlapStyleData = file;
 
+    file->BlockUntilLoaded();
+    if (!file->IsLoaded())
+    {
+        MMLog("No slap style configuration file found\n");
+        return true;
+    }
+    
     ByteArray& b = file->GetData();
     CGatherVariables variables;
-    variables.Init<CSlapStyles>((CSlapStyles*)&gSlapMeshes);
+    Init<CSlapStyles>(variables, (CSlapStyles*)&gSlapMeshes);
     if (GatherVariablesLoad(b, variables, true, NULL) != REFLECT_OK)
 {
         DebugLog("An error occurred while loading data for slap styles!\n");

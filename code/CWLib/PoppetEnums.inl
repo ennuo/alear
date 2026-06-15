@@ -29,7 +29,7 @@ typedef enum EInventoryObjectSubType {
     E_SUBTYPE_POD_MESH=2,
     E_SUBTYPE_ANIMATION_STYLE=16384,
     E_SUBTYPE_EMOTE=32768,
-    E_SUBTYPE_LEVEL=65536,
+    E_SUBTYPE_MORPH=65536,
 } EInventoryObjectSubType;
 
 typedef enum EInventoryObjectType {
@@ -181,6 +181,9 @@ typedef enum EPoppetMessageType {
     E_POPPET_EXPLOSION_MESSAGE,
     E_POPPET_GENEALOGY_MESSAGE,
     E_POPPET_GRADIENT_MESSAGE,
+    
+    E_POPPET_MORPH_MESSAGE,
+    E_POPPET_RESET_MORPHS_MESSAGE,
 
     E_POPPET_MESSAGE_TYPE_COUNT
 } EPoppetMessageType;
@@ -193,7 +196,8 @@ typedef enum EPoppetMode {
     MODE_TWEAK=4,
     MODE_TWEAK_CUSTOM=5,
     MODE_MOTION_CONTROLLER=6,
-    MODE_COUNT=7
+    MODE_LOOKS=7,
+    MODE_COUNT=8
 } EPoppetMode;
 
 typedef enum EPoppetSubMode {
@@ -339,6 +343,10 @@ typedef enum EToolType {
     TOOL_RANDOM_DECORATION = 59,
     TOOL_RANDOM_MATERIAL = 60,
     TOOL_RANDOM_OBJECT = 61,
+
+    TOOL_MORPH_RESET = 62,
+    TOOL_MORPH_SAVE = 63,
+    TOOL_MORPH_EDIT = 64,
     
     NUM_TOOL_TYPES
 
