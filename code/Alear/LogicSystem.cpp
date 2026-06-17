@@ -362,8 +362,8 @@ void CPoppet::InitializeExtraData()
     CustomPoppetSize = v2(512.0f, 544.0f);
     ShowTether = true;
     HidePoppetGooey = false;
-    CaptureSubType = NCapture::SUBTYPE_COSTUME_MORPH;
-
+    CaptureSubType = NCapture::SUBTYPE_NONE;
+    
     DotToDot.SetParent(this);
     Looks.SetParent(this);
 }
