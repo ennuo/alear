@@ -5,7 +5,11 @@
 #include <algorithm>
 #include <functional>
 #include <Serialise.h>
+
+#include <Sync/Bootstrap.h>
+
 #include <mmalex.h>
+
 
 CFileDBRow::CFileDBRow()
 {
@@ -205,4 +209,17 @@ bool FileDB::RemapLocalGUID(const CGUID& in, CGUID& out)
     }
 
     return false;
+}
+
+void FileDB::Destroy()
+{
+    CCSLock lock(&FileDB::Mutex, __FILE__, __LINE__);
+    for (CFileDB** it = DBs.begin(); it != DBs.end(); ++it)
+    {
+        if (*it == &sync::Database)
+            continue;
+        delete *it;
+    }
+    
+    DBs.resize(0);
 }

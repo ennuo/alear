@@ -12,8 +12,10 @@
 #include <ReadINI.h>
 #include <FileWatcher.h>
 #include <AlearStartMenu.h>
+#include <ResourceTypes.h>
 
 extern MAKE_THREAD_FUNCTION(SyncLoadThread);
+extern CSRQueue CSRsForSync;
 
 namespace sync
 {
@@ -174,9 +176,18 @@ namespace sync
 
     void Close()
     {
+        delete sync::Client;
+        delete sync::DownloadJobManager;
+        
         if (ResourceThread != NULL)
+        {
+            CSRsForSync.Abort();
             ThreadJoin(ResourceThread);
+        }
+        
         ResourceThread = NULL;
+        sync::DownloadJobManager = NULL;
+        sync::Client = NULL;
     }
 
 

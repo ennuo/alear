@@ -217,13 +217,18 @@ void RGfxMaterial::CacheParameters()
     UniformsCached = true;
     UsesPlayerDefinedColour = false;
 
+    CellCgbFragmentProgramConfiguration conf;
+    memset(&conf, 0, sizeof(CellCgbFragmentProgramConfiguration));
+    if (cellGcmCgGetCgbFragmentProgramConfiguration(Shaders[SHADER_C], &conf, CELL_GCM_FALSE, 1, 0) == CELL_OK)
+    {
+        if ((conf.attributeInputMask & CELL_GCM_ATTRIB_OUTPUT_MASK_FRONTDIFFUSE))
+            UsesPlayerDefinedColour = true;
+    }
+
     for (u32 i = 0; i < SHADER_LAST; ++i)
     {
         UniformCache& c = CachedUniforms[i];
         CGprogram program = Shaders[i];
-
-        if (cellGcmCgGetVertexAttribInputMask(program) & CG_COLOR0)
-            UsesPlayerDefinedColour = true;
         
         c.Time = cellGcmCgGetNamedParameter(program, "iTime");
         c.ExpressionLevel = cellGcmCgGetNamedParameter(program, "iExpressionLevel");

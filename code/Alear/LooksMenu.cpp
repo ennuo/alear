@@ -9,7 +9,7 @@
 #include <StringUtil.h>
 #include <vm/NativeFunctionCracker.h>
 #include <vm/VirtualMachine.h>
-#include <ResourceTranslationTable.h>
+#include <Translate.h>
 #include <Capture.h>
 #include <ResourceSystem.h>
 
@@ -281,8 +281,8 @@ void OnRefreshPlanDetails(CPlanDetails* details, CThing* thing)
     {
         details->Type = E_TYPE_COSTUME;
         details->SubType = E_SUBTYPE_MORPH;
-        details->Category = MakeLamsKeyID("TG_Morphs", NULL);
-        details->Location = details->Category;
+        details->SetCategory(MakeLamsKeyID("TG_Morphs"));
+        details->SetLocation(details->GetCategory());
     }
 }
 
@@ -349,7 +349,7 @@ namespace LooksMenuNativeFunctions
         char key[64];
         const tchar_t* text;
         sprintf(key, "LOOKS_MENU_SACKBOY_BONE_PRETTY_NAME_%d", index);
-        if (CustomTryTranslate(MakeLamsKeyID(key, NULL), text))
+        if (TryTranslate(MakeLamsKeyID(key), text))
             return (const wchar_t*)text;
 
         *local_widechars = '\0';

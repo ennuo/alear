@@ -12,13 +12,13 @@
 #include <ResourceGFXMesh.h>
 #include <ResourceSystem.h>
 #include <ResourceDescriptor.h>
-#include <ResourceTranslationTable.h>
 #include <ResourcePointer.h>
 #include <Poppet.h>
 #include <thing.h>
 #include <ResourceGame.h>
 #include <PartPhysicsWorld.h>
 
+#include <Translate.h>
 #include <SharedSerialise.h>
 #include <DebugLog.h>
 

@@ -30,19 +30,6 @@ _global_webternate_hook:
     ld %r0, 0xb0(%r1)
     ba 0x00234fd0
 
-.global _global_artist_hook
-_global_artist_hook:
-    mr %r3, %r27
-
-    std %r2, 0x28(%r1)
-    lis %r5, _Z12DoArtistSortP14CInventoryView@h      
-    ori %r5, %r5, _Z12DoArtistSortP14CInventoryView@l
-    lwz %r2, 0x4(%r5)
-    bl ._Z12DoArtistSortP14CInventoryView
-    ld %r2, 0x28(%r1)
-
-    ba 0x000c2cf4
-
 .global _global_type_sort_hook
 _global_type_sort_hook:
     mr %r3, %r27
@@ -56,15 +43,16 @@ _global_type_sort_hook:
 
     ba 0x000c2cf4
 
-.global _global_pref_hook
-_global_pref_hook:
-    mr %r3, %r27
-
+.global _global_subcategory_sort_hook
+_global_subcategory_sort_hook:
+    mr %r3, %r26
+    mr %r4, %r27
+    
     std %r2, 0x28(%r1)
-    lis %r5, _Z16DoPreferenceSortP14CInventoryView@h      
-    ori %r5, %r5, _Z16DoPreferenceSortP14CInventoryView@l
+    lis %r5, _Z17DoSubcategorySortP13RLocalProfileP14CInventoryView@h      
+    ori %r5, %r5, _Z17DoSubcategorySortP13RLocalProfileP14CInventoryView@l
     lwz %r2, 0x4(%r5)
-    bl ._Z16DoPreferenceSortP14CInventoryView
+    bl ._Z17DoSubcategorySortP13RLocalProfileP14CInventoryView
     ld %r2, 0x28(%r1)
 
     ba 0x000c2cf4

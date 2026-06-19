@@ -17,6 +17,15 @@ enum EPoppetGooeyUpdateState {
     PG_OK
 };
 public:
+
+    void DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 size);
+    void DoItemInfoIcon(u64 uid, v2& offset, v2 item_size, v4 col, int icon);
+
+    inline CGooeyNodeManager* GetManager() const
+    {
+        return *(CGooeyNodeManager**)((char*)this + 0x250);
+    }
+public:
     CCamera UICamera;
     m44 Trans;
     CP<RTexture> ColourSwatch;

@@ -122,4 +122,6 @@ public:
 	const T* End;
 };
 
+typedef TextRange<char> TextRangeA;
+
 #endif

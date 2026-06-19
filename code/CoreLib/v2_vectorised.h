@@ -1,10 +1,33 @@
-#ifndef V2_VECTORISED_H
-#define V2_VECTORISED_H
+#pragma once
 
 #include <vectormath/cpp/vectormath_aos.h>
 
 struct vint {
-    unsigned int V  __attribute__ ((__vector_size__ (16)));
+
+    inline vint() { }
+    vint(unsigned int, unsigned int);
+    vint(unsigned int);
+    vint(vec_uint4 v) : V(v) {}
+    
+    // unsigned int operator unsigned int() const;
+
+    const vint operator++(int);
+    const vint operator--(int);
+
+    const vint& operator++();
+    const vint& operator--();
+
+    const vint operator-() const;
+
+    inline const vint operator~() const
+    {
+        return vint(vec_nor(V, V));
+    }
+
+    vint& operator+=(vint);
+    vint& operator-=(vint);
+
+    vec_uint4 V;
 };
 
 struct vfloat {
@@ -44,6 +67,11 @@ struct v2 {
     inline void setZ(vfloat z) { V = _vmathVfInsert(V, z.V, 2); }
     inline void setW(vfloat w) { V = _vmathVfInsert(V, w.V, 3); }
 
+    void setX(v2 v);
+    void setY(v2 v);
+    void setZ(v2 v);
+    void setW(v2 v);
+
     inline void setX(float x) { _vmathVfSetElement(V, x, 0); }
     inline void setY(float y) { _vmathVfSetElement(V, y, 1); }
     inline void setZ(float z) { _vmathVfSetElement(V, z, 2); }
@@ -52,17 +80,54 @@ struct v2 {
     inline v2 operator+(v2 b) const { return v2(vec_add(V, b.V)); }
     inline v2 operator-(v2 b) const { return v2(vec_sub(V, b.V)); }
     inline v2 operator*(v2 b) const { return v2(vec_madd(V, b.V, (vec_float4)(0.0f))); }
-    
     inline v2 operator*(float scalar) const { return *this * vfloat(scalar); }
     inline v2 operator*(vfloat scalar) const { return v2(vec_madd(V, scalar.V, (vec_float4)(0.0f))); }
+    inline v2 operator/(float scalar) const { return *this / vfloat(scalar); }
+    inline v2 operator/(vfloat scalar) const { return v2(divf4(V, scalar.V)); }
+    inline v2 operator/(v2 v) const { return v2(divf4(V, v.V)); }
 
-    Vectormath::Aos::Vector4 Makev4(vfloat w = (vec_float4)(1.0)) const 
+    inline v2& operator+=(v2 v) 
     { 
-        vec_float4 vec128 = V; 
-        vec128 = _vmathVfInsert(vec128, w.V, 3); 
-        return Vectormath::Aos::Vector4(vec128); 
-    } 
+        *this = *this + v;
+        return *this;
+    }
 
+    inline v2& operator-=(v2 v)
+    {
+        *this = *this - v;
+        return *this;
+    }
+
+    inline v2& operator*=(v2 v)
+    {
+        *this = *this * v;
+        return *this;
+    }
+
+    inline v2& operator*=(vfloat scalar)
+    {
+        *this = *this * scalar;
+        return *this;
+    }
+
+    inline v2& operator/=(vfloat scalar)
+    {
+        *this = *this / scalar;
+        return *this;
+    }
+
+    inline v2 operator-() const
+    {
+        return v2(negatef4(V));
+    }
+
+    vfloat LengthSquared() const;
+    vfloat Length3d() const;
+    v2 Normal3d() const;
+    v2 Rotate(vfloat) const;
+    vfloat Angle() const;
+    v2 Right() const;
+    
     inline v2 Min(v2 v) const 
     { 
         return v2( vec_min( V, v.V ) ); 
@@ -73,9 +138,51 @@ struct v2 {
         return v2( vec_max( V, v.V )); 
     }
 
+    v2 Abs() const;
+    v2 CopySign(v2) const;
+
+    inline Vectormath::Aos::Vector4 Makev4(vfloat w = (vec_float4)(1.0)) const 
+    { 
+        vec_float4 vec128 = V; 
+        vec128 = _vmathVfInsert(vec128, w.V, 3); 
+        return Vectormath::Aos::Vector4(vec128); 
+    }
+
+    inline vint operator==(v2 rhs) const
+    {
+        return vint((vec_uint4)vec_cmpeq(V, rhs.V));
+    }
+
+    inline vint operator!=(v2 rhs) const
+    {
+        return ~(*this == rhs);
+    }
+
+    inline vint operator>(v2 rhs) const
+    {
+        return vint((vec_uint4)vec_cmpgt(V, rhs.V));
+    }
+
+    inline vint operator<(v2 rhs) const
+    {
+        return vint((vec_uint4)vec_cmpgt(rhs.V, V));
+    }
+
+    inline vint operator>=(v2 rhs) const
+    {
+        return ~(*this < rhs);
+    }
+    
+    inline vint operator<=(v2 rhs) const
+    {
+        return ~(*this > rhs);
+    }
+
+    vfloat Length() const;
+    v2 Normal() const;
+    v2 NormalFast() const;
+
     vec_float4 V;
 };
 
 typedef vfloat floatInV2;
-
-#endif // V2_VECTORISED_H

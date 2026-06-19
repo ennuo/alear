@@ -71,19 +71,18 @@ typedef enum EInventoryObjectType {
 typedef enum EInventorySortMode {
     INVALID_SORT_MODE=-1,
     SORT_DATE_OLDEST=1,
-    SORT_DATE_NEWEST=2,
-    SORT_MRU=3,
-    SORT_NUMUSES=4,
-    SORT_LOCATION=5,
-    SORT_CATEGORY=6,
-    SORT_SIZE=7,
-    SORT_COLOR=8,
-    SORT_NAME=9,
+    SORT_DATE_NEWEST,
+    SORT_MRU,
+    SORT_NUMUSES,
+    SORT_LOCATION,
+    SORT_CATEGORY,
+    SORT_SIZE,
+    SORT_COLOR,
+    SORT_NAME,
 
     // custom
-    SORT_ARTIST = 10,
-    SORT_MEME = 11,
-    SORT_TYPE = 12,
+    SORT_SUBCATEGORY,
+    SORT_TYPE,
     
     NUM_SORT_MODES
 } EInventorySortMode;

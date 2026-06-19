@@ -1,5 +1,4 @@
-#ifndef INVENTORY_ITEM_FLAGS_H
-#define INVENTORY_ITEM_FLAGS_H
+#pragma once 
 
 enum EInventoryItemFlags {
     E_IIF_NONE = 0x0,
@@ -10,4 +9,9 @@ enum EInventoryItemFlags {
     E_IIF_ERRORED = 0x10
 };
 
-#endif // INVENTORY_ITEM_FLAGS_H
+enum ECustomItemFlags {
+    E_ITEM_ANIMATED = (1 << 0),
+    E_ITEM_USER_COLOR = (1 << 1),
+    E_ITEM_LOCKED = (1 << 2),
+    E_ITEM_TEST = (1 << 3)
+};

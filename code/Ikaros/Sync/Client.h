@@ -204,6 +204,7 @@ namespace sync
         void HandleSyncChannel(const packet& packet, ByteArray& data);
         void HandleGateChannel(const packet& packet, ByteArray& data);
         void HandleResourceChannel(const packet& packet, ByteArray& data);
+        void UpdateDownloadTasks();
         void UpdateUploadTasks();
         void UpdateCommitTask();
     public:

@@ -2,6 +2,7 @@
 
 #include <thing.h>
 #include <refcount.h>
+#include <Translate.h>
 #include <Poppet.h>
 #include <ResourceSystem.h>
 #include <ResourceScript.h>
@@ -9,7 +10,6 @@
 #include <PartGeneratedMesh.h>
 #include <PartRenderMesh.h>
 #include <PartTrigger.h>
-#include <ResourceTranslationTable.h>
 #include <PartScript.h>
 
 #include <vm/NativeFunctionCracker.h>
@@ -1064,6 +1064,31 @@ namespace TweakShapeNativeFunctions
             }
 
             return false;
+        }
+
+        PCostume* costume = thing->GetPCostume();
+        if (costume != NULL)
+        {
+            if (costume->Mat && costume->Mat->IsLoaded() && costume->Mat->UsesPlayerDefinedColour)
+                return true;
+            
+            for (u32 i = 0; i < COSTUMEPART_COUNT; ++i)
+            {
+                const CCostumePiece& piece = costume->CostumePieceVec[i];
+                const CP<RMesh>& mesh = piece.Mesh;
+                if (mesh) mesh->BlockUntilLoaded();
+                if (!mesh || !mesh->IsLoaded()) return false;
+                CVector<CPrimitive>& primitives = mesh->mesh.Primitives;
+                for (CPrimitive* it = primitives.begin(); it != primitives.end(); ++it)
+                {
+                    CPrimitive& primitive = *it;
+                    CP<RGfxMaterial>& gmat = primitive.Material;
+                    if (gmat) gmat->BlockUntilLoaded();
+                    if (!gmat || !gmat->IsLoaded()) continue;
+                    gmat->CacheParameters();
+                    if (gmat->UsesPlayerDefinedColour) return true;
+                }
+            }
         }
 
         return false;

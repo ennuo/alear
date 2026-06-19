@@ -67,9 +67,10 @@ void RMaterial::DestroyExtraData()
 
 void RPlan::InitializeExtraData()
 {
-    new (&InventoryData.TemplateLevel) CResourceDescriptor<RLevel>();
-    InventoryData.LoreKey = 0;
     InventoryData.Flags = 0;
+    InventoryData.SetSubcategoryIndex(-1);
+    InventoryData.SetLore(0);
+    InventoryData.SetSubcategory(0);
 }
 
 void RGfxMaterial::InitializeExtraData()
@@ -107,6 +108,25 @@ void RLocalProfile::InitializeExtraData()
         new (&Emotes[i]) CResourceDescriptor<RPlan>();
     new (&SelectedAnimationStyle) CResourceDescriptor<RPlan>(CGUID(2507392567u));
     new (&PinsAwarded) CPinsAwarded();
+
+    for (u32 i = 0; i < Inventory.size(); ++i)
+    {
+        CInventoryItem& d = Inventory[i];
+        d.Details.SubcategoryIndex = 0;
+        d.Details.LoreTranslationTag = 0;
+        d.Details.Flags = 0;
+    }
+}
+
+void RBigProfile::InitializeExtraData()
+{
+    for (u32 i = 0; i < Inventory.size(); ++i)
+    {
+        CInventoryItem& d = Inventory[i];
+        d.Details.SubcategoryIndex = 0;
+        d.Details.LoreTranslationTag = 0;
+        d.Details.Flags = 0;
+    }
 }
 
 void RSyncedProfile::InitializeExtraData()
@@ -268,6 +288,38 @@ ReflectReturn OnSerializeExtraData(R& r, RMaterial& d)
 }
 
 template <typename R>
+ReflectReturn ReflectInventoryItemData(R& r, CVector<CInventoryItem>& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+    if (r.GetCustomVersion() >= ALEAR_INVENTORY_DATA)
+    {
+        for (u32 i = 0; i < d.size(); ++i)
+        {
+            CInventoryItem& item = d[i];
+            if ((rv = Reflect(r, item.Details.LoreTranslationTag)) != REFLECT_OK) return rv;
+            if ((rv = Reflect(r, item.Details.SubcategoryIndex)) != REFLECT_OK) return rv;
+            if ((rv = Reflect(r, item.Details.Flags)) != REFLECT_OK) return rv;
+        }
+    }
+    
+    return rv;
+}
+
+template <typename R>
+ReflectReturn OnSerializeExtraData(R& r, RPlan& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+    if (r.GetCustomVersion() >= ALEAR_INVENTORY_DATA)
+    {
+        ADD(InventoryData.LoreTranslationTag);
+        ADD(InventoryData.Subcategory);
+        ADD(InventoryData.Flags);
+    }
+
+    return rv;
+}
+
+template <typename R>
 ReflectReturn OnSerializeExtraData(R& r, RSyncedProfile& d)
 {
     DebugLog("Attempting to serialize additional information for RSyncedProfile (Revision=%08x, CustomRevision=%08x) (loading=%s, saving=%s)\n", r.GetRevision(), r.GetCustomVersion(), r.GetLoading() ? "true":"false", r.GetSaving() ? "true":"false");
@@ -348,10 +400,29 @@ ReflectReturn OnSerializeExtraData(R& r, RGfxMaterial& d)
 }
 
 template <typename R>
+ReflectReturn OnSerializeExtraData(R& r, RBigProfile& d)
+{
+    ReflectReturn rv = REFLECT_OK;
+    if (r.GetCustomVersion() >= ALEAR_INVENTORY_DATA)
+    {
+        if ((rv = ReflectInventoryItemData(r, d.Inventory)) != REFLECT_OK)
+            return rv;
+    }
+
+    return rv;
+}
+
+template <typename R>
 ReflectReturn OnSerializeExtraData(R& r, RLocalProfile& d)
 {
     DebugLog("Attempting to serialize additional information for RLocalProfile[ALSR] (Revision=%08x, CustomRevision=%08x) (loading=%s, saving=%s)\n", r.GetRevision(), r.GetCustomVersion(), r.GetLoading() ? "true":"false", r.GetSaving() ? "true":"false");
     ReflectReturn rv = REFLECT_OK;
+
+    if (r.GetCustomVersion() >= ALEAR_INVENTORY_DATA)
+    {
+        if ((rv = ReflectInventoryItemData(r, d.Inventory)) != REFLECT_OK)
+            return rv;
+    }
     
     if (r.GetCustomVersion() >= ALEAR_HIDDEN_CATEGORIES)
     {
@@ -398,7 +469,7 @@ ReflectReturn OnSerializeExtraData(R& r, RCharacterSettings& d)
 
 bool ResourceHasCustomData(EResourceType type)
 {
-    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL || type == RTYPE_MATERIAL || type == RTYPE_SETTINGS_CHARACTER;
+    return type == RTYPE_SYNCED_PROFILE || type == RTYPE_LOCAL_PROFILE || type == RTYPE_GFXMATERIAL || type == RTYPE_MATERIAL || type == RTYPE_SETTINGS_CHARACTER || type == RTYPE_PLAN;
 }
 
 template <typename R>
@@ -423,6 +494,27 @@ ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
             case RTYPE_SETTINGS_CHARACTER:
             {
                 ((RCharacterSettings*)resource)->InitializeExtraData();
+                break;
+            }
+            case RTYPE_PLAN:
+            {
+                // does not work for allocatenewresource
+                ((RPlan*)resource)->InitializeExtraData();
+                break;
+            }
+        }
+    }
+
+    if (r.GetSaving())
+    {
+        switch (resource->GetResourceType())
+        {
+            case RTYPE_PLAN:
+            {
+                RPlan* plan = (RPlan*)resource;
+                CPlanDetails& details = plan->InventoryData;
+                if (details.Flags == 0 && details.LoreTranslationTag == 0 && details.SubcategoryIndex == -1)
+                    return REFLECT_OK;
                 break;
             }
         }
@@ -483,6 +575,7 @@ ReflectReturn ReflectExtraResourceData(CResource* resource, R& r)
         case RTYPE_GFXMATERIAL: rv = OnSerializeExtraData(r, *((RGfxMaterial*)resource)); break;
         case RTYPE_MATERIAL: rv = OnSerializeExtraData(r, *((RMaterial*)resource)); break;
         case RTYPE_SETTINGS_CHARACTER: rv = OnSerializeExtraData(r, *((RCharacterSettings*)resource)); break;
+        case RTYPE_PLAN: rv = OnSerializeExtraData(r, *((RPlan*)resource)); break;
     }
 
     if (!r.IsGatherVariables())
@@ -725,6 +818,7 @@ void AttachCustomRevisionHooks()
     MH_Poke32(0x00088e44, LI(4, sizeof(RGfxMaterial)));
     MH_Poke32(0x00089000, LI(4, sizeof(RMaterial)));
     MH_Poke32(0x00088f48, LI(4, sizeof(RCharacterSettings)));
+    MH_Poke32(0x000896b0, LI(4, sizeof(RPlan)));
 
     // Increase the size of certain parts to account for modifications
     MH_Poke32(0x00020f30, LI(4, sizeof(PCreature)));
@@ -1704,4 +1798,10 @@ void InitResourceHooks()
     MH_PokeBranch(0x00031f0c, &_initextradata_part_generatedmesh);
     MH_PokeBranch(0x0005e6a8, &_initextradata_part_switch);
     MH_PokeBranch(0x00031750, &_initextradata_part_yellowhead);
+
+    // Poke a bunch of constructors to save our plan data
+    MH_PokeConstructorHook(0x0009ca8c, CPlanDetails);
+    MH_PokeConstructorHook(0x002ecfd8, CInventoryItemDetails);
+    MH_PokeMemberHook(0x002ee394, CInventoryItemDetails::operator=);
+    MH_PokeMemberHook(0x002ee674, CInventoryItem::SetPlan);
 }

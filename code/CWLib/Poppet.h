@@ -17,6 +17,8 @@
 #include <vector.h>
 
 class CGooeyNodeManager;
+class CInventoryCollection;
+class CInventoryView;
 
 struct SDrawObjectEdgesScratch
 {
@@ -83,6 +85,9 @@ public:
     void RaycastAgainstSwitchConnector(v4 ray_start, v4 ray_dir, CRaycastResults& results);
 public:
     const CP<RLocalProfile>& GetLocalProfile() const;
+    CInventoryCollection* GetCurrentInventoryCollection();
+    CInventoryView* GetCurrentInventoryPage();
+    u32 GetModeCollectionIndex() const;
     void RenderHoverObject(CThing* thing, float outline);
     void RenderUI();
     v2 GetBubbleSize();

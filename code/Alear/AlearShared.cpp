@@ -49,6 +49,7 @@
 #include <InventoryItem.h>
 #include <InventoryCollection.h>
 #include <PoppetEnums.inl>
+#include <Translate.h>
 
 #include <PartPhysicsWorld.h>
 #include <PartYellowHead.h>
@@ -60,9 +61,9 @@
 #include <ResourceGFXFont.h>
 #include <ResourceLocalProfile.h>
 #include <ResourceSyncedProfile.h>
-#include <ResourceTranslationTable.h>
 #include <ResourceFileOfBytes.h>
 #include <ResourceGFXShader.h>
+#include <ResourceTranslationTable.h>
 #include <ResourceSystem.h>
 
 #include <gooey/GooeyNodeManager.h>
@@ -311,46 +312,6 @@ void OnUpdateHttpTasks()
     // gPinsTask.Update();
 }
 
-CVector<CP<RTranslationTable> > gTranslations;
-bool CustomTryTranslate(u32 key, tchar_t const*& out)
-{
-    static tchar_t EMPTY_STRING[] = { 0x20 };
-
-    if (gTranslations.size() == 0)
-    {
-        CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_TRANSLATIONS_RLST);
-        rlst->BlockUntilLoaded();
-
-        if (rlst->IsLoaded())
-        {
-            CVector<MMString<char> > lines;
-            LinesLoad(rlst->GetData(), lines);
-
-            for (int i = 0; i < lines.size(); ++i)
-                gTranslations.push_back(LoadResourceByFilename<RTranslationTable>(lines[i].c_str()));
-        }
-        else
-        {
-            MMLog("couldn't find translations.rlst, not loading extra translations\n");
-        }
-
-        gTranslations.push_back(gPatchTrans);
-        gTranslations.push_back(gTranslationTable);
-
-        BlockUntilResourcesLoaded((CResource**)gTranslations.begin(), gTranslations.size());
-    }
-
-    for (int i = 0; i < gTranslations.size(); ++i)
-    {
-        RTranslationTable* table = gTranslations[i];
-        if (table == NULL || !table->IsLoaded()) continue;
-        if (table->GetText(key, out)) return true;
-    }
-    
-    out = EMPTY_STRING;
-    return false;
-}
-
 PlanDescriptorSet gUsedPlanDescriptors;
 void GatherUsedPlanDescriptors()
 {
@@ -588,18 +549,7 @@ void OnLocalProfileLoadFinished(RLocalProfile* prf)
 
 void OnBaseProfileLoadFinished(CBaseProfile* prf)
 {
-    return;
-
-    // Delete all tools from the inventory, we're going to re-add them in sorted order.
-    // CRawVector<CInventoryItem>& items = *((CRawVector<CInventoryItem>*)&prf->Inventory);
-    // for (CInventoryItem* item = items.begin(); item != items.end(); ++item)
-    // {
-    //     if (item->Details.ToolType != TOOL_NOT_A_TOOL)
-    //         item = items.erase(item) - 1;
-    // }
-
-    // if (prf->GetResourceType() == RTYPE_LOCAL_PROFILE)
-    //     OnLocalProfileLoadFinished((RLocalProfile*)prf);
+    
 }
 
 AUDIO_GROUP gStingerGroup;
@@ -1110,6 +1060,7 @@ void OnBackdropChange(PWorld* world)
 extern "C" uintptr_t _shadow_call_hook;
 extern "C" uintptr_t _popit_has_cursor_hook;
 extern "C" uintptr_t _popit_decorating_player_hook;
+
 void InitSharedHooks()
 {
     MH_PokeBranch(0x001f0e8c, &_shadow_call_hook);
@@ -1146,7 +1097,8 @@ void InitSharedHooks()
     MH_InitHook((void*)0x0035d1a8, (void*)&CustomIsStickerPlaceable);
 
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
-    MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);
+    MH_PokeHook(0x000232bc, TryTranslate);
+    MH_PokeHook(0x000ba884, RTranslationTable::GetTranslationTables);
     MH_InitHook((void*)0x0009c52c, (void*)&CustomDoGUIDSubstitution);
     MH_PokeBranch(0x000b94e4, &_gsub_rlst_hook);
     MH_PokeBranch(0x003800b8, &_popit_isitemselected_hook);

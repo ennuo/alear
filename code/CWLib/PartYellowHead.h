@@ -14,6 +14,7 @@ class RSyncedProfile;
 class RLocalProfile;
 
 class CPoppet;
+class CPlayer;
 
 class PYellowHead : public CPart {
 public:
@@ -28,6 +29,7 @@ public:
     void SetJetpack(CThing* attachment, float length, v2 pos);
 public:
     inline CRenderYellowHead* GetRenderYellowHead() const { return RenderYellowHead; }
+    CPlayer* GetPlayer();
 private:
     char Pad[0x20];
 public:

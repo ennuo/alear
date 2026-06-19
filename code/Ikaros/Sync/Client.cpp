@@ -723,6 +723,8 @@ namespace sync
             client->Update();
             ThreadSleep(33);
         }
+        
+        THREAD_RETURN(0);
     }
 
     bool CClient::Connect(const char* host, int port)
@@ -1281,6 +1283,7 @@ namespace sync
         {
             UpdateUploadTasks();
             UpdateCommitTask();
+            UpdateDownloadTasks();
         }
     }
 
@@ -1335,6 +1338,19 @@ namespace sync
         CommitTask = new CCommitTask(fp, depot_id);
 
         return CommitTask;
+    }
+
+    void CClient::UpdateDownloadTasks()
+    {
+        CCSLock _lock(&DownloadMutex, __FILE__, __LINE__);
+        for (CP<CDownloadJob>* it = DownloadsInProgress.begin(); it != DownloadsInProgress.end(); )
+        {
+            const CP<CDownloadJob>& job = *it;
+            if (job->State == kDownloadState_Inactive)
+                it = DownloadsInProgress.erase(it);
+            else
+                it++;
+        }
     }
 
     void CClient::UpdateCommitTask()

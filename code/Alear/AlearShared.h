@@ -21,7 +21,6 @@ void OnRunPipelinePostProcessing();
 void OnPredictionOrRenderUpdate();
 void OnWorldRenderUpdate();
 void OnUpdateHttpTasks();
-bool CustomTryTranslate(u32 key, tchar_t const*& out);
 bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID* owner);
 void GatherUsedPlanDescriptors();
 
@@ -38,7 +37,6 @@ void LoadRecordingShaders();
 void LoadPostProcessingShaders();
 
 #define E_GSUB_RLST 3536200819u
-#define E_TRANSLATIONS_RLST 4014013721u
 
 class CPoppet;
 extern std::set<CPoppet*, std::less<CPoppet*>, STLBucketAlloc<CPoppet*> > gPoppetBloomHack;

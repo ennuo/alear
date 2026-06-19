@@ -8,6 +8,7 @@
 #include <PlayerNumber.inl>
 
 #include <ResourceGame.h>
+#include <Translate.h>
 #include <ResourceLevel.h>
 #include <ResourceGFXTexture.h>
 #include <ResourceScript.h>
@@ -97,7 +98,7 @@ public:
 
     CTweakSetting& SetSuffix(const char* lams_key)
     {
-        Suffix = MakeLamsKeyID(lams_key, NULL);
+        Suffix = MakeLamsKeyID(lams_key);
         return *this;
     }
 
@@ -121,7 +122,7 @@ public:
 
     CTweakSetting& SetToolTip(const char* lams_key)
     {
-        ToolTip = MakeLamsKeyID(lams_key, NULL);
+        ToolTip = MakeLamsKeyID(lams_key);
         return *this;
     }
 

@@ -15,7 +15,7 @@ gTestSuiteResourcesDisabled: 0x00946a50
 gLazyGCTime: 0x00946a80
 gFarDist: 0x00924b38
 gScriptObjectManager: 0x009caa54
-gStaticCPHead: 0x00945818
+gStaticCPHead: 0x00a1eda0
 gPatchTrans: 0x00945824
 gPadData: 0x009dbd90
 gTranslationTable: 0x00945818

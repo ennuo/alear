@@ -35,6 +35,17 @@ public:
     inline CHash& GetLoadedHash() { return LoadedHash; }
     inline const CHash& GetLoadedHash() const { return LoadedHash; }
     inline EResourceType GetResourceType() const { return ResourceType; }
+    inline void GetLoadDescriptor(CResourceDescriptorBase& desc) const
+    {
+        if (GUID)
+        {
+            desc = CResourceDescriptorBase(ResourceType, GUID);
+        }
+        else
+        {
+            desc = CResourceDescriptorBase(ResourceType, LoadedHash);
+        }
+    }
 public:
     volatile u32 RefCount;
     volatile u32 WeakCount;

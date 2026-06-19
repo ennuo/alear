@@ -5,6 +5,7 @@
 #include <MMString.h>
 
 class CSortString {
+public:
     u32 String;
     MMString<wchar_t> WString;
     u32 Index;
@@ -13,6 +14,8 @@ class CSortString {
 class CStringLookupTable {
 public:
     u32 AddString(u32 key);
+    u32 GetSortIndex(u32 index) const;
+    bool GetString(u32 index, MMString<wchar_t>& out);
 public:
     bool Unsorted;
     bool SortEnabled;

@@ -1,11 +1,9 @@
-#include "Poppet.h"
-#include "hook.h"
-#include "AlearConfig.h"
-
-#include <cell/DebugLog.h>
-
-#include "cell/DebugLog.h"
-#include "AlearConfig.h"
+#include <Poppet.h>
+#include <AlearConfig.h>
+#include <DebugLog.h>
+#include <InventoryCollection.h>
+#include <InventoryView.h>
+#include <ResourceLocalProfile.h>
 
 MH_DefineFunc(CPoppet_GetBubbleSize, 0x00343dc4, TOC1, v2, CPoppet*);
 MH_DefineFunc(CPoppet_RenderHoverObject, 0x00344ab4, TOC1, void, CPoppet*, CThing*, float);
@@ -208,4 +206,30 @@ bool CanScaleMesh(CGUID mesh_guid)
     }
 
     return true;
+}
+
+u32 CPoppet::GetModeCollectionIndex() const
+{
+    const CP<RLocalProfile>& profile = GetLocalProfile();
+    CPoppetMode* mode;
+    if (profile && (mode = profile->GetPoppetModePtrLocal()) != NULL)
+        return mode->Ex.CollectionIdx;
+    return 0;
+}
+
+CInventoryCollection* CPoppet::GetCurrentInventoryCollection()
+{
+    const CP<RLocalProfile>& profile = GetLocalProfile();
+    if (profile)
+        return profile->RetrieveInventoryCollectionByIndex(GetModeCollectionIndex());
+    
+    return NULL;
+}
+
+CInventoryView* CPoppet::GetCurrentInventoryPage()
+{
+    CInventoryCollection* collection = GetCurrentInventoryCollection();
+    if (collection != NULL)
+        return collection->GetCurrentPage();
+    return NULL;
 }

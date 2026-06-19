@@ -17,6 +17,12 @@ CThing* RGame::GetYellowheadFromPlayerNumber(EPlayerNumber player_number)
     return RGame_GetYellowheadFromPlayerNumber(this, player_number);
 }
 
+MH_DefineFunc(RGame_GetPlayerFromPlayerNumber, 0x0009345c, TOC0, CPlayer*, RGame*, EPlayerNumber);
+CPlayer* RGame::GetPlayerFromPlayerNumber(EPlayerNumber player_number)
+{
+    return RGame_GetPlayerFromPlayerNumber(this, player_number);
+}
+
 PWorld* RGame::GetWorld()
 {
     if (!Level) return NULL;

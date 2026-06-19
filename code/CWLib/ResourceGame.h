@@ -14,6 +14,7 @@ public:
     CThing* GetYellowheadFromPlayerNumber(EPlayerNumber player_number);
     void TeleportPlayer(CThing* player, v2 const& position);
     CPlayer* GetPlayerFromIndex(u32);
+    CPlayer* GetPlayerFromPlayerNumber(EPlayerNumber player_number);
 public:
     PWorld* GetWorld();
 public:

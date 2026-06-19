@@ -1,5 +1,4 @@
-#ifndef COLOR_CORRECTION_H
-#define COLOR_CORRECTION_H
+#pragma once
 
 #include <refcount.h>
 #include <ReflectionVisitable.h>
@@ -24,5 +23,3 @@ public:
     m44 ColorCorrection;
     u32 PreloadID;
 };
-
-#endif // COLOR_CORRECTION_H

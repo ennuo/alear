@@ -872,15 +872,18 @@ namespace AlearOptNativeFunctions
         plan->BlockUntilLoaded();
         if (!plan->IsLoaded()) return;
 
-        u32 category = plan->InventoryData.Category;
+        u32 category = plan->InventoryData.GetCategory();
         if (category == 0 && (plan->InventoryData.Type & E_TYPE_COSTUME_MATERIAL) != 0)
             category = 2988363256ull;
 
         item->Details.Icon = plan->InventoryData.Icon;
         item->Details.NameTranslationTag = plan->InventoryData.NameTranslationTag;
         item->Details.DescTranslationTag = plan->InventoryData.DescTranslationTag;
-        item->Details.LocationIndex = prf->AddString(plan->InventoryData.Location);
-        item->Details.CategoryIndex = prf->AddString(category);
+        item->Details.SetLookupIndices(
+            prf->AddString(plan->InventoryData.GetLocation()),
+            prf->AddString(category)
+        );
+
         item->Details.UserCreatedName = plan->InventoryData.UserCreatedName;
         item->Details.UserCreatedDescription = plan->InventoryData.UserCreatedDescription;
         item->Details.Type = plan->InventoryData.Type;
@@ -892,7 +895,11 @@ namespace AlearOptNativeFunctions
         item->Details.Colour = plan->InventoryData.Colour;
         item->Details.Shareable = plan->InventoryData.Shareable;
         item->Details.Copyright = plan->InventoryData.Copyright;
-        
+
+        item->Details.LoreTranslationTag = plan->InventoryData.LoreTranslationTag;
+        item->Details.Flags = plan->InventoryData.Flags;
+        item->Details.SubcategoryIndex = prf->AddString(plan->InventoryData.Subcategory);
+    
         prf->SetViewsDirtyIfTheyContainItem(uid);
     }
 

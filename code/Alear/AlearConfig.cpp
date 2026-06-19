@@ -7,11 +7,17 @@
 #include <vm/NativeFunctionCracker.h>
 
 #include <ResourceSystem.h>
+#include <ResourceLocalProfile.h>
+#include <ResourcePlan.h>
+#include <GameUpdateStage.h>
+#include <ProfileCache.h>
 #include <MMString.h>
 #include <ReadINI.h>
 #include <vector.h>
 #include <filepath.h>
 #include <mmalex.h>
+
+#include <network/NetworkUtilsNP.h>
 
 void OnSetRenderDistanceToggle();
 

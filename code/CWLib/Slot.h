@@ -15,6 +15,8 @@ public:
         return SlotID < rhs.SlotID;
     }
 public:
+    const tchar_t* GetTranslatedName() const;
+public:
     CSlotID SlotID;
     CResourceDescriptor<RLevel> Level;
     CResourceDescriptor<RTexture> Icon;

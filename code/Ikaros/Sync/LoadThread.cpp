@@ -11,6 +11,7 @@
 
 CSRQueue CSRsForSync;
 
+
 CResource* _FindResourceInList(const CSerialisedResource* csr)
 {
     CCSLock _lock(gResourceCS, __FILE__, __LINE__);
@@ -72,6 +73,8 @@ MAKE_THREAD_FUNCTION(MainSlowThread)
             AddCSRToDoneQueue(csr, priority);
         }
     }
+
+    THREAD_RETURN(0);
 }
 
 MAKE_THREAD_FUNCTION(MainLoadingThread)

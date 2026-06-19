@@ -101,6 +101,7 @@ namespace FileDB
     extern CFileDBRow* (*FindByGUID)(const CGUID& guid);
     extern CFileDBRow* (*FindByPath)(const CFilePath& fp, bool create);
     bool RemapLocalGUID(const CGUID& in, CGUID& out);
+    void Destroy();
     extern CCriticalSec Mutex;
     extern V_CFileDB DBs;
 }

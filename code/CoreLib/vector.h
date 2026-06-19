@@ -338,8 +338,8 @@ public:
 	{
 		if (this->Size == this->MaxSize)
 			this->try_reserve(this->Size + 1);
-		new (&this->Data[this->Size]) T();
-		this->Data[this->Size++] = element;
+		new (this->Data + this->Size) T(element);
+		this->Size++;
 	}
 
 	inline T* insert(T* it, T const& element)

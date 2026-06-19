@@ -123,7 +123,7 @@ void AlearSetupDatabase()
     sync::Database.Path = CFilePath(FPR_ALEAR, "sync/cache.map");
 
     CVector<MMString<char> > paths;
-    if (!FileLoad(CFilePath(FPR_ALEAR, "config/databases.txt"), paths));
+    if (!FileLoad(CFilePath(FPR_ALEAR, "config/databases.txt"), paths))
     {
         paths.push_back("output/brg_patch.map");
         paths.push_back("output/blurayguids.map");
@@ -164,8 +164,10 @@ void AlearSetupDatabase()
 }
 
 #include <gooey/GooeyImage.h>
+#include <Translate.h>
 
 extern MAKE_THREAD_FUNCTION(MainLoadingThread);
+extern MAKE_THREAD_FUNCTION(MainSlowThread);
 void AlearStartup()
 {
     DebugLog("Alear version v%f build date: " __DATE__ " time: " __TIME__ "\n", mmalex::sqrtf(ALEAR_VERSION));
@@ -177,6 +179,7 @@ void AlearStartup()
     DebugLog("SPRX TOC Base: %x\n", gTocBase);
 
     DebugLog("sizeof(CGooeyImage) = 0x%08x\n", sizeof(CGooeyImage));
+    MMLog("MakeLamsKeyID(%s) = %08x", "GRAVITYRUSH_COSTUME_KAT_COSTUME_NAME", MakeLamsKeyID("GRAVITYRUSH_COSTUME_KAT_COSTUME_NAME"));
 
     // Setup all our hooks
     InitSharedHooks();
@@ -205,7 +208,9 @@ void AlearStartup()
     MH_PokeHook(0x0040a92c, SetScubaGear);
 
     MH_PokeHook(0x00090538, MainLoadingThread);
+    MH_PokeHook(0x00090060, MainSlowThread);
     MH_PokeHook(0x0057d008, FileDB::RemapLocalGUID);
+    MH_PokeHook(0x0057ca30, FileDB::Destroy);
     
     MH_Poke32(0x0001da24, 0x39200001);
     MH_PokeBranch(0x000ebc6c, &_on_post_sackboy_animation_update_hook);
