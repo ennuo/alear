@@ -198,7 +198,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     {
         if ((item_type & E_TYPE_TOOL) != 0) return true;
 
-        if(!gSeparateToys)
+        if(!gUseToysPage)
         {
             return (item_type & view_type) != 0;
         }

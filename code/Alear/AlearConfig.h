@@ -173,6 +173,8 @@ extern CConfigBool gLoadRemoveAllDecorations;
 extern CConfigBool gLoadRemoveAllLights;
 extern CConfigBool gForceLoadEditable;
 extern CConfigBool gSeparateToys;
+extern CConfigBool gUseToysPage;
+extern CConfigBool gUsePaintPage;
 extern CConfigBool gAllowDebugTooltypes;
 extern CConfigBool gAllowMeshScaling;
 extern CConfigBool gAllowEyedroppingMeshes;

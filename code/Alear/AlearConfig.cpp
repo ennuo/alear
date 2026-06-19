@@ -23,45 +23,45 @@ void OnSetRenderDistanceToggle();
 
 bool gPauseGameSim;
 
-CConfigBool gEnablePodTransitionMask("Pod/Interface/Enable Pod Transition Mask", "EnablePodTransitionMask", false);
-
-CConfigBool gUsePopitGradients("Popit/Interface/Use Popit Color Gradient", "PopitGradient", true);
-CConfigBool gCanCollapseCategories("Popit/Interface/Can Collapse Categories", "CollapsibleCategories", true);
-CConfigBool gSeparateToys("Popit/Interface/Separate Toys and Meshes", "SeparateToysAndMeshes", true);
-CConfigBool gCanHidePopit("Popit/Interface/Can Hide Tether & UI", "EnableHideTether", false);
-CConfigBool gUseCustomCursors("Popit/Visual/Use Unique Cursor Sprites", "UniqueCursorSprites", true);
-CConfigBool gColorCustomCursors("Popit/Visual/Use Player Color Cursor Sprites", "ColourCursorSprites", false);
-CConfigBool gAllowDebugTooltypes("Popit/Function/Allow Debug Tooltypes", "DebugTooltypes", true);
-CConfigBool gAllowMeshScaling("Popit/Function/Allow Mesh Scaling", "AllowMeshScaling", false);
-CConfigBool gAllowEyedroppingMeshes("Popit/Function/Allow Eyedropping Meshes", "AllowEyedroppingMeshes", false);
-
-CConfigBool gDebugMaterialTweaks("Editor/Materials/Use Debug Tweak Options", "DebugTweakOptions", false);
-CConfigBool gUseLegacyKeyColors("Editor/Gadgets/Use Legacy Key Colors", "LegacyKeyColors", true);
-CConfigBool gUseNewKeyColorSelection("Editor/Gadgets/Use New Key Color Selection", "NewKeyColorSelection", true);
-
-CConfigBool gResetLevelSettings("Loading/LevelSettings/Force Default", "ForceDefaultLevelSettings", false);
-CConfigBool gForceLoadEditable("Loading/Shapes/Force Editable On Load", "ForceShapesEditableOnLoad", false);
-CConfigBool gUnlethalizeAllLethals("Loading/Shapes/Disable Lethals", "DisableShapeLethalsOnLoad", false);
-CConfigBool gForceGFXShapes("Loading/Shapes/Turn into GFX", NULL, false);
-CConfigBool gPhysicsToGFX("Loading/Shapes/Visualize Physics", NULL, false);
-CConfigBool gForceMeshGFX("Loading/Objects/Turn into GFX", NULL, false);
-CConfigBool gLoadDefaultMaterial("Loading/Materials/Render Invisible GFX", NULL, false);
-CConfigBool gForcePlainGFX("Loading/Materials/Use Plain GFX", NULL, false);
-CConfigBool gForcePlainBevels("Loading/Materials/Use Plain Bevels", NULL, false);
-CConfigBool gLoadRemoveAllStickers("Loading/Stickers/Remove all", "RemoveAllStickersOnLoad", false);
-CConfigBool gLoadRemoveAllDecorations("Loading/Decorations/Remove all", "RemoveAllDecorationsOnLoad", false);
-CConfigBool gLoadRemoveAllLights("Loading/Lights/Remove all", "RemoveAllLightsOnLoad", false);
-CConfigBool gRemoveBurningScripts("Loading/Scripts/Remove Unused", "RemoveUnusedScriptsOnLoad", true);
-CConfigBool gFixupEmitters("Loading/Emitters/Fixup Invisible", "FixupInvisibleEmitters", false);
-CConfigBool gUseAlternateJointMeshes("Loading/Joints/Use Alternate Meshes", "AlternateJointMeshes", true);
+CConfigFloat gRenderDistance("Render/Render Distance", "RenderDistance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
 CConfigBool gPlayBackgroundStings("Audio/Play Background Stings", "EnableBackgroundStings", true);
-
-CConfigFloat gRenderDistance("Render/Visual/Render Distance", "RenderDistance", gFarDist, 0.0f, NAN, 1000.0f, OnSetRenderDistanceToggle);
 
 CConfigBool gUseDivergenceCheck("Gameplay/Divergence Check", "DivergenceCheck", true);
 CConfigBool gUseIceAccessibility("Gameplay/Ice Shake Mode", "IceShakeMode", false);
 
+CConfigBool gEnablePodTransitionMask("Pod/Interface/Enable Pod Transition Mask", "EnablePodTransitionMask", false);
+
+CConfigBool gAllowDebugTooltypes("Popit/Function/Show Debug Tooltypes", "DebugTooltypes", true);
+CConfigBool gAllowMeshScaling("Popit/Function/Disable Mesh Scaling Limit", "AllowMeshScaling", false);
+CConfigBool gAllowEyedroppingMeshes("Popit/Function/Allow Eyedropping Meshes", "AllowEyedroppingMeshes", false);
+CConfigBool gCanCollapseCategories("Popit/Interface/Collapsible Categories", "CollapsibleCategories", true);
+CConfigBool gUseToysPage("Popit/Interface/Use Toys Page", "SeparateToysAndMeshes", true);
+CConfigBool gUsePaintPage("Popit/Interface/Use Paint Page", "UsePaintPage", true);
+CConfigBool gUsePopitGradients("Popit/Visual/Use Popit Color Gradient", "PopitGradient", true);
+CConfigBool gCanHidePopit("Popit/Visual/Can Hide Tether & UI", "EnableHideTether", false);
+CConfigBool gUseCustomCursors("Popit/Cursor/Use Unique Cursor Sprites", "UniqueCursorSprites", true);
+CConfigBool gColorCustomCursors("Popit/Cursor/Use Player Color Cursor Sprites", "ColourCursorSprites", false);
+
+CConfigBool gDebugMaterialTweaks("Editor/Use Debug Shape Tweaks", "DebugTweakOptions", false);
+CConfigBool gUseLegacyKeyColors("Editor/Gadgets/Use Legacy Key Colors", "LegacyKeyColors", true);
+CConfigBool gUseNewKeyColorSelection("Editor/Gadgets/Use New Key Color Selection", "NewKeyColorSelection", true);
+
+CConfigBool gForceLoadEditable("Loading/Fixup/Force Editable On Load", "ForceShapesEditableOnLoad", false);
+CConfigBool gFixupEmitters("Loading/Fixup/Render Invisible Emitters", "FixupInvisibleEmitters", false);
+CConfigBool gUseAlternateJointMeshes("Loading/Fixup/Render Alternate Joint Meshes", "AlternateJointMeshes", true);
+CConfigBool gRemoveBurningScripts("Loading/Fixup/Remove Unused Scripts", "RemoveUnusedScriptsOnLoad", false);
+CConfigBool gLoadDefaultMaterial("Loading/Visual/Load Invisible GFX as Color GFX", NULL, false);
+CConfigBool gForcePlainGFX("Loading/Visual/Load Every GFX as Color GFX", NULL, false);
+CConfigBool gForceGFXShapes("Loading/Visual/Load Shapes as Color GFX", NULL, false);
+CConfigBool gForceMeshGFX("Loading/Visual/Load Meshes as Color GFX", NULL, false);
+CConfigBool gPhysicsToGFX("Loading/Visual/Load Physics as Material Category", NULL, false);
+CConfigBool gForcePlainBevels("Loading/Visual/Remove Complex Bevels", NULL, false);
+CConfigBool gLoadRemoveAllStickers("Loading/Visual/Remove Stickers", "RemoveAllStickersOnLoad", false);
+CConfigBool gLoadRemoveAllDecorations("Loading/Visual/Remove Decorations", "RemoveAllDecorationsOnLoad", false);
+CConfigBool gLoadRemoveAllLights("Loading/Visual/Remove Lights", "RemoveAllLightsOnLoad", false);
+CConfigBool gUnlethalizeAllLethals("Loading/Visual/Remove Lethals", "DisableShapeLethalsOnLoad", false);
+CConfigBool gResetLevelSettings("Loading/Visual/Remove LevelSettings", "ForceDefaultLevelSettings", false);
 
 void ToggleEditOrPlayMode()
 {
