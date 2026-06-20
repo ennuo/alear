@@ -947,7 +947,7 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
                         if ((rv = Reflect(r, yellowhead->AnimBoneRot[i])) != REFLECT_OK)
                             return rv;
                     }
-                    else yellowhead->AnimBoneRot[i] = v4(0.0f, 0.0f, 0.0f, 1.0f);
+                    else yellowhead->AnimBoneRot[i] = q4::identity();
 
                     if (scale_bits & (1ul << i))
                     {

@@ -485,6 +485,10 @@ void CSackBoyAnim::PostAnimUpdate()
         comp->Scale[i] = Vectormath::Aos::mulPerElem(comp->Scale[i], part->AnimBoneScale[i]);
     for (u32 i = 0; i < comp->Pos.size(); ++i)
         comp->Pos[i] += part->AnimBonePos[i];
+    for (u32 i = 0; i < comp->Rot.size(); ++i)
+        comp->Rot[i] *= part->AnimBoneRot[i];
     for (u32 i = 0; i < comp->Morph.size(); ++i)
         comp->Morph[i] += part->AnimMorph[i];
+
+    ScriptyStuff::ApplyMorphs(part->GetThing(), 4);
 }

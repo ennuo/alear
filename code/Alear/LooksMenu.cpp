@@ -74,7 +74,7 @@ void CLooksMenuState::Update()
         switch (Mode)
         {
             case kRigMode_Translation: yellowhead->AnimBonePos[EditBone] = v4(0.0f); break;
-            case kRigMode_Rotation: yellowhead->AnimBoneRot[EditBone] = v4::wAxis(); break;
+            case kRigMode_Rotation: yellowhead->AnimBoneRot[EditBone] = q4::identity(); break;
             case kRigMode_Scale: yellowhead->AnimBoneScale[EditBone] = v4(1.0f); break;
             case kRigMode_Targets: yellowhead->AnimMorph[EditMorph]; break;
         }
@@ -82,12 +82,17 @@ void CLooksMenuState::Update()
         return;
     }
 
+    bool changed_mode = false;
+    bool changed_bone = false;
+
     if (input->IsJustClicked(BUTTON_CONFIG_LOOKSMENU_NEXT, Mode == kRigMode_Targets ? L"BP_NEXT_MORPH" : L"BP_NEXT_BONE"))
     {
         if (Mode == kRigMode_Targets)
             EditMorph = (EditMorph + 1) % num_morphs;
         else
             EditBone = (EditBone + 1) % num_bones;
+
+        changed_bone = true;
     }
 
     if (input->IsJustClicked(BUTTON_CONFIG_LOOKSMENU_PREVIOUS, Mode == kRigMode_Targets ? L"BP_PREVIOUS_MORPH" : L"BP_PREVIOUS_BONE"))
@@ -103,10 +108,15 @@ void CLooksMenuState::Update()
             if (EditBone < 0)
                 EditBone = num_bones - 1;
         }
+
+        changed_bone = true;
     }
 
     if (input->IsJustClicked(BUTTON_CONFIG_LOOKSMENU_CHANGE_MODE, L"BP_CHANGE_MODE"))
+    {
         Mode = (Mode + 1) % kRigMode_Max;
+        changed_mode = true;
+    }
     
     if (Mode == kRigMode_Scale)
     {
@@ -122,6 +132,15 @@ void CLooksMenuState::Update()
     {
         _SetButtonPrompt(BP_LEFTSTICK, L"BP_XY", yellowhead->PlayerNumber);
         _SetButtonPrompt(BP_L2_R2, L"BP_Z", yellowhead->PlayerNumber);
+    }
+
+    if (changed_mode || changed_bone)
+    {
+        if (Mode == kRigMode_Rotation)
+        {
+            
+
+        }
     }
 
     float FRAME_DELTA = 1.0f / 30.0f;
@@ -155,7 +174,7 @@ void CLooksMenuState::Update()
         switch (Mode)
         {
             case kRigMode_Translation: out_v = yellowhead->AnimBonePos + EditBone; break;
-            case kRigMode_Rotation: out_v = yellowhead->AnimBoneRot + EditBone; break;
+            case kRigMode_Rotation: out_v = (v4*)(yellowhead->AnimBoneRot + EditBone); break;
             case kRigMode_Scale: 
             {
                 if (UniformScaling)
@@ -171,7 +190,7 @@ void CLooksMenuState::Update()
 
         if (Mode == kRigMode_Rotation)
         {
-            // this shit dont work
+            *(q4*)out_v *= q4::rotationX(x) * q4::rotationY(y) * q4::rotationZ(z);
         }
         else
         {
@@ -395,6 +414,12 @@ namespace LooksMenuNativeFunctions
         return poppet != NULL ? poppet->Looks.Mode : kRigMode_Translation;
     }
 
+    bool GetUniformScaling(CThing* thing)
+    {
+        const CPoppet* poppet = GetPoppet(thing);
+        return poppet != NULL ? poppet->Looks.UniformScaling : true;
+    }
+    
     const wchar_t* GetEditModeDisplayName(int mode)
     {
         if (mode < 0 || mode >= kRigMode_Max)
@@ -402,27 +427,28 @@ namespace LooksMenuNativeFunctions
         return RIG_MODE_NAMES[mode];
     }
 
-    const wchar_t* GetDisplayValue(CThing* thing)
+    const wchar_t* GetDisplayValue(CThing* thing, int component)
     {
         const CPoppet* poppet = GetPoppet(thing);
         if (poppet == NULL) return L"<?>";
         PYellowHead* yellowhead = thing->GetPYellowHead();
 
-        if (poppet->Looks.Mode == kRigMode_Rotation) return L"<?>";
-
         char buf[256] = { 0 };
 
-        if (poppet->Looks.Mode != kRigMode_Targets)
+        if (poppet->Looks.Mode == kRigMode_Rotation)
+        {
+            return L"<?>";
+        }
+        else if (poppet->Looks.Mode != kRigMode_Targets)
         {
             v4* v = yellowhead->AnimBonePos + poppet->Looks.EditBone;
             if (poppet->Looks.Mode == kRigMode_Scale)
                 v = yellowhead->AnimBoneScale + poppet->Looks.EditBone;
-            
-            sprintf(buf, "<%f, %f, %f>", v->getX().getAsFloat(), v->getY().getAsFloat(), v->getZ().getAsFloat());
+            sprintf(buf, "%f", v->getElem(component).getAsFloat());
         }
         else
         {
-            sprintf(buf, "<%f>", yellowhead->AnimMorph[poppet->Looks.EditMorph]);   
+            sprintf(buf, "%f", yellowhead->AnimMorph[poppet->Looks.EditMorph]);   
         }
 
         for (u32 i = 0; i < 256; ++i)
@@ -442,6 +468,7 @@ namespace LooksMenuNativeFunctions
         REGISTER_NATIVE_FUNCTION_STATIC("LooksMenu", GetEditMode);
         REGISTER_NATIVE_FUNCTION_STATIC("LooksMenu", GetEditModeDisplayName);
         REGISTER_NATIVE_FUNCTION_STATIC("LooksMenu", GetDisplayValue);
+        REGISTER_NATIVE_FUNCTION_STATIC("LooksMenu", GetUniformScaling);
     }
 }
 

@@ -344,6 +344,7 @@ ReflectReturn Reflect(R& r, u64& h)
 READ_WRITE_32(float);
 READ_WRITE_FAST(bool);
 READ_WRITE_FAST(v4);
+READ_WRITE_FAST(q4);
 
 template <typename R>
 ReflectReturn Reflect(R& r, CGUID& d)

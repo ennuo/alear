@@ -689,7 +689,7 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
         }
         case E_POPPET_MORPH_MESSAGE:
         {
-            poppet->PushMode(MODE_LOOKS, SUBMODE_NONE);
+            poppet->PushMode(MODE_TWEAK, SUBMODE_LOOKS);
             break;
         }
         case E_POPPET_RESET_MORPHS_MESSAGE:
@@ -703,7 +703,7 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
             {
                 yellowhead->AnimBonePos[i] = v4(0.0f);
                 yellowhead->AnimBoneScale[i] = v4(1.0f);
-                yellowhead->AnimBoneRot[i] = v4::wAxis();
+                yellowhead->AnimBoneRot[i] = q4::identity();
             }
 
             break;

@@ -73,6 +73,7 @@ namespace ScriptyStuff {
     void RestoreMesh(CThing* thing);
     int GetNumFrames(CThing* thing, int anim);
     void SampleAnimi(CThing* thing, int dst, int anim, int frame, bool looped);
+    void ApplyMorphs(CThing* thing, int anim);
 
     void Mirror(CThing* thing, int dst, int src);
     void Blend(CThing* thing, int dst, int a, int b, float f);

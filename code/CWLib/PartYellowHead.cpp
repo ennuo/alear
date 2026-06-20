@@ -56,7 +56,7 @@ void PYellowHead::InitializeExtraData()
     for (u32 i = 0; i < 64; ++i)
     {
         AnimBonePos[i] = v4::wAxis();
-        AnimBoneRot[i] = v4::wAxis();
+        AnimBoneRot[i] = q4::identity();
         AnimBoneScale[i] = v4(1.0f);
     }
     

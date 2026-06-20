@@ -139,40 +139,19 @@ _popit_attempt_tweak_hook:
 
     ba 0x0034fcdc
 
-.global _popit_has_cursor_hook
-_popit_has_cursor_hook:
-.set MODE_LOOKS, 7
-    cmpwi %cr7, %r31, MODE_LOOKS
-    beq %cr7, NoCursor
-
-    mr %r3, %r30
-    ba 0x0034564c
-
-NoCursor:
-    ba 0x00345614
-
 .global _popit_decorating_player_hook
 _popit_decorating_player_hook:
-.set MODE_LOOKS, 7
-.set CPoppet_GetMode, 0x0033efa8
+.set SUBMODE_LOOKS, 55
+.set CPoppet_GetSubMode, 0x0033f22c
     mr %r3, %r31
-    bla CPoppet_GetMode
-    cmpwi %cr7, %r3, MODE_LOOKS
+    bla CPoppet_GetSubMode
+    cmpwi %cr7, %r3, SUBMODE_LOOKS
     beq %cr7, IsDecorating
     mr %r3, %r31
     lwz %r0, 0x4c(%r30)
     ba 0x00347034
 IsDecorating:
     ba 0x003470bc
-
-.global _popit_update_shape_looks_menu_hook
-_popit_update_shape_looks_menu_hook:
-.set MODE_LOOKS, 7
-    cmpwi %cr7, %r3, MODE_LOOKS
-    beq %cr7, UpdateMenuShape 
-    ba 0x0035b264
-UpdateMenuShape:
-    ba 0x0035b410
 
 .global _popit_on_sanitize_inventory_item_hook
 _popit_on_sanitize_inventory_item_hook:
@@ -191,8 +170,8 @@ _popit_on_refresh_plan_details_hook:
 .global _on_calculate_input_mode_hook
 _on_calculate_input_mode_hook:
 .set INPUT_LOOKS_MENU, 8192
-.set MODE_LOOKS, 7
-    cmpwi %cr7, %r29, MODE_LOOKS
+.set SUBMODE_LOOKS, 55
+    cmpwi %cr7, %r31, SUBMODE_LOOKS
     beq %cr7, IsLooksMenu
     li %r8, 0x100
     ba 0x00221f64

@@ -132,7 +132,7 @@ void OnUpdateLockStepped()
         CInput* input = yellowhead->GetInput();
         if (input == NULL) continue;
 
-        if (poppet->GetMode() == MODE_LOOKS)
+        if (poppet->GetSubMode() == SUBMODE_LOOKS)
             poppet->Looks.Update();
 
         CThing* hover = poppet->Edit.LastHoverThing;
@@ -1058,7 +1058,6 @@ void OnBackdropChange(PWorld* world)
 }
 
 extern "C" uintptr_t _shadow_call_hook;
-extern "C" uintptr_t _popit_has_cursor_hook;
 extern "C" uintptr_t _popit_decorating_player_hook;
 
 void InitSharedHooks()
@@ -1185,8 +1184,7 @@ void InitSharedHooks()
     MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
 
     MH_PokeHook(0x0009a634, IsGamePaused);
-
-    MH_PokeBranch(0x00345648, &_popit_has_cursor_hook);
+    
     MH_PokeBranch(0x00347030, &_popit_decorating_player_hook);
 
     MH_PokeCall(0x000b1410, OnUpdateLockStepped);

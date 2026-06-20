@@ -393,19 +393,6 @@ v4 GetCameraFocus()
 
 void OnDrawPostComp(COverlayUI* interface)
 {
-    PWorld* world = gGame->GetWorld();
-    if (world != NULL)
-    {
-        for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
-        {
-            PYellowHead* part = *it;
-            CPoppet* poppet;
-            if (part == NULL || (poppet = part->Poppet) == NULL) continue;
-            if (poppet->GetMode() == MODE_LOOKS)
-                poppet->Looks.Render();
-        }
-    }
-
     RenderPinOverlay();
 
     if (!gView.DebugCameraActive && !gRenderOnlyPopit)

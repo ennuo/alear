@@ -336,6 +336,8 @@ void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 si
     CGooeyNodeManager* manager = GetManager();
     if (manager == NULL) return;
 
+    manager->SetFrameApplyClip(false, false);
+
     icon_move_x = v2(64.0f, 0.0f);
     icon_move_y = v2(-128.0f, 64.0f);
     icon_size = v2(64.0f);

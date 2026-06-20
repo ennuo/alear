@@ -14,7 +14,6 @@ extern "C" void _emote_select_hook();
 extern "C" void _popit_update_menu_shape_hook();
 extern "C" void _animstyles_hook();
 extern "C" void _get_slap_force_hook();
-extern "C" void _popit_update_shape_looks_menu_hook();
 
 void InitEmoteHooks()
 {
@@ -42,7 +41,6 @@ void InitPopitStyleHooks()
     MH_InitHook((void*)0x00344084, (void*)&OnFillPoppetBackground);
     MH_InitHook((void*)0x00343dc4, (void*)&CustomGetBubbleSize);
     MH_Poke32(0x0035b410, B(&_popit_update_menu_shape_hook, 0x0035b410));
-    MH_PokeBranch(0x0035b260, &_popit_update_shape_looks_menu_hook);
 }
 
 void InitStyleHooks()

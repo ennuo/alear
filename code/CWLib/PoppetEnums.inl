@@ -195,8 +195,7 @@ typedef enum EPoppetMode {
     MODE_TWEAK=4,
     MODE_TWEAK_CUSTOM=5,
     MODE_MOTION_CONTROLLER=6,
-    MODE_LOOKS=7,
-    MODE_COUNT=8
+    MODE_COUNT=7
 } EPoppetMode;
 
 typedef enum EPoppetSubMode {
@@ -258,6 +257,7 @@ typedef enum EPoppetSubMode {
     SUBMODE_OBJECT_EDIT_UVS = 52,
     SUBMODE_GRAB_PLAN_MARQUEE = 53,
     SUBMODE_MESH_CAPTURE = 54,
+    SUBMODE_LOOKS = 55,
 
 
     

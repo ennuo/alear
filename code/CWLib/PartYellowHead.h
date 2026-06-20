@@ -49,7 +49,7 @@ public:
     u32 LastTimeSlappedAPlayer;
     u32 AnimSetKey;
     v4 AnimBonePos[64];
-    v4 AnimBoneRot[64];
+    q4 AnimBoneRot[64];
     v4 AnimBoneScale[64];
     float AnimMorph[32];
 };

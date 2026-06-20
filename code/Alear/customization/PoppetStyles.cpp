@@ -197,13 +197,6 @@ void CustomUpdateShape(CPoppetBubble* bubble, bool in_use)
 {
     CPoppet* poppet = bubble->GetParent();
     EPoppetMode mode = poppet->GetMode();
-
-    if (mode == MODE_LOOKS)
-    {
-        bubble->SetBubbleBalloon(0.0f, 0.0f, 0.0f);
-        bubble->SetBubbleModeID(0x3c8);
-    }
-
     EPoppetSubMode submode = poppet->GetSubMode();
     v2 bubble_size = poppet->GetBubbleSize();
 

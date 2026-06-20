@@ -218,6 +218,7 @@ u32 CInput::GetListenerType(EButtonConfig button_config) const
         case BUTTON_CONFIG_LOOKSMENU_CHANGE_MODE:
         case BUTTON_CONFIG_LOOKSMENU_RESET:
         case BUTTON_CONFIG_LOOKSMENU_EXIT:
+        case BUTTON_CONFIG_LOOKSMENU_CHANGE_SCALING_MODE:
             return INPUT_LOOKS_MENU;
         
         case BUTTON_CONFIG_PODCOMPUTER_SELECT:

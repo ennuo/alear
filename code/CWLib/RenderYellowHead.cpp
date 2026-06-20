@@ -111,6 +111,12 @@ namespace ScriptyStuff
         _SampleAnimi(thing, dst, anim, frame, looped);
     }
 
+    MH_DefineFunc(_ApplyMorphs, 0x000e527c, TOC0, void, CThing*, int);
+    void ApplyMorphs(CThing* thing, int anim)
+    {
+        _ApplyMorphs(thing, anim);
+    }
+
     MH_DefineFunc(_Mirror, 0x000e48dc, TOC0, void, CThing*, int, int);
     void Mirror(CThing* thing, int dst, int src)
     {
