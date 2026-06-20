@@ -1472,6 +1472,28 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
         {
             CIconConfig icon(E_KEY_BEVEL_TYPE_SDF, 4, 4);
 
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Rounded 1", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Rounded 2", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Metal", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Metal Beam", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"Gold", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Fluid", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Sponge", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(9), L"Squidgy", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(10), L"Stitched 1", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(11), L"Stitched 2", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Couch", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Soft", v4(1.0)));
+
+            break;
+        }
+        
+        case CAROUSEL_PHYSICS_TYPE:
+        {
+            CIconConfig icon(E_KEY_PHYSICS_TYPE_SDF, 4, 4);
+
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Light Fragile 1 (cardboard)", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Light Fragile 2 (paper)", v4(1.0)));
 
@@ -1514,32 +1536,6 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Plastic", v4(1.0, 1.0, 0.0, 0.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Plastic Heavy", v4(1.0, 1.0, 0.0, 0.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Metal Light", v4(1.0, 1.0, 0.0, 0.0)));
-
-            break;
-        }
-        
-        case CAROUSEL_PHYSICS_TYPE:
-        {
-            CIconConfig icon(E_KEY_PHYSICS_TYPE_SDF, 4, 4);
-
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Cardboard", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Cardboard No-Bevel", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Fluid", v4(1.0)));
-
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Polystyrene", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Sponge", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"Rubber", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Wood", v4(1.0)));
-
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Glass", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(9), L"Gold", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(10), L"Metal", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(11), L"Stone", v4(1.0)));
-            
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Pink Floaty", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Peach Floaty", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(14), L"Dark Matter", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"Hologram", v4(1.0)));
 
             break;
         }

@@ -348,26 +348,29 @@ void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 si
     const CPlayer* player = GetPlayer()->GetPYellowHead()->GetPlayer();
     const CSlotID& id = item->Details.GetLevelUnlockSlotID();
 
-    v2 top_row_offset = v2(-32.0f, 0.0f);
+    v2 top_row_offset = v2(4.0f, 4.0f);
+    v2 top_row_icon_size = v2(42.0f);
 
-    if (item->Details.IsColorable())
+    if(gShowColorableItems)
     {
-        manager->DoImageButton(
-            LoadResourceByKey<RTexture>(2807377854ul),
-            icon_size
-        );
-        
-        manager->SetLastItemAsRelative(uid, top_row_offset);
-        top_row_offset += icon_move_x;
-    }
+        if (item->Details.IsColorable())
+        {
+            manager->DoImageButton(
+                LoadResourceByKey<RTexture>(2807377854ul),
+                top_row_icon_size
+            );
+            
+            manager->SetLastItemAsRelative(uid, top_row_offset);
+            top_row_offset += icon_move_x;
+        }
 
-    if (item->Details.IsAnimated())
-    {
-        manager->DoIcon(GI_VIDEO_PLAY, icon_size, v4(1.0f));
-        manager->SetLastItemAsRelative(uid, top_row_offset);
-        top_row_offset += icon_move_x;
+        if (item->Details.IsAnimated())
+        {
+            manager->DoIcon(GI_RATING_STAR, top_row_icon_size, v4(1.0f));
+            manager->SetLastItemAsRelative(uid, top_row_offset);
+            top_row_offset += icon_move_x;
+        }
     }
-
 
     if (!id.Empty())
     {
@@ -388,6 +391,8 @@ void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 si
         }
     }
 
+    if (gShowCheatedItems && item->IsCheat())
+        DoItemInfoIcon(uid, offset, size, v4(1.0), GI_COPYRIGHT_MINE);
     if (item->IsErrored())
         DoItemInfoIcon(uid, offset, size, v4(1.0, 0.0, 0.0, 1.0), GI_UNSAVED);
     if (item->IsHearted())

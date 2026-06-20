@@ -175,6 +175,8 @@ extern CConfigBool gForceLoadEditable;
 extern CConfigBool gSeparateToys;
 extern CConfigBool gUseToysPage;
 extern CConfigBool gUsePaintPage;
+extern CConfigBool gShowColorableItems;
+extern CConfigBool gShowCheatedItems;
 extern CConfigBool gAllowDebugTooltypes;
 extern CConfigBool gAllowMeshScaling;
 extern CConfigBool gAllowEyedroppingMeshes;
