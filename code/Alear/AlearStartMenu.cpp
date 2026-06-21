@@ -893,6 +893,7 @@ namespace AlearOptNativeFunctions
         item->Details.HighlightSound = plan->InventoryData.HighlightSound;
         item->Details.LevelUnlockSlotID = plan->InventoryData.LevelUnlockSlotID;
         item->Details.Colour = plan->InventoryData.Colour;
+        item->Details.AllowEmit = plan->InventoryData.AllowEmit;
         item->Details.Shareable = plan->InventoryData.Shareable;
         item->Details.Copyright = plan->InventoryData.Copyright;
 

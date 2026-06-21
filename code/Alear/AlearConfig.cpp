@@ -40,6 +40,10 @@ CConfigBool gUseToysPage("Popit/Interface/Use Toys Page", "SeparateToysAndMeshes
 CConfigBool gUsePaintPage("Popit/Interface/Use Paint Page", "UsePaintPage", true);
 CConfigBool gShowColorableItems("Popit/Visual/Show Colorable & Animated Items", "ShowColorableItems", true);
 CConfigBool gShowCheatedItems("Popit/Visual/Show Cheated Items", "ShowCheatedItems", false);
+CConfigBool gShowItemsWithLore("Popit/Visual/Show Items With Lore", "ShowItemsWithLore", false);
+CConfigBool gShowMissingName("Popit/Visual/Show Items Missing Names", "ShowMissingName", false);
+CConfigBool gShowMissingDesc("Popit/Visual/Show Items Missing Descriptions", "ShowMissingDesc", false);
+CConfigBool gShowEmittableItems("Popit/Visual/Show Emittable Items", "ShowEmittableItems", false);
 CConfigBool gUsePopitGradients("Popit/Visual/Use Popit Color Gradient", "PopitGradient", true);
 CConfigBool gCanHidePopit("Popit/Visual/Can Hide Tether & UI", "EnableHideTether", false);
 CConfigBool gUseCustomCursors("Popit/Cursor/Use Unique Cursor Sprites", "UniqueCursorSprites", true);

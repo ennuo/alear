@@ -391,6 +391,18 @@ void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 si
         }
     }
 
+    if(!item->Details.IsUserCreated())
+    {
+        const tchar_t* text;
+        if (gShowItemsWithLore && item->Details.GetLore() != 0)
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 1.0, 0.0, 1.0), GI_CHAT);
+        if (gShowMissingDesc && !TryTranslate(item->Details.GetDescription(), text))
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 0.0, 1.0, 1.0), GI_CHAT);
+        if (gShowMissingName && !TryTranslate(item->Details.GetName(), text))
+            DoItemInfoIcon(uid, offset, size, v4(1.0, 0.0, 0.0, 1.0), GI_CHAT);
+        if (gShowEmittableItems && item->Details.AllowEmit)
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 0.0, 1.0, 1.0), GI_STAR);
+    }
     if (gShowCheatedItems && item->IsCheat())
         DoItemInfoIcon(uid, offset, size, v4(1.0), GI_COPYRIGHT_MINE);
     if (item->IsErrored())
