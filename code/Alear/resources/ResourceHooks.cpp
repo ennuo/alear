@@ -20,6 +20,7 @@
 #include <ResourceGfxMaterial.h>
 #include <ResourceGFXTexture.h>
 #include <ResourceGFXMesh.h>
+#include <ResourceScript.h>
 #include <ResourceCharacterSettings.h>
 #include <PartScriptName.h>
 #include <PartPhysicsWorld.h>
@@ -176,16 +177,16 @@ ReflectReturn Reflect(R& r, PMaterialOverride& d)
 template<typename R>
 ReflectReturn Reflect(R& r, PMicroChip& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
 
     if (r.IsGatherVariables())
     {
-        ADD(CircuitBoardThing);
+        // ADD(CircuitBoardThing);
     }
     else
     {
         int thing_uid = d.CircuitBoardThing ? d.CircuitBoardThing->UID : 0;
-        if ((ret = Reflect(r, thing_uid)) != REFLECT_OK) return ret;
+        if ((rv = Reflect(r, thing_uid)) != REFLECT_OK) return rv;
 
         if (r.GetLoading())
             d.CircuitBoardThing.SetDeferred(thing_uid);
@@ -197,16 +198,16 @@ ReflectReturn Reflect(R& r, PMicroChip& d)
     ADD(Offset);
     
     u32 name_len = 0;
-    if ((ret = Reflect(r, name_len)) != REFLECT_OK) return ret;
+    if ((rv = Reflect(r, name_len)) != REFLECT_OK) return rv;
     u32 num_components = 0;
-    if ((ret = Reflect(r, num_components)) != REFLECT_OK) return ret;
+    if ((rv = Reflect(r, num_components)) != REFLECT_OK) return rv;
 
     ADD(CircuitBoardSizeX);
     ADD(CircuitBoardSizeY);
     ADD(KeepVisualVertical);
     ADD(BroadcastType);
 
-    return ret;
+    return rv;
 }
 
 
@@ -644,9 +645,8 @@ template void Init<RGuidList>(CGatherVariables& variables, RGuidList* data);
 
 void Initialize(CGatherVariables& r, PMicroChip* d)
 {
-    r.Init(d);
+    Init(r, d);
 }
-
 
 RPins* AllocatePinsResource(EResourceFlag flags) 
 {
@@ -1029,7 +1029,7 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
             { 
                 PMaterialOverride* part = new PMaterialOverride();
                 part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
-                if ((ret = Reflect(r, *part)) != REFLECT_OK) return ret;
+                if ((rv = Reflect(r, *part)) != REFLECT_OK) return rv;
                 thing->CustomThingData->PartMaterialOverride = part;
 
                 break; 
@@ -1039,7 +1039,7 @@ ReflectReturn PScriptName::LoadAlearData(CThing* thing)
             {
                 PMicroChip* part_microchip = new PMicroChip();
                 part_microchip->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(thing);
-                if ((ret = Reflect(r, *part_microchip)) != REFLECT_OK) return ret;
+                if ((rv = Reflect(r, *part_microchip)) != REFLECT_OK) return rv;
                 thing->CustomThingData->PartMicroChip = part_microchip;
 
                 break;
@@ -1197,8 +1197,8 @@ ReflectReturn PScriptName::WriteAlearData()
     {
         u32 magic = 0x4d434850;
 
-        if ((ret = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return ret; 
-        if ((ret = Reflect(r, *part_microchip)) != REFLECT_OK) return ret; 
+        if ((rv = r.ReadWrite(&magic, sizeof(u32))) != REFLECT_OK) return rv; 
+        if ((rv = Reflect(r, *part_microchip)) != REFLECT_OK) return rv; 
     }
 
     PGeneratedMesh* mesh = thing->GetPGeneratedMesh();

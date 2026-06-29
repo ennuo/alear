@@ -2342,6 +2342,8 @@ void InitLogicSystemHooks()
 
     MH_PokeBranch(0x0007c508, &_update_joints_hook);
 
+    MH_PokeMemberHook(0x00044dd0, PJoint::GetDesiredLength);
+    MH_PokeMemberHook(0x00024ef8, PJoint::GetMaxDesiredVel);
 
     MH_PokeCall(0x001e9f3c, OnSceneGraphStartFrame);
     MH_PokeCall(0x00014040, OnSceneGraphStartFrame);

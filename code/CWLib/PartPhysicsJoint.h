@@ -49,6 +49,11 @@ public:
 
     void SetModScale(float scale);
     void SetPosition(float analogue, bool directional);
+
+    float GetDesiredLength(float frame, bool ignore_mod) const;
+    float GetDesiredLengthVel() const;
+    float GetMaxDesiredVel() const;
+    float GetWaveFactor(float) const;
 public:
     u32 Type;
     CThingPtr A;

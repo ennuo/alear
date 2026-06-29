@@ -901,8 +901,8 @@ _webternate_custom_parts_hook:
 
 create_hook shadow_call_hook, 0x001f0e90
     mr %r3, %r27
-    cmpwi %cr7, %r3, 0
     call _Z20HandleShadowDrawCallP13CMeshInstance
+    cmpwi %cr7, %r3, 0
     beq %cr7, NormalShadowPass
     ba 0x001f0e0c
 NormalShadowPass:

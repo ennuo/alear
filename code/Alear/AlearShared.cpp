@@ -1081,6 +1081,7 @@ void OnBackdropChange(PWorld* world)
 
 extern "C" uintptr_t _shadow_call_hook;
 extern "C" uintptr_t _popit_decorating_player_hook;
+extern "C" uintptr_t _run_frame_hook;
 
 void InitSharedHooks()
 {

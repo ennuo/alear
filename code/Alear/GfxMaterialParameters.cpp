@@ -184,6 +184,7 @@ void OnGfxMaterialBinded(RGfxMaterial* gmat, CGprogram program, u32 shader, u32 
     }
 }
 
+
 bool HandleShadowDrawCall(CMeshInstance* instance)
 {
     CMesh* mesh = instance->Mesh;
