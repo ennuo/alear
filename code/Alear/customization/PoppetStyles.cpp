@@ -1,7 +1,7 @@
 #include "customization/PoppetStyles.h"
 #include "AlearConfig.h"
 
-#include <hook.h>
+
 
 #include <GFXApi.h>
 #include <Poppet.h>
@@ -196,12 +196,9 @@ int gLastNumVerts = 0;
 void CustomUpdateShape(CPoppetBubble* bubble, bool in_use)
 {
     CPoppet* poppet = bubble->GetParent();
-
-    v2 bubble_size = poppet->GetBubbleSize();
     EPoppetMode mode = poppet->GetMode();
     EPoppetSubMode submode = poppet->GetSubMode();
-
-    bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());
+    v2 bubble_size = poppet->GetBubbleSize();
 
     if (submode == SUBMODE_EMOTES) bubble->SetBubbleCircle(MAX(bubble_size.getX(), bubble_size.getY()) / 2.0f);
     else bubble->SetBubbleRoundedRect(bubble_size.getX(), bubble_size.getY());

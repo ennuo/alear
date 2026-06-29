@@ -1,6 +1,6 @@
 #include <PartPhysicsJoint.h>
-#include <hook.h>
 #include <thing.h>
+
 
 MH_DefineFunc(PJoint_SetA, 0x000608ec, TOC1, void, PJoint*, CThing*);
 void PJoint::SetA(CThing* thing)

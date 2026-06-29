@@ -6,7 +6,7 @@
 
 #include <ResourceSystem.h>
 #include <ResourceFileOfBytes.h>
-#include <Variable.h>
+#include <SharedSerialise.h>
 
 #include <cell/DebugLog.h>
 
@@ -33,13 +33,33 @@ void CRenderJoint::LoadMeshResources()
     if (PatternMesh != 0) PatternMeshResource = LoadResourceByKey<RMesh>(PatternMesh, 0, STREAM_PRIORITY_DEFAULT);
 }
 
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoint& d)
+{
+    ReflectReturn rv;
+    ADD(Mesh);    
+    ADD(InactiveMesh);
+    ADD(PatternMesh);
+    return rv;
+}
+
+template<typename R>
+ReflectReturn Reflect(R& r, CRenderJoints& d)
+{
+    ReflectReturn rv;
+    ADD(Joints);
+    return rv;
+}
+
 bool LoadJointMeshes()
 {
     tGatherElementMap lookup;
     for (int i = 0; i <= JOINT_TYPE_MAX; ++i)
         lookup.insert(tGatherElementMap::value_type(gJointNames[i], i));
 
-    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_JOINTS_KEY, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> file = LoadResourceByKey<RFileOfBytes>(E_JOINTS_KEY);
+    
 
     file->BlockUntilLoaded();
     if (!file->IsLoaded()) return false;
@@ -48,7 +68,7 @@ bool LoadJointMeshes()
     CGatherVariables variables;
 
     CRenderJoints joints;
-    variables.Init<CRenderJoints>(&joints);
+    Init<CRenderJoints>(variables, &joints);
 
     CScopedGatherLookup _gather_scope(&lookup);
 

@@ -38,13 +38,13 @@ bool CScriptObjectInstance::InvokeSync(PWorld* pworld, CSignature const& signatu
     return CScriptObjectInstance_InvokeSync(this, pworld, signature, arguments, return_value);
 }
 
-CScriptObjectInstance::CScriptObjectInstance(CP<RScript>& script) : CScriptObject(), ScriptInstance(script)
+CScriptObjectInstance::CScriptObjectInstance(const CP<RScript>& script) : CScriptObject(), ScriptInstance(script)
 {
 
 }
 
-MH_DefineFunc(CScriptObjectInstance_Create, 0x00192658, TOC0, CScriptObjectInstance*, CP<RScript>&, PWorld*, bool);
-CScriptObjectInstance* CScriptObjectInstance::Create(CP<RScript>& script, PWorld* pworld, bool default_construct)\
+MH_DefineFunc(CScriptObjectInstance_Create, 0x00192658, TOC0, CScriptObjectInstance*, const CP<RScript>&, PWorld*, bool);
+CScriptObjectInstance* CScriptObjectInstance::Create(const CP<RScript>& script, PWorld* pworld, bool default_construct)\
 {
     return CScriptObjectInstance_Create(script, pworld, default_construct);
 }

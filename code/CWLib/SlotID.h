@@ -25,7 +25,7 @@ public:
 
     inline bool Empty() const
     {
-        return SlotNumber == 0;
+        return Type == 0 && SlotNumber == 0;
     }
 
     inline bool IsGroup() const

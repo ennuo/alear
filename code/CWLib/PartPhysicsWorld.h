@@ -139,12 +139,6 @@ public:
     bool IsTutorialLevel;
 private:
     char Pad10[0xc52];
-public:
-    CVector<BroadcastMicrochip> BroadcastMicrochips;
-    u32 GameMode;
-    u32 OnlineMode;
-    float GameModeScore[4];
-    bool UseAdvancedLogicSystem;
 };
 
 #endif // PART_PHYSICS_WORLD_H

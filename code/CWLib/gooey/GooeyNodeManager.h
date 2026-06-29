@@ -49,10 +49,13 @@ public:
     void EndFrame();
     u32 EndFrame(u32 accepted_input);
 
-    u32 DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, v2 size, v4 colour, u32 accepted_input);
+    u32 DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, v2 size, v4 colour = v4(1.0), u32 accepted_input = 0);
     u32 DoFancyButtonNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonStyle button_style, EGooeyButtonState button_state, u32 accepted_input, CSDFIconParams* icon);
     u32 DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour);
     u32 DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 size);
+
+
+    u32 DoIconNamed(u64 uid, EGooeyIcon icon, v2 size, v4 color);
 
     u32 DoButton(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
     u32 DoInline(u64 uid, wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input);
@@ -77,8 +80,7 @@ public:
     void SetLastItemRoundyBG(bool bg);
 
     void SetFrameCornerRadius(float radius);
-
-
+    void SetLastItemAsRelative(u64 uid, v2 offset);
 public:
     inline void SetFrameApplyClip(bool apply_clip_x, bool apply_clip_y)
     {
@@ -113,6 +115,16 @@ public:
     inline u32 DoButton(wchar_t* text, EGooeyTextStyle text_style, EGooeyButtonState button_state, CSDFIconParams* icon, u32 accepted_input)
     {
         return DoButton(GetAnonymousUID(), text, text_style, button_state, icon, accepted_input);
+    }
+
+    inline u32 DoImageButton(CP<RTexture> const& texture, v2 size, v4 colour = v4(1.0), u32 accepted_input = 0)
+    {
+        return DoImageButtonNamed(GetAnonymousUID(), texture, size, colour, accepted_input);
+    }
+
+    inline u32 DoIcon(EGooeyIcon icon, v2 size, v4 color)
+    {
+        return DoIconNamed(GetAnonymousUID(), icon, size, color);
     }
 
     inline u32 DoRectangle(v2 size, v4 colour)

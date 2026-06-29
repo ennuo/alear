@@ -21,6 +21,9 @@ void AddInitSteps(CInitStep* newsteps);
 extern CInitStep gInitSteps[];
 extern CInitStep gPs3Test1InitSteps[];
 
-extern bool(*WantQuitOrWantQuitRequested)();
+bool WantQuit();
+bool WantQuitOrWantQuitRequested();
+void SetWantQuit(bool wantQuit);
+u64 GetQuitTime();
 
 #endif // SYSTEM_H

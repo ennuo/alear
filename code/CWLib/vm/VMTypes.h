@@ -1,15 +1,10 @@
-#ifndef VM_TYPES_H
-#define VM_TYPES_H
+#pragma once
 
+#include <StringUtil.h>
+#include <MMString.h>
+#include <Hash.h>
 
-#include "StringUtil.h"
-#include "MMString.h"
-#include "Hash.h"
-
-struct ModifierBits {
-private:
-    u32 Bits;
-};
+const u32 MAX_FIELD_NAME_LENGTH = 52;
 
 enum EMachineType
 {
@@ -65,6 +60,31 @@ enum EModifierType
     MT_EXPORT
 };
 
+class ModifierBits {
+public:
+    inline ModifierBits() : Bits() {}
+    inline ModifierBits(u32 bits) : Bits(bits) {}
+    inline ModifierBits(EModifierType type) : Bits(1 << type) {}
+public:
+    inline bool operator==(const ModifierBits& rhs) const { return Bits == rhs.Bits; }
+    inline bool operator!=(const ModifierBits& rhs) const { return Bits != rhs.Bits; }
+public:
+    inline static u32 MakeBits(EModifierType type) { return 1 << type; }
+    inline static u32 IsSet(u32 bits, EModifierType type) { return bits & (1 << type); }
+public:
+    inline void Set(EModifierType type) { Bits |= (1 << type); }
+    inline void Clear(EModifierType type) { Bits &= ~(1 << type); }
+    inline bool IsSet(EModifierType type) const { return Bits & (1 << type); }
+    inline u32 GetBits() const { return Bits; }
+    u32 CountAccessModifiers() const; // count leading zeroes
+    bool ValidAccessModifiers() const;
+    u32 CountVirtualModifiers() const;
+    bool ValidVirtualModifiers() const;
+    MMString<char> GetDescription(const char*) const;
+private:
+    u32 Bits;
+};
+
 u32 GetTypeSize(EMachineType machine_type);
 const char* GetTypeName(EMachineType machine_type);
 
@@ -91,18 +111,23 @@ struct NativeTypeMangle<type> \
 NATIVE_TYPE_MANGLE(unsigned int, "i"); // 249
 NATIVE_TYPE_MANGLE(void, "v");
 
-template <typename Type>
-struct Arg
-{
-    const char* Name;
-    
-    Arg()
-    {
-        Name = "abc";
-    }
+template <typename T> struct Arg; 
 
-    const char* GetName() { return Name; }
-};
+#define MAKE_ARG_TEMPLATE(type, mangled) template <> struct Arg<type> { const char* Name; const char* GetName() const { return Name; } Arg() { Name = mangled; } };
+
+class CThing;
+
+MAKE_ARG_TEMPLATE(CThing*, "Q5Thing");
+MAKE_ARG_TEMPLATE(s32, "i");
+MAKE_ARG_TEMPLATE(u32, "i");
+MAKE_ARG_TEMPLATE(float, "f");
+MAKE_ARG_TEMPLATE(v4, "r");
+MAKE_ARG_TEMPLATE(bool, "b");
+MAKE_ARG_TEMPLATE(wchar_t, "c");
+MAKE_ARG_TEMPLATE(s64, "j");
+MAKE_ARG_TEMPLATE(double, "d");
+
+#undef MAKE_ARG_TEMPLATE
 
 struct ScriptObjectUID {
     u32 UID;
@@ -128,29 +153,96 @@ struct ScriptObjectUID {
     }
 };
 
-
 class CSignature {
 public:
-    inline CSignature(const char* name) : MangledName()
+    inline CSignature() : MangledName(), MangledNameHash() {}
+public:
+    inline bool IsEmpty() const { return MangledNameHash == 0; }
+    inline u32 GetMangledNameHash() const { return MangledNameHash; }
+public:
+    CSignature(const char* mangled) : MangledName(), MangledNameHash()
     {
-        MakeName(name);
+        SetMangledName(mangled);
+    }
+public:
+    inline const char* GetMangledName() const
+    {
+        return MangledName.c_str();
     }
 
-    inline void MakeName(const char* name)
+    void SetMangledName(const char* mangled)
     {
-        int len = StringLength(name);
-        MangledName.assign(name, len);
-        MangledNameHash = JenkinsHash((u8*)name, len, 0);
+        MangledName = mangled;
+        UpdateHash();
     }
 
-    inline bool IsEmpty()
+    bool ExtractFunctionName(MMString<char>&);
+    static bool ExtractFunctionName(MMString<char>&, const char*);
+    bool Unmangle(MMString<char>&) const;
+    bool Unmangle(MMString<char>&, const char*);
+    
+    inline int Compare(const CSignature& rhs) const
     {
-        return MangledName.empty();
+        return rhs.MangledNameHash - MangledNameHash;
     }
     
+    inline bool operator==(const CSignature& rhs) const
+    {
+        return MangledNameHash == rhs.MangledNameHash;
+    }
+
+    inline bool operator<(const CSignature& rhs) const
+    {
+        return MangledNameHash < rhs.MangledNameHash;
+    }
+public:
+    inline static u32 MakeHash(const char* mangled)
+    {
+        return JenkinsHash((uint8_t*)mangled, StringLength(mangled), 0);
+    }
+
+    inline void UpdateHash()
+    {
+        MangledNameHash = MakeHash(MangledName.c_str());
+    }
+public:
+    inline void MakeName(const char* name)
+    {
+        MangledName = name;
+        MangledName += "__";
+        UpdateHash();
+    }
+
+    void MakeName(const char* name, const char* a1)
+    {
+        MangledName = name;
+        MangledName += "__";
+        MangledName += a1;
+        UpdateHash();
+    }
+    
+    void MakeName(const char* name, const char* a1, const char* a2)
+    {
+        MangledName = name;
+        MangledName += "__";
+        MangledName += a1;
+        MangledName += a2;
+        UpdateHash();
+    }
+
+    void MakeName(const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+    void MakeName(const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*, const char*);
+public:
+    static bool ExtractAndUnmangle(MMString<char>&, const char*, bool);
 private:
     MMString<char> MangledName;
     u32 MangledNameHash;
 };
-
-#endif // VM_TYPES_H

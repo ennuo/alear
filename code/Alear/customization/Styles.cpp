@@ -3,7 +3,7 @@
 #include "customization/PoppetStyles.h"
 #include "customization/Emotes.h"
 
-#include <hook.h>
+
 #include <ppcasm.h>
 
 extern "C" void _beslapped_hook();

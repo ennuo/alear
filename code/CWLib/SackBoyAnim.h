@@ -41,6 +41,7 @@ private:
     
     int UpdateFreezeIdleState(int last_idle);
     void OnLateAnimUpdate();
+    void PostAnimUpdate();
 public:
     void Steam(f32 size);
     void DeathSmoke(f32 size);

@@ -6,6 +6,7 @@
 #include <CritSec.h>
 #include <GuidHash.h>
 #include <filepath.h>
+#include <ResourceDescriptor.h>
 
 enum CacheType {
     CT_READONLY,
@@ -26,25 +27,35 @@ struct SResourceReader;
 
 class CCache { // fart.h: 18
 public:
+    CCache(const char* name);
+public:
     virtual ~CCache() = 0;
     virtual bool IsSlow(const SResourceReader&) = 0;
     virtual bool GetReader(const CHash&, SResourceReader&) = 0;
-    virtual void CloseReader(SResourceReader* in, bool hashes_matched) = 0;
+    virtual void CloseReader(SResourceReader& in, bool hashes_matched) = 0;
     virtual bool Unlink(const CHash&) = 0;
     virtual bool GetSize(const CHash&, u32&) = 0;
-    virtual bool Put(CHash&, const void*, u32) = 0;
+    virtual bool Put(CHash& hash_in_out, const void* bin, u32 size)
+    {
+        return false;
+    }
 public:
     CCriticalSec Mutex;
 };
 
 class SResourceReader { // fart.h: 37
 public:
-    SResourceReader() { memset(this, 0, sizeof(SResourceReader)); }
+    SResourceReader() 
+    { 
+        memset(this, 0, sizeof(SResourceReader));
+        RollingHash.Reset();
+        Handle = INVALID_FILE_HANDLE;
+    }
 
     ~SResourceReader()
     {
         if (Owner != NULL)
-            Owner->CloseReader(this, true);
+            Owner->CloseReader(*this, true);
     }
 public:
     CCache* Owner;
@@ -52,7 +63,9 @@ public:
     u32 Offset;
     u32 Size;
     s32 BytesRead;
+    s32 BytesRequested;
     u32 OwnerData;
+    CCache* DebugCache;
     CSHA1Context RollingHash;
     CHash OriginalHash;
 };
@@ -67,6 +80,8 @@ private:
     u32 Size;
 };
 
+u32 GetFartRevision(u32 magic);
+
 extern bool (*CloseCaches)();
 extern bool (*InitCaches)();
 extern CCache* gCaches[CT_COUNT];
@@ -74,6 +89,12 @@ extern CCache* gCaches[CT_COUNT];
 extern bool (*GetFileDataFromCaches)(CHash& hash, ByteArray& out);
 extern bool (*SaveFileDataToCache)(CacheType type, const void* data, u32 size, CHash& out);
 
-bool GetResourceReader(CHash& hash, SResourceReader& out);
+bool GetResourceReader(const CResourceDescriptorBase& desc, SResourceReader& out, CFilePath& loose_path);
+bool GetResourceReader(const CHash& hash, SResourceReader& out);
+
+bool FileLoad(SResourceReader& h, ByteArray& out);
+u64 FileRead(SResourceReader& h, void* out, u64 count);
+u64 FileSize(SResourceReader& h);
+bool FileClose(SResourceReader& h);
 
 #endif // FART_H

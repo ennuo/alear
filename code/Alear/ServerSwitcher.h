@@ -9,11 +9,13 @@ const int MAX_DIGEST_CHARS = 18;
 extern const char* gServerURL;
 extern const char* gServerSecureURL;
 extern const char* gServerDigest;
+extern const char* gUserAgent;
 
 struct SServerConfiguration
 {
     static const int MAX_URL_CHARS = 127;
     static const int MAX_NAME_CHARS = 31;
+    static const int MAX_USER_AGENT_CHARS = 63;
 
     MMString<wchar_t> Name;
 
@@ -25,6 +27,9 @@ struct SServerConfiguration
 
     /// @brief Digest key for request/response signatures
     char Digest[MAX_DIGEST_CHARS + 1];
+
+    /// @brief Custom user agent for server
+    char UserAgent[MAX_USER_AGENT_CHARS + 1];
 };
 
 class CServerSwitcher {

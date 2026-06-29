@@ -3,7 +3,7 @@
 #include "ResourceGFXMesh.h"
 #include "thing.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(CRenderYellowHead_RemoveSackBoyAnim, 0x000e5c34, TOC0, void, CRenderYellowHead*);
 void CRenderYellowHead::RemoveSackBoyAnim()
@@ -109,6 +109,12 @@ namespace ScriptyStuff
     void SampleAnimi(CThing* thing, int dst, int anim, int frame, bool looped)
     {
         _SampleAnimi(thing, dst, anim, frame, looped);
+    }
+
+    MH_DefineFunc(_ApplyMorphs, 0x000e527c, TOC0, void, CThing*, int);
+    void ApplyMorphs(CThing* thing, int anim)
+    {
+        _ApplyMorphs(thing, anim);
     }
 
     MH_DefineFunc(_Mirror, 0x000e48dc, TOC0, void, CThing*, int, int);

@@ -1,6 +1,6 @@
-#include "PartYellowHead.h"
-#include "hook.h"
-
+#include <PartYellowHead.h>
+#include <ResourceGame.h>
+#include <Player.h>
 
 MH_DefineFunc(PYellowHead_GetActivePosition, 0x00036598, TOC0, v4hack, const PYellowHead* const);
 v4 PYellowHead::GetActivePosition() const
@@ -42,4 +42,25 @@ MH_DefineFunc(PYellowHead_SetJetpack, 0x005bd9d4, TOC1, void, PYellowHead*, CThi
 void PYellowHead::SetJetpack(CThing* attachment, float length, v2 pos)
 {
     return PYellowHead_SetJetpack(this, attachment, length, pos);
+}
+
+CPlayer* PYellowHead::GetPlayer()
+{
+    return gGame != NULL ? gGame->GetPlayerFromPlayerNumber(PlayerNumber) : NULL;
+}
+
+void PYellowHead::InitializeExtraData()
+{
+    LastTimeSlappedAPlayer = 0;
+    AnimSetKey = 0;
+    for (u32 i = 0; i < 64; ++i)
+    {
+        AnimBonePos[i] = v4::wAxis();
+        AnimBoneRot[i] = q4::identity();
+        AnimBoneScale[i] = v4(1.0f);
+    }
+    
+    memset(AnimMorph, 0, sizeof(AnimMorph));
+
+    // AnimBoneScale[12] = v4(1.75f, 1.75f, 1.75f, 1.0f);
 }

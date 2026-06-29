@@ -12,14 +12,14 @@
 #include <ResourceGFXMesh.h>
 #include <ResourceSystem.h>
 #include <ResourceDescriptor.h>
-#include <ResourceTranslationTable.h>
 #include <ResourcePointer.h>
 #include <Poppet.h>
 #include <thing.h>
 #include <ResourceGame.h>
 #include <PartPhysicsWorld.h>
-#include <hook.h>
-#include <Variable.h>
+
+#include <Translate.h>
+#include <SharedSerialise.h>
 #include <DebugLog.h>
 
 #include <cell/gcm.h>
@@ -447,16 +447,24 @@ void RenderSwitchDebug()
 void CPoppet::InitializeExtraData()
 {
     new (&HiddenList) CVector<CThingPtr>();
+    new (&DotToDot) CDotToDotState();
+    new (&Looks) CLooksMenuState();
     StampMode = STAMP_DEFAULT;
     CustomPoppetOffset = v2(0.0f);
     CustomPoppetSize = v2(512.0f, 544.0f);
     ShowTether = true;
     HidePoppetGooey = false;
+    CaptureSubType = NCapture::SUBTYPE_NONE;
+    
+    DotToDot.SetParent(this);
+    Looks.SetParent(this);
 }
 
 void CPoppet::DestroyExtraData()
 {
     HiddenList.~CVector();
+    DotToDot.~CDotToDotState();
+    Looks.~CLooksMenuState();
 }
 
 CSwitchOutput* CThing::GetInput(int port) const
@@ -2031,11 +2039,10 @@ void PRenderMesh::SetupRendering() const
     }
 }
 
-#define ADD(name) ret = Add(r, d.name, #name); if (ret != REFLECT_OK) return ret;
 template<typename R>
 ReflectReturn Reflect(R& r, CRaycastResults& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(HitPoint);
     ADD(Normal);
     ADD(BaryU);
@@ -2048,35 +2055,35 @@ ReflectReturn Reflect(R& r, CRaycastResults& d)
     ADD(SwitchConnector);
     ADD(HitPort);
     ADD(RefPort);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchSignal& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Analogue);
     ADD(Ternary);
     ADD(Player);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchTarget& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Thing);
     ADD(Port);
-    return ret;
+    return rv;
 }
 
 template<typename R>
 ReflectReturn Reflect(R& r, CSwitchOutput& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Activation);
     ADD(TargetList);
-    return ret;
+    return rv;
 }
 
 template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CRaycastResults& d);
@@ -2087,9 +2094,18 @@ template ReflectReturn Reflect<CGatherVariables>(CGatherVariables& r, CSwitchOut
 template ReflectReturn Reflect<CReflectionLoadVector>(CReflectionLoadVector& r, CSwitchSignal& d);
 template ReflectReturn Reflect<CReflectionSaveVector>(CReflectionSaveVector& r, CSwitchSignal& d);
 
+MH_DefineFunc(Reflect_CGatherVariables_CThingPtr, 0x006f40b0, TOC1, ReflectReturn, CGatherVariables&, CThingPtr&);
+template <typename R>
+ReflectReturn Reflect(R& r, CThingPtr& d)
+{
+    if (r.IsGatherVariables())
+        return Reflect_CGatherVariables_CThingPtr(r, d);
+    return REFLECT_NOT_IMPLEMENTED;
+}
+
 ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
 {
-    ReflectReturn ret;
+    ReflectReturn rv;
     ADD(Inverted);
     ADD(Radius);
     ADD(ColorIndex);
@@ -2110,11 +2126,8 @@ ReflectReturn GatherSwitchVariables(CGatherVariables& r, PSwitch& d)
     ADD(HideConnectors);
     ADD(DetectUnspawnedPlayers);
     ADD(PlaySwitchAudio);
-    return ret;
+    return rv;
 }
-
-#undef ADD
-
 
 ReflectReturn GatherPoppetRaycastVariables(CGatherVariables& r, CRaycastResults& d)
 {
@@ -2205,6 +2218,45 @@ namespace LogicSystemNativeFunctions
         thing->OnFixup();
     }
 
+    CThing* GetPodThing(bool platform)
+    {
+        PWorld* world = gGame->GetWorld();
+        if (world == NULL) return NULL;
+        for (u32 i = 0; i < world->ListPRenderMesh.size(); ++i)
+        {
+            PRenderMesh* part = world->ListPRenderMesh[i];
+            if (!part || !part->Mesh) continue;
+            if (part->Mesh->GetGUID() == 0x2f6c)
+                return part->GetThing();
+            if (part->Mesh->GetGUID() == 0x23959 && platform)
+                return part->GetThing();
+        }
+
+        return NULL;
+    }
+
+    void SetRenderMeshMesh(CThing* thing, CP<CResource> resource)
+    {
+        if (thing == NULL) return;
+        PRenderMesh* part = thing->GetPRenderMesh();
+        if (part == NULL) return;
+
+        RMesh* mesh = resource->GetResourceType() == RTYPE_MESH ? (RMesh*)resource.GetRef() : NULL;
+        part->Mesh = mesh;
+    }
+
+    CP<CResource> LoadMeshByFilename(CGUID guid)
+    {
+        return (CP<CResource>)LoadResourceByKey<RMesh>(guid.guid);
+    }
+
+    void SetShapeEditorColour(CThing* thing, v4 c)
+    {
+        PShape* shape;
+        if (thing == NULL || (shape = thing->GetPShape()) == NULL) return;
+        shape->EditorColour = c;
+    }
+
     bool IsSwitchTriggered(CThing* thing, int port)
     {
         return thing && thing->GetInput(port) != NULL;
@@ -2248,6 +2300,11 @@ namespace LogicSystemNativeFunctions
 
     void Register()
     {
+        RegisterNativeFunction("Thing", "GetPodThing__b", true, NVirtualMachine::CNativeFunction1<CThing*, bool>::Call<GetPodThing>);
+        RegisterNativeFunction("Thing", "SetRenderMeshMesh__Q5ThingQ8Resource", true, NVirtualMachine::CNativeFunction2V<CThing*, CP<CResource> >::Call<SetRenderMeshMesh>);
+        RegisterNativeFunction("Resource", "LoadMeshByFilename__g", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CGUID>::Call<LoadMeshByFilename>);
+        RegisterNativeFunction("Thing", "SetShapeEditorColour__Q5Thingr", true, NVirtualMachine::CNativeFunction2V<CThing*, v4>::Call<SetShapeEditorColour>);
+
         RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
         RegisterNativeFunction("SwitchBase", "GetNumOutputs__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetNumOutputs>);
         RegisterNativeFunction("SwitchBase", "GetTweakTitle__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetTweakTitle>);
@@ -2262,6 +2319,7 @@ namespace LogicSystemNativeFunctions
     }
 }
 
+#include <ppcasm.h>
 void InitLogicSystemHooks()
 {
     LogicSystemNativeFunctions::Register();

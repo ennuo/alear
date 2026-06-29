@@ -17,6 +17,7 @@ public:
     // ReflectReturn LoadCompressedBytes(CReflectionLoadVector& r);
 private:
 	CResourceDescriptorBase Descriptor;
+public:
 	CFilePath LoosePath;
 	ByteArray Data;
 };

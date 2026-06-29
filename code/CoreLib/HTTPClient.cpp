@@ -3,7 +3,7 @@
 #include "StringUtil.h"
 #include "cell/DebugLog.h"
 #include "sha1.h"
-#include <hook.h>
+
 
 MH_DefineFunc(ParseURL, 0x0057de50, TOC1, void, char const*, CHTTPURL&);
 MH_DefineFunc(CHTTPMessage_AddHeader, 0x0057f1f8, TOC1, void, CHTTPMessage*, char const*, char const*, EHTTPHeaderMode);

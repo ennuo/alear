@@ -3,7 +3,7 @@
 #include "PartPhysicsWorld.h"
 #include "thing.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(RGame_TeleportPlayer, 0x000aa008, TOC0, void, RGame*, CThing*, v2 const&);
 void RGame::TeleportPlayer(CThing* player, v2 const& pos)
@@ -17,8 +17,28 @@ CThing* RGame::GetYellowheadFromPlayerNumber(EPlayerNumber player_number)
     return RGame_GetYellowheadFromPlayerNumber(this, player_number);
 }
 
+MH_DefineFunc(RGame_GetPlayerFromPlayerNumber, 0x0009345c, TOC0, CPlayer*, RGame*, EPlayerNumber);
+CPlayer* RGame::GetPlayerFromPlayerNumber(EPlayerNumber player_number)
+{
+    return RGame_GetPlayerFromPlayerNumber(this, player_number);
+}
+
 PWorld* RGame::GetWorld()
 {
     if (!Level) return NULL;
     return Level->GetWorld();
+}
+
+CPlayer* RGame::GetPlayerFromIndex(u32 index)
+{
+    // lazy
+
+    u32 count = *(u32*)(((char*)this) + 0x144);
+    if (index >= count) return NULL;
+
+
+    const char* data = *(char**)(((char*)this) + 0x140);
+    data += (index * 0x240);
+
+    return (CPlayer*)data;
 }

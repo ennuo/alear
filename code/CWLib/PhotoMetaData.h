@@ -1,15 +1,13 @@
-#ifndef PHOTO_METADATA_H
-#define PHOTO_METADATA_H
+#pragma once
 
 #include <ReflectionVisitable.h>
+#include <ResourceDescriptor.h>
 #include <MMString.h>
 #include <GuidHash.h>
+#include <SlotID.h>
 #include <CalendarTime.h>
 #include <vector.h>
-
-#include "ResourceDescriptor.h"
-#include "ResourceGFXTexture.h"
-#include "ResourcePlan.h"
+#include <network/NetworkUtilsNP.h>
 
 class CPlayerInPhoto { // file: 11
 public:
@@ -38,4 +36,9 @@ struct SServerPhotoData {
     u32 PhotoID;
 };
 
-#endif // PHOTO_METADATA_H
+class SInventoryItemPhotoData : public CReflectionVisitable {
+public:
+    CResourceDescriptor<RTexture> Icon;
+    CResourceDescriptor<RTexture> Sticker;
+    CPhotoMetaData PhotoMetadata;
+};

@@ -1,6 +1,6 @@
 #include "gooey/GooeyNodeManager.h"
 
-#include <hook.h>
+
 
 MH_DefineFunc(CGooeyNodeManager_CGooeyNodeManager, 0x00301ce0, TOC0, void, CGooeyNodeManager*, EInputMode, EGooeyNodeManagerNetworkID);
 CGooeyNodeManager::CGooeyNodeManager(EInputMode input_type, EGooeyNodeManagerNetworkID network_id)
@@ -92,6 +92,12 @@ u32 CGooeyNodeManager::DoImageButtonNamed(u64 uid, CP<RTexture> const& texture, 
     return CGooeyNodeManager_DoImageButtonNamed(this, uid, texture, size, colour, accepted_input);
 }
 
+MH_DefineFunc(CGooeyNodeManager_SetLastItemAsRelative, 0x002f96f0, TOC0, void, CGooeyNodeManager*, u64, v2);
+void CGooeyNodeManager::SetLastItemAsRelative(u64 uid, v2 offset)
+{
+    CGooeyNodeManager_SetLastItemAsRelative(this, uid, offset);
+}
+
 MH_DefineFunc(CGooeyNodeManager_DoTextNamed, 0x002ffb48, TOC0, u32, CGooeyNodeManager*, u64, TextRange<wchar_t>, EGooeyTextStyle, v4);
 u32 CGooeyNodeManager::DoTextNamed(u64 uid, TextRange<wchar_t> text, EGooeyTextStyle text_style, v4 text_colour)
 {
@@ -102,6 +108,12 @@ MH_DefineFunc(CGooeyNodeManager_DoTitleNamed, 0x002ff608, TOC0, u32, CGooeyNodeM
 u32 CGooeyNodeManager::DoTitleNamed(u64 uid, wchar_t* text, EGooeyTextStyle text_style, v2 size)
 {
     return CGooeyNodeManager_DoTitleNamed(this, uid, text, text_style, size);
+}
+
+MH_DefineFunc(CGooeyNodeManager_DoIconNamed, 0x003013f0, TOC0, u32, CGooeyNodeManager*, u64, EGooeyIcon, v2, v4);
+u32 CGooeyNodeManager::DoIconNamed(u64 uid, EGooeyIcon icon, v2 size, v4 color)
+{
+    return CGooeyNodeManager_DoIconNamed(this, uid, icon, size, color);
 }
 
 MH_DefineFunc(CGooeyNodeManager_DoFancyButtonNamed, 0x002ffd10, TOC0, u32, CGooeyNodeManager*, u64, wchar_t*, EGooeyTextStyle, EGooeyButtonStyle, EGooeyButtonState, u32, CSDFIconParams*);

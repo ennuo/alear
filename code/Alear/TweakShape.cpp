@@ -2,6 +2,7 @@
 
 #include <thing.h>
 #include <refcount.h>
+#include <Translate.h>
 #include <Poppet.h>
 #include <ResourceSystem.h>
 #include <ResourceScript.h>
@@ -9,8 +10,8 @@
 #include <PartGeneratedMesh.h>
 #include <PartRenderMesh.h>
 #include <PartTrigger.h>
-#include <ResourceTranslationTable.h>
 #include <PartScript.h>
+#include <GuidHashMap.h>
 
 #include <vm/NativeFunctionCracker.h>
 #include <vm/NativeRegistry.h>
@@ -26,7 +27,7 @@ const u32 E_TWEAK_SHAPE_SCRIPT = 3796510132u;
 const u32 E_TWEAK_CHECKPOINT_SCRIPT = 4286805021u;
 const u32 E_TWEAK_EXPLOSIVE_SCRIPT = 3549987402u;
 const u32 E_TWEAK_MAGIC_EYE_SCRIPT = 34681;
-const u32 E_TWEAK_SPIKE_PLATE_SCRIPT = 34681;
+const u32 E_TWEAK_SPIKE_PLATE_SCRIPT = 3068830340u;
 const u32 E_TWEAK_MICROCHIP_SCRIPT = 2682034179ul;
 
 const u32 E_LAMS_TWEAKABLE_MATERIAL = MakeLamsKeyID("TWEAKABLE_MATERIAL", "_NAME");
@@ -322,35 +323,78 @@ CGUID gPhysicsTypes[] =
     10724,
     // Cardboard No-Bev
     66927,
-    // Fluid
-    10726,
-    // Polystyrene
-    10718,
-
-    // Sponge
-    10719,
+    
+    // Light Basic (WIP)
+    12986,
     // Wood
     10717,
-    // Rubber
-    16362,
-    // Glass
-    10725,
-
-    // Gold
-    10715,
-    // Metal
-    10716,
     // Stone
     26602,
 
+    // Polystyrene
+    10718,
+    // Sponge
+    10719,
+    // Snow
+    208738,
+
+    // Rubber
+    16362,
+    // Mid Traction (WIP)
+    1417,
+    // Glass
+    10725,
+
+    // Light Metal (WIP)
+    40793,
+    // Metal
+    10716,
+    // Gold
+    10715,
+    
+    // Hamster Plastic
+    87170,
+    // Fluid
+    10726,
+
+    // Light Floaty (WIP)
+    12744,
     // Pink Floaty
     21166,
     // Peach Floaty
     21165,
+
     // Dark Matter
     45764,
     // Hologram
-    99258
+    99258,
+
+    // V Clay
+    1050350,
+    // V Cork
+    1050351,
+    // V Styrofoam
+    1049141,
+    // V Ice
+    1150152,
+    // V Poly no grab
+    1295257,
+    // V Light Wood
+    1053524,
+    // V Cloth Light
+    1049731,
+    // V Cloth Light Traction
+    1232046,
+    // V Cloth Heavy
+    1049730,
+    // V Cloth Heavy Traction
+    1232092,
+    // V Plastic
+    1049656,
+    // V Plastic Heavy
+    1049837,
+    // V Metal Light
+    1049836
 };
 
 CGUID GetMeshGUID(CThing* thing)
@@ -1005,6 +1049,7 @@ namespace TweakShapeNativeFunctions
         CGUID guid = thing->PlanGUID;
 
         PGeneratedMesh* mesh = thing->GetPGeneratedMesh();
+        PRef* ref = thing->GetPRef();
         if (mesh != NULL) guid = mesh->PlanGUID;
         else if (!guid)
         {
@@ -1015,6 +1060,7 @@ namespace TweakShapeNativeFunctions
             if (group != NULL)
                 guid = group->PlanDescriptor.GetGUID();
         }
+        else if (ref != NULL) guid = ref->Plan.GetGUID();
 
         if (!guid) return NULL;
 
@@ -1081,6 +1127,31 @@ namespace TweakShapeNativeFunctions
             }
 
             return false;
+        }
+
+        PCostume* costume = thing->GetPCostume();
+        if (costume != NULL)
+        {
+            if (costume->Mat && costume->Mat->IsLoaded() && costume->Mat->UsesPlayerDefinedColour)
+                return true;
+            
+            for (u32 i = 0; i < COSTUMEPART_COUNT; ++i)
+            {
+                const CCostumePiece& piece = costume->CostumePieceVec[i];
+                const CP<RMesh>& mesh = piece.Mesh;
+                if (mesh) mesh->BlockUntilLoaded();
+                if (!mesh || !mesh->IsLoaded()) return false;
+                CVector<CPrimitive>& primitives = mesh->mesh.Primitives;
+                for (CPrimitive* it = primitives.begin(); it != primitives.end(); ++it)
+                {
+                    CPrimitive& primitive = *it;
+                    CP<RGfxMaterial>& gmat = primitive.Material;
+                    if (gmat) gmat->BlockUntilLoaded();
+                    if (!gmat || !gmat->IsLoaded()) continue;
+                    gmat->CacheParameters();
+                    if (gmat->UsesPlayerDefinedColour) return true;
+                }
+            }
         }
 
         return false;
@@ -1183,6 +1254,16 @@ namespace TweakShapeNativeFunctions
                 CVector<CThingPtr> things;
                 things.push_back(thing);
                 poppet->Inventory.TakePlan(things);
+                break;
+            }
+            case TOOL_STICKER_WASH:
+            {
+                if(thing->GetPShape())
+                {
+                    PStickers* stickers = thing->GetPStickers();
+                    if (stickers != NULL)
+                        thing->RemovePart(PART_TYPE_STICKERS);
+                }
                 break;
             }
         }

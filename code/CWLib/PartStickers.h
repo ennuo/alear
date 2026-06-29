@@ -7,6 +7,8 @@
 
 class PStickers : public CPart {
 public:
+    void RemoveAllDecals(int);
+public:
     CVector<CDecal> Decals;
     CVector<CDecal> CostumeDecals[14];
 };

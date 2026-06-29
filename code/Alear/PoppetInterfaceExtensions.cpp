@@ -1,7 +1,7 @@
 #include "AlearShared.h"
 #include "AlearConfig.h"
 
-#include <hook.h>
+
 #include <refcount.h>
 #include <Hash.h>
 
@@ -10,13 +10,18 @@
 #include <PoppetEnums.inl>
 #include <gooey/GooeyNodeManager.h>
 #include <gooey/GooeyContainerStyles.inl>
+#include <poppet/PoppetGooey.h>
 #include <InventoryItem.h>
 #include <inventoryView.h>
 #include <InventoryCollection.h>
+#include <Translate.h>
+#include <ProfileCache.h>
 
 #include <ResourceGFXTexture.h>
 #include <ResourceLocalProfile.h>
 #include <ResourceGame.h>
+#include <PartYellowHead.h>
+#include <Player.h>
 
 #include <vm/VirtualMachine.h>
 
@@ -67,16 +72,19 @@ u32 DoCustomInventoryPage(CPoppetChild* gooey, CInventoryCollection* current_cac
         manager->SetFrameBorders(16.0f, 8.0f, 16.0f, 8.0f);
         manager->SetFrameConstrainFocus(true);
 
-        CSignature signature("UpdateGlobalUI__Q5Gooeyi");
         PWorld* world = gGame->GetWorld();
-        CScriptArguments args;
-
-        CScriptVariant arg1(so_gooey);
-        CScriptVariant arg2(page->CustomID);
-
-        args.AppendArg(arg1);
-        args.AppendArg(arg2);
         
+        CSignature signature;
+        CScriptArguments args;
+        args.AppendArg(so_gooey);
+
+        if (page->CustomID == 0x4D525048) signature = CSignature("UpdateMorphUI__Q5Gooey");
+        else
+        {
+            signature = CSignature("UpdateGlobalUI__Q5Gooeyi");
+            args.AppendArg(page->CustomID);
+        }
+
         so_poppet->InvokeSync(world, signature, args, NULL);
 
         manager->EndFrame();
@@ -125,7 +133,7 @@ u32 DoInventorySoundObjectButton(CPoppetChild* gooey, u64 uid, CInventoryItem* i
                 manager->SetFrameApplyClip(true, false);
 
                 const tchar_t* text = item->Details.TranslateName();
-                // if (!CustomTryTranslate(item->Details.NameTranslationTag, text))
+                // if (!TryTranslate(item->Details.NameTranslationTag, text))
                 //     text = (const tchar_t*)L"";
                 manager->DoTitle((wchar_t*)text, GTS_B1, v2(-1.0f, 0.0f));
                 
@@ -220,7 +228,14 @@ void CustomDoPoppetSection(
 
     bool is_hidden = false;
     bool can_hide = category_id != gFunctionCategoryID;
-    if(!gCanCollapseCategories) { can_hide = false; }
+    if (!gCanCollapseCategories) 
+        can_hide = false;
+    
+    bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
+    bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
+    hide_section_titles = settings.IsPlayerColourPage || backgrounds || sound_objects;
+    
+    if (hide_section_titles) can_hide = false;
 
     if (can_hide)
     {
@@ -234,16 +249,9 @@ void CustomDoPoppetSection(
         }
     }
     
-    bool backgrounds = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_BACKGROUND;
-    bool sound_objects = current_cache->InventoryViews[page_number]->Descriptor.Type == E_TYPE_SOUND;
 
-    if (settings.IsPlayerColourPage || backgrounds || sound_objects)
+    if (!hide_section_titles)
     {
-        is_hidden = false;
-    }
-    //if (!settings.IsPlayerColourPage && !backgrounds && !sound_objects)
-    // if (!hide_section_titles)
-    //{
         // float height = is_hidden ? 2.0f : 24.0f;
         float height = 24.0f;
         manager->SetFrameBorders(0.0f, height, 0.0f, height);
@@ -288,8 +296,8 @@ void CustomDoPoppetSection(
         }
 
         manager->DoBreak();
-    //}
-
+    } 
+    
     first_section_break = false;
 
     if (!is_hidden)
@@ -305,7 +313,204 @@ void CustomDoPoppetSection(
     manager->EndFrame();
 }
 
+#include <ResourceSystem.h>
+
+static v2 icon_move_x;
+static v2 icon_move_y;
+static v2 icon_size;
+
+void CPoppetGooey::DoItemInfoIcon(u64 uid, v2& offset, v2 item_size, v4 col, int icon)
+{
+    CGooeyNodeManager* gooey = GetManager();
+
+    offset += icon_move_x;
+    if ((float)offset.getX() > (float)item_size.getX()) // not dealing with vector shit right now
+        offset += icon_move_y;
+    
+    gooey->DoIcon((EGooeyIcon)icon, icon_size, col);
+    gooey->SetLastItemAsRelative(uid, item_size - offset);
+}
+
+void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 size)
+{
+    CGooeyNodeManager* manager = GetManager();
+    if (manager == NULL) return;
+
+    manager->SetFrameApplyClip(false, false);
+
+    icon_move_x = v2(64.0f, 0.0f);
+    icon_move_y = v2(-128.0f, 64.0f);
+    icon_size = v2(64.0f);
+
+    v2 offset = v2(0.0f, 64.0f);
+    
+
+    const CPlayer* player = GetPlayer()->GetPYellowHead()->GetPlayer();
+    const CSlotID& id = item->Details.GetLevelUnlockSlotID();
+
+    v2 top_row_offset = v2(4.0f, 4.0f);
+    v2 top_row_icon_size = v2(42.0f);
+
+    if(gShowColorableItems)
+    {
+        if (item->Details.IsColorable())
+        {
+            manager->DoImageButton(
+                LoadResourceByKey<RTexture>(2807377854ul),
+                top_row_icon_size
+            );
+            
+            manager->SetLastItemAsRelative(uid, top_row_offset);
+            top_row_offset += icon_move_x;
+        }
+
+        if (item->Details.IsAnimated())
+        {
+            manager->DoIcon(GI_RATING_STAR, top_row_icon_size, v4(1.0f));
+            manager->SetLastItemAsRelative(uid, top_row_offset);
+            top_row_offset += icon_move_x;
+        }
+    }
+
+    if (!id.Empty())
+    {
+        offset += icon_move_x;
+        if ((float)offset.getX() > (float)size.getX()) // not dealing with vector shit right now
+            offset += icon_move_y;
+
+        const CP<RLocalProfile>& profile = ProfileCache::GetOrCreateMainUserProfile();
+        const CSlot* slot = profile->FindSlot(id);
+        if (slot != NULL && slot->Icon.IsValid() && slot->Icon.GetType() == RTYPE_TEXTURE)
+        {
+            manager->DoImageButton(
+                LoadResource(slot->Icon),
+                icon_size
+            );
+
+            manager->SetLastItemAsRelative(uid, size - offset);
+        }
+    }
+
+    if(!item->Details.IsUserCreated())
+    {
+        const tchar_t* text;
+        if (gShowItemsWithLore && item->Details.GetLore() != 0)
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 1.0, 0.0, 1.0), GI_CHAT);
+        if (gShowMissingDesc && !TryTranslate(item->Details.GetDescription(), text))
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 0.0, 1.0, 1.0), GI_CHAT);
+        if (gShowMissingName && !TryTranslate(item->Details.GetName(), text))
+            DoItemInfoIcon(uid, offset, size, v4(1.0, 0.0, 0.0, 1.0), GI_CHAT);
+        if (gShowEmittableItems && item->Details.AllowEmit)
+            DoItemInfoIcon(uid, offset, size, v4(0.0, 0.0, 1.0, 1.0), GI_STAR);
+    }
+    if (gShowCheatedItems && item->IsCheat())
+        DoItemInfoIcon(uid, offset, size, v4(1.0), GI_COPYRIGHT_MINE);
+    if (item->IsErrored())
+        DoItemInfoIcon(uid, offset, size, v4(1.0, 0.0, 0.0, 1.0), GI_UNSAVED);
+    if (item->IsHearted())
+        DoItemInfoIcon(uid, offset, size, v4(1.0), GI_HEART);
+    if (item->IsUploaded())
+        DoItemInfoIcon(uid, offset, size, v4(1.0), GI_UPLOADED);
+    if (item->Details.IsUserCreated() && item->Details.GetCopyrightFlag() && !item->Details.IsACostume())
+        DoItemInfoIcon(uid, offset, size, v4(1.0), GI_COPYRIGHT);
+}
+
+void CustomDoEmptyPageMessage(CPoppetGooey* gooey, CInventoryView* view, u32 num_items)
+{
+    CGooeyNodeManager* manager = gooey->GetManager();
+    CPoppet* poppet = gooey->GetParent();
+
+    if (manager == NULL || poppet == NULL || view == NULL) return;
+
+    manager->DoBreak();
+    if (manager->StartFrame())
+    {
+        manager->SetFrameSizing(SizingBehaviour::Contents(), 0.0f);
+        manager->SetFrameLayoutMode(LM_CENTERED, LM_JUSTIFY_START);
+        manager->SetFrameHighlightStyle(GHS_NONE);
+        manager->SetFrameBorders(16.0f, 64.0f);
+
+        const char* prefix = num_items == 0 ? "POPIT_PAGE_NO_" : "POPIT_PAGE_FEW_";
+        const char* suffix;
+        CInventoryView* page = poppet->GetCurrentInventoryPage();
+        if (page != NULL)
+        {
+            if (!page->HeartedOnly)
+            {
+                const u32 type = page->Descriptor.Type;
+                const u32 subtype = page->Descriptor.SubType;
+
+                if (type & E_TYPE_USER_COSTUME)
+                    suffix = "SAVED_COSTUMES";
+                else if (type == E_TYPE_PLAYER_COLOUR)
+                    suffix = "COLOURS";
+                else if (type == E_TYPE_COSTUME_MATERIAL)
+                    suffix = "COSTUME_MATERIALS";
+                else if (type == E_TYPE_COSTUME)
+                {
+                    if (subtype == E_SUBTYPE_MORPH)
+                        suffix = "MORPHS";
+                    else
+                        suffix = "COSTUMES";
+                }
+                else if (type == E_TYPE_STICKER)
+                    suffix = "STICKERS";
+                else if (type == E_TYPE_DECORATION)
+                    suffix = "DECORATIONS";
+                else if (type == E_TYPE_EYETOY)
+                    suffix = "EYETOY";
+                else if (type == E_TYPE_PAINT)
+                    suffix = "PAINT";
+                else if ((type & E_TYPE_USER_STICKER) == 0)
+                {
+                    if (type == E_TYPE_PRIMITIVE_SHAPE)
+                        suffix = "SHAPES";
+                    else if (type == E_TYPE_PRIMITIVE_MATERIAL)
+                        suffix = "MATERIALS";
+                    else if ((type & E_TYPE_USER_POD) == 0)
+                    {
+                        if ((type & E_TYPE_USER_OBJECT) == 0)
+                        {
+                            if (subtype == E_SUBTYPE_TOYS)
+                                suffix = "TOYS";
+                            else
+                                suffix = "OBJECTS";
+                        }
+                        else if ((subtype & E_SUBTYPE_MADE_BY_OTHERS) == 0)
+                            suffix = "PLANS";
+                        else
+                            suffix = "OTHERSPLANS";
+                    }
+                    else 
+                    {
+                        if (subtype == E_SUBTYPE_POD_CONTROLLER)
+                            suffix = "POD_CONTROLLERS";
+                        else if (subtype == E_SUBTYPE_POD_MESH)
+                            suffix = "POD_MESHES";
+                        else
+                            suffix = "PODS";
+                    }
+                }
+                else if ((subtype & E_SUBTYPE_MADE_BY_OTHERS) == 0)
+                    suffix = "PHOTOS";
+                else suffix = "OTHERSPHOTOS";
+            }
+            else
+            {
+                suffix = "HEARTED";
+            }
+
+            manager->DoText((wchar_t*)Translate(MakeLamsKeyID(prefix, suffix)), GTS_T5);
+        }
+
+        manager->EndFrame();
+    }
+}
+
 void AttachPoppetInterfaceExtensionHooks()
 {
     MH_PokeHook(0x00382818, DoCustomInventoryPage);
+    MH_PokeHook(0x00380944, CustomDoEmptyPageMessage);
+    MH_PokeMemberHook(0x002ed5b8, CInventoryItemDetails::TranslateName);
+    MH_PokeMemberHook(0x0037f2bc, CPoppetGooey::DoInventoryItemInfoIcons);
 }

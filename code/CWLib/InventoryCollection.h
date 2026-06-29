@@ -8,6 +8,13 @@
 
 class CInventoryCollection : public CBaseCounted, public CReflectionVisitable {
 public:
+    inline CInventoryView* GetCurrentPage()
+    {
+        if (CurrentPageNumber < InventoryViews.size())
+            return InventoryViews[CurrentPageNumber];
+        return NULL;
+    }
+public:
     CVector<CP<CInventoryView> > InventoryViews;
     NetworkPlayerID PlayerID;
     u32 CurrentPageNumber;

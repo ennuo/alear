@@ -6,8 +6,9 @@
 
 #include <GooeyNetworkAction.h>
 #include <PlayerNumber.inl>
-#include <hook.h>
+
 #include <ResourceGame.h>
+#include <Translate.h>
 #include <ResourceLevel.h>
 #include <ResourceGFXTexture.h>
 #include <ResourceScript.h>
@@ -97,7 +98,7 @@ public:
 
     CTweakSetting& SetSuffix(const char* lams_key)
     {
-        Suffix = MakeLamsKeyID(lams_key, NULL);
+        Suffix = MakeLamsKeyID(lams_key);
         return *this;
     }
 
@@ -121,7 +122,7 @@ public:
 
     CTweakSetting& SetToolTip(const char* lams_key)
     {
-        ToolTip = MakeLamsKeyID(lams_key, NULL);
+        ToolTip = MakeLamsKeyID(lams_key);
         return *this;
     }
 
@@ -818,6 +819,16 @@ namespace TweakSettingNativeFunctions
         return gDebugMaterialTweaks;
     }
 
+    bool SeparateToys()
+    {
+        return gUseToysPage;
+    }
+
+    bool UsePaintPage()
+    {
+        return gUsePaintPage;
+    }
+
     void Register()
     {
         RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
@@ -826,6 +837,8 @@ namespace TweakSettingNativeFunctions
         RegisterNativeFunction("PlayerColour", "UseLegacyKeyColors__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseLegacyKeyColors>);
         RegisterNativeFunction("PlayerColour", "UseNewKeyColorSelection__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseNewKeyColorSelection>);
         RegisterNativeFunction("TweakShape", "AllowDebugTweaks__", true, NVirtualMachine::CNativeFunction0<bool>::Call<DebugMaterialTweaks>);
+        RegisterNativeFunction("Poppet", "SeparateToys__", true, NVirtualMachine::CNativeFunction0<bool>::Call<SeparateToys>);
+        RegisterNativeFunction("Poppet", "UsePaintPage__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UsePaintPage>);
     }
 }
 
@@ -2221,24 +2234,48 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
         {
             CIconConfig icon(E_KEY_PHYSICS_TYPE_SDF, 4, 4);
 
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Cardboard", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Cardboard No-Bevel", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Fluid", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(1), L"Light Fragile 1 (cardboard)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(2), L"Light Fragile 2 (paper)", v4(1.0)));
 
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Polystyrene", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Sponge", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"Rubber", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Wood", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Light Basic (WIP)", v4(1.0, 0.0, 0.0, 1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(7), L"Mid Basic (wood)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(11), L"Heavy Basic (stone)", v4(1.0)));
 
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Glass", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(9), L"Gold", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(10), L"Metal", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(11), L"Stone", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(4), L"Light Grabbable (polystyrene)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Mid Grabbable (sponge)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(5), L"Heavy Grabbable (clay)", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(6), L"High Traction (rubber)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Mid Traction (WIP)", v4(1.0, 0.0, 0.0, 1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Low Traction (glass)", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(10), L"Light Metal (WIP)", v4(1.0, 0.0, 0.0, 1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(10), L"Common Metal (metal)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(9), L"Precious Metal (gold)", v4(1.0)));
             
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Pink Floaty", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Peach Floaty", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(14), L"Dark Matter", v4(1.0)));
-            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"Hologram", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(8), L"Slippery Aerogel (plastic)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(3), L"Rough Aerogel (fluid)", v4(1.0)));
+            
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Down Buoyant (WIP)", v4(1.0, 0.0, 0.0, 1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Neutral Buoyant (pink)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Strong Buoyant (peach)", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(14), L"Infinite Mass (dark matter)", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"No Mass (hologram)", v4(1.0)));
+            
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Clay", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Cork", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Styrofoam", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Ice", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Poly no grab", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Light Wood", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Cloth Light", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Cloth Light Traction", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Cloth Heavy", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Cloth Heavy Traction", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Plastic", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Plastic Heavy", v4(1.0, 1.0, 0.0, 0.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(15), L"V Metal Light", v4(1.0, 1.0, 0.0, 0.0)));
 
             break;
         }

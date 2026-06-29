@@ -1,5 +1,6 @@
-#include "vm/ScriptFunction.h"
-#include <hook.h>
+#include <vm/ScriptFunction.h>
+#include <ResourceScript.h>
+
 
 namespace NVirtualMachine 
 {
@@ -7,6 +8,18 @@ namespace NVirtualMachine
     {
         
     }
+
+    CScriptFunctionBinding::~CScriptFunctionBinding()
+    {
+        Clear();
+    }
+
+    void CScriptFunctionBinding::Set(RScript* script, u32 function_idx)
+    {
+        Script = script;
+        FunctionIdx = function_idx;
+    }
+
 
     void CScriptFunctionBinding::Clear()
     {

@@ -147,7 +147,7 @@ public:
 
     void reserve(size_t l) { Grow(l); }
 
-    void resize(size_t l, char c)
+    void resize(size_t l, char c = '\0')
     {
         u32 len = length();
 
@@ -289,7 +289,7 @@ public:
         return append(s);
     }
 
-    inline int compare(T* s)
+    inline int compare(T* s) const
     {
         return StringCompare(c_str(), s);
     }
@@ -344,5 +344,7 @@ private:
 
 extern tchar_t const* (*MultiByteToTChar)(MMString<tchar_t>& dst, char const* src, char const* src_end);
 extern wchar_t const* (*MultiByteToWChar)(MMString<wchar_t>& dst, char const* src, char const* src_end);
+
+void WCharToMultiByteAppend(MMString<char>& dst, const wchar_t* src, const wchar_t* src_end = NULL);
 
 #endif // MMSTRING_H

@@ -9,6 +9,8 @@ class RLocalProfile;
 
 class RBigProfile : public CBaseProfile {
 public:
+    void InitializeExtraData();
+public:
     SlotMap MyMoonSlots;
     RLocalProfile* LocalProfile;
     CInventoryLimitsHaver Limits;

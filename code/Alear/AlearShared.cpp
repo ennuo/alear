@@ -10,6 +10,7 @@
 #include "PoppetOutlineShapes.h"
 #include "RenderJoint.h"
 #include "AlearSerialization.h"
+#include <Sync/Bootstrap.h>
 
 #include "customization/SlapStyles.h"
 #include "customization/Emotes.h"
@@ -19,7 +20,7 @@
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
 
-#include <hook.h>
+
 #include <json.h>
 #include <printf.h>
 #include <gfxcore.h>
@@ -48,6 +49,7 @@
 #include <InventoryItem.h>
 #include <InventoryCollection.h>
 #include <PoppetEnums.inl>
+#include <Translate.h>
 
 #include <PartPhysicsWorld.h>
 #include <PartYellowHead.h>
@@ -59,9 +61,9 @@
 #include <ResourceGFXFont.h>
 #include <ResourceLocalProfile.h>
 #include <ResourceSyncedProfile.h>
-#include <ResourceTranslationTable.h>
 #include <ResourceFileOfBytes.h>
 #include <ResourceGFXShader.h>
+#include <ResourceTranslationTable.h>
 #include <ResourceSystem.h>
 
 #include <gooey/GooeyNodeManager.h>
@@ -70,6 +72,7 @@
 #include <network/NetworkPartiesData.h>
 #include <poppet/ScriptObjectPoppet.h>
 #include <MMAudio.h>
+#include <ppcasm.h>
 
 #ifdef __SM64__
 #include <sm64/init.h>
@@ -106,8 +109,6 @@ void OnReleaseLevel()
     #endif
 }
 
-#include "AlearSync.h"
-
 void OnResetPoppetModeStack(CPoppet* poppet)
 {
     poppet->ClearHiddenList();
@@ -118,22 +119,8 @@ void CPoppet::ClearHiddenList()
     HiddenList.clear();
 }
 
-void OnUpdateLevel()
+void OnUpdateLockStepped()
 {
-    MainThreadUpdate();
-
-    // Tick Mario's in the world if enabled.
-    #ifdef __SM64__
-    UpdateMarioAvatars();
-    #endif
-
-    // Handle any reloads for databases and caches,
-    // if anything was changed on disk or requested from
-    // a local network.
-    ReloadPendingDatabases();
-    ProcessStartMenuNotifications();
-
-    // Check if there are any mesh export requests from a player in the world
     PWorld* world = gGame->Level->WorldThing->GetPWorld();
     PYellowHead** it = world->ListPYellowHead.begin();
     for (PYellowHead** it = world->ListPYellowHead.begin(); it != world->ListPYellowHead.end(); ++it)
@@ -145,22 +132,8 @@ void OnUpdateLevel()
         CInput* input = yellowhead->GetInput();
         if (input == NULL) continue;
 
-        // CThing* player = yellowhead->GetThing();
-        // if (player != NULL && input->IsJustClicked(BUTTON_CONFIG_FORCE_BLAST, (const wchar_t*)NULL))
-        // {
-        //     ExplosionInfo info;
-        //     GetExplosionInfo(player, info);
-        //     info.Center = info.Center + v2(0.0f, -50.0f, 0.0f, 0.0f);
-        //     info.IgnoreYellowHead = true;
-
-        //     info.OuterRadius = 250.0f;
-        //     info.InnerRadius = 250.0f;
-        //     info.MaxVel = 100.0f;
-        //     info.MaxForce = 1500.0f;
-        //     info.MaxAngVel = 1.0f;
-
-        //     ApplyRadialForce(info);
-        // }
+        if (poppet->GetSubMode() == SUBMODE_LOOKS)
+            poppet->Looks.Update();
 
         CThing* hover = poppet->Edit.LastHoverThing;
 
@@ -216,8 +189,22 @@ void OnUpdateLevel()
         {
             // DumpMeshToFile(hover);
         }
-
     }
+}
+
+void OnUpdateLevel()
+{
+    // Tick Mario's in the world if enabled.
+    #ifdef __SM64__
+    UpdateMarioAvatars();
+    #endif
+
+    // Handle any reloads for databases and caches,
+    // if anything was changed on disk or requested from
+    // a local network.
+    ReloadPendingDatabases();
+    ProcessStartMenuNotifications();
+    sync::Update();
 
     UpdateItemRequest();
 
@@ -326,7 +313,6 @@ void OnRunPipelinePostProcessing()
 
 void OnPredictionOrRenderUpdate()
 {
-    UpdateDownloadInfo();
     UpdatePinOverlay();
     
     if (!gView.DebugCameraActive)
@@ -346,74 +332,6 @@ void OnWorldRenderUpdate()
 void OnUpdateHttpTasks()
 {
     // gPinsTask.Update();
-}
-
-CVector<CP<RTranslationTable> > gTranslations;
-bool CustomTryTranslate(u32 key, tchar_t const*& out)
-{
-    if (key == MakeLamsKeyID("BP_", "HIDE_TETHER"))
-    {
-        out = (tchar_t*)L"Hide Tether";
-        return true;
-    }
-
-    if (key == MakeLamsKeyID("BP_", "HIDE_POPPET_UI"))
-    {
-        out = (tchar_t*)L"Hide Poppet UI";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MATERIAL)
-    {
-        out = (tchar_t*)L"Material";
-        return true;
-    }
-
-    if (key == E_LAMS_TWEAKABLE_MESH)
-    {
-        out = (tchar_t*)L"Mesh";
-        return true;
-    }
-    
-    if (key == E_LAMS_TWEAKABLE_DECAL)
-    {
-        out = (tchar_t*)L"Decal";
-        return true;
-    }
-
-    static tchar_t EMPTY_STRING[] = { 0x20 };
-
-    if (gTranslations.size() == 0)
-    {
-        CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_TRANSLATIONS_RLST, 0, STREAM_PRIORITY_DEFAULT);
-        rlst->BlockUntilLoaded();
-
-        CVector<MMString<char> > lines;
-        LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
-
-        for (int i = 0; i < lines.size(); ++i)
-        {
-            MMString<char>& line = lines[i];
-            CFilePath fp(FPR_BLURAY, line.c_str());
-            CP<RTranslationTable> subst = LoadResourceByFilename<RTranslationTable>(fp, 0, STREAM_PRIORITY_DEFAULT, false); 
-            gTranslations.push_back(subst);
-        }
-        
-        gTranslations.push_back(gPatchTrans);
-        gTranslations.push_back(gTranslationTable);
-
-        BlockUntilResourcesLoaded((CResource**)gTranslations.begin(), gTranslations.size());
-    }
-
-    for (int i = 0; i < gTranslations.size(); ++i)
-    {
-        RTranslationTable* table = gTranslations[i];
-        if (table == NULL || !table->IsLoaded()) continue;
-        if (table->GetText(key, out)) return true;
-    }
-    
-    out = EMPTY_STRING;
-    return false;
 }
 
 PlanDescriptorSet gUsedPlanDescriptors;
@@ -444,6 +362,11 @@ void GatherUsedPlanDescriptors()
         PRef* ref = thing->GetPRef();
         if (ref != NULL && ref->Plan.IsValid())
             gUsedPlanDescriptors.insert(ref->Plan);
+            
+        PGameplayData* gameplay_data = thing->GetPGameplayData();
+        if (gameplay_data != NULL && gameplay_data->EggLink->IsValid()) 
+        {
+        }
 
         // PCostume* costume = thing->GetPCostume();
         // if (costume != NULL)
@@ -550,11 +473,17 @@ void OnLoadSubstTablesFinished()
 {
     gSubsts.clear();
 
-    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_GSUB_RLST, 0, STREAM_PRIORITY_DEFAULT);
+    CP<RFileOfBytes> rlst = LoadResourceByKey<RFileOfBytes>(E_GSUB_RLST);
     rlst->BlockUntilLoaded();
 
+    if (rlst->IsError())
+    {
+        MMLog("Skipping load of substitutions as configuration doesn't exist!\n");
+        return;
+    }
+
     CVector<MMString<char> > lines;
-    LinesLoad(rlst->GetData(), lines, &StripAndIgnoreHash);
+    LinesLoad(rlst->GetData(), lines);
 
     for (int i = 0; i < lines.size(); ++i)
     {
@@ -642,24 +571,22 @@ void OnLocalProfileLoadFinished(RLocalProfile* prf)
 
 void OnBaseProfileLoadFinished(CBaseProfile* prf)
 {
-    return;
-
-    // Delete all tools from the inventory, we're going to re-add them in sorted order.
-    // CRawVector<CInventoryItem>& items = *((CRawVector<CInventoryItem>*)&prf->Inventory);
-    // for (CInventoryItem* item = items.begin(); item != items.end(); ++item)
-    // {
-    //     if (item->Details.ToolType != TOOL_NOT_A_TOOL)
-    //         item = items.erase(item) - 1;
-    // }
-
-    // if (prf->GetResourceType() == RTYPE_LOCAL_PROFILE)
-    //     OnLocalProfileLoadFinished((RLocalProfile*)prf);
+    
 }
 
 AUDIO_GROUP gStingerGroup;
 
 FMOD_RESULT LoadAllEventProjects()
 {
+    CVector<CP<RFilename> > files;
+    for (int i = 0; i < CAudio::gFMODFileSize; ++i)
+    {
+        CAudio::FMODFile& file = CAudio::gFMODFiles[i];
+        CFileDBRow* row = FileDB::FindByGUID(file.Key);
+        if (row == NULL) continue;
+        files.push_back(LoadResourceByKey<RFilename>(file.Key));
+    }
+
     for (int i = 0; i < CAudio::gFMODFileSize; ++i)
     {
         CAudio::FMODFile& file = CAudio::gFMODFiles[i];
@@ -667,7 +594,16 @@ FMOD_RESULT LoadAllEventProjects()
         if (row == NULL) continue;
 
         if (strstr(row->FilePathX, ".fev") == NULL) continue;
+        
         CFilePath fp(FPR_GAMEDATA, row->FilePathX);
+        CP<RFilename> r = LoadResourceByKey<RFilename>(file.Key);
+        r->BlockUntilLoaded();
+
+        if (r->IsError())
+        {
+            MMLog("an error occurred loading fmod file, errors may occur: %s\n", row->FilePathX);
+            continue;
+        }
 
         FMOD::EventProject* project;
         FMOD_RESULT result = CAudio::EventSystem->load(fp.c_str(), NULL, &project);
@@ -680,8 +616,8 @@ FMOD_RESULT LoadAllEventProjects()
     }
 
     FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
-    if (result != FMOD_OK) return result;
-    gStingerGroup.Frame = gGraphicsFrameNum;
+    if (result != FMOD_OK) MMLog("failed to fetch stinger group\n");
+    else gStingerGroup.Frame = gGraphicsFrameNum;
 
     return FMOD_OK;
 }
@@ -735,14 +671,10 @@ void CustomPreRaycastPrepare(PWorld* world)
 StaticCP<RPixelShader> gCopyGlowShader;
 StaticCP<RPixelShader> gRenderPoppetShader;
 StaticCP<RVertexShader> gFullscreenShader;
-ByteArray gVideoHeader;
+#include <AviHeader.inl>
 
 void LoadRecordingShaders()
 {
-    CFilePath fp(FPR_GAMEDATA, "gamedata/alear/data/avi.raw");
-    CHash hash;
-    FileLoad(fp, gVideoHeader, hash);
-
     *((CP<RPixelShader>*)&gCopyGlowShader) = LoadResourceByKey<RPixelShader>(3306909899u, 0, STREAM_PRIORITY_DEFAULT);
     *((CP<RPixelShader>*)&gRenderPoppetShader) = LoadResourceByKey<RPixelShader>(3364422394u, 0, STREAM_PRIORITY_DEFAULT);
      *((CP<RVertexShader>*)&gFullscreenShader) = LoadResourceByKey<RVertexShader>(19194, 0, STREAM_PRIORITY_DEFAULT);
@@ -753,10 +685,10 @@ void CVideoRecording::StartRecording(char* path)
     if (IsRecording()) StopRecording();
     NumFrames = 0;
     Filepath.Assign(FPR_GAMEDATA, path);
-    if (FileOpen(Filepath, &Handle, OPEN_RDWR))
+    if (FileOpen(Filepath, Handle, OPEN_RDWR))
     {
-        FileResize(Handle, gVideoHeader.size());
-        FileSeek(Handle, gVideoHeader.size(), CELL_FS_SEEK_SET);
+        FileResize(Handle, sizeof(gVideoHeader));
+        FileSeek(Handle, sizeof(gVideoHeader), FILE_BEGIN);
     }
 }
 
@@ -765,18 +697,18 @@ void CVideoRecording::StopRecording()
     if (!IsRecording()) return;
 
     u32 data_len = (gResX * gResY * sizeof(s32)) * NumFrames + (0xc * NumFrames);
-    u32 file_len = gVideoHeader.size() + data_len;
+    u32 file_len = sizeof(gVideoHeader) + data_len;
     u32 riff_size = file_len - 0x8;
     u32 mov_size = data_len + 0xc;
     
-    *(u32*)(gVideoHeader.begin() + 0x004) = (riff_size >> 24) | ((riff_size << 8) & 0x00FF0000) | ((riff_size >> 8) & 0x0000FF00) | (riff_size << 24);
-    *(u32*)(gVideoHeader.begin() + 0x030) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
-    *(u32*)(gVideoHeader.begin() + 0x08c) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
-    *(u32*)(gVideoHeader.begin() + 0x5c8) = (mov_size >> 24) | ((mov_size << 8) & 0x00FF0000) | ((mov_size >> 8) & 0x0000FF00) | (mov_size << 24);
+    *(u32*)(gVideoHeader + 0x004) = (riff_size >> 24) | ((riff_size << 8) & 0x00FF0000) | ((riff_size >> 8) & 0x0000FF00) | (riff_size << 24);
+    *(u32*)(gVideoHeader + 0x030) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader + 0x08c) = (NumFrames >> 24) | ((NumFrames << 8) & 0x00FF0000) | ((NumFrames >> 8) & 0x0000FF00) | (NumFrames << 24);
+    *(u32*)(gVideoHeader + 0x5c8) = (mov_size >> 24) | ((mov_size << 8) & 0x00FF0000) | ((mov_size >> 8) & 0x0000FF00) | (mov_size << 24);
     
-    FileSeek(Handle, 0, CELL_FS_SEEK_SET);
-    FileWrite(Handle, (void*)gVideoHeader.begin(), gVideoHeader.size());
-    FileClose(&Handle);
+    FileSeek(Handle, 0, FILE_BEGIN);
+    FileWrite(Handle, (void*)gVideoHeader, sizeof(gVideoHeader));
+    FileClose(Handle);
 }
 
 bool CVideoRecording::IsRecording()
@@ -1148,6 +1080,8 @@ void OnBackdropChange(PWorld* world)
 }
 
 extern "C" uintptr_t _shadow_call_hook;
+extern "C" uintptr_t _popit_decorating_player_hook;
+
 void InitSharedHooks()
 {
     MH_PokeBranch(0x001f0e8c, &_shadow_call_hook);
@@ -1184,7 +1118,8 @@ void InitSharedHooks()
     MH_InitHook((void*)0x0035d1a8, (void*)&CustomIsStickerPlaceable);
 
     MH_InitHook((void*)0x002eeb90, (void*)&CustomItemMatch);
-    MH_InitHook((void*)0x000232bc, (void*)&CustomTryTranslate);
+    MH_PokeHook(0x000232bc, TryTranslate);
+    MH_PokeHook(0x000ba884, RTranslationTable::GetTranslationTables);
     MH_InitHook((void*)0x0009c52c, (void*)&CustomDoGUIDSubstitution);
     MH_PokeBranch(0x000b94e4, &_gsub_rlst_hook);
     MH_PokeBranch(0x003800b8, &_popit_isitemselected_hook);
@@ -1259,11 +1194,11 @@ void InitSharedHooks()
     
     // allow disabling rendering popit tether
     // DrawForBloom
-    MH_Poke32(0x0034c870, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
-    MH_Poke32(0x0034c604, 0x891b1b31 /* lbz %r8, 0x1b31(%r27) */);
+    MH_Poke32(0x0034c870, 0x891b1b01 /* lbz %r8, 0x1b01(%r27) */);
+    MH_Poke32(0x0034c604, 0x891b1b01 /* lbz %r8, 0x1b01(%r27) */);
     // RenderUI
-    MH_Poke32(0x00345d84, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
-    MH_Poke32(0x00345dc0, 0x891d1b31 /* lbz %r8, 0x1b31(%r29) */);
+    MH_Poke32(0x00345d84, 0x891d1b01 /* lbz %r8, 0x1b01(%r29) */);
+    MH_Poke32(0x00345dc0, 0x891d1b01 /* lbz %r8, 0x1b01(%r29) */);
 
     MH_PokeBranch(0x00345a9c, &_popit_render_ui_debug_hook);
 
@@ -1271,8 +1206,9 @@ void InitSharedHooks()
     MH_InitHook((void*)0x003400c4, (void*)&CanTweakThing);
 
     MH_PokeHook(0x0009a634, IsGamePaused);
-
     MH_PokeBranch(0x000b149c, &_run_frame_hook);
+    MH_PokeCall(0x000b1410, OnUpdateLockStepped);
+    MH_PokeBranch(0x00347030, &_popit_decorating_player_hook);
 }
 
 // Draw ( col, glitter, glitter_bloom, drawloop, drawtail, cam)

@@ -7,6 +7,7 @@ namespace mmalex {
     extern float (*__FSin)(float, unsigned int);
     extern float (*_sqrtf)(float);
     extern float (*_powf)(float, float);
+    extern u32 (*crc32)(u32 crc, const char* buf, u32 len);
 
     inline float sin(float f) { return __FSin(f, 0); }
     inline float cos(float f) { return __FSin(f, 1); }

@@ -13,6 +13,7 @@
 #include "ResourcePlan.h"
 #include "InventoryItem.h"
 #include "StringLookupTable.h"
+#include <MMString.h>
 
 class CInventoryTemplateLevel {
 public:
@@ -42,6 +43,7 @@ public:
     virtual void ClearInventory();
     virtual void CopyProfile(CBaseProfile* profile);
     virtual void OnInventoryChanged();
+    bool GetStringFromIndex(u32 index, MMString<wchar_t>& str_out);
 public:
     u32 AddString(u32 key);
 public:

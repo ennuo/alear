@@ -30,28 +30,29 @@ _global_webternate_hook:
     ld %r0, 0xb0(%r1)
     ba 0x00234fd0
 
-.global _global_artist_hook
-_global_artist_hook:
+.global _global_type_sort_hook
+_global_type_sort_hook:
     mr %r3, %r27
 
     std %r2, 0x28(%r1)
-    lis %r5, _Z12DoArtistSortP14CInventoryView@h      
-    ori %r5, %r5, _Z12DoArtistSortP14CInventoryView@l
+    lis %r5, _Z10DoTypeSortP14CInventoryView@h      
+    ori %r5, %r5, _Z10DoTypeSortP14CInventoryView@l
     lwz %r2, 0x4(%r5)
-    bl ._Z12DoArtistSortP14CInventoryView
+    bl ._Z10DoTypeSortP14CInventoryView
     ld %r2, 0x28(%r1)
 
     ba 0x000c2cf4
 
-.global _global_pref_hook
-_global_pref_hook:
-    mr %r3, %r27
-
+.global _global_subcategory_sort_hook
+_global_subcategory_sort_hook:
+    mr %r3, %r26
+    mr %r4, %r27
+    
     std %r2, 0x28(%r1)
-    lis %r5, _Z16DoPreferenceSortP14CInventoryView@h      
-    ori %r5, %r5, _Z16DoPreferenceSortP14CInventoryView@l
+    lis %r5, _Z17DoSubcategorySortP13RLocalProfileP14CInventoryView@h      
+    ori %r5, %r5, _Z17DoSubcategorySortP13RLocalProfileP14CInventoryView@l
     lwz %r2, 0x4(%r5)
-    bl ._Z16DoPreferenceSortP14CInventoryView
+    bl ._Z17DoSubcategorySortP13RLocalProfileP14CInventoryView
     ld %r2, 0x28(%r1)
 
     ba 0x000c2cf4
@@ -71,7 +72,12 @@ _global_icon_size_hook:
     rlwinm %r9, %r0, 0x0, 0x0, 0x0
     cmpwi %cr7, %r9, 0
     bne %cr7, UseLargeIcons
-    
+
+    # Morphs also use large icons
+    rlwinm %r9, %r0, 0x0, 0xf, 0xf
+    cmpwi %cr7, %r9, 0
+    bne %cr7, UseLargeIcons
+
     # User Stickers
     lwz %r0, 0x40(%r27)
     # rlwinm %r9, %r0, 0x0, 0x15, 0x15
@@ -376,8 +382,8 @@ _run_frame_hook:
 ExitFrameHook:
     # branch to function epilogue
     li %r0, 0xe0
-    ba 0x000b1990
 
+    ba 0x000b1990
 .global _base_profile_load_hook
 _base_profile_load_hook:
     std %r2, 0x28(%r1)
@@ -457,6 +463,12 @@ _initextradata_part_switch:
     ld %r0, 0x100(%r1)
     ba 0x0005e6ac
 
+.global _initextradata_part_yellowhead
+_initextradata_part_yellowhead:
+    mr %r3, %r27
+    call _ZN11PYellowHead19InitializeExtraDataEv
+    ba 0x00031754
+
 .global _initextradata_part_generatedmesh
 _initextradata_part_generatedmesh:
     mr %r3, %r28
@@ -476,6 +488,12 @@ create_hook on_fixup_thing_hook, 0x003c4228
     mr %r4, %r20
     call _ZN6CThing7OnFixupEj
     rldicl %r9, %r28, 0x0, 0x20
+    ret
+
+create_hook on_fixup_script_hook, 0x000cc0b0
+    mr %r3, %r30
+    call _ZN7RScript19FixupStaticInstanceEv
+    lwz %r0, 0x4(%r29)
     ret
 
 .global _custom_gooey_network_action_hook
@@ -870,23 +888,35 @@ DisableLethalFlag:
 _update_joints_hook:
     mr %r3, %r30
     call _Z12UpdateJointsP6PWorld
-    mr %r3, %r30
     ba 0x0007c50c
 
+    mr %r3, %r30
 .global _webternate_custom_parts_hook
 _webternate_custom_parts_hook:
     mr %r3, %r27
     mr %r4, %r24
-    call _Z19WebternateThingPageR14MMOTextStreamARK9CThingPtr
     ld %r0, 0x160(%r1)
+    call _Z19WebternateThingPageR14MMOTextStreamARK9CThingPtr
     ba 0x0023966c
 
 create_hook shadow_call_hook, 0x001f0e90
     mr %r3, %r27
-    call _Z20HandleShadowDrawCallP13CMeshInstance
     cmpwi %cr7, %r3, 0
+    call _Z20HandleShadowDrawCallP13CMeshInstance
     beq %cr7, NormalShadowPass
     ba 0x001f0e0c
 NormalShadowPass:
     lhz %r0, 0x19a(%r27)
+    lwz %r11, 0xf0(%r27)
+    mr %r4, %r11
+    ret
+
+create_hook on_update_creature_water_depth_hook, 0x000a59fc
+    mr %r3, %r26
+    call _Z18OnSubmergeCreatureP9PCreature
+    ret
+
+create_hook on_post_sackboy_animation_update_hook, 0x000ebc70
+    lwz %r3, 0x458(%r31)
+    call _ZN12CSackBoyAnim14PostAnimUpdateEv
     ret

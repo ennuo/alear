@@ -1,30 +1,41 @@
-#ifndef RESOURCE_TRANSLATION_TABLE_H
-#define RESOURCE_TRANSLATION_TABLE_H
+#pragma once
 
-
-#include "Resource.h"
+#include <Resource.h>
 
 class RTranslationTable : public CResource {
-struct Index {
-    u32 Hash;
-    union {
-        u32 Offset;
-        tchar_t* Text;
+    struct Index 
+    {
+        u32 Hash;
+        union {
+            u32 Offset;
+            tchar_t* Text;
+        };
     };
-};
+
+    struct SSortByIndex
+    {
+        inline bool operator()(const RTranslationTable::Index& lhs, const RTranslationTable::Index& rhs) const
+        {
+            return lhs.Hash < rhs.Hash;
+        }
+
+        inline bool operator()(u32 lhs, const RTranslationTable::Index& rhs) const
+        {
+            return lhs < rhs.Hash;
+        }
+
+        inline bool operator()(const RTranslationTable::Index& lhs, u32 rhs) const
+        {
+            return lhs.Hash < rhs;
+        }
+    };
+
 public:
     bool GetText(u32 key, tchar_t const*& out);
+public:
+    static void GetTranslationTables(CP<RTranslationTable>& table, CP<RTranslationTable>& patch);
 private:
     ByteArray Data;
     Index* IndexStart;
     Index* IndexEnd;
 };
-
-extern StaticCP<RTranslationTable> gPatchTrans;
-extern StaticCP<RTranslationTable> gTranslationTable;
-
-
-extern u32 (*MakeLamsKeyID)(const char* prefix, const char* suffix);
-
-
-#endif // RESOURCE_TRANSLATION_TABLE_H

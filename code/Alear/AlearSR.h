@@ -1,13 +1,12 @@
-#ifndef ALEAR_REVISIONS_H
-#define ALEAR_REVISIONS_H
+#pragma once
 
-enum AlearSR {
+enum eAlearSR {
     ALEAR_INITIAL = 1,
     
     ALEAR_LATEST_PLUS_ONE
 };
 
-enum AlearBranchSR {
+enum eAlearBranchSR {
     ALEAR_BR1_INITIAL = 1,
 
     ALEAR_POPIT_STYLES,
@@ -17,8 +16,10 @@ enum AlearBranchSR {
     ALEAR_PARAMETER_ANIMATIONS,
     ALEAR_PINS,
     ALEAR_EXPLOSIVES,
-
+    ALEAR_INVENTORY_DATA,
+    
     ALEAR_BR1_LATEST_PLUS_ONE
 };
 
-#endif // ALEAR_REVISIONS_H
+#define ALEAR_LATEST (ALEAR_LATEST_PLUS_ONE - 1)
+#define ALEAR_BR1_LATEST (ALEAR_BR1_LATEST_PLUS_ONE - 1)

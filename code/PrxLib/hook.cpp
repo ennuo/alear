@@ -3,8 +3,7 @@
 
 #include <sys/process.h>
 #include <sys/syscall.h>
-
-#include "cell/DebugLog.h"
+#include <DebugLog.h>
 
 
 #include "ppcasm.h"
@@ -29,6 +28,9 @@ u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size)
         int num_words = size / sizeof(u32);
         for (int i = 0; i < num_words; ++i)
             gWriteCache[gNumWrites++] = ps3_write(address + (i * sizeof(u32)), *(((u32*)data) + i));
+
+        if (gNumWrites > ARRAY_LENGTH(gWriteCache))
+            MMLog("WARNING: OUT OF WRITES!!\n");
     }
 
     system_call_4(905, (u64)sys_process_getpid(), address, size, (u64)data);
@@ -38,7 +40,7 @@ u32 sys_dbg_write_process_memory(uint64_t address, void* data, size_t size)
 ps3_write gWriteCache[MAX_WRITES];
 u32 gNumWrites;
 
-static u8 g_StubData[4096] __attribute__((section(".text#"))) = { 0 };
+static u8 g_StubData[8192] __attribute__((section(".text#"))) = { 0 };
 u8* gStubBaseAddress = g_StubData;
 static u8* g_StubAddress = g_StubData;
 static bool g_HookInit = false;
@@ -47,6 +49,10 @@ void* MH_Allocate(size_t size)
 {
     void* data = (void*)g_StubAddress;
     g_StubAddress += size;
+
+    if (g_StubAddress > (u8*)(gWriteCache + MAX_WRITES))
+        MMLog("WARNING: OUT OF HOOK MEMORY!\n");
+    
     return data;
 }
 

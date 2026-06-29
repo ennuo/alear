@@ -1,12 +1,11 @@
 #include "AlearDebugCamera.h"
-#include "AlearSync.h"
 #include "AlearConfig.h"
 #include "PinSystem.h"
 
 #include <cell/fs/cell_fs_file_api.h>
 #include <cell/gcm.h>
 
-#include <hook.h>
+
 #include <mmalex.h>
 #include <ppcasm.h>
 #include <json_ext.h>
@@ -88,7 +87,7 @@ void UpdateDebugCameraNotInUse()
     gShowCameraMenu = false;
 }
 
-float UnpackAnalogue(u16 raw)
+static float UnpackAnalogue(u16 raw)
 {
     float val = (int)(raw - 128);
     if (abs(val) < 37.0f) return 0.0f;
@@ -394,7 +393,6 @@ v4 GetCameraFocus()
 
 void OnDrawPostComp(COverlayUI* interface)
 {
-    RenderDownloadInfo();
     RenderPinOverlay();
 
     if (!gView.DebugCameraActive && !gRenderOnlyPopit)
@@ -623,7 +621,7 @@ bool LoadCameraClips()
     gClips.clear();
     DebugLog("Starting load of camera config clips...\n");
 
-    CFilePath clipdir(FPR_GAMEDATA, "gamedata/alear/clips");
+    CFilePath clipdir(FPR_ALEAR, "clips");
 
     int fd;
 

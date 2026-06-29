@@ -1,137 +1,156 @@
-#include "filepath.h"
+#include <filepath.h>
 
-#include <cell/fs/cell_fs_file_api.h>
-#include <sys/return_code.h>
+#include <DebugLog.h>
+#include <StringUtil.h>
+#include <sha1.h>
 
-#include "cell/DebugLog.h"
-
-void FileClose(FileHandle* h) 
+char* PrependPath(char* dst, const char* filename, const char* path)
 {
-	if (*h != 0) 
-		cellFsClose(*h);
-	*h = -1;
+	if (*filename == '/') filename += 1;
+
+	int len = StringLength(path);
+	bool append_slash = len == 0 || path[len - 1] != '/';
+
+	strcpy(dst + len + (append_slash ? 1 : 0), filename);
+	if (path != dst)
+		strncpy(dst, path, len);
+	if (append_slash)
+		dst[len] = '/';
+	
+	return dst;
 }
 
-bool FileOpen(CFilePath& fp, FileHandle* fd, EOpenMode mode) 
+CFilePath::CFilePath()
 {
-	*fd = -1;
-	int ret;
-	switch (mode) {
-		case OPEN_READ: {
-			ret = cellFsOpen(fp.c_str(), CELL_FS_O_RDONLY, fd, NULL, 0); 
-			break;
-		}
-		case OPEN_WRITE: {
-			ret = cellFsOpen(fp.c_str(), CELL_FS_O_WRONLY | CELL_FS_O_CREAT | CELL_FS_O_TRUNC, fd, NULL, 0);
-			break;
-		}
-		case OPEN_APPEND: {
-			ret = cellFsOpen(fp.c_str(), CELL_FS_O_WRONLY | CELL_FS_O_CREAT | CELL_FS_O_APPEND, fd, NULL, 0);
-			break;
-		}
-		case OPEN_RDWR: {
-			ret = cellFsOpen(fp.c_str(), CELL_FS_O_RDWR |  CELL_FS_O_CREAT, fd, NULL, 0);
-			break;
-		}
-		// case OPEN_SECURE: {
-		// 	static SceNpDrmKey KioskKey = {
-		// 		{ 0xC0, 0xA3, 0xB3, 0x64, 0x1C, 0x2A, 0xD1, 0xEF, 0x23, 0x15, 0x3A, 0x48, 0xA3, 0xE1, 0x2F, 0xE7 }
-		// 	};
-
-		// 	//if (IsKioskDemo()) {
-		// 	//	ret = cellFsSdataOpen(fp->Filepath, CELL_FS_O_RDWR |  CELL_FS_O_CREAT, fd, NULL, 0);
-		// 	//	break;
-		// 	//}
-
-		// 	ret = sceNpDrmOpen(&KioskKey, fp.c_str(), CELL_FS_O_RDWR | CELL_FS_O_CREAT, fd, NULL, 0);
-		// 	break;
-		// }
-		default: return false;
-	}
-
-	if (ret != CELL_FS_OK) 
-		DebugLogChF(DC_RESOURCE, "Failed cellFsOpen(%s) %d\n", fp.c_str(), ret);
-
-	return ret == CELL_FS_OK;
-
+	*Filepath = '\0';
+	Invalid = true;
 }
 
-u64 FileRead(FileHandle h, void* out, u64 count) {
-	u64 n;
-	int ret = cellFsRead(h, out, count, &n);
-	if (ret != CELL_FS_OK) {
-		DebugLogChF(DC_RESOURCE, "Failed cellFsRead %d\n", ret);
-		return 0;
-	}
-	return n;
+CFilePath::CFilePath(const char* filename)
+{
+	Assign(filename);
 }
 
-u64 FileWrite(FileHandle h, void* bin, u64 count)
+CFilePath::CFilePath(EFilePathRootDir root_dir, const char* filename)
 {
-	u64 n;
-	cellFsWrite(h, bin, count, &n);
-	return n;
+	Assign(root_dir, filename);
 }
 
-u64 FileSeek(FileHandle h, s64 newpos, u32 whence)
+CFilePath::CFilePath(const CFilePath& rhs)
 {
-	u64 p;
-	cellFsLseek(h, newpos, whence, &p);
-	return 0;
+	*this = rhs;
 }
 
-bool FileStat(FileHandle h, u64* modtime, u64* size) 
+CFilePath& CFilePath::operator=(const CFilePath& rhs)
 {
-	*modtime = 0;
-	*size = 0;
-	if (h != -1) 
+	Assign(rhs.Filepath);
+	return *this;
+}
+
+CFilePath& CFilePath::operator=(const char* rhs)
+{
+	Assign(rhs);
+	return *this;
+}
+
+void CFilePath::Append(const char* str)
+{
+	if (IsEmpty())
 	{
-		CellFsStat status;
-		if (cellFsFstat(h, &status) == CELL_FS_OK) 
-		{
-			*modtime = status.st_mtime;
-			*size = status.st_size;
-			return true;
-		}
+		AppendRaw(str);
+		return;
 	}
-	return false;
-}
 
-bool FileStat(CFilePath& fp, u64* modtime, u64* size)
-{
-	*modtime = 0;
-	*size = 0;
-    CellFsStat status;
-    if (cellFsStat(fp.c_str(), &status) == CELL_FS_OK) 
+	char c = Filepath[Length() - 1];
+	if (c == '/') AppendRaw(*str == '/' ? str + 1 : str);
+	else
 	{
-        *modtime = status.st_mtime;
-        *size = status.st_size;
-        return true;
-    }
-	return false;
+		if (*str != '/') AppendRaw("/");
+		AppendRaw(str);
+	}
 }
 
-bool FileExists(CFilePath& fp)
+void CFilePath::AppendRaw(const char* str)
 {
-    u64 modtime, size;
-    return FileStat(fp, &modtime, &size);
+	int len = StringAppend(Filepath, str);
+	Invalid = len > MAX_PATH - 1;
 }
 
-bool FileResize(FileHandle h, u32 newsize)
+void CFilePath::Clear()
 {
-	return cellFsFtruncate(h, newsize) == CELL_FS_OK;
+	Assign("");
+}
+
+void CFilePath::Assign(EFilePathRootDir root_dir, const char* filename)
+{
+	Invalid = false;
+
+	switch (root_dir)
+	{
+		case FPR_GAMEDATA: PrependPath(Filepath, filename, gGameDataPath.c_str()); break;
+		case FPR_BLURAY: PrependPath(Filepath, filename, gBaseDir.c_str()); break;
+		case FPR_SYSCACHE: PrependPath(Filepath, filename, gSysCachePath.c_str()); break;
+		case FPR_ALEAR:
+			PrependPath(Filepath, "gamedata/alear/", gGameDataPath.c_str());
+			Append(filename);
+			break;
+		default: 
+			Invalid = true; 
+			break;
+	}
+}
+
+void CFilePath::Assign(const char* filename)
+{
+	int len = StringCopy<char, MAX_PATH>(Filepath, filename);
+	Invalid = len > MAX_PATH - 1;
+}
+
+const char* CFilePath::GetExtension() const
+{
+	const char* s = strrchr(Filepath, '.');
+	return s != NULL ? s : "";
+}
+
+const char* CFilePath::GetFilename() const
+{
+	const char* s = strrchr(Filepath, '/');
+	return s != NULL ? s + 1 : "";
+}
+
+void CFilePath::FixSlashesAndCase()
+{
+	for (char* it = Filepath; *it != '\0'; ++it)
+	{
+		if (*it == '\\') *it = '/';
+		else *it = tolower(*it);
+	}
+}
+
+void CFilePath::StripExtension()
+{
+	char* s = strrchr(Filepath, '.');
+	if (s != NULL)
+		*s = '\0';
+}
+
+void CFilePath::StripTrailingSlash()
+{
+	int len = strlen(Filepath);
+	if (len != 0 && Filepath[len - 1] == '/' || Filepath[len - 1] == '\\')
+		Filepath[len - 1] = '\0';
 }
 
 char* FileLoadText(CFilePath& fp)
 {
 	FileHandle fd;
 	u64 modtime, size;
-	if (FileOpen(fp, &fd, OPEN_READ) && FileStat(fd, &modtime, &size))
+	if (FileOpen(fp, fd, OPEN_READ) && FileStat(fd, modtime, size))
 	{
 		char* data = new char[size + 1];
 		if (size != 0)
 			FileRead(fd, data, size);
-		FileClose(&fd);
+		FileClose(fd);
 		data[size] = '\0';
 		
 		return data;
@@ -140,20 +159,93 @@ char* FileLoadText(CFilePath& fp)
 	return NULL;
 }
 
-MH_DefineFunc(_FileLoad, 0x0057b6ec, TOC1, bool, CFilePath const&, ByteArray&, CHash&)
-bool FileLoad(CFilePath const& fp, ByteArray& bufout, CHash& hash_out)
+bool FileLoad(const CFilePath& f, ByteArray& out, CHash* out_hash)
 {
-	return _FileLoad(fp, bufout, hash_out);
+	FileHandle h;
+	if (!FileOpen(f, h, OPEN_READ)) return false;
+
+	int size = FileSize(f);
+	out.resize(size);
+
+	if (size == 0)
+	{
+		FileClose(h);
+		return true;
+	}
+
+	if (FileRead(h, out.begin(), size) != size)
+	{
+		FileClose(h);
+		return false;
+	}
+
+	FileClose(h);
+	if (out_hash != NULL)
+		*out_hash = CHash((const uint8_t*)out.begin(), out.size());
+
+	return true;
 }
 
-MH_DefineFunc(_LinesLoad, 0x0057bcc8, TOC1, bool, const ByteArray&, CVector<MMString<char> >&, ParseFn)
+bool StripAndIgnoreFileHash(TextRange<char>& range)
+{
+    const char* c = range.Begin;
+    while (c != range.End && *c != '#') c++;
+    range.End = c;
+    range.TrimWhite();
+    return range.Valid();
+}
+
+u32 GetLine(const ByteArray& bytes, u32 start_offs, TextRange<char>& range)
+{
+	const char* s = bytes.begin() + start_offs;
+	range.Begin = s;
+	while (s != bytes.end() && *s != '\n' && *s != '\r') s++;
+	range.End = s;
+	while (*s == '\n' || *s == '\r') s++;
+	return s - bytes.begin();
+}
+
 bool LinesLoad(const ByteArray& bytes, CVector<MMString<char> >& out, ParseFn parsefunc)
 {
-	return _LinesLoad(bytes, out, parsefunc);
+	u32 offset = 0;
+	while (offset < bytes.size())
+	{
+		TextRange<char> range;
+		offset = GetLine(bytes, offset, range);
+		if (range.Valid() && (parsefunc == NULL || parsefunc(range)))
+		{
+			out.resize(out.size() + 1);
+			out.back().assign(range.Begin, range.Length());
+		}
+	}
+
+	return true;
 }
 
-MH_DefineFunc(_StripAndIgnoreHash, 0x0057baf0, TOC1, bool, TextRange<char>& range)
-bool StripAndIgnoreHash(TextRange<char>& range)
+bool FileLoad(const CFilePath& path, CVector<MMString<char> >& out, ParseFn parsefunc)
 {
-	return _StripAndIgnoreHash(range);
+	ByteArray bytes;
+	if (!FileLoad(path, bytes, NULL)) return false;
+	return LinesLoad(bytes, out, parsefunc);
+}
+
+bool FileHash(const CFilePath& fp, CHash* out_hash)
+{
+	CSHA1Context ctx;
+	FileHandle fd;
+	if (!FileOpen(fp, fd, OPEN_READ)) return false;
+	
+	const u32 chunk_size = 0x4000;
+	char chunk[chunk_size];
+	
+	u64 n;
+	do
+	{
+		n = FileRead(fd, chunk, chunk_size);
+		ctx.AddData((const u8*)chunk, n);
+	} 
+	while (n == chunk_size);
+	
+	ctx.Result((u8*)out_hash);
+	return true;
 }

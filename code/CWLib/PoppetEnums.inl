@@ -24,11 +24,12 @@ typedef enum EInventoryObjectSubType {
     E_SUBTYPE_FULL_COSTUME=2147483648u,
     
     // these are custom subtypes
+    E_SUBTYPE_TOYS=1,
     E_SUBTYPE_POD_CONTROLLER=1,
     E_SUBTYPE_POD_MESH=2,
     E_SUBTYPE_ANIMATION_STYLE=16384,
     E_SUBTYPE_EMOTE=32768,
-    E_SUBTYPE_LEVEL=65536,
+    E_SUBTYPE_MORPH=65536,
 } EInventoryObjectSubType;
 
 typedef enum EInventoryObjectType {
@@ -70,18 +71,18 @@ typedef enum EInventoryObjectType {
 typedef enum EInventorySortMode {
     INVALID_SORT_MODE=-1,
     SORT_DATE_OLDEST=1,
-    SORT_DATE_NEWEST=2,
-    SORT_MRU=3,
-    SORT_NUMUSES=4,
-    SORT_LOCATION=5,
-    SORT_CATEGORY=6,
-    SORT_SIZE=7,
-    SORT_COLOR=8,
-    SORT_NAME=9,
+    SORT_DATE_NEWEST,
+    SORT_MRU,
+    SORT_NUMUSES,
+    SORT_LOCATION,
+    SORT_CATEGORY,
+    SORT_SIZE,
+    SORT_COLOR,
+    SORT_NAME,
 
     // custom
-    SORT_ARTIST = 10,
-    SORT_MEME = 11,
+    SORT_SUBCATEGORY,
+    SORT_TYPE,
     
     NUM_SORT_MODES
 } EInventorySortMode;
@@ -179,6 +180,9 @@ typedef enum EPoppetMessageType {
     E_POPPET_EXPLOSION_MESSAGE,
     E_POPPET_GENEALOGY_MESSAGE,
     E_POPPET_GRADIENT_MESSAGE,
+    
+    E_POPPET_MORPH_MESSAGE,
+    E_POPPET_RESET_MORPHS_MESSAGE,
 
     E_POPPET_MESSAGE_TYPE_COUNT
 } EPoppetMessageType;
@@ -253,6 +257,7 @@ typedef enum EPoppetSubMode {
     SUBMODE_OBJECT_EDIT_UVS = 52,
     SUBMODE_GRAB_PLAN_MARQUEE = 53,
     SUBMODE_MESH_CAPTURE = 54,
+    SUBMODE_LOOKS = 55,
 
 
     
@@ -337,6 +342,10 @@ typedef enum EToolType {
     TOOL_RANDOM_DECORATION = 59,
     TOOL_RANDOM_MATERIAL = 60,
     TOOL_RANDOM_OBJECT = 61,
+
+    TOOL_MORPH_RESET = 62,
+    TOOL_MORPH_SAVE = 63,
+    TOOL_MORPH_EDIT = 64,
     
     NUM_TOOL_TYPES
 

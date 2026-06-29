@@ -11,10 +11,14 @@
 #include "InventoryCollection.h"
 #include "network/NetworkUtilsNP.h"
 
+#include <PoppetMode.h>
+
 #define MAX_USER_EMOTES (4)
 
 extern const u32 gUsedItemsCustomId;
 extern const u32 gEmotesCustomId;
+
+class CSlot;
 
 // 0x3b8
 class RLocalProfile : public CBaseProfile {
@@ -29,8 +33,11 @@ private:
     void InitializeExtraData();
 public:
     void SetUsedItemViewDirty();
+    CSlot* FindSlot(const CSlotID& id);
+    CPoppetMode* GetPoppetModePtrLocal();
+    CInventoryCollection* RetrieveInventoryCollectionByIndex(u32 i);
 public:
-    CRawVector<void*> PoppetModeStack; // meant to be a vec of CPoppetMode, just dont care rn
+    CRawVector<CPoppetMode> PoppetModeStack; // meant to be a vec of CPoppetMode, just dont care rn
     u32 NextInventoryCollectionID;
     CRawVector<u32> CostumeUIDList;
     CVector<void*> InventoryViewBackup;

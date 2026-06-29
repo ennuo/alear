@@ -1,13 +1,15 @@
-#ifndef REFLECTION_FIND_DEPENDENCIES_H
-#define REFLECTION_FIND_DEPENDENCIES_H
+#pragma once
+
+#include <SerialiseRevision.h>
+#include <SerialiseEnums.h>
 
 class CReflectionFindDependencies : public CReflectionBase, public CReflectionVisitSave {
 public:
     inline bool GetSaving() { return false; }
     inline bool GetLoading() { return false; }
-    inline u32 GetRevision() { return 0x272; }
-    inline u32 GetBranchDescription() { return 0x4c440017; }
-    inline u16 GetCustomVersion() { return ALEAR_LATEST_PLUS_ONE - 1; }
+    inline u32 GetRevision() { return gFormatRevision; }
+    inline u32 GetBranchDescription() { return gFormatBranchDescription; }
+    inline u16 GetCustomVersion() { return ALEAR_LATEST; }
     inline u8 GetCompressionFlags() { return DEFAULT_COMPRESS_FLAGS; }
     inline u16 GetBranchID() { return 0x4c44; }
     inline u16 GetBranchRevision() { return 0x0017; }
@@ -21,5 +23,3 @@ public:
 private:
     u32 Size;
 };
-
-#endif // REFLECTION_FIND_DEPENDENCIES_H

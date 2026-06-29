@@ -31,6 +31,65 @@ bool _BlockUntilAllResourcesLoaded(EWaitForStreamingResources streaming_resource
     return BlockUntilLoaded_(streaming_resources, NULL, 0);
 }
 
+void AddCSRToQueue(const CP<CSerialisedResource>& csr, CSRQueue* queue, CStreamPriority priority)
+{
+    if (!csr) return;
+    queue->Push(priority.GetPriority(), csr);
+}
+
+void AddCSRToDoneQueue(const CP<CSerialisedResource>& csr, CStreamPriority prio)
+{
+    switch (csr->GetDescriptor().GetType())
+    {
+        case RTYPE_LEVEL:
+        case RTYPE_SCRIPT:
+        case RTYPE_SYNCED_PROFILE:
+        case RTYPE_GAME:
+        case RTYPE_LIMITS_SETTINGS:
+        case RTYPE_AUDIO_MATERIALS:
+        case RTYPE_MUSIC_SETTING:
+        case RTYPE_MIXER_SETTINGS:
+            AddCSRToQueue(csr, CSRsDone, prio);
+            break;
+        default:
+            AddCSRToQueue(csr, CSRsDoneThreaded, prio);
+            break;
+    }
+}
+
+ESerialisationType GetPreferredSerialisationType(EResourceType type)
+{
+    switch (type)
+    {
+        case RTYPE_FILENAME:
+        case RTYPE_FONTFACE:
+            return PREFER_FILE;
+        
+        case RTYPE_GUID_SUBST:
+        case RTYPE_SETTINGS_CHARACTER:
+        case RTYPE_SETTINGS_SOFT_PHYS:
+        case RTYPE_EDITOR_SETTINGS:
+        case RTYPE_JOINT:
+        case RTYPE_GAME_CONSTANTS:
+        case RTYPE_POPPET_SETTINGS:
+        case RTYPE_SETTINGS_NETWORK:
+        case RTYPE_PARTICLE_SETTINGS:
+        // case RTYPE_PARTICLE_TEMPLATE:
+        // case RTYPE_PARTICLE_LIBRARY:
+        case RTYPE_AUDIO_MATERIALS:
+        case RTYPE_SETTINGS_FLUID:
+        case RTYPE_TEXTURE_LIST:
+        case RTYPE_MUSIC_SETTING:
+        case RTYPE_MIXER_SETTINGS:
+            return PREFER_TEXT;
+        
+        default: 
+            return PREFER_BINARY;
+    }
+}
+
+MH_DefineFunc(SetResourceError, 0x0008f568, TOC0, void, const CSerialisedResource* res, EResourceLoadState error);
+
 const char* gResourceNames[RTYPE_LAST];
 
 MH_DefineFunc(LoadResourceByFilenameGeneric, 0x0008ee08, TOC0, CP<CResource>, CFilePath const& filename, EResourceType type, unsigned int flags, CStreamPriority stream_priority_override, bool can_create);

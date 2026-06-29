@@ -4,6 +4,7 @@
 
 #include <GuidHash.h>
 
+
 #include <cell/DebugLog.h>
 #include <cell/fs/cell_fs_file_api.h>
 #include <refcount.h>
@@ -356,7 +357,7 @@ bool DumpMeshToFile(CPoppet* poppet, CThing* thing)
     CFilePath fp(FPR_GAMEDATA, path);
 
     FileHandle fd;
-    FileOpen(fp, &fd, OPEN_WRITE);
+    FileOpen(fp, fd, OPEN_WRITE);
 
     MMString<char> gltf;
     gltf.reserve(10000); // reserve a reasonable amount of space for all the strcat bullshit
@@ -398,7 +399,7 @@ bool DumpMeshToFile(CPoppet* poppet, CThing* thing)
         }
     }
 
-    FileClose(&fd);
+    FileClose(fd);
     return true;
 }
 
@@ -547,6 +548,69 @@ bool HandlePickObjectAction(CPoppet* poppet, CThing* thing)
 }
 */
 
+enum
+{
+    kMorphType_Translation,
+    kMorphType_Rotation,
+    kMorphType_Scale,
+    kMorphType_Targets
+};
+
+struct SPoppetMessageMorphData
+{
+    v4 Getv4() const
+    {
+        switch (Type)
+        {
+            case kMorphType_Translation:
+            {
+                
+                break;
+            }
+        }
+    }
+
+
+    u8 Type;
+    u8 Index;
+    union
+    {
+        float Components[3];
+        float MorphValue;
+    };
+};
+
+void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg, v4 v)
+{
+    switch (msg)
+    {
+        case E_POPPET_PHOTO_MESSAGE:
+        {
+            poppet->Inventory.SelectBoxBounds = v;
+            poppet->PushMode(MODE_CURSOR, SUBMODE_GRAB_PHOTO);
+            break;
+        }
+        case E_POPPET_MORPH_MESSAGE:
+        {
+
+            SPoppetMessageMorphData& data = *((SPoppetMessageMorphData*)&v);
+            
+            PYellowHead* part = poppet->PlayerThing->GetPYellowHead();
+            switch (data.Type)
+            {
+                case kMorphType_Scale:
+                {
+                    
+                    break;
+                }
+            }
+
+
+            break;
+        }
+    }
+}
+
 void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
 {
     switch (msg)
@@ -621,6 +685,27 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg)
         case E_POPPET_MESH_CAPTURE_MESSAGE:
         {
             poppet->PushMode(MODE_CURSOR, SUBMODE_MESH_CAPTURE);
+            break;
+        }
+        case E_POPPET_MORPH_MESSAGE:
+        {
+            poppet->PushMode(MODE_TWEAK, SUBMODE_LOOKS);
+            break;
+        }
+        case E_POPPET_RESET_MORPHS_MESSAGE:
+        {
+            CThing* player = poppet->PlayerThing;
+            if (player == NULL) break;
+            PYellowHead* yellowhead = player->GetPYellowHead();
+            if (yellowhead == NULL) break;
+
+            for (u32 i = 0; i < 64; ++i)
+            {
+                yellowhead->AnimBonePos[i] = v4(0.0f);
+                yellowhead->AnimBoneScale[i] = v4(1.0f);
+                yellowhead->AnimBoneRot[i] = q4::identity();
+            }
+
             break;
         }
     }
@@ -743,6 +828,21 @@ void HandleCustomToolType(CPoppet* poppet, EToolType tool)
             //poppet->SendPoppetMessage(E_POPPET_GRADIENT_MESSAGE);
             break;
         }
+        case TOOL_MORPH_EDIT:
+        {
+            poppet->SendPoppetMessage(E_POPPET_MORPH_MESSAGE);
+            break;
+        }
+        case TOOL_MORPH_RESET:
+        {
+            poppet->SendPoppetMessage(E_POPPET_RESET_MORPHS_MESSAGE);
+            break;
+        }
+        case TOOL_MORPH_SAVE:
+        {
+            poppet->Inventory.SaveMorphToInventory();
+            break;
+        }
     }
 }
 
@@ -763,6 +863,17 @@ bool HandleToolPickSound(CPoppet* poppet, CThing* thing)
 }
 
 void LoadCursorSprites()
+{
+
+}
+
+CDotToDotState::CDotToDotState() : CPoppetChild(),
+Polygon(), PlacementThing(), Z(), Depth()
+{
+    
+}
+
+CDotToDotState::~CDotToDotState()
 {
 
 }
@@ -807,6 +918,9 @@ void AttachCustomPoppetMessages()
     TABLE[E_POPPET_EXPLOSION_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_GENEALOGY_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
     TABLE[E_POPPET_GRADIENT_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+
+    TABLE[E_POPPET_MORPH_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
+    TABLE[E_POPPET_RESET_MORPHS_MESSAGE] = (u32)&_custom_poppet_message_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092afb4, (u32)TABLE);
@@ -856,6 +970,10 @@ void AttachCustomToolTypes()
     TABLE[TOOL_EXPLOSION] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_GENEALOGY] = (u32)&_custom_tool_type_hook - (u32)TABLE;
     TABLE[TOOL_POPIT_GRADIENT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+
+    TABLE[TOOL_MORPH_RESET] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_MORPH_SAVE] = (u32)&_custom_tool_type_hook - (u32)TABLE;
+    TABLE[TOOL_MORPH_EDIT] = (u32)&_custom_tool_type_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0092ad18, (u32)TABLE);

@@ -5,6 +5,7 @@
 #include "vm/VMTypes.h"
 
 class CScriptObject;
+class CThing;
 
 class CScriptVariant {
 public:
@@ -14,6 +15,7 @@ public:
     inline CScriptVariant(u32 value) : S32(value), MachineType(VMT_S32) {}
     inline CScriptVariant(float value) : F32(value), MachineType(VMT_F32) {}
     CScriptVariant(CScriptObject* value);
+    CScriptVariant(const CThing* thing);
 public:
     EMachineType MachineType;
     union

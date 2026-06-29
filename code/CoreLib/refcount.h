@@ -15,7 +15,7 @@ public:
 	int GetRefCount() const { return RefCount; }
 	CBaseCounted() : RefCount() {}
 protected:
-	virtual ~CBaseCounted() = 0;
+	virtual ~CBaseCounted();
 private:
 	CBaseCounted(const CBaseCounted&);
 	CBaseCounted& operator=(const CBaseCounted&);
@@ -112,7 +112,7 @@ public:
 
 	StaticCP(T* ptr) : CP<T>(ptr) {}
 	StaticCP(const StaticCP<T>& rhs) : CP<T>(rhs.Ref) {}
-	
+
 	static void RemoveRef(void* ptr)
 	{
 		(*(StaticCP<T>*)ptr) = (T*)NULL;
@@ -127,6 +127,12 @@ public:
 	StaticCP<T>& operator=(StaticCP<T> const& rhs) 
 	{
 		this->CopyFrom(rhs.Ref);
+		return *this;
+	}
+
+	StaticCP<T>& operator=(CP<T> const& rhs)
+	{
+		this->CopyFrom(rhs.GetRef());
 		return *this;
 	}
 public:

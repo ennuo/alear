@@ -28,14 +28,17 @@ void* CAllocatorMM::Realloc(CAllocatorBucket& bucket, void* data, u32 size)
 // TODO: I don't fucking know, man
 u32 CAllocatorMM::ResizePolicy(u32 old_max_size, u32 new_size, u32 item_sizeof) 
 {
-	u64 uVar1 = ((u64)(s32)old_max_size & 0x7fffffffU) * 2;
-	if (item_sizeof != 0) {
-		uVar1 = uVar1 - (-(u64)(uVar1 < 0x20 / (u64)item_sizeof) &
-                    uVar1 - 0x20 / (u64)item_sizeof);
+	u32 double_size = old_max_size * 2;
+	u32 min_size = double_size;
+
+	if (item_sizeof != 0)
+	{
+		min_size = 32 / item_sizeof;
+		if (min_size < double_size)
+			min_size = double_size;
 	}
-	return (s32)uVar1 -
-         ((s32)uVar1 - new_size &
-         -(u32)((uVar1 & 0xffffffff) < ((u64)(s32)new_size & 0xffffffffU)));
+
+	return new_size > min_size ? new_size : min_size;
 }
 
 void* CAllocatorMMAligned128::Malloc(CAllocatorBucket& bucket, u32 size)
@@ -53,16 +56,17 @@ void* CAllocatorMMAligned128::Realloc(CAllocatorBucket& bucket, void* data, u32 
 	return CAllocatorBucket_AlignedRealloc(bucket, data, size + 0x7f & 0xffffff80, 128);
 }
 
-/* mem_allocator.cpp: 757 */
-// TODO: I don't fucking know, man
 u32 CAllocatorMMAligned128::ResizePolicy(u32 old_max_size, u32 new_size, u32 item_sizeof) 
 {
-	u64 uVar1 = ((u64)(s32)old_max_size & 0x7fffffffU) * 2;
-	if (item_sizeof != 0) {
-		uVar1 = uVar1 - (-(u64)(uVar1 < 0x20 / (u64)item_sizeof) &
-                    uVar1 - 0x20 / (u64)item_sizeof);
+	u32 double_size = old_max_size * 2;
+	u32 min_size = double_size;
+
+	if (item_sizeof != 0)
+	{
+		min_size = 32 / item_sizeof;
+		if (min_size < double_size)
+			min_size = double_size;
 	}
-	return (s32)uVar1 -
-         ((s32)uVar1 - new_size &
-         -(u32)((uVar1 & 0xffffffff) < ((u64)(s32)new_size & 0xffffffffU)));
+
+	return new_size > min_size ? new_size : min_size;
 }

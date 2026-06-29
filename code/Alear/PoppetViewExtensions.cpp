@@ -8,14 +8,12 @@
 #include <ResourceGame.h>
 #include <Poppet.h>
 #include <PoppetEnums.inl>
+#include <Translate.h>
 #include <InventoryItem.h>
 #include <InventoryView.h>
 #include <network/NetworkUtilsNP.h>
 
 #include "customization/Emotes.h"
-
-const u32 gUserObjectMask = 0x40100480;
-const u32 gPodMask = E_TYPE_USER_POD | E_TYPE_POD_TOOL;
 
 bool IsPlayerCustomizationTool(u32 tool_type)
 {
@@ -32,6 +30,8 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
     u32 type = view->Descriptor.Type;
     u32 subtype = view->Descriptor.SubType;
 
+    if (type == E_TYPE_PLAYER_COLOUR) return false;
+    
     switch (tool_type)
     {
         case TOOL_COSTUME_RESET:
@@ -39,7 +39,7 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
         case TOOL_COSTUME_SAVE:
         case TOOL_COSTUME_WASH:
         {
-            return (type & (E_TYPE_COSTUME_TOOL)) != 0;
+            return (type & (E_TYPE_COSTUME_TOOL)) != 0 || (subtype & E_SUBTYPE_ANIMATION_STYLE) != 0;
         }
         
         case TOOL_STICKER_PICK:
@@ -138,6 +138,13 @@ bool IsToolMatch(CInventoryView* view, u32 tool_type)
             return (type & (E_TYPE_TOOL | E_TYPE_FLOOD_FILL)) != 0 && edit;
         }
 
+        case TOOL_MORPH_RESET:
+        case TOOL_MORPH_SAVE:
+        case TOOL_MORPH_EDIT:
+        {
+            return (subtype & E_SUBTYPE_MORPH) != 0;
+        }
+
         default: return false;
     }
 }
@@ -181,11 +188,24 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     u32 item_subtype = item->Details.SubType;
     u32 view_subtype = view->Descriptor.SubType;
 
-    if (view->HeartedOnly && (item->Flags & E_IIF_HEARTED) == 0) return false;
+    if (view->HeartedOnly && !item->IsHearted()) return false;
     if (item->Details.ToolType != TOOL_NOT_A_TOOL) return IsToolMatch(view, item->Details.ToolType);
 
     if (item_guid == 0x12981 || item_guid == 0x15351) return false;
     if ((item_type & view_type) == 0) return false;
+
+    if ((item_type & E_TYPE_READYMADE) != 0)
+    {
+        if ((item_type & E_TYPE_TOOL) != 0) return true;
+
+        if(!gUseToysPage)
+        {
+            return (item_type & view_type) != 0;
+        }
+        if (view_subtype == E_SUBTYPE_TOYS)
+            return (item_subtype & E_SUBTYPE_TOYS) != 0;
+        return (item_subtype & E_SUBTYPE_TOYS) == 0;
+    }
 
     if (view_type == gPodMask)
     {
@@ -206,7 +226,7 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     }
     
     bool owns = item->Details.ToolType == TOOL_NOT_A_TOOL 
-                ? item->Details.IsCreatedBy(owner)
+                ? item->Details.IsCreatedBy(*owner)
                 : (item_subtype & E_SUBTYPE_MADE_BY_OTHERS) == 0;
     
     if ((view_subtype & E_SUBTYPE_MADE_BY_ME) != 0 && owns)
@@ -218,10 +238,68 @@ bool CustomItemMatch(CInventoryView* view, CInventoryItem* item, NetworkPlayerID
     return false;
 }
 
-struct BaseGroupBy {
-    RLocalProfile* LocalProfile;
-    CInventoryView* Page;
-};
+int MapInventoryItemToType(int type, int subtype)
+{
+    if (type == E_TYPE_TOOL)
+        return 0;
+    if (type == E_TYPE_PLAYER_COLOUR)
+        return 1;
+    if (type == E_TYPE_USER_POD)
+        return 2;
+    if (type == E_TYPE_BACKGROUND)
+        return 3;
+    if (type == E_TYPE_PRIMITIVE_SHAPE)
+        return 4;
+    if (type == E_TYPE_PRIMITIVE_MATERIAL)
+        return 5;
+    if (type == E_TYPE_READYMADE)
+    {
+        if (subtype == E_SUBTYPE_TOYS)
+        {
+            return 7;
+        }
+        return 6;
+    }
+    if (type == E_TYPE_USER_OBJECT)
+    {
+        if (type == E_SUBTYPE_MADE_BY_ME)
+        {   
+            return 8;
+        }
+        return 9;
+    }
+    if (type == E_TYPE_JOINT)
+        return 10;
+    if (type == E_TYPE_GADGET)
+        return 11;
+    if (type == E_TYPE_GAMEPLAY_KIT)
+        return 12;
+    if (type == E_TYPE_MUSIC)
+        return 13;
+    if (type == E_TYPE_SOUND)
+        return 14;
+    if (type == E_TYPE_COSTUME_MATERIAL || type == E_TYPE_COSTUME)
+        return 15;
+    if (type == E_TYPE_USER_COSTUME)
+        return 16;
+    if (type == E_TYPE_STICKER)
+        return 17;
+    if (type == E_TYPE_DECORATION)
+        return 18;
+    if (type == E_TYPE_PAINT)
+        return 19;
+    if (type == E_TYPE_EYETOY)
+        return 20;
+    if (type == E_TYPE_USER_STICKER)
+    {
+        if (type == E_SUBTYPE_MADE_BY_ME)
+        {
+            return 21;
+        }
+        return 22;
+    }
+    return 23;
+}
 
 struct SortByName
 {
@@ -237,59 +315,127 @@ struct SortByName
     }
 };
 
-struct SortByArtist
+struct SortByType
 {
     bool operator()(CInventoryView::SInventoryItemData& a, CInventoryView::SInventoryItemData& z) const
     {
-        if (a.Item->Details.CustomSortKey != z.Item->Details.CustomSortKey)
-        {
-            return a.Item->Details.CustomSortKey > z.Item->Details.CustomSortKey;
-        }
+        int a_type = MapInventoryItemToType(a.Item->Details.Type, a.Item->Details.SubType);
+        int z_type = MapInventoryItemToType(z.Item->Details.Type, z.Item->Details.SubType);
 
-        return a.Item->UID > z.Item->UID;
+        if (a_type == z_type)
+            return a.Item->UID < z.Item->UID;
+        return a_type > z_type;
     }
 };
 
-void DoArtistSort(CInventoryView* view)
+struct SortByCurSortIndex
 {
-    std::sort(view->PageData.begin(), view->PageData.end(), SortByArtist());
+    bool operator()(const CInventoryView::SInventoryItemData& a, const CInventoryView::SInventoryItemData& z) const
+    {
+        if (a.CurSortIndex == z.CurSortIndex)
+            return a.Item->UID < z.Item->UID;
+        return a.CurSortIndex > z.CurSortIndex;
+    }
+};
+
+void DoTypeSort(CInventoryView* view)
+{
+    std::sort(view->PageData.begin(), view->PageData.end(), SortByType());
 
     int key = 0xDEADBEEF;
     for (int i = 0; i < view->PageData.size(); ++i)
     {
         CInventoryItem* item = view->PageData[i].Item;
-        if (item->Details.CustomSortKey != key)
+        int item_key = MapInventoryItemToType(item->Details.GetType(), item->Details.GetSubType());
+        if (item_key != key)
         {
-            SSortTermBoundary boundary;
+            const char* lams_key;
+            switch (item->Details.GetType())
+            {
+                case E_TYPE_TOOL: lams_key = "POPIT_FUNCTIONS"; break;
+                case E_TYPE_PLAYER_COLOUR: lams_key = "POPIT_PAGE_PLAYER_COLOUR"; break;
+                case E_TYPE_USER_POD: lams_key = "TG_My_Pods"; break;
+                case E_TYPE_BACKGROUND: lams_key = "TG_Backgrounds"; break;
+                case E_TYPE_PRIMITIVE_SHAPE: lams_key = "TG_Shapes"; break;
+                case E_TYPE_PRIMITIVE_MATERIAL: lams_key = "TG_Materials"; break;
+                case E_TYPE_READYMADE:
+                {
+                    if (item->Details.GetSubType() == E_SUBTYPE_TOYS)
+                        lams_key = "TG_Toys";
+                    else
+                        lams_key = "TG_Objects";
+                    break;
+                }
+                case E_TYPE_USER_OBJECT:
+                {
+                    if (item->Details.GetSubType() == E_SUBTYPE_MADE_BY_ME)
+                        lams_key = "POPIT_MY_PLANS";
+                    else
+                        lams_key = "POPIT_PAGE_COMMUNITY_OBJECTS";
+                    break;
+                }
+                case E_TYPE_JOINT: lams_key = "TG_Links"; break;
+                case E_TYPE_GADGET: lams_key = "POPIT_PAGE_GADGETS"; break;
+                case E_TYPE_GAMEPLAY_KIT: lams_key = "TG_Gameplay_Kits"; break;
+                case E_TYPE_MUSIC: lams_key = "CATEGORY_MUSIC"; break;
+                case E_TYPE_SOUND: lams_key = "CATEGORY_SOUND_OBJECTS"; break;
+                case E_TYPE_COSTUME_MATERIAL:
+                case E_TYPE_COSTUME:
+                case E_TYPE_USER_COSTUME:
+                    lams_key = "TG_My_Costumes"; 
+                    break;
+                case E_TYPE_STICKER: lams_key = "TG_Stickers"; break;
+                case E_TYPE_DECORATION: lams_key = "TG_Decorations"; break;
+                case E_TYPE_PAINT: lams_key = "TG_Paint"; break;
+                case E_TYPE_EYETOY: lams_key = "TG_Eyetoy"; break;
+                case E_TYPE_USER_STICKER:
+                {
+                    if (item->Details.GetSubType() == E_SUBTYPE_MADE_BY_ME)
+                        lams_key = "POPIT_MY_PHOTOS";
+                    else
+                        lams_key = "POPIT_PAGE_COMMUNITY_PHOTOS";
+                    break;
+                }
+            }
+
+            view->SortTermBoundaries.resize(view->SortTermBoundaries.size() + 1);
+            SSortTermBoundary& boundary = view->SortTermBoundaries.back();
             boundary.Index = i;
-            MultiByteToWChar(boundary.Name, "No Artist", NULL);
-            view->SortTermBoundaries.push_back(boundary);
-
-            key = item->Details.CustomSortKey;
+            if (key != NULL)
+                Translate(boundary.Name, lams_key);
+            
+            key = item_key;
         }
-
     }
 }
 
-struct SortByPreference
+void DoSubcategorySort(RLocalProfile* profile, CInventoryView* view)
 {
-    bool operator()(CInventoryView::SInventoryItemData& a, CInventoryView::SInventoryItemData& z) const
+    for (u32 i = 0; i < view->PageData.size(); ++i)
     {
-        return a.Item->Details.NameTranslationTag == 1244778990;
+        CInventoryView::SInventoryItemData& item = view->PageData[i];
+        CInventoryItemDetails& details = item.Item->Details;
+        if (details.IsATool()) item.CurSortIndex = -2;
+        else item.CurSortIndex = profile->StringTable.GetSortIndex(details.GetSubcategoryIndex());
     }
-};
 
-void DoPreferenceSort(CInventoryView* view)
-{
-    std::sort(view->PageData.begin(), view->PageData.end(), SortByPreference());
+    std::sort(view->PageData.begin(), view->PageData.end(), SortByCurSortIndex());
 
-    SSortTermBoundary boundary;
-    MultiByteToWChar(boundary.Name, "Good", NULL);
-    view->SortTermBoundaries.push_back(boundary);
+    int key = 0xDEADBEEF;
+    for (int i = 0; i < view->PageData.size(); ++i)
+    {
+        CInventoryItem* item = view->PageData[i].Item;
+        u32 subcategory = item->Details.GetSubcategoryIndex();
+        if (subcategory != key)
+        {
+            view->SortTermBoundaries.resize(view->SortTermBoundaries.size() + 1);
+            SSortTermBoundary& boundary = view->SortTermBoundaries.back();
+            boundary.Index = i;
+            profile->GetStringFromIndex(subcategory, boundary.Name);
+            key = subcategory;
+        }
 
-    boundary.Index = 1;
-    MultiByteToWChar(boundary.Name, "Shit", NULL);
-    view->SortTermBoundaries.push_back(boundary);
+    }
 }
 
 bool IsAlphabeticalCategory(CInventoryView* view)
@@ -303,6 +449,7 @@ bool IsAlphabeticalCategory(CInventoryView* view)
     if (view->Descriptor.Type & E_TYPE_READYMADE) return true;
     if (view->Descriptor.Type & E_TYPE_STICKER) return true;
     if (view->Descriptor.Type & E_TYPE_DECORATION) return true;
+    if (view->Descriptor.Type & E_TYPE_PAINT) return true;
     if (view->Descriptor.Type & E_TYPE_PRIMITIVE_MATERIAL) return true;
     if (view->Descriptor.Type & E_TYPE_BACKGROUND) return true;
 
@@ -355,8 +502,8 @@ void AttachCustomSortModes()
     }
 
     // Using the location sort for the artist sort
-    TABLE[SORT_ARTIST] = (u32)&_global_artist_hook - (u32)TABLE;
-    TABLE[SORT_MEME] = (u32)&_global_pref_hook - (u32)TABLE;
+    TABLE[SORT_SUBCATEGORY] = (u32)&_global_subcategory_sort_hook - (u32)TABLE;
+    TABLE[SORT_TYPE] = (u32)&_global_type_sort_hook - (u32)TABLE;
 
     // Switch out the pointer to the switch case in the TOC
     MH_Poke32(0x0091e06c, (u32)TABLE);
