@@ -8,6 +8,7 @@ class CPlayer;
 
 #include "Resource.h"
 #include "PlayerNumber.inl"
+#include <RandomStream.h>
 
 class RGame : public CResource {
 public:
@@ -15,6 +16,12 @@ public:
     void TeleportPlayer(CThing* player, v2 const& position);
     CPlayer* GetPlayerFromIndex(u32);
     CPlayer* GetPlayerFromPlayerNumber(EPlayerNumber player_number);
+
+    inline CRandomStream& GetNonDeterministicRandStream()
+    {
+        return *(CRandomStream*)(((char*)this) + 0x1b8);
+    }
+    
 public:
     PWorld* GetWorld();
 public:

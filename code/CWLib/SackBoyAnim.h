@@ -2,6 +2,7 @@
 #define SACK_BOY_ANIM_H
 
 #include <vector.h>
+#include <hack_thingptr.h>
 #include "AnimBank.h"
 #include "ResourceDescriptor.h"
 #include "RandomStream.h"
@@ -25,6 +26,7 @@ public:
     void OnFreeze();
     void OnThaw();
     void InitExtraAnimData();
+    void DoLauncherAnims();
 public:
     void LoadAnims(CAnimBank* ab, bool cached);
     CRenderYellowHead* GetRenderYellowHead() const;
@@ -328,6 +330,10 @@ public:
     bool CrossedZero;
 public:
     bool WasStunned;
+public:
+    CThingPtr JustLaunchedOff;
+    CThingPtr LastLaunchedOff;
+    int LaunchFrame;
 };
 
 #endif // SACK_BOY_ANIM_H

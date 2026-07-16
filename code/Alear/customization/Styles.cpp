@@ -14,6 +14,20 @@ extern "C" void _emote_select_hook();
 extern "C" void _popit_update_menu_shape_hook();
 extern "C" void _animstyles_hook();
 extern "C" void _get_slap_force_hook();
+extern "C" void _sbanim_late_update_hook();
+
+MH_DefineFunc(CSackBoyAnim_Destructor, 0x000f1fe0, TOC0, void, CSackBoyAnim*);
+void DestroyAllocatedInstance(CSackBoyAnim* anim)
+{
+    // Have to make sure these get unset
+    // or else the game is going to crash at some point.
+    anim->JustLaunchedOff = NULL;
+    anim->LastLaunchedOff = NULL;
+
+    // Call normal destructor now, this function is only
+    // used on the allocated version of this class.
+    CSackBoyAnim_Destructor(anim);
+}
 
 void InitEmoteHooks()
 {
@@ -26,6 +40,8 @@ void InitEmoteHooks()
     MH_InitHook((void*)0x000e6894, (void*)&ScriptyStuff::LoadAnim);
     MH_InitHook((void*)0x000e6858, (void*)&CustomInitAnimsPostResource);
 
+    MH_PokeCall(0x000e5c60, DestroyAllocatedInstance);
+    MH_PokeBranch(0x000fed60, &_sbanim_late_update_hook);
     MH_PokeBranch(0x0038ae78, &_animstyles_hook);
 }
 

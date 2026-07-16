@@ -1,7 +1,41 @@
 #include "PartCreature.h"
 #include "PartYellowHead.h"
-#include "thing.h"
-#include "hook.h"
+#include <PartScript.h>
+#include <PartShape.h>
+#include <thing.h>
+
+#include <ResourceGame.h>
+#include <ResourceScript.h>
+
+#include <mmalex.h>
+#include <Launcher.h>
+
+MH_DefineFunc(PCreature_GetJumpInput, 0x00050674, TOC0, bool, const PCreature*);
+bool PCreature::GetJumpInput() const
+{
+    return PCreature_GetJumpInput(this);
+}
+
+u32 PCreature::GetNumLegs() const
+{
+    if (!CachedIsEnemy)
+        return Config->Limbs - Config->Arms;
+    return LegList.size();
+}
+
+float PCreature::GetLegLength(u32 i) const
+{
+    // todo: i dont care
+    if (CachedIsEnemy) return 0.0f;
+
+    return Config->LegLength;
+}
+
+float PCreature::GetMaxDistForFeetTouching(u32 i) const
+{
+    if (!CachedIsEnemy) return Config->MaxDistForFeetTouching;
+    return GetLegLength(i) * 0.5f;
+}
 
 MH_DefineFunc(PCreature_SetState, 0x0007194c, TOC0, void, PCreature*, EState);
 void PCreature::SetState(EState state)

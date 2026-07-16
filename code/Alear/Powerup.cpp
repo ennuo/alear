@@ -18,6 +18,8 @@
 #include "AlearConfig.h"
 #include "WinterBlast.h"
 
+#include <Launcher.h>
+
 float gSackboyThickness;
 CRawVector<v2, CAllocatorMMAligned128> gSackboyPolygon;
 CRawVector<unsigned int> gSackboyLoops;
@@ -935,6 +937,8 @@ bool CanFloat(PCreature& creature)
 
 void OnCreatureStateUpdate(PCreature& creature)
 {
+    CThing* thing = creature.GetThing();
+    HandleAutoActivatedBouncepads(thing);
     //DebugLog("ICE RANGE: min:%f, max:%f\n", creature.Fork->ObstacleMin, creature.Fork->ObstacleMax);
 
     if (IsAffectedByIce(creature))  
@@ -1023,7 +1027,6 @@ void OnCreatureStateUpdate(PCreature& creature)
     CInput* input = creature.GetInput();
     if (input == NULL) return;
 
-    CThing* thing = creature.GetThing();
     // Handle all custom powerup/sackboy states here
     
     //part_creature->CanDropPowerup = true;

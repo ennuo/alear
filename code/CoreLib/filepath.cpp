@@ -247,5 +247,7 @@ bool FileHash(const CFilePath& fp, CHash* out_hash)
 	while (n == chunk_size);
 	
 	ctx.Result((u8*)out_hash);
+	FileClose(fd);
+	
 	return true;
 }

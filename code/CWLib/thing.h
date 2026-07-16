@@ -29,6 +29,7 @@
 #include "PartPhysicsJoint.h"
 
 #include <PartMaterialOverride.h>
+#include <PartPhysicsBody.h>
 #include <PartList.h>
 
 #include "hack_thingptr.h"
@@ -39,7 +40,7 @@ enum EObjectType
     NUM_OBJECT_TYPES
 };
 
-class PBody : public CPart {};
+
 class PPos;
 
 
@@ -110,6 +111,10 @@ public:
         if (part == PART_TYPE_MATERIAL_OVERRIDE) return GetPMaterialOverride();
         return Parts[part];
     }
+
+    inline PBody* GetBodyRoot() { return BodyRoot; }
+    inline PWorld* GetWorld() const { return World; }
+    inline CThing* GetParent() const { return Parent; }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

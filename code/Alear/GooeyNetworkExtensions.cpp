@@ -18,6 +18,7 @@
 #include <PartEnemy.h>
 #include <thing.h>
 #include <mmalex.h>
+#include <Launcher.h>
 
 #include <cell/DebugLog.h>
 #include <vm/VirtualMachine.h>
@@ -527,10 +528,11 @@ namespace TweakSettingNativeFunctions
             }
             case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
             {
-                PScript* script = thing->GetPScript();
-                f32 distance = script->GetValue<f32>("Distance", 0.0f);
-                DebugLog("Distance: (%f)\n", distance);
-                return setting.GameToFixed(distance);
+                return setting.GameToFixed(Launcher::GetDistance(thing));
+            }
+            case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
+            {
+                return !Launcher::IsAutoActivated(thing);
             }
             case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
             {
@@ -880,6 +882,10 @@ bool InitTweakSettings()
         .SetSteps(0.1f, 1.0f)
         .SetIcon(paramanim_texture, 1)
         .SetDebugToolTip(L"Launcher Height");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED)
+        .SetupYesNo()
+        .SetDebugToolTip(L"Manual Activation");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER)
         .SetWidget(TWEAK_WIDGET_MEASURER)
@@ -1296,32 +1302,16 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
         
         case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
         {
-            float distance = setting.FixedToGame(action.Value);
-            DebugLog("E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE: %08x (%f)\n", (u32)action.Value, distance);
-
-            CThing* thing = world->GetThingByUID(action.ThingUID);
-            if (thing != NULL)
-            {
-                PScript* script = thing->GetPScript();
-                if (script != NULL)
-                {
-                    script->SetValue("Distance", distance);
-                    CThing* light_thing = script->GetValue<CThing*>("LightThing", NULL);
-                    if(light_thing != NULL)
-                    {
-                        PSpriteLight* light = light_thing->GetPSpriteLight();
-                        if(light != NULL)
-                        {
-                            //light->FarDist = distance;
-                        }
-                    }
-
-                }
-            }
-
+            Launcher::SetDistance(world->GetThingByUID(action.ThingUID), setting.FixedToGame(action.Value));
             break;
         }
-        
+
+        case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
+        {
+            Launcher::SetAutoActivated(world->GetThingByUID(action.ThingUID), !action.Value);
+            break;
+        }
+    
         case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
         {
             float speed_modifier = setting.FixedToGame(action.Value);
@@ -1704,6 +1694,7 @@ void AttachGooeyNetworkHooks()
     
     TABLE[E_GOOEY_NETWORK_ACTION_AMMO_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

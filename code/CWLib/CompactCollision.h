@@ -1,5 +1,27 @@
-#ifndef COMPACT_MATERIAL_H
-#define COMPACT_MATERIAL_H
+#pragma once
+
+class PShape;
+class PBody;
+
+inline v4 mergex(floatInV2 a, v4 s)
+{
+    return s.setX(a);
+}
+
+inline floatInV2 splatx(v4 a)
+{
+    return vfloat(a.getX().get128());
+}
+
+inline floatInV2 splaty(v4 a)
+{
+    return vfloat(a.getY().get128());
+}
+
+inline floatInV2 splatz(v4 a)
+{
+    return vfloat(a.getZ().get128());
+}
 
 class __attribute__((aligned(0x10))) CCompactMaterial {
 public:
@@ -12,4 +34,36 @@ public:
     bool Grabbable;
 };
 
-#endif // COMPACT_MATERIAL_H
+class CCompactMass {
+public:
+    inline floatInV2 GetAngVel() const { return splatx(Scalars); }
+    inline floatInV2 GetIMoment() const { return splaty(Scalars); }
+    inline floatInV2 GetIMass() const { return splatz(Scalars); }
+    inline v2 GetPosVel() const { return PosVel; }
+    inline v2 GetPos() const { return loadxy(Pos); }
+    PBody* GetBody() const;
+    CCompactMass* GetProxy() const;
+    inline void SetAngVel(floatInV2 a) { Scalars = mergex(a, Scalars); }
+    void SetIMoment(floatInV2);
+    void SetIMass(floatInV2);
+    
+    inline void SetPosVel(v2 v)
+    {
+        PosVel = v;
+    }
+
+    void SetPos(v2);
+    void SetBody(PBody*);
+    void SetProxy(CCompactMass*);
+    void SetOldPosVel(v2);
+    void SetOldAngVel(floatInV2);
+    v2 GetOldPosVel();
+    floatInV2 GetOldAngVel();
+public:
+    CCompactMass();
+    bool IsMovable();
+private:
+    v2 PosVel;
+    v2 Pos;
+    v4 Scalars;
+};

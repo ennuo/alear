@@ -1835,6 +1835,14 @@ namespace LogicSystemNativeFunctions
         shape->EditorColour = c;
     }
 
+    void DoLaunch(CThing* launcher, CThing* player)
+    {
+        if (launcher == NULL || player == NULL) return;
+        PCreature* creature = player->GetPCreature();
+        if (creature == NULL) return;
+        creature->DoLaunch(launcher);
+    }
+
     void Register()
     {
         // RegisterNativeFunction("SwitchBase", "GetSwitchType__", false, NVirtualMachine::CNativeFunction1<int, CThing*>::Call<GetSwitchType>);
@@ -1846,7 +1854,7 @@ namespace LogicSystemNativeFunctions
         RegisterNativeFunction("Thing", "SetRenderMeshMesh__Q5ThingQ8Resource", true, NVirtualMachine::CNativeFunction2V<CThing*, CP<CResource> >::Call<SetRenderMeshMesh>);
         RegisterNativeFunction("Resource", "LoadMeshByFilename__g", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CGUID>::Call<LoadMeshByFilename>);
         RegisterNativeFunction("Thing", "SetShapeEditorColour__Q5Thingr", true, NVirtualMachine::CNativeFunction2V<CThing*, v4>::Call<SetShapeEditorColour>);
-
+        RegisterNativeFunction("Launcher", "DoLaunch__Q5Thing", false, NVirtualMachine::CNativeFunction2V<CThing*, CThing*>::Call<DoLaunch>);
     }
 }
 

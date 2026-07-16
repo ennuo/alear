@@ -1,4 +1,11 @@
 #include "PartShape.h"
+#include <PartRenderPosition.h>
+#include <thing.h>
+
+v2 PShape::GetPosCOM()
+{
+    return GetThing()->GetPPos()->GetWorldPosition() * COM.getCol3();
+}
 
 
 MH_DefineFunc(PShape_SetCollidableGame, 0x0002f0f0, TOC0, void, PShape*, bool);
