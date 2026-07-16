@@ -348,6 +348,15 @@ void CPoppetGooey::DoInventoryItemInfoIcons(u64 uid, CInventoryItem* item, v2 si
     const CPlayer* player = GetPlayer()->GetPYellowHead()->GetPlayer();
     const CSlotID& id = item->Details.GetLevelUnlockSlotID();
 
+    v2 locked_offset = v2(0.0f, 0.0f);
+    v2 locked_icon_size = v2(256.0f);
+
+    if(item->Details.IsLocked())
+    {
+        manager->DoIcon(GI_COPYRIGHT, locked_offset, v4(1.0f));
+        manager->SetLastItemAsRelative(uid, locked_icon_size);
+    }
+
     v2 top_row_offset = v2(4.0f, 4.0f);
     v2 top_row_icon_size = v2(42.0f);
 
@@ -450,6 +459,8 @@ void CustomDoEmptyPageMessage(CPoppetGooey* gooey, CInventoryView* view, u32 num
                 {
                     if (subtype == E_SUBTYPE_MORPH)
                         suffix = "MORPHS";
+                    else if (subtype == E_SUBTYPE_ANIMATION_STYLE)
+                        suffix = "STUFF";
                     else
                         suffix = "COSTUMES";
                 }
@@ -461,6 +472,8 @@ void CustomDoEmptyPageMessage(CPoppetGooey* gooey, CInventoryView* view, u32 num
                     suffix = "EYETOY";
                 else if (type == E_TYPE_PAINT)
                     suffix = "PAINT";
+                else if (type == E_TYPE_TOOL || E_TYPE_GADGET || E_TYPE_BACKGROUND || E_TYPE_SOUND)
+                    suffix = "STUFF";
                 else if ((type & E_TYPE_USER_STICKER) == 0)
                 {
                     if (type == E_TYPE_PRIMITIVE_SHAPE)
