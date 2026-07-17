@@ -530,6 +530,10 @@ namespace TweakSettingNativeFunctions
             {
                 return setting.GameToFixed(Launcher::GetDistance(thing));
             }
+            case E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE:
+            {
+                return setting.GameToFixed(Launcher::GetAngle(thing));
+            }
             case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
             {
                 PShape* shape = thing->GetPShape();
@@ -887,6 +891,13 @@ bool InitTweakSettings()
         .SetSteps(0.1f, 1.0f)
         .SetIcon(paramanim_texture, 1)
         .SetDebugToolTip(L"Launcher Height");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(-45.0f, 45.0f)
+        .SetSteps(1.0f, 5.0f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"Launcher Angle");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED)
         .SetupYesNo()
@@ -1308,6 +1319,12 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
         case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
         {
             Launcher::SetDistance(world->GetThingByUID(action.ThingUID), setting.FixedToGame(action.Value));
+            break;
+        }
+        
+        case E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE:
+        {
+            Launcher::SetAngle(world->GetThingByUID(action.ThingUID), setting.FixedToGame(action.Value));
             break;
         }
 
@@ -1735,6 +1752,7 @@ void AttachGooeyNetworkHooks()
     
     TABLE[E_GOOEY_NETWORK_ACTION_AMMO_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

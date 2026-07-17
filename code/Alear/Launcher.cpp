@@ -106,6 +106,18 @@ CThing* PCreature::GetTouchingBouncepad(bool ignore_layer)
 
 }
 
+v2 Rotate(float launch_ang, v2 launch_vec)
+{
+    float radians = launch_ang * (3.14159 / 180) * -1.0f;
+    float cos = mmalex::cos(radians);
+    float sin = mmalex::sin(radians);
+
+    return v2(
+        launch_vec.getX() * cos - launch_vec.getY() * sin,
+        launch_vec.getX() * sin + launch_vec.getY() * cos
+    );
+}
+
 bool PCreature::DoLaunch(CThing* launcher)
 {
     if (!Launcher::IsActive(launcher)) return false;
@@ -115,6 +127,8 @@ bool PCreature::DoLaunch(CThing* launcher)
     v2 launch_vel = 
         Vectormath::Aos::normalize(launcher->GetPPos()->GetWorldPosition().getCol2()) * 
         Launcher::GetSpeed(launcher);
+    
+    launch_vel = Rotate(Launcher::GetAngle(launcher), launch_vel);
 
     if (Fork->JumpFrame != -1 || Fork->IsSwimming) return false;
 
@@ -243,6 +257,25 @@ namespace Launcher
             CScriptArguments args;
             args.AppendArg(distance);
             script->InvokeSync("SetDistance__f", args);
+        }
+    }
+
+    float GetAngle(CThing* launcher)
+    {
+        PScript* script;
+        if ((script = GetScript(launcher)) != NULL)
+            return script->GetValue<float>("Angle", 0.0f);
+        return 0.0f;
+    }
+
+    void SetAngle(CThing* launcher, float angle)
+    {
+        PScript* script;
+        if ((script = GetScript(launcher)) != NULL)
+        {
+            CScriptArguments args;
+            args.AppendArg(angle);
+            script->InvokeSync("SetAngle__f", args);
         }
     }
 

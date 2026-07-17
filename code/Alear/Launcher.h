@@ -9,6 +9,8 @@ namespace Launcher
     CThing* FindFromSurface(CThing*);
     float GetDistance(CThing*);
     void SetDistance(CThing*, float);
+    float GetAngle(CThing*);
+    void SetAngle(CThing*, float);
     float GetSpeed(CThing*);
     float GetAnimationFactor(CThing*);
     void SetAnimationFactor(CThing*, float);
