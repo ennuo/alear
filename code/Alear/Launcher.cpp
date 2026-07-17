@@ -183,10 +183,9 @@ struct LaunchCreature
 bool HandleManualBouncepad(PCreature* creature)
 {
     CThing* bouncepad = creature->GetTouchingBouncepad();
-    if (bouncepad != NULL && !Launcher::IsAutoActivated(bouncepad))
+    if (bouncepad != NULL)
     {
-        creature->DoLaunch(bouncepad);
-        return true;
+        return creature->DoLaunch(bouncepad);
     }
 
     return false;

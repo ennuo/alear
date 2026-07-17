@@ -532,6 +532,11 @@ namespace TweakSettingNativeFunctions
             }
             case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
             {
+                PShape* shape = thing->GetPShape();
+                if(shape != NULL)
+                {
+                    shape->EditorColour = Launcher::IsAutoActivated(thing) ? v4(1.0) : v4(0.0, 1.0, 1.0, 1.0) ;
+                }
                 return !Launcher::IsAutoActivated(thing);
             }
             case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
