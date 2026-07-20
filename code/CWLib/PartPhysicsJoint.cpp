@@ -21,10 +21,9 @@ float PJoint::GetCurrentLength() const
     return PJoint_GetCurrentLength(this);
 }
 
-MH_DefineFunc(PJoint_GetWaveFactor, 0x000284bc, TOC0, float, const PJoint*, float);
-float PJoint::GetWaveFactor(float f) const
+float PJoint::GetCurrentAngle() const
 {
-    return PJoint_GetWaveFactor(this, f);
+    return 0.0f;
 }
 
 void PJoint::SetPosition(float analogue, bool directional)
@@ -35,6 +34,51 @@ void PJoint::SetPosition(float analogue, bool directional)
     
     if (Type == JOINT_TYPE_MOTOR)
     {
+        v2 angle = (Angle + M_PI) * (1.0f / (2.0f * M_PI));
+        angle = (angle - Floor(angle)) * (2.0f * M_PI) - M_PI;
+
+        if (true)
+        {
+            if (max_length == 0.0f)
+            {
+                max_length = -min_length;
+                if (AnimationPattern != JOINT_PATTERN_FLIPPER)
+                    analogue = -analogue;
+            }
+
+
+            float dVar7 = angle.getX();
+            float somevar = GetCurrentAngle();
+            float dVar9 = dVar7 - M_PI;
+            float dVar8 = M_PI * 2.0f;
+            float dVar10 = (somevar - dVar9) / dVar8;
+            somevar = floorf(somevar);
+            float fVar2 = -0.5f;
+
+
+            scale = ((dVar7 - ((dVar10 - somevar) * dVar8 +
+                                                                dVar9)) /
+                                (max_length * fVar2));
+
+
+            AnimationSpeed = analogue - 2.5f;
+        }
+        else
+        {
+            analogue = MIN(analogue, 0.0f);
+            if (max_length == 0.0f)
+            {
+                max_length = -min_length;
+                if (AnimationPattern != JOINT_PATTERN_FLIPPER)
+                    analogue = 1.0f - analogue;
+            }
+
+            AnimationSpeed = analogue;
+
+
+
+        }
+
         // not implementing this right now
         scale = 0.0f;
     }
@@ -85,8 +129,7 @@ float PJoint::GetWorldFrame() const
 
 v4 PJoint::GetContactPointA() const
 {
-    v4 contact = AContact;
-    contact.setW(1.0f);
+    v4 contact = AContact.Makev4();
     if (A != NULL && A->GetPPos() != NULL)
         contact = A->GetPPos()->Fork->WorldPosition * contact;
     return contact;
@@ -94,8 +137,7 @@ v4 PJoint::GetContactPointA() const
 
 v4 PJoint::GetContactPointB() const
 {
-    v4 contact = BContact;
-    contact.setW(1.0f);
+    v4 contact = BContact.Makev4();
     if (B != NULL && B->GetPPos() != NULL)
         contact = B->GetPPos()->Fork->WorldPosition * contact;
     return contact;
@@ -111,130 +153,13 @@ float PJoint::GetMaxDesiredVel() const
 
     if (is_switch_triggered && (Behaviour == JOINT_BEHAVIOR_FORWARDS_BACKWARDS || Behaviour == JOINT_BEHAVIOR_POSITIONAL))
     {
-        return AnimationTime < 1.0f ? 0.0f : abs((AnimationRange / AnimationTime) * 2.0f);
+        return AnimationTime < 1.0f ? 0.0f : abs(AnimationRange / AnimationTime);
     }
 
     if (AnimationPattern == JOINT_PATTERN_FLIPPER) return AnimationRange;
     if (AnimationPattern == JOINT_PATTERN_FORWARDS) return abs(AnimationSpeed);
-    if (AnimationPattern != JOINT_PATTERN_WAVE) return 0.0f;
+    if (AnimationPattern == JOINT_PATTERN_WAVE) 
+        return AnimationTime < 1.0f ? 0.0f : abs((AnimationRange / AnimationTime) * M_PI);
 
-    return AnimationTime < 1.0f ? 0.0f : abs((AnimationRange / AnimationTime) * 3.1415f);
-
-}
-
-float PJoint::GetDesiredLengthVel() const
-{
-    // supposed to be passed in, but it'll usually just be the level's
-    // forked frame
-    float frame = A ? A->World->GetFrame() : 0.0f;
-    const int& Behaviour = GetThing()->Behaviour;
-    bool is_switch_triggered = GetThing()->GetInput(0) != NULL;
-
-    if (AnimationPattern == JOINT_PATTERN_FORWARDS)
-    {
-        if (is_switch_triggered || Behaviour != JOINT_BEHAVIOR_SINGLE_CYCLE)
-            return AnimationSpeed * ModScale;
-
-        if (6.2831855f < ((frame - ModStartFrame) * ModScale + (ModStartFrame + ModDeltaFrames)) * abs(AnimationSpeed))
-            return 0.0f * ModScale;
-
-        return ModScale * AnimationSpeed;
-    }
-    else if (AnimationSpeed < 1.0f) return 0.0f * ModScale;
-    
-    return (AnimationRange / (AnimationTime * 0.5f)) * ModScale;
-}
-
-float PJoint::GetDesiredLength(float frame, bool ignore_mod) const
-{
-    const int& Behaviour = GetThing()->Behaviour;
-    bool is_switch_triggered = GetThing()->GetInput(0) != NULL;
-
-    switch (Type)
-    {
-        case JOINT_TYPE_LEGACY:
-        {
-            // fcurve
-            break;
-        }
-
-        case JOINT_TYPE_ELASTIC:
-        case JOINT_TYPE_SPRING:
-        case JOINT_TYPE_STRING:
-        case JOINT_TYPE_ROD:
-        case JOINT_TYPE_BOLT:
-        case JOINT_TYPE_SPRING_ANGULAR:
-            return Length;
-
-        case JOINT_TYPE_CHAIN:
-        case JOINT_TYPE_PISTON:
-        case JOINT_TYPE_MOTOR:
-        {
-            frame = (frame - ModStartFrame) * ModScale + ModStartFrame + ModDeltaFrames;
-            float range = 0.0f;
-
-            if (ignore_mod || is_switch_triggered || Behaviour == JOINT_BEHAVIOR_ON_OFF || Behaviour == JOINT_BEHAVIOR_SPEED_SCALE)
-            {
-                frame += AnimationPhase;
-                if (AnimationPattern == JOINT_PATTERN_FORWARDS)
-                {
-                    range = frame * AnimationSpeed;
-                    return (float)Length + range;
-                }
-                else if (AnimationPattern == JOINT_PATTERN_FLIPPER)
-                {
-                    if (1.0f <= AnimationTime)
-                    {
-                        frame = mmalex::fmod(frame, AnimationTime + AnimationPause);
-                        if (frame < AnimationTime)
-                            range = (1.0f - (frame / AnimationTime)) * AnimationRange;
-                    }
-
-                    return (float)Length + range;
-                }
-
-            }
-            else
-            {
-                if (Behaviour == JOINT_BEHAVIOR_FORWARDS_BACKWARDS || Behaviour == JOINT_BEHAVIOR_POSITIONAL)
-                {
-                    if (1.0f <= AnimationTime)
-                        range = (frame * AnimationRange) / (AnimationTime * 0.5f);
-                    return (float)Length + range;
-                }
-                else if (Behaviour == JOINT_BEHAVIOR_SINGLE_CYCLE)
-                {
-                    if (AnimationPattern == JOINT_PATTERN_FORWARDS)
-                    {
-                        if (frame * abs(AnimationSpeed) < 6.2831855f)
-                            range = frame * AnimationSpeed;
-                        return (float)Length + range;
-                    }
-                    else if (AnimationPattern == JOINT_PATTERN_FLIPPER)
-                    {
-                        if (frame < AnimationTime && 1.0f <= AnimationTime)
-                            range = (1.0f - (frame / AnimationTime)) * AnimationRange;
-                        return (float)Length + range;
-                    }
-                    else frame = MIN(AnimationTime + AnimationPause, frame);
-                }
-            }
-
-            float factor = GetWaveFactor(frame);
-            if (Type == JOINT_TYPE_MOTOR)
-                range = mmalex::sin(factor * M_PI) * -0.5f;
-            else
-                range = mmalex::sin(factor * M_PI) * -0.5f + 0.5f;
-
-            range *= AnimationRange;
-
-            return range + Length;
-        }
-
-        case JOINT_TYPE_QUANTIZED:
-        {
-            // angle
-            break;
-        }
-    }
+    return 0.0f;
 }

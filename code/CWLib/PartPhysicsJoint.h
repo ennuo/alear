@@ -1,11 +1,25 @@
-#ifndef PART_PHYSICS_JOINT_H
-#define PART_PHYSICS_JOINT_H
+#pragma once
 
-#include <refcount.h>
+#ifdef SPU
+    #include <mmtypes.h>
+    using namespace std;
+#else
+    #include <refcount.h>
 
-#include "Part.h"
-#include "hack_thingptr.h"
-#include "ResourceJoint.h"
+    #include <Part.h>
+    #include <hack_thingptr.h>
+    #include <ResourceJoint.h>
+#endif
+
+enum JointBehavior
+{
+    JOINT_BEHAVIOR_ON_OFF,
+    JOINT_BEHAVIOR_FORWARDS_BACKWARDS,
+    JOINT_BEHAVIOR_SINGLE_CYCLE,
+    JOINT_BEHAVIOR_SPEED_SCALE,
+    JOINT_BEHAVIOR_POSITIONAL,
+    JOINT_BEHAVIOR_COUNT
+};
 
 enum EJointType 
 {
@@ -33,16 +47,21 @@ enum EJointPattern {
     JOINT_PATTERN_FLIPPER
 };
 
+#ifndef SPU
 class PJoint : public CPart {
 struct Forked {
     v2 AccumulatedImpulse[3];
     bool DontRotateA;
 };
 public:
+    inline CThing* GetA() const { return A; }
+    inline CThing* GetB() const { return B; }
+public:
     float GetMaxLength() const;
     float GetMinLength() const;
     float GetWorldFrame() const;
     float GetCurrentLength() const;
+    float GetCurrentAngle() const;
 
     v4 GetContactPointA() const;
     v4 GetContactPointB() const;
@@ -56,11 +75,13 @@ public:
     float GetWaveFactor(float) const;
 public:
     u32 Type;
+private:
     CThingPtr A;
     CThingPtr B;
+public:
     u8 Direction;
-    v4 AContact;
-    v4 BContact;
+    v2 AContact;
+    v2 BContact;
     float AAngleOffset;
     float BAngleOffset;
     CP<RJoint> Settings;
@@ -71,6 +92,7 @@ public:
     v4 BContactGlobalNew;
     v2 SlideDir;
     bool Stiff;
+    bool SpuHack_IsSwitchTriggered;
     float Strength;
     u32 AnimationPattern;
     float AnimationRange;
@@ -81,6 +103,9 @@ public:
     floatInV2 Angle;
     floatInV2 Length;
     u32 JointSoundEnum;
+    float SpuHack_Frame;
+    float SpuHack_WaveFactor;
+    int SpuHack_Behaviour;
     Forked Game;
     Forked Rend;
     Forked* Fork;
@@ -105,10 +130,35 @@ public:
 public:
     void SetA(CThing* thing);
     void SetB(CThing* thing);
-public:
-    inline CThing* GetA() const { return A; }
-    inline CThing* GetB() const { return B; }
 };
-
-
-#endif // PART_PHYSICS_JOINT_H
+#else
+class PJoint {
+public:
+    float GetDesiredLengthVel() const;
+    float GetDesiredLength(float) const;
+    float GetWaveFactor(float) const;
+public:
+    char Pad0[12];
+    u32 Type;
+    char Pad1[160];
+    bool Stiff;
+    bool SpuHack_IsSwitchTriggered;
+    float Strength;
+    u32 AnimationPattern;
+    float AnimationRange;
+    float AnimationTime;
+    float AnimationPhase;
+    float AnimationSpeed;
+    float AnimationPause;
+    floatInV2 Angle;
+    floatInV2 Length;
+    u32 JointSoundEnum;
+    float SpuHack_Frame;
+    float SpuHack_WaveFactor;
+    int SpuHack_Behaviour;
+    char Pad2[132];
+    float ModStartFrame;
+    float ModDeltaFrames;
+    float ModScale;
+};
+#endif

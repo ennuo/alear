@@ -276,9 +276,11 @@ void OnSanitizeNewInventoryItem(CPoppetInventory* inventory)
 {
     CThing* thing = inventory->CurrentSaveThing;
 
-    if (inventory->GetParent()->CaptureSubType == NCapture::SUBTYPE_COSTUME_MORPH)
+    NCapture::ESubType subtype = inventory->GetParent()->CaptureSubType;
+
+    if (subtype == NCapture::SUBTYPE_COSTUME_MORPH)
         SanitiseMorphForSave(thing);
-    else if (thing->HasPart(PART_TYPE_COSTUME) && thing->HasPart(PART_TYPE_RENDER_MESH))
+    else if (subtype != NCapture::SUBTYPE_PLAYER && thing->HasPart(PART_TYPE_COSTUME) && thing->HasPart(PART_TYPE_RENDER_MESH))
         SanitiseCostumeForSave(thing);
     
     inventory->GetParent()->CaptureSubType = NCapture::SUBTYPE_NONE;

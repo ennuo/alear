@@ -781,8 +781,19 @@ void UpdateJoints(PWorld* world)
     for (u32 i = 0; i < world->ListPJoint.size(); ++i)
     {
         PJoint* joint = world->ListPJoint[i];
+        CThing* thing = joint->GetThing();
 
-        joint->ModDriven = false;
+        // Update data for SPU
+        joint->SpuHack_Behaviour = thing->Behaviour;
+        joint->SpuHack_Frame = world->GetFrame();
+        joint->SpuHack_IsSwitchTriggered = thing->GetInput(0) != NULL;
+        joint->SpuHack_WaveFactor = 0.0f;
+        // joint->SpuHack_WaveFactor = joint->GetWaveFactor(joint->SpuHack_Frame);
+    
+        joint->ModDriven = 
+            (thing->GetInput(0) != NULL && thing->Behaviour == JOINT_BEHAVIOR_FORWARDS_BACKWARDS) ||
+            joint->AnimationPattern == JOINT_PATTERN_FORWARDS;
+        
         joint->ModScaleActive = true;
 
         if (joint->CurrentlyEditing)
@@ -791,8 +802,8 @@ void UpdateJoints(PWorld* world)
             continue;
         }
 
-        CSwitchOutput* input = joint->GetThing()->GetInput(0);
-        int behaviour = joint->GetThing()->Behaviour;
+        CSwitchOutput* input = thing->GetInput(0);
+        int behaviour = thing->Behaviour;
 
         if (input == NULL)
         {
@@ -800,8 +811,8 @@ void UpdateJoints(PWorld* world)
             joint->ModDeltaFrames = 0.0f;
             joint->ModScale = 1.0f;
 
-            if (behaviour == JOINT_BEHAVIOR_POSITIONAL)
-                joint->AnimationSpeed = -4.0f;
+            // if (behaviour == JOINT_BEHAVIOR_POSITIONAL)
+            //     joint->AnimationSpeed = -4.0f;
 
             continue;
         }
@@ -1342,7 +1353,7 @@ bool GetPortPos2(const CThing* thing, int port, bool output, m44& pos)
     if (thing->GetPJoint() != NULL)
     {
         const PJoint* joint = thing->GetPJoint();
-        if (joint->A == NULL || joint->B == NULL) return false;
+        if (joint->GetA() == NULL || joint->GetB() == NULL) return false;
         
         pos = m44::identity();
         pos = pos.setCol3(GetJointCenter(joint));
@@ -1469,7 +1480,7 @@ bool GetPortPos(const CThing* thing, int port, bool output, v4& out)
     if (thing != NULL && thing->GetPJoint() != NULL)
     {
         const PJoint* joint = thing->GetPJoint();
-        if (joint->A == NULL || joint->B == NULL) return false;
+        if (joint->GetA() == NULL || joint->GetB() == NULL) return false;
         out = GetJointCenter(joint);
         return true;
     }

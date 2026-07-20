@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SweepAndPrune.h>
+
 class PShape;
 class PBody;
 
@@ -40,18 +42,13 @@ public:
     inline floatInV2 GetIMoment() const { return splaty(Scalars); }
     inline floatInV2 GetIMass() const { return splatz(Scalars); }
     inline v2 GetPosVel() const { return PosVel; }
-    inline v2 GetPos() const { return loadxy(Pos); }
+    inline v2 GetPos() const { return Pos; }
     PBody* GetBody() const;
     CCompactMass* GetProxy() const;
     inline void SetAngVel(floatInV2 a) { Scalars = mergex(a, Scalars); }
     void SetIMoment(floatInV2);
     void SetIMass(floatInV2);
-    
-    inline void SetPosVel(v2 v)
-    {
-        PosVel = v;
-    }
-
+    void SetPosVel(v2);
     void SetPos(v2);
     void SetBody(PBody*);
     void SetProxy(CCompactMass*);
@@ -66,4 +63,36 @@ private:
     v2 PosVel;
     v2 Pos;
     v4 Scalars;
+};
+
+class CCompactConvex {
+public:
+    enum
+    {
+        CIRCLE_CENTER_GLOBAL_IDX = 0,
+        CIRCLE_CENTER_LOCAL_IDX = 1,
+        CACHE_SIZE = 4
+    };
+private:
+    v2 VertexCache[4];
+    CCompactMaterial* Material;
+    PShape* Shape;
+    const v2* SharedVerticesBase;
+    u16 FirstIndex;
+    u16 NumIndices;
+    CCompactCollidability Collidability;
+    u16 OldNumber;
+    u16 NewNumber;
+    u32 LastVisibleFrame;
+    float MinX;
+    float MinY;
+    float MinZ;
+    float MaxX;
+    float MaxY;
+    float MaxZ;
+    float Restitution;
+    u8 LayerFlag;
+    u8 LethalType;
+    bool Collidable;
+    bool IsSticky;
 };

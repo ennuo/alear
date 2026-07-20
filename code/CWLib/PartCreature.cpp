@@ -58,7 +58,7 @@ bool PCreature::IsGrabbing() const
 {
     if (!GrabJoint) return false;
     const PJoint* joint = GrabJoint->GetPJoint();
-    return joint && joint->B && joint->B->BodyRoot;
+    return joint && joint->GetB() && joint->GetB()->GetBodyRoot();
 }
 
 MH_DefineFunc(PCreature_StartGunState, 0x00073718, TOC0, void, PCreature*, CThing*);

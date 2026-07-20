@@ -33,7 +33,10 @@
 #include <PartPhysicsBody.h>
 #include <PartList.h>
 
+
 #include "hack_thingptr.h"
+
+class PNpc;
 
 enum EObjectType
 {
@@ -47,17 +50,18 @@ enum
     FLAG_SWITCH_TARGET = (1 << 1)
 };
 
+class PBody : public CPart {};
 class PPos;
-
 
 class CCustomThingData {
 public:
-    inline CCustomThingData() : Microchip(), PartMaterialOverride(), PartMicroChip(), InputList()
+    inline CCustomThingData() : Microchip(), PartMaterialOverride(), PartMicroChip(), PartNpc(), InputList()
     {}
 public:
     CThing* Microchip;
     PMaterialOverride* PartMaterialOverride;
     PMicroChip* PartMicroChip;
+    PNpc* PartNpc;
     CVector<CSwitchOutput*> InputList;
 };
 
@@ -66,7 +70,8 @@ public:
     CThing();
     ~CThing();
 public:
-
+    inline const PBody* GetBodyRoot() const { return BodyRoot; }
+     
     void SetParent(CThing* p);
     
     void InitializeExtraData();
@@ -116,6 +121,11 @@ public:
         return CustomThingData == NULL ? NULL : CustomThingData->PartMicroChip;
     }
 
+    inline PNpc* GetPNpc() const
+    {
+        return CustomThingData == NULL ? NULL : CustomThingData->PartNpc;
+    }
+
     inline bool HasPart(EPartType part) const
     {
         return GetPart(part) != NULL;
@@ -125,6 +135,7 @@ public:
     {
         if (part == PART_TYPE_MATERIAL_OVERRIDE) return GetPMaterialOverride();
         if (part == PART_TYPE_MICROCHIP) return GetPMicroChip();
+        if (part == PART_TYPE_NPC) return (CPart*)GetPNpc();
         return Parts[part];
     }
 

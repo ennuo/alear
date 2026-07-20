@@ -12,6 +12,7 @@ namespace NCapture
     enum ESubType
     {
         SUBTYPE_NONE,
-        SUBTYPE_COSTUME_MORPH
+        SUBTYPE_COSTUME_MORPH,
+        SUBTYPE_PLAYER
     };
 }

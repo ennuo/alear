@@ -840,9 +840,18 @@ namespace TweakSettingNativeFunctions
         return gUsePaintPage;
     }
 
+    void GetTweakSetting_Debug(CScriptContext* context, void* ret, u8* arguments)
+    {
+        EGooeyNetworkAction action = *(EGooeyNetworkAction*)arguments;
+        MMLog("requesting action %d\n", action);
+        CScriptObjectInstance* value = Get(action);
+        NVirtualMachine::ConvertReturnValue<CScriptObjectInstance*>(ret, context, value);
+    }
+
     void Register()
     {
-        RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
+        // RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, NVirtualMachine::CNativeFunction1<CScriptObjectInstance*, EGooeyNetworkAction>::Call<Get>);
+        RegisterNativeFunction("TweakSetting", "GetTweakSetting__i", true, GetTweakSetting_Debug);
         RegisterNativeFunction("TweakSetting", "GetFixedTweakData__ii", true, NVirtualMachine::CNativeFunction2<u32, EGooeyNetworkAction, u32>::Call<GetFixedTweakData>);
         RegisterNativeFunction("Gooey", "GetStylesheetScalingFactor__", false, NVirtualMachine::CNativeFunction1<f32, CScriptObjectGooey*>::Call<GetStylesheetScalingFactor>);
         RegisterNativeFunction("PlayerColour", "UseLegacyKeyColors__", true, NVirtualMachine::CNativeFunction0<bool>::Call<UseLegacyKeyColors>);

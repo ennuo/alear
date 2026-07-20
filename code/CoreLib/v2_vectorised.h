@@ -45,6 +45,7 @@ struct vfloat {
 
     inline operator float() const { return (float)vec_extract(V, 0); }
 
+    inline vfloat operator+(float b) const { return *this + vfloat(b); }
     inline vfloat operator+(const vfloat& b) const { return vfloat(vec_add(V, b.V)); }
     inline vfloat operator-(const vfloat& b) const { return vfloat(vec_sub(V, b.V)); }
 
@@ -155,7 +156,7 @@ struct v2 {
     { 
         return v2( vec_max( V, v.V )); 
     }
-
+    
     v2 Abs() const;
     v2 CopySign(v2) const;
 
@@ -214,6 +215,7 @@ struct v2 {
 };
 
 typedef vfloat floatInV2;
+typedef vint intInV2;
 
 static inline v2 mergev2(v2 xy, v2 zw)
 {
@@ -231,4 +233,9 @@ static inline vfloat dot(v2 a, v2 b)
 {
     vec_float4 dot = _vmathVfDot2(a.V, b.V);
     return vfloat(dot, 0);
+}
+
+inline v2 Floor(v2 v)
+{
+    return v2(vec_floor(v.V));
 }

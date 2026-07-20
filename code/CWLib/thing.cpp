@@ -1,6 +1,7 @@
 #include "thing.h"
 #include "ResourceSystem.h"
 #include <ResourceScript.h>
+#include <PartNpc.h>
 #include "MatrixUtils.h"
 
 
@@ -162,6 +163,17 @@ void CThing::AddPart(EPartType type)
         return;
     }
 
+    if (type == PART_TYPE_NPC)
+    {
+        PNpc*& part = CustomThingData->PartNpc;
+        if (part != NULL) return;
+
+        part = new PNpc();
+        part->SetThing_BECAUSE_I_HATE_CODING_CONVENTIONS_AND_NEED_TO_BE_SPANKED(this);
+
+        return;
+    }
+
     CThing_AddPart(this, type);
 }
 
@@ -180,6 +192,12 @@ void CThing::RemovePart(EPartType type)
         CustomThingData->PartMicroChip = NULL;
     }
 
+    if (type == PART_TYPE_NPC && CustomThingData->PartNpc != NULL)
+    {
+        delete CustomThingData->PartNpc;
+        CustomThingData->PartNpc = NULL;
+    }
+    
     CThing_RemovePart(this, type);
 }
 

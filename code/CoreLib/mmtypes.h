@@ -1,7 +1,10 @@
-#ifndef MM_TYPES_H
-#define MM_TYPES_H
+#pragma once
 
-#include <printf.h>
+#ifndef SPU
+    #include <printf.h>
+    #include <v2_vectorised.h>
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -14,13 +17,10 @@
 #include <sys/integertypes.h>
 #include <vectormath/cpp/vectormath_aos.h>
 
-#include "v2_vectorised.h"
-
 #define ARRAY_LENGTH(x) sizeof(x) / sizeof(x[0])
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define SATURATE(x) MAX(0.0f, MIN(x, 1.0f))
-
 
 typedef int8_t s8;
 typedef uint8_t u8;
@@ -42,8 +42,18 @@ typedef Vectormath::Aos::Vector3 v3;
 typedef Vectormath::Aos::Vector4 v4;
 typedef Vectormath::Aos::Matrix4 m44;
 
-#include <hook.h>
 #include <GameConstants.h>
 #include <refcount.h>
+#ifdef SPU
+    #include <vectormath/cpp/floatInVec.h>
+    typedef Vectormath::floatInVec floatInV2;
+    typedef Vectormath::Aos::Vector4 v2;
 
-#endif // MM_TYPES_H
+    #define FMODF(x, y) fmodf(x, y)
+    #define SINF(x) sinf(x)
+#else
+    #include <hook.h>
+    
+    #define FMODF(x, y) mmalex::fmod(x, y)
+    #define SINF(x) mmalex::sin(x)
+#endif
