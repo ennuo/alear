@@ -43,7 +43,6 @@ typedef Vectormath::Aos::Vector4 v4;
 typedef Vectormath::Aos::Matrix4 m44;
 
 #include <GameConstants.h>
-#include <refcount.h>
 #ifdef SPU
     #include <vectormath/cpp/floatInVec.h>
     typedef Vectormath::floatInVec floatInV2;
@@ -53,6 +52,7 @@ typedef Vectormath::Aos::Matrix4 m44;
     #define SINF(x) sinf(x)
 #else
     #include <hook.h>
+    #include <refcount.h>
     
     #define FMODF(x, y) mmalex::fmod(x, y)
     #define SINF(x) mmalex::sin(x)
