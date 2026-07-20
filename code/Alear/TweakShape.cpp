@@ -314,7 +314,79 @@ CGUID gBevelTypes[] =
     // Soft
     78020,
     // Couch
-    78018
+    78018,
+    
+    // Garage Plastic
+    78810,
+    // no bevel
+    99327,
+    // irobot
+    103517,
+
+    // Default Sponge
+    191010,
+    // Default Hard Rounded
+    313338,
+    // Extreme Border
+    313396,
+    // Fake Leather
+    332109,
+    // Tin Can
+    361469,
+    
+    // tarsier rounded
+    1004002,
+    // tarsier wood
+    1004003,
+
+    // tarsier cheese
+    1048920,
+    // tarsier plasticfloor
+    1049099,
+    // tarsier stitching
+    1049100,
+    // tarsier styro
+    1049101,
+    // tarsier asphalt
+    1049708,
+    // tarsier leather
+    1049748,
+    // tarsier metal soft
+    1049750,
+
+    // tarsier tent
+    1052033,
+    // tarsier piano
+    1054341,
+
+    // palish plastic
+    1083872,
+    
+    // tarsier jam
+    1148295,
+    // tarsier black wood
+    1170569,
+    // tarsier velvet
+    1172016,
+    // tarsier sand
+    1178972,
+    // tarsier metal soft
+    1184812,
+    // tarsier ice
+    1197697,
+    
+    // tarsier blueprint
+    1213517,
+    // tarsier plant
+    1229643,
+    // tarsier water
+    1234903,
+    // tarsier padded
+    1242665,
+    // tarsier brick
+    1286061,
+    // tarsier round wood
+    1288614
 };
 
 CGUID gPhysicsTypes[] =

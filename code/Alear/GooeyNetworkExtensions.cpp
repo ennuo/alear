@@ -18,6 +18,7 @@
 #include <PartEnemy.h>
 #include <thing.h>
 #include <mmalex.h>
+#include <Launcher.h>
 
 #include <cell/DebugLog.h>
 #include <vm/VirtualMachine.h>
@@ -606,10 +607,20 @@ namespace TweakSettingNativeFunctions
             }
             case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
             {
-                PScript* script = thing->GetPScript();
-                f32 distance = script->GetValue<f32>("Distance", 0.0f);
-                DebugLog("Distance: (%f)\n", distance);
-                return setting.GameToFixed(distance);
+                return setting.GameToFixed(Launcher::GetDistance(thing));
+            }
+            case E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE:
+            {
+                return setting.GameToFixed(Launcher::GetAngle(thing));
+            }
+            case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
+            {
+                PShape* shape = thing->GetPShape();
+                if(shape != NULL)
+                {
+                    shape->EditorColour = Launcher::IsAutoActivated(thing) ? v4(1.0) : v4(0.0, 1.0, 1.0, 1.0) ;
+                }
+                return !Launcher::IsAutoActivated(thing);
             }
             case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
             {
@@ -1163,6 +1174,17 @@ bool InitTweakSettings()
         .SetSteps(0.1f, 1.0f)
         .SetIcon(paramanim_texture, 1)
         .SetDebugToolTip(L"Launcher Height");
+        
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE)
+        .SetWidget(TWEAK_WIDGET_MEASURER)
+        .SetMinMax(-45.0f, 45.0f)
+        .SetSteps(1.0f, 5.0f)
+        .SetIcon(paramanim_texture, 1)
+        .SetDebugToolTip(L"Launcher Angle");
+
+    GetTweakSetting(E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED)
+        .SetupYesNo()
+        .SetDebugToolTip(L"Manual Activation");
 
     GetTweakSetting(E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER)
         .SetWidget(TWEAK_WIDGET_MEASURER)
@@ -1784,32 +1806,22 @@ void DoNetworkActionResponse(CMessageGooeyAction& action)
         
         case E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE:
         {
-            float distance = setting.FixedToGame(action.Value);
-            DebugLog("E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE: %08x (%f)\n", (u32)action.Value, distance);
-
-            CThing* thing = world->GetThingByUID(action.ThingUID);
-            if (thing != NULL)
-            {
-                PScript* script = thing->GetPScript();
-                if (script != NULL)
-                {
-                    script->SetValue("Distance", distance);
-                    CThing* light_thing = script->GetValue<CThing*>("LightThing", NULL);
-                    if(light_thing != NULL)
-                    {
-                        PSpriteLight* light = light_thing->GetPSpriteLight();
-                        if(light != NULL)
-                        {
-                            //light->FarDist = distance;
-                        }
-                    }
-
-                }
-            }
-
+            Launcher::SetDistance(world->GetThingByUID(action.ThingUID), setting.FixedToGame(action.Value));
             break;
         }
         
+        case E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE:
+        {
+            Launcher::SetAngle(world->GetThingByUID(action.ThingUID), setting.FixedToGame(action.Value));
+            break;
+        }
+
+        case E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED:
+        {
+            Launcher::SetAutoActivated(world->GetThingByUID(action.ThingUID), !action.Value);
+            break;
+        }
+    
         case E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER:
         {
             float speed_modifier = setting.FixedToGame(action.Value);
@@ -2226,6 +2238,42 @@ void SetupCarousel(ECarouselType type, CVector<CCarouselItem>& items)
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(11), L"Stitched 2", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(12), L"Couch", v4(1.0)));
             items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Soft", v4(1.0)));
+            
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"garage plastic", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"no bevel", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"irobot", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Default Sponge Bevel", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Default Hard Rounded", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Extreme Border", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Fake Leather", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tin Can", v4(1.0)));
+
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier1", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier2", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier3", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier4", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier5", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier6", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier7", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier8", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier9", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier10", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier11", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier12", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier13", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier14", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier15", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier16", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier17", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier18", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier19", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier20", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier21", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier22", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier23", v4(1.0)));
+            items.push_back(CCarouselItem(icon.Texture, icon.GetUV(13), L"Tarsier24", v4(1.0)));
+
 
             break;
         }
@@ -2454,6 +2502,8 @@ void AttachGooeyNetworkHooks()
     
     TABLE[E_GOOEY_NETWORK_ACTION_AMMO_COUNT] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_DISTANCE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_ANGLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
+    TABLE[E_GOOEY_NETWORK_ACTION_LAUNCHER_AUTO_ACTIVATED] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_JUMP_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_SPEED_MODIFIER] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;
     TABLE[E_GOOEY_NETWORK_ACTION_ENEMY_COLLECTABLE] = (u32)&_custom_gooey_network_action_hook - (u32)TABLE;

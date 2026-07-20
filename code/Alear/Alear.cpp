@@ -28,6 +28,7 @@
 #include "LoadingScreen.h"
 #include <Serialise.h>
 #include <Explode.h>
+#include <Launcher.h>
 
 #include "RPCS3.h"
 #include "ppcasm.h"
@@ -202,7 +203,8 @@ void AlearStartup()
     AttachWebternateHooks();
     AttachFloatyFluidHooks();
     AttachLooksMenuHooks();
-
+    Launcher::Attach();
+    
     MH_PokeHook(0x0040b678, SetJetpackTether);
     MH_PokeHook(0x0040a9f4, CollectGun);
     MH_PokeHook(0x0040a92c, SetScubaGear);

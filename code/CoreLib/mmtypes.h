@@ -43,5 +43,7 @@ typedef Vectormath::Aos::Vector4 v4;
 typedef Vectormath::Aos::Matrix4 m44;
 
 #include <hook.h>
+#include <GameConstants.h>
+#include <refcount.h>
 
 #endif // MM_TYPES_H

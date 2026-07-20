@@ -366,6 +366,14 @@ EObjectType GetObjectType(CThing* thing)
 
     if (part_shape != NULL && part_shape->MMaterial)
     {
+
+        PScript* parent_script;
+        if (thing->GetPScript() == NULL && thing->Parent != NULL && (parent_script = thing->Parent->GetPScript()) != NULL)
+        {
+            if (parent_script->ScriptInstance.GetScript() != NULL && parent_script->ScriptInstance.GetScript()->GetGUID() == 0x12d39)
+                return OBJECT_BOUNCE_PAD_SURFACE;
+        }
+        
         switch (part_shape->MMaterial->GetGUID().guid)
         {
             case 0x29e0:

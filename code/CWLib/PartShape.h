@@ -7,12 +7,14 @@
 #include "GameEnums.inl"
 #include "Part.h"
 
+#include <CollisionQuery.h>
+
 class PShape : public CPart {
 struct Forked {
     v2 Min;
     v2 Max;
     CRawVector<v2, CAllocatorMMAligned128> GlobalPolygon; // 0x20
-    CVector<void*> Convexes; // technically CVector<CCompactConvex, CAllocatorMMAligned128>, but need a dummy type
+    CVector<CCompactConvex> Convexes; // technically CVector<CCompactConvex, CAllocatorMMAligned128>, but need a dummy type
     v2* SharedVertices;
     // float BrightnessHack;
 };
@@ -44,6 +46,12 @@ public:
         }
     }
     
+
+    inline const CVector<CCompactConvex>& GetConvexes() const
+    {
+        return Fork->Convexes;
+    }
+
 public:
     v4 GetPosCOMv4() const;
     v2 GetPosCOM() const;

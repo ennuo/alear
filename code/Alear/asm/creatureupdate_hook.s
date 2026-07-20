@@ -1,3 +1,5 @@
+.include "asm/macros/fnptr.s"
+
 .global _creatureupdate_hook
 _creatureupdate_hook:
     # Move the execution state into the first argument register
@@ -221,3 +223,14 @@ _NoBuoyancy:
     ba 0x000a5714
 _DoBuoyancy:
     ba 0x00a5a80
+
+.global _creature_bouncepad_hook
+_creature_bouncepad_hook:
+    mr %r3, %r31
+    call _Z21HandleManualBouncepadP9PCreature
+    cmpwi %cr7, %r3, 0
+    beq %cr7, NoLaunch
+    ba 0x00052888
+NoLaunch:
+    rldicl %r9, %r27, 0x0, 0x20
+    ba 0x00052c60

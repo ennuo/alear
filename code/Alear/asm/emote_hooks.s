@@ -1,3 +1,5 @@
+.include "asm/macros/fnptr.s"
+
 .global _emote_hook
 _emote_hook:
     mr %r3, %r31
@@ -65,3 +67,10 @@ _sbanim_update_emote_sounds_hook:
     # Branch back to normal animation sounds
     lwz %r6, 0x4(%r3)
     ba 0x000ec728
+
+.global _sbanim_late_update_hook
+_sbanim_late_update_hook:
+    mr %r3, %r31
+    call _ZN12CSackBoyAnim16OnLateAnimUpdateEv
+    mr %r3, %r31
+    ba 0x000fed64

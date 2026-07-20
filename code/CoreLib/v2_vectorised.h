@@ -2,6 +2,13 @@
 
 #include <vectormath/cpp/vectormath_aos.h>
 
+static inline vec_float4 _vmathVfDot2( vec_float4 vec0, vec_float4 vec1 )
+{
+    vec_float4 result;
+    result = vec_madd( vec0, vec1, (vec_float4)(0.0f) );
+    return vec_madd( vec_sld( vec0, vec0, 4 ), vec_sld( vec1, vec1, 4 ), result );
+}
+
 struct vint {
 
     inline vint() { }
@@ -120,11 +127,24 @@ struct v2 {
     }
 
     vfloat LengthSquared() const;
-    vfloat Length3d() const;
+    
+    inline vfloat Length3d() const
+    {
+        return vfloat(sqrtf4(_vmathVfDot3(V, V)), 0);
+    }
+
     v2 Normal3d() const;
     v2 Rotate(vfloat) const;
     vfloat Angle() const;
-    v2 Right() const;
+    
+    inline v2 Right() const
+    {
+        return vec_perm( 
+            V, 
+            negatef4(V),
+            (vec_uchar16)(vec_uint4){ _VECTORMATH_PERM_X, _VECTORMATH_PERM_A, _VECTORMATH_PERM_Z, _VECTORMATH_PERM_W }
+        );
+    }
     
     inline v2 Min(v2 v) const 
     { 
@@ -176,11 +196,39 @@ struct v2 {
         return ~(*this > rhs);
     }
 
-    vfloat Length() const;
-    v2 Normal() const;
+    vfloat Length() const
+    {
+        return vfloat(sqrtf4(_vmathVfDot2(V, V)), 0);
+    }
+
+    inline v2 Normal() const
+    {
+        vec_float4 dot = _vmathVfDot2(V, V);
+        dot = vec_splat(dot, 0);
+        return v2(vec_madd(V, rsqrtf4(dot), (vec_float4)(0.0f)));
+    }
+    
     v2 NormalFast() const;
 
     vec_float4 V;
 };
 
 typedef vfloat floatInV2;
+
+static inline v2 mergev2(v2 xy, v2 zw)
+{
+    const vec_uint4 mask = (vec_uint4){ 0, 0, 0xffffffff, 0xffffffff };
+    return v2(vec_sel(xy.V, zw.V, mask));
+}
+
+static inline v2 loadxy(v2 v)
+{
+    const vec_uint4 mask = { 0xFFFFFFFF, 0xFFFFFFFF, 0x0, 0x0 };
+    return v2(vec_and(v.V, (vec_float4)mask));
+}
+
+static inline vfloat dot(v2 a, v2 b)
+{
+    vec_float4 dot = _vmathVfDot2(a.V, b.V);
+    return vfloat(dot, 0);
+}

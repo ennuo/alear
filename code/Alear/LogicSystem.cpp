@@ -2298,6 +2298,14 @@ namespace LogicSystemNativeFunctions
         return false;
     }
 
+    void DoLaunch(CThing* launcher, CThing* player)
+    {
+        if (launcher == NULL || player == NULL) return;
+        PCreature* creature = player->GetPCreature();
+        if (creature == NULL) return;
+        creature->DoLaunch(launcher);
+    }
+
     void Register()
     {
         RegisterNativeFunction("Thing", "GetPodThing__b", true, NVirtualMachine::CNativeFunction1<CThing*, bool>::Call<GetPodThing>);
@@ -2316,6 +2324,7 @@ namespace LogicSystemNativeFunctions
         RegisterNativeFunction("TweakEmitter", "GetEmitterPlanIcon__Q5Thing", true, NVirtualMachine::CNativeFunction1<CP<CResource>, CThing*>::Call<GetEmitterPlanIcon>);
         RegisterNativeFunction("MicroChip", "GetMicroChipName__Q5Thingi", true, NVirtualMachine::CNativeFunction2<const wchar_t*, CThing*, int>::Call<GetMicroChipName>);
         RegisterNativeFunction("MicroChip", "IsCircuitBoardChildHeldByAnyPlayer__Q5Thingi", true, NVirtualMachine::CNativeFunction2<bool, CThing*, int>::Call<IsCircuitBoardChildHeldByAnyPlayer>);
+        RegisterNativeFunction("Launcher", "DoLaunch__Q5Thing", false, NVirtualMachine::CNativeFunction2V<CThing*, CThing*>::Call<DoLaunch>);
     }
 }
 

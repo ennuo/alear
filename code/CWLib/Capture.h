@@ -6,8 +6,7 @@ namespace NCapture
     {
         TYPE_PLAN,
         TYPE_COSTUME,
-        TYPE_POD,
-        TYPE_MORPH
+        TYPE_POD
     };
 
     enum ESubType

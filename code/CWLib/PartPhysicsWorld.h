@@ -6,6 +6,8 @@
 #include "hack_thingptr.h"
 #include "PoppetEnums.inl"
 
+class CCollisionQuery;
+
 class PPos;
 class PRenderMesh;
 class PGeneratedMesh;
@@ -75,6 +77,16 @@ public:
         return *(CVector<CThingPtr>*)(((char*)this) + 0x514);
     }
 
+    inline CCollisionQuery* GetCollisionQuery() const
+    {
+        return *(CCollisionQuery**)(((char*)this) + 0x1dc);
+    }
+
+
+    inline CCollisionQuery* GetGameCollisionQuery() const
+    {
+        return *(CCollisionQuery**)(((char*)this) + 0x1dc);
+    }
 public:
     u32 ThingUIDCounter;
     CRawVector<CThing*> Things;

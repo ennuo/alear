@@ -548,38 +548,6 @@ bool HandlePickObjectAction(CPoppet* poppet, CThing* thing)
 }
 */
 
-enum
-{
-    kMorphType_Translation,
-    kMorphType_Rotation,
-    kMorphType_Scale,
-    kMorphType_Targets
-};
-
-struct SPoppetMessageMorphData
-{
-    v4 Getv4() const
-    {
-        switch (Type)
-        {
-            case kMorphType_Translation:
-            {
-                
-                break;
-            }
-        }
-    }
-
-
-    u8 Type;
-    u8 Index;
-    union
-    {
-        float Components[3];
-        float MorphValue;
-    };
-};
-
 void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg, v4 v)
 {
     switch (msg)
@@ -588,24 +556,6 @@ void HandleCustomPoppetMessage(CPoppet* poppet, EPoppetMessageType msg, v4 v)
         {
             poppet->Inventory.SelectBoxBounds = v;
             poppet->PushMode(MODE_CURSOR, SUBMODE_GRAB_PHOTO);
-            break;
-        }
-        case E_POPPET_MORPH_MESSAGE:
-        {
-
-            SPoppetMessageMorphData& data = *((SPoppetMessageMorphData*)&v);
-            
-            PYellowHead* part = poppet->PlayerThing->GetPYellowHead();
-            switch (data.Type)
-            {
-                case kMorphType_Scale:
-                {
-                    
-                    break;
-                }
-            }
-
-
             break;
         }
     }

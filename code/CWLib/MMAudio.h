@@ -31,6 +31,7 @@ namespace CAudio
     CGUID GetCurrMusicGuid();
 
     extern AUDIO_GROUP gSFX;
+    extern AUDIO_GROUP gLBP2SFX;
 
     extern FMOD::System* System;
     extern FMOD::EventSystem* EventSystem;

@@ -1,5 +1,4 @@
 #include "PartShape.h"
-#include <hook.h>
 
 #include <thing.h>
 #include <PartShape.h>

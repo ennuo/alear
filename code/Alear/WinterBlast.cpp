@@ -200,7 +200,7 @@ void CSackBoyAnim::InitIceData()
 
 void CSackBoyAnim::OnLateAnimUpdate()
 {
-    WasFrozen = Thing->GetPCreature()->State == STATE_FROZEN;
+    DoLauncherAnims();
 }
 
 void CSackBoyAnim::OnFreeze()

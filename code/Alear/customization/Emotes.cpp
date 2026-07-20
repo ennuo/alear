@@ -292,6 +292,9 @@ void OnInitializeSackboyAnims(CSackBoyAnim& sb)
         // The non-cached load is using stack space, so initializing the extra ice
         // data could cause problems there, but cached load is always from an allocated
         // instance, so we actually have the space.
+        new (&sb.JustLaunchedOff) CThingPtr();
+        new (&sb.LastLaunchedOff) CThingPtr();
+
         sb.InitIceData();
         sb.InitExtraAnimData();
 

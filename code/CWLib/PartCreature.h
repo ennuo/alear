@@ -115,11 +115,20 @@ public:
     CInput* GetInput();
     bool IsTouchingIce();
 
+    u32 GetNumLegs() const;
+    float GetLegLength(u32) const;
+    float GetMaxDistForFeetTouching(u32) const;
+    
     inline u32 GetStateTimer() const { return StateTimer; }
     inline u8 GetState() const { return State; }
 
     inline v4 GetForceOfLethalThingTouched() const { return *(v4*)&LethalForce; }
     inline int GetTypeOfLethalThingTouched() const { return TypeOfLethalThingTouched; }
+
+    bool DoLaunch(CThing* launcher);
+    CThing* GetTouchingBouncepad(bool ignore_layer = false);
+
+    bool GetJumpInput() const;
 public:
     Forked Game;
     Forked Rend;

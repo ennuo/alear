@@ -575,6 +575,7 @@ void OnBaseProfileLoadFinished(CBaseProfile* prf)
 }
 
 AUDIO_GROUP gStingerGroup;
+namespace CAudio { AUDIO_GROUP gLBP2SFX; }
 
 FMOD_RESULT LoadAllEventProjects()
 {
@@ -618,6 +619,10 @@ FMOD_RESULT LoadAllEventProjects()
     FMOD_RESULT result = CAudio::EventSystem->getGroup("stings/music/stings", FMOD_DEFAULT, &gStingerGroup.t);
     if (result != FMOD_OK) MMLog("failed to fetch stinger group\n");
     else gStingerGroup.Frame = gGraphicsFrameNum;
+
+    result = CAudio::EventSystem->getGroup("main2/sfx", FMOD_DEFAULT, &CAudio::gLBP2SFX.t);
+    if (result != FMOD_OK) MMLog("failed to fetch lbp2 sfx\n");
+    else CAudio::gLBP2SFX.Frame = gGraphicsFrameNum;
 
     return FMOD_OK;
 }
