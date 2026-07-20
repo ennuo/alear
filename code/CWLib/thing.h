@@ -50,7 +50,6 @@ enum
     FLAG_SWITCH_TARGET = (1 << 1)
 };
 
-class PBody : public CPart {};
 class PPos;
 
 class CCustomThingData {

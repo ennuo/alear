@@ -48,7 +48,12 @@ public:
     inline void SetAngVel(floatInV2 a) { Scalars = mergex(a, Scalars); }
     void SetIMoment(floatInV2);
     void SetIMass(floatInV2);
-    void SetPosVel(v2);
+    
+    inline void SetPosVel(v2 v)
+    {
+        PosVel = v;
+    }
+
     void SetPos(v2);
     void SetBody(PBody*);
     void SetProxy(CCompactMass*);
@@ -73,8 +78,9 @@ public:
         CIRCLE_CENTER_LOCAL_IDX = 1,
         CACHE_SIZE = 4
     };
-private:
+public:
     v2 VertexCache[4];
+    void* DummyForLBP1;
     CCompactMaterial* Material;
     PShape* Shape;
     const v2* SharedVerticesBase;
