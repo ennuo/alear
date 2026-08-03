@@ -3,8 +3,6 @@
 
 
 #include "AlearSerialization.h"
-#include "mmalex.h"
-#include "hook.h"
 
 tGatherElementMap* gGatherElementMap;
 void SetGatherIndexLookup(tGatherElementMap* map)

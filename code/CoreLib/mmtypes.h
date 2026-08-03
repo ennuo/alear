@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef SPU
-    #include <printf.h>
+    #include <Ib/Printf.h>
     #include <v2_vectorised.h>
 #endif
 
@@ -47,13 +47,16 @@ typedef Vectormath::Aos::Matrix4 m44;
     #include <vectormath/cpp/floatInVec.h>
     typedef Vectormath::floatInVec floatInV2;
     typedef Vectormath::Aos::Vector4 v2;
-
+	
     #define FMODF(x, y) fmodf(x, y)
     #define SINF(x) sinf(x)
 #else
-    #include <hook.h>
-    #include <refcount.h>
-    
+	#include <Ib/MH.h>
+	#include <mmalex.h>
+	#include <GameConstants.h>
+	#include <refcount.h>
+	#include <FileList.h>
+	
     #define FMODF(x, y) mmalex::fmod(x, y)
     #define SINF(x) mmalex::sin(x)
 #endif

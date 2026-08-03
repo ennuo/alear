@@ -1,5 +1,5 @@
 #include "MMAudio.h"
-#include "hook.h"
+
 
 namespace CAudio 
 {

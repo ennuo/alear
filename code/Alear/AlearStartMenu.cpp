@@ -6,12 +6,12 @@
 #include "customization/SlapStyles.h"
 #include "FileWatcher.h"
 
-#include <printf.h>
+#include <Ib/Printf.h>
 
 #include <mmalex.h>
 #include <ppcasm.h>
 #include <filepath.h>
-#include <printf.h>
+#include <Ib/Printf.h>
 #include <filepath.h>
 #include <refcount.h>
 #include <GuidHashMap.h>

@@ -13,7 +13,7 @@
 #include "ResourceGame.h"
 #include "ResourceLevel.h"
 
-#include "hook.h"
+
 #include "ppcasm.h"
 
 CThing* GetPodThing(PWorld* world)

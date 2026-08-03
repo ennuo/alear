@@ -1,5 +1,5 @@
 #include "GuidHashMap.h"
-#include "hook.h"
+
 #include "mem_allocator.h"
 
 #include <algorithm>

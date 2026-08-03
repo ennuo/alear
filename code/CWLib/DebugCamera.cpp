@@ -1,5 +1,5 @@
 #include "DebugCamera.h"
-#include "hook.h"
+
 
 MH_DefineFunc(CDebugCamera_Update, 0x001bd578, TOC0, void, CDebugCamera*, bool);
 void CDebugCamera::Update(bool maverick)

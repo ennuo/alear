@@ -1,6 +1,6 @@
 #include "PartPhysicsWorld.h"
 
-#include "hook.h"
+
 
 MH_DefineFunc(PWorld_InitBackdropCuller, 0x00032754, TOC0, void, PWorld*);
 void PWorld::InitBackdropCuller()

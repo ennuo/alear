@@ -1,7 +1,7 @@
 #include "MemoryTexture.h"
 
 #include "GFXApi.h"
-#include "hook.h"
+
 
 
 MH_DefineFunc(CMemoryTexture_CMemoryTexture, 0x001d1464, TOC0, void, CMemoryTexture*);

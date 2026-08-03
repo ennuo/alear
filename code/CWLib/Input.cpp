@@ -1,5 +1,5 @@
 #include "Input.h"
-#include "hook.h"
+
 
 MH_DefineFunc(_SetButtonPrompt, 0x002653fc, TOC0, void, EButtonPrompts button, wchar_t const* lams_key, EPlayerNumber player);
 
