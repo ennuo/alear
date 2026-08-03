@@ -1,5 +1,5 @@
 #include "ResourceSystem.h"
-#include "hook.h"
+
 
 MH_DefineFunc(BlockUntilLoaded_, 0x0008d154, TOC0, bool, EWaitForStreamingResources streaming_resources, CResource** wait_for_resources, unsigned int count);
 MH_DefineFunc(BlockUntilResourcesLoaded, 0x0008f174, TOC0, bool, CResource** resources, u32 count);

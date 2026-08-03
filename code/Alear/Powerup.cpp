@@ -1,5 +1,5 @@
 #include "Powerup.h"
-#include "hook.h"
+
 #include "ppcasm.h"
 #include "vector.h"
 #include "mmalex.h"

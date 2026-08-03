@@ -30,7 +30,7 @@
 #include <Explode.h>
 #include <Launcher.h>
 
-#include "RPCS3.h"
+#include <Ib/Emu.h>
 #include "ppcasm.h"
 #include "PoppetOutlineShapes.h"
 
@@ -177,7 +177,6 @@ void AlearStartup()
     DebugLog("First CInitStep: %s\n", gInitSteps[0].DebugText);
     DebugLog("First ps3test1 CInitStep: %s\n", gPs3Test1InitSteps[0].DebugText);
     DebugLog("First Alear CInitStep: %s\n", gAlearInitSteps[0].DebugText);
-    DebugLog("SPRX TOC Base: %x\n", gTocBase);
 
     DebugLog("sizeof(CGooeyImage) = 0x%08x\n", sizeof(CGooeyImage));
     MMLog("MakeLamsKeyID(%s) = %08x", "GRAVITYRUSH_COSTUME_KAT_COSTUME_NAME", MakeLamsKeyID("GRAVITYRUSH_COSTUME_KAT_COSTUME_NAME"));
@@ -253,8 +252,23 @@ void AlearShutdown()
 
 bool AlearCheckPatch()
 {
-    if (!IsUsingLLVM()) return true;
-    GeneratePatchYML();
+    if (!Ib::NeedsRebuildPatch()) return true;
+
+    if (Ib::WriteCache != NULL)
+    {
+        const char* kTitleID = "LBP1DEBUG";
+
+        Ib::WriteCache->AddExecutableModule(CFilePath(FPR_GAMEDATA, "EBOOT.BIN"));
+        Ib::WriteCache->AddPRX(sys_prx_get_my_module_id());
+        
+        Ib::GeneratePatchYML(
+            "Alear",
+            "LittleBigPlanet",
+            kTitleID,
+            CFilePath(FPR_GAMEDATA, "output/generated_patch.yml")
+        );
+
+    }
 
     CTextState state(0xd, 0, 0, 0x0, 0, NULL);
 

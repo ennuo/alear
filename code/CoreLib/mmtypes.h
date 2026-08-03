@@ -1,7 +1,7 @@
 #ifndef MM_TYPES_H
 #define MM_TYPES_H
 
-#include <printf.h>
+#include <Ib/Printf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -43,8 +43,10 @@ typedef Vectormath::Aos::Vector3 v3;
 typedef Vectormath::Aos::Vector4 v4;
 typedef Vectormath::Aos::Matrix4 m44;
 
-#include <hook.h>
+#include <Ib/MH.h>
+#include <mmalex.h>
 #include <GameConstants.h>
 #include <refcount.h>
+#include <FileList.h>
 
 #endif // MM_TYPES_H

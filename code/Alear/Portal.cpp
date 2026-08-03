@@ -1,7 +1,7 @@
 #include "Portal.h"
 #include "ppcasm.h"
 #include "vector.h"
-#include "hook.h"
+
 #include "Camera.h"
 #include "View.h"
 

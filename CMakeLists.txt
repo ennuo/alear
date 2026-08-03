@@ -58,6 +58,28 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 	${PS3_SDK}/target/ppu/include
 )
 
+file(STRINGS "${PROJECT_SOURCE_DIR}/ports.cnf" PORTS_FILE)
+while(PORTS_FILE)
+    list(POP_FRONT PORTS_FILE LINE)
+
+
+    if (LINE MATCHES "#" OR LINE STREQUAL "")
+        continue()
+    endif()
+
+    string(REPLACE "." "_" LINE ${LINE})
+    string(REPLACE " " ";" LINE ${LINE})
+
+    list(GET LINE 0 PORT_TOC)
+    list(GET LINE 1 PORT_ADDRESS)
+    list(GET LINE 2 PORT_NAME)
+
+    add_compile_definitions(
+        PORT_${PORT_NAME}_TOC=${PORT_TOC}
+        PORT_${PORT_NAME}_ADDRESS=${PORT_ADDRESS}
+    )
+endwhile()
+
 file(STRINGS "${PROJECT_SOURCE_DIR}/symbols.yml" SYMBOLS_FILE)
 while(SYMBOLS_FILE)
     # Some regex like (^[^\s]*):(\s*.*)[^\s] maybe?
@@ -88,7 +110,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     >
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd gcm_sys_stub http_stub http_util_stub net_stub sysutil_np_stub)
+target_link_libraries(${CMAKE_PROJECT_NAME} fs_stub audio_stub gcm_cmd gcm_sys_stub http_stub http_util_stub net_stub sysutil_np_stub rtc_stub)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC 
     ALEAR_MAJOR_VERSION=${CMAKE_PROJECT_VERSION_MAJOR} 
     ALEAR_MINOR_VERSION=${CMAKE_PROJECT_VERSION_MINOR}

@@ -115,6 +115,7 @@ public:
     inline PBody* GetBodyRoot() { return BodyRoot; }
     inline PWorld* GetWorld() const { return World; }
     inline CThing* GetParent() const { return Parent; }
+    inline u32 GetUID() const { return UID; }
 public:
     CThingPtr* FirstPtr;
     CPart* Parts[PART_TYPE_SIZE];

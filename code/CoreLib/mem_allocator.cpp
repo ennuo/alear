@@ -1,6 +1,6 @@
 #include "mem_allocator.h"
 
-#include "hook.h"
+
 
 MH_DefineFunc(CAllocatorBucket_AlignedRealloc, 0x00589934, TOC1, void*, CAllocatorBucket& bucket, void* data, u32 size, u32 align);
 MH_DefineFunc(CAllocatorBucket_AlignedMalloc, 0x00588a60, TOC1, void*, CAllocatorBucket& bucket, u32 size, u32 align);

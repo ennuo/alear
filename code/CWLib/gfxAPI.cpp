@@ -1,6 +1,6 @@
 #include "GFXApi.h"
 
-#include "hook.h"
+
 
 namespace NGfx 
 {

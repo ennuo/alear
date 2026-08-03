@@ -1,6 +1,8 @@
-#ifndef CALENDAR_TIME_H
-#define CALENDAR_TIME_H
+#pragma once
 
-typedef int64_t CalendarTime;
+#include <time.h>
+typedef time_t CalendarTime;
 
-#endif // CALENDAR_TIME_H
+CalendarTime GetCalendarTime();
+bool TryGetCalendarTime(CalendarTime& timestamp);
+u64 GetCalendarMicroseconds();

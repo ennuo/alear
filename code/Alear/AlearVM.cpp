@@ -16,7 +16,7 @@ static void* g_ElfTocTable[] =
     (void*) TOC1
 };
 
-void Invoke(ExecutionState* state, shkOpd* fn)
+void Invoke(ExecutionState* state, Opd* fn)
 {
     ((void(*)(
         int, int, int, int, int, int, int, int,
@@ -40,7 +40,7 @@ void Invoke(ExecutionState* state, shkOpd* fn)
 }
 
 template <typename T>
-void InvokeAndStore(ExecutionState* state, shkOpd* fn, u8* storage)
+void InvokeAndStore(ExecutionState* state, Opd* fn, u8* storage)
 {
     T ret = ((T(*)(
         int, int, int, int, int, int, int, int,
@@ -237,7 +237,7 @@ void AlearHandleVM(ExecutionState* state)
             );
             #endif
 
-            shkOpd fn = 
+            Opd fn = 
             {
                 (void*)instruction.Invoke.SrcOrIdx,
                 g_ElfTocTable[instruction.Invoke.TocIdx]

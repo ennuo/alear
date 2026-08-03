@@ -1,5 +1,5 @@
 #include "LoadingScreen.h"
-#include "hook.h"
+
 
 // < 0xa = also running sackboy?
 // 0xb = running sackboy

@@ -1,7 +1,7 @@
 #ifndef STRING_UTIL_H
 #define STRING_UTIL_H
 
-#include <printf.h>
+#include <Ib/Printf.h>
 #include <stdarg.h>
 
 size_t StringLength(const char* str);
